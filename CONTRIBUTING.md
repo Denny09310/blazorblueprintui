@@ -77,9 +77,6 @@ BlazorBlueprint/
 │   └── BlazorBlueprint.Icons.Feather/   # Feather icon integration
 ├── demo/
 │   └── BlazorBlueprint.Demo/            # Demo Blazor Server app
-├── website/
-│   └── BlazorBlueprint.Website/         # Documentation website
-├── .devflow/                     # DevFlow documentation and standards
 ├── scripts/                      # Release automation scripts
 └── .github/                      # CI/CD workflows
 ```
@@ -91,12 +88,6 @@ BlazorBlueprint/
 - **Tailwind CSS** - Utility-first CSS framework (standalone CLI, no Node.js required)
 - **CSS Variables** - Runtime theme switching
 - **Lucide Icons** - 1000+ beautiful, consistent icons
-
-For detailed technical architecture, see [.devflow/architecture.md](../.devflow/architecture.md)
-
-## Code Style Guidelines
-
-Blazor Blueprint follows the coding standards documented in `.devflow/constitution.md`. Key guidelines:
 
 ### Naming Conventions
 - **PascalCase** for public members, types, and namespaces
