@@ -56,6 +56,14 @@
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
+  <!-- Prevent wwwroot files from being packed as NuGet contentFiles.
+       They are already served via the RCL static web assets mechanism (staticwebassets/).
+       Including both causes duplicate asset conflicts in .NET 10 SDK when multiple
+       projects in the same solution reference this package. -->
+  <ItemGroup>
+    <Content Update="wwwroot\**" Pack="false" />
+  </ItemGroup>
+
   <!-- Build Tailwind CSS before build (standalone CLI binary per platform) -->
   <Target Name="BuildBlazorBlueprintCSS" BeforeTargets="BeforeBuild;BeforeRebuild" Condition="'$(OS)' == 'Windows_NT'">
     <Message Text="Building BlazorBlueprint Tailwind CSS..." Importance="high" />
