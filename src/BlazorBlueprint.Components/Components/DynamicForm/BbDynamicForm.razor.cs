@@ -122,10 +122,18 @@ public partial class BbDynamicForm : ComponentBase
     public RenderFragment? ChildContent { get; set; }
 
     /// <inheritdoc />
-    protected override void OnInitialized() => ApplyDefaultValues();
+    protected override void OnInitialized()
+    {
+        ApplyDefaultValues();
+        ClearHiddenFieldValues();
+    }
 
     /// <inheritdoc />
-    protected override void OnParametersSet() => ApplyDefaultValues();
+    protected override void OnParametersSet()
+    {
+        ApplyDefaultValues();
+        ClearHiddenFieldValues();
+    }
 
     private void ApplyDefaultValues()
     {
@@ -237,20 +245,12 @@ public partial class BbDynamicForm : ComponentBase
             1 => "grid grid-cols-1 gap-4",
             2 => "grid grid-cols-1 md:grid-cols-2 gap-4",
             3 => "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4",
-            4 => "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4",
-            _ => "grid grid-cols-1 md:grid-cols-2 gap-4"
+            // Clamp to 4-column responsive preset to preserve mobile layout
+            _ => "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
         };
     }
 
-    private static string? GetGridStyle(int columns)
-    {
-        if (columns > 4)
-        {
-            return $"grid-template-columns: repeat({columns}, minmax(0, 1fr))";
-        }
-
-        return null;
-    }
+    private static string? GetGridStyle(int columns) => null;
 
     private static string? GetColSpanStyle(FormFieldDefinition field, int maxColumns)
     {

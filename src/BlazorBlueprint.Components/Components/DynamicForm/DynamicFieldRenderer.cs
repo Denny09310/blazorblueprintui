@@ -26,8 +26,10 @@ internal static class DynamicFieldRenderer
         RenderFragment<DynamicFieldRenderContext>? customRenderer,
         FormLayout layout = FormLayout.Vertical)
     {
-        var isDisabled = disabled || field.Disabled;
+        var baseDisabled = disabled || field.Disabled;
         var isReadOnly = readOnly || field.ReadOnly;
+        // For field types without native ReadOnly support, treat read-only as disabled
+        var isDisabled = baseDisabled || isReadOnly;
 
         switch (field.Type)
         {
@@ -52,7 +54,7 @@ internal static class DynamicFieldRenderer
                 break;
 
             case FieldType.RichText:
-                RenderRichText(builder, seq, field, value, onValueChanged, errorText, isDisabled, isReadOnly, owner, layout);
+                RenderRichText(builder, seq, field, value, onValueChanged, errorText, baseDisabled, isReadOnly, owner, layout);
                 break;
 
             case FieldType.Select:
@@ -128,7 +130,7 @@ internal static class DynamicFieldRenderer
                 break;
 
             case FieldType.Custom:
-                RenderCustomField(builder, seq, field, value, onValueChanged, errorText, isDisabled, isReadOnly, customRenderer, layout);
+                RenderCustomField(builder, seq, field, value, onValueChanged, errorText, baseDisabled, isReadOnly, customRenderer, layout);
                 break;
         }
     }
@@ -797,26 +799,33 @@ internal static class DynamicFieldRenderer
                 innerBuilder.CloseComponent();
             }
 
-            // Control — pass controlId and describedById for ARIA wiring
-            renderControl(innerBuilder, controlId, describedById);
+            // Wrap control + description/error inside BbFieldContent for consistent
+            // horizontal layout (provides min-w-0 and vertical stacking)
+            innerBuilder.OpenComponent<BbFieldContent>(10);
+            innerBuilder.AddAttribute(11, "ChildContent", (RenderFragment)(contentBuilder =>
+            {
+                // Control — pass controlId and describedById for ARIA wiring
+                renderControl(contentBuilder, controlId, describedById);
 
-            // Description or error
-            if (errorText is not null)
-            {
-                innerBuilder.OpenComponent<BbFieldError>(50);
-                innerBuilder.AddAttribute(51, "Id", errorId);
-                innerBuilder.AddAttribute(52, "ChildContent", (RenderFragment)(eb =>
-                    eb.AddContent(0, errorText)));
-                innerBuilder.CloseComponent();
-            }
-            else if (field.Description is not null)
-            {
-                innerBuilder.OpenComponent<BbFieldDescription>(50);
-                innerBuilder.AddAttribute(51, "Id", descriptionId);
-                innerBuilder.AddAttribute(52, "ChildContent", (RenderFragment)(db =>
-                    db.AddContent(0, field.Description)));
-                innerBuilder.CloseComponent();
-            }
+                // Description or error
+                if (errorText is not null)
+                {
+                    contentBuilder.OpenComponent<BbFieldError>(50);
+                    contentBuilder.AddAttribute(51, "Id", errorId);
+                    contentBuilder.AddAttribute(52, "ChildContent", (RenderFragment)(eb =>
+                        eb.AddContent(0, errorText)));
+                    contentBuilder.CloseComponent();
+                }
+                else if (field.Description is not null)
+                {
+                    contentBuilder.OpenComponent<BbFieldDescription>(50);
+                    contentBuilder.AddAttribute(51, "Id", descriptionId);
+                    contentBuilder.AddAttribute(52, "ChildContent", (RenderFragment)(db =>
+                        db.AddContent(0, field.Description)));
+                    contentBuilder.CloseComponent();
+                }
+            }));
+            innerBuilder.CloseComponent();
         }));
         builder.CloseComponent();
     }
