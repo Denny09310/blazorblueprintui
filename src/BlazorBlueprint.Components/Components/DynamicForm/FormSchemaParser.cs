@@ -304,9 +304,17 @@ public static class FormSchemaParser
         }
         else if (jsonType == "array" && property.TryGetProperty("items", out var itemsEl))
         {
-            // Array with items → MultiSelect
-            field.Type = FieldType.MultiSelect;
-            field.Options = ParseItemsOptions(itemsEl);
+            // Array with items → MultiSelect when options can be derived; otherwise Tags
+            var itemOptions = ParseItemsOptions(itemsEl);
+            if (itemOptions != null)
+            {
+                field.Type = FieldType.MultiSelect;
+                field.Options = itemOptions;
+            }
+            else
+            {
+                field.Type = FieldType.Tags;
+            }
         }
         else
         {

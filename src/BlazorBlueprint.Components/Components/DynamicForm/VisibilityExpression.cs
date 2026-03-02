@@ -18,6 +18,7 @@ namespace BlazorBlueprint.Components;
 /// </example>
 public static class VisibilityExpression
 {
+    private const int MaxCacheSize = 1000;
     private static readonly ConcurrentDictionary<string, Func<Dictionary<string, object?>, bool>> cache = new();
 
     /// <summary>
@@ -28,6 +29,11 @@ public static class VisibilityExpression
     /// <returns>A function that evaluates the expression against a values dictionary.</returns>
     public static Func<Dictionary<string, object?>, bool> Parse(string expression)
     {
+        if (cache.Count >= MaxCacheSize)
+        {
+            cache.Clear();
+        }
+
         return cache.GetOrAdd(expression, static expr =>
         {
             var tokens = Tokenize(expr);

@@ -288,12 +288,35 @@ public partial class BbDynamicForm : ComponentBase
 
     private void ClearHiddenFieldValues()
     {
-        foreach (var field in GetAllFields())
+        if (Schema is null)
         {
-            if (!IsFieldVisible(field) && Values.ContainsKey(field.Name))
+            return;
+        }
+
+        if (Schema.Sections.Count > 0)
+        {
+            foreach (var section in Schema.Sections)
             {
-                Values.Remove(field.Name);
-                fieldErrors.Remove(field.Name);
+                var sectionHidden = !IsSectionVisible(section);
+                foreach (var field in section.Fields)
+                {
+                    if ((sectionHidden || !IsFieldVisible(field)) && Values.ContainsKey(field.Name))
+                    {
+                        Values.Remove(field.Name);
+                        fieldErrors.Remove(field.Name);
+                    }
+                }
+            }
+        }
+        else
+        {
+            foreach (var field in Schema.Fields)
+            {
+                if (!IsFieldVisible(field) && Values.ContainsKey(field.Name))
+                {
+                    Values.Remove(field.Name);
+                    fieldErrors.Remove(field.Name);
+                }
             }
         }
     }
@@ -307,7 +330,13 @@ public partial class BbDynamicForm : ComponentBase
     {
         fieldErrors.Clear();
 
-        foreach (var field in GetAllFields())
+        var fieldsToValidate = Schema?.Sections.Count > 0
+            ? Schema.Sections
+                .Where(s => IsSectionVisible(s))
+                .SelectMany(s => s.Fields)
+            : GetAllFields();
+
+        foreach (var field in fieldsToValidate)
         {
             if (!IsFieldVisible(field))
             {
@@ -422,9 +451,19 @@ public partial class BbDynamicForm : ComponentBase
                 break;
 
             case ValidationType.Pattern:
-                if (validation.Value is string pattern && !Regex.IsMatch(str, pattern))
+                if (validation.Value is string pattern)
                 {
-                    return validation.Message ?? $"{label} does not match the required format.";
+                    try
+                    {
+                        if (!Regex.IsMatch(str, pattern, RegexOptions.None, TimeSpan.FromSeconds(1)))
+                        {
+                            return validation.Message ?? $"{label} does not match the required format.";
+                        }
+                    }
+                    catch (RegexMatchTimeoutException)
+                    {
+                        return validation.Message ?? $"{label} does not match the required format.";
+                    }
                 }
 
                 break;
