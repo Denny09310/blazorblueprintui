@@ -732,6 +732,32 @@
             </BbSidebarMenu>
         </BbSidebarGroup>
 
+        <!-- Recipes Section -->
+        <BbSidebarGroup>
+            <BbSidebarMenu>
+                <BbSidebarMenuItem>
+                    <BbCollapsible Open="@_recipesMenuOpen" OpenChanged="@OnRecipesMenuOpenChanged">
+                        <BbSidebarMenuButton Tooltip="Recipes">
+                            <LucideIcon Name="chef-hat" Size="18" />
+                            <span>Recipes</span>
+                            <BbSidebarMenuChevron>
+                                <LucideIcon Name="chevron-right" Size="16" />
+                            </BbSidebarMenuChevron>
+                        </BbSidebarMenuButton>
+                        <BbCollapsibleContent>
+                            <BbSidebarMenuSub>
+                                <BbSidebarMenuSubItem>
+                                    <BbSidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="recipes/filterable-datagrid">
+                                        <span>Filterable Data Grid</span>
+                                    </BbSidebarMenuSubButton>
+                                </BbSidebarMenuSubItem>
+                            </BbSidebarMenuSub>
+                        </BbCollapsibleContent>
+                    </BbCollapsible>
+                </BbSidebarMenuItem>
+            </BbSidebarMenu>
+        </BbSidebarGroup>
+
         <!-- Guides Section -->
         <BbSidebarGroup>
             <BbSidebarMenu>
