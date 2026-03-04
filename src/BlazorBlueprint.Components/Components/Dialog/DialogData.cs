@@ -39,10 +39,6 @@ public abstract class DialogData
     internal Task<DialogResult> Completion => tcs.Task;
 
     /// <summary>
-    /// Gets the underlying task completion source used to resolve the dialog.
-    /// </summary>
-
-    /// <summary>
     /// Resolves the dialog with the specified result.
     /// </summary>
     /// <param name="result">The result supplied by the dialog renderer.</param>

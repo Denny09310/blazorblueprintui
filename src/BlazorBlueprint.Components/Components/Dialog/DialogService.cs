@@ -4,10 +4,6 @@ using Microsoft.AspNetCore.Components;
 namespace BlazorBlueprint.Components;
 
 /// <summary>
-/// Service for showing programmatic confirm dialogs.
-/// Register as scoped in DI for Blazor Server user isolation.
-/// </summary>
-/// <summary>
 /// Provides functionality for showing and managing dialogs.
 /// </summary>
 /// <remarks>
