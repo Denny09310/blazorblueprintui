@@ -49,7 +49,7 @@ public class DialogService
         dialogs.Add(data);
         OnChange?.Invoke();
 
-        return data.Task;
+        return data.Completion;
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public class DialogService
         dialogs.Add(data);
         OnChange?.Invoke();
 
-        var result = await data.Task;
+        var result = await data.Completion;
         return new ConfirmDialogResult(result);
     }
 
@@ -127,7 +127,7 @@ public class DialogService
         dialogs.Add(data);
         OnChange?.Invoke();
 
-        var result = await data.Task;
+        var result = await data.Completion;
         return new PromptDialogResult(result);
     }
 
@@ -150,7 +150,7 @@ public class DialogService
         dialogs.Add(data);
         OnChange?.Invoke();
 
-        return data.Task;
+        return data.Completion;
     }
 
     /// <summary>

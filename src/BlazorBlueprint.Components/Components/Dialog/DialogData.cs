@@ -36,7 +36,7 @@ public abstract class DialogData
     /// <remarks>
     /// This task is awaited internally by <see cref="DialogService"/>.
     /// </remarks>
-    internal Task<DialogResult> Task => tcs.Task;
+    internal Task<DialogResult> Completion => tcs.Task;
 
     /// <summary>
     /// Gets the underlying task completion source used to resolve the dialog.

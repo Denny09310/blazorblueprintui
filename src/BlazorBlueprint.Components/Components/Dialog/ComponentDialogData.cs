@@ -24,13 +24,13 @@ public sealed class ComponentDialogData(DialogService dialogService) : DialogDat
     public Task CloseAsync(DialogResult result)
     {
         dialogService.Resolve(Id, result);
-        return System.Threading.Tasks.Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
     public Task CancelAsync()
     {
         dialogService.Resolve(Id, DialogResult.Cancel());
-        return System.Threading.Tasks.Task.CompletedTask;
+        return Task.CompletedTask;
     }
 }
