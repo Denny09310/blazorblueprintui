@@ -120,6 +120,7 @@
   - OnRowSelect : EventCallback<TData>
   - OnSelectionChange : EventCallback<IReadOnlyCollection<TData>>
   - OnSortChange : EventCallback<IReadOnlyList<SortDefinition>>
+  - OnToggleExpand : EventCallback<TData>
   - SelectionMode : SelectionMode
   - State : DataGridState<TData>
   - StateChanged : EventCallback<DataGridState<TData>>
