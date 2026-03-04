@@ -135,12 +135,19 @@ public class DialogService
         DialogOpenOptions? options = null)
         where TComponent : IComponent
     {
-        var data = new ComponentDialogData(this)
+        ComponentDialogData data = null!;
+
+        data = new ComponentDialogData
         {
             Title = options?.Title ?? string.Empty,
             ComponentType = typeof(TComponent),
             Parameters = parameters,
-            Options = options ?? new DialogOpenOptions()
+            Options = options ?? new DialogOpenOptions(),
+            CloseCallback = result =>
+            {
+                Resolve(data.Id, result);
+                return Task.CompletedTask;
+            }
         };
 
         dialogs.Add(data);
