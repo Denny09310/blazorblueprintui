@@ -70,6 +70,29 @@
   - ChildContent : RenderFragment
   - Context : CollapsibleContext [CascadingParameter]
 
+### BbDashboardGrid (BlazorBlueprint.Primitives.DashboardGrid)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
+  - ChildContent : RenderFragment
+  - Context : DashboardGridContext
+
+### BbDashboardWidget (BlazorBlueprint.Primitives.DashboardGrid)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Column : Int32
+  - ColumnSpan : Int32
+  - Draggable : Boolean
+  - Id : String [EditorRequired]
+  - MaxColumnSpan : Int32
+  - MaxRowSpan : Int32
+  - MinColumnSpan : Int32
+  - MinRowSpan : Int32
+  - Resizable : Boolean
+  - Row : Int32
+  - RowSpan : Int32
+  - Static : Boolean
+  - Context : DashboardGridContext [CascadingParameter]
+
 ### BbDataGridBody (BlazorBlueprint.Primitives.DataGrid)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
@@ -612,6 +635,19 @@
   - Single = 0
   - Multiple = 1
 
+### DashboardBreakpoint (BlazorBlueprint.Primitives.DashboardGrid)
+  - Large = 0
+  - Medium = 1
+  - Small = 2
+
+### AggregateFunction (BlazorBlueprint.Primitives.DataGrid)
+  - None = 0
+  - Count = 1
+  - Sum = 2
+  - Average = 3
+  - Min = 4
+  - Max = 5
+
 ### ColumnPinning (BlazorBlueprint.Primitives.DataGrid)
   - None = 0
   - Left = 1
@@ -774,6 +810,8 @@
 ## Interfaces
 
 ### IDataGridColumn<TData> (BlazorBlueprint.Primitives.DataGrid)
+  - Aggregate : AggregateFunction { get; }
+  - AggregateFormat : String { get; }
   - CellClass : String { get; }
   - CellTemplate : RenderFragment<DataGridCellContext<TData>> { get; }
   - ColumnId : String { get; }
@@ -791,6 +829,7 @@
   - Width : String { get; }
   - Compare(TData x, TData y) : Int32
   - GetFilterExpression() : LambdaExpression
+  - GetRawValue(TData item) : Object
   - GetSortExpression() : LambdaExpression
   - GetValue(TData item) : Object
 
