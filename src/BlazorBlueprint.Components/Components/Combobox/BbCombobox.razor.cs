@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.JSInterop;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
@@ -48,6 +49,8 @@ namespace BlazorBlueprint.Components;
 /// </example>
 public partial class BbCombobox<TValue> : ComponentBase
 {
+    [Inject] private IBbLocalizer Localizer { get; set; } = default!;
+
     private FieldIdentifier _fieldIdentifier;
     private EditContext? _editContext;
     private static readonly Func<CommandItemMetadata, string, bool> PassthroughFilter = (_, _) => true;
@@ -55,6 +58,7 @@ public partial class BbCombobox<TValue> : ComponentBase
     private string? _selectedDisplayTextCache;
 
     // ShouldRender tracking fields
+    private bool _parametersChanged;
     private bool _lastIsOpen;
     private IEnumerable<SelectOption<TValue>>? _lastOptions;
     private TValue? _lastValue;
@@ -63,6 +67,17 @@ public partial class BbCombobox<TValue> : ComponentBase
 
     protected override bool ShouldRender()
     {
+        if (_parametersChanged)
+        {
+            _parametersChanged = false;
+            _lastIsOpen = _isOpen;
+            _lastValue = Value;
+            _lastDisabled = Disabled;
+            _lastSearchQuery = SearchQuery;
+            _lastOptions = Options;
+            return true;
+        }
+
         if (_isOpen != _lastIsOpen
             || !EqualityComparer<TValue>.Default.Equals(Value, _lastValue)
             || Disabled != _lastDisabled
@@ -123,19 +138,23 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// Gets or sets the placeholder text shown in the button when no item is selected.
     /// </summary>
     [Parameter]
-    public string Placeholder { get; set; } = "Select an option...";
+    public string? Placeholder { get; set; }
 
     /// <summary>
     /// Gets or sets the placeholder text shown in the search input.
     /// </summary>
     [Parameter]
-    public string SearchPlaceholder { get; set; } = "Search...";
+    public string? SearchPlaceholder { get; set; }
 
     /// <summary>
     /// Gets or sets the message displayed when no items match the search.
     /// </summary>
     [Parameter]
-    public string EmptyMessage { get; set; } = "No results found.";
+    public string? EmptyMessage { get; set; }
+
+    private string EffectivePlaceholder => Placeholder ?? Localizer["Combobox.Placeholder"];
+    private string EffectiveSearchPlaceholder => SearchPlaceholder ?? Localizer["Combobox.SearchPlaceholder"];
+    private string EffectiveEmptyMessage => EmptyMessage ?? Localizer["Combobox.EmptyMessage"];
 
     /// <summary>
     /// Gets or sets the current search query text.
@@ -236,6 +255,7 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// </summary>
     protected override void OnParametersSet()
     {
+        _parametersChanged = true;
         base.OnParametersSet();
 
         // Filter out null options for safety (Options mode only)
@@ -263,7 +283,7 @@ public partial class BbCombobox<TValue> : ComponentBase
         {
             if (Value is null)
             {
-                return Placeholder;
+                return EffectivePlaceholder;
             }
 
             // Options mode: look up from Options collection
@@ -281,7 +301,7 @@ public partial class BbCombobox<TValue> : ComponentBase
 
             // Fallback: cached display text from last selection survives Options array changes
             // during async filtering (e.g. selected option filtered out of current results).
-            return _selectedDisplayTextCache ?? Placeholder;
+            return _selectedDisplayTextCache ?? EffectivePlaceholder;
         }
     }
 
@@ -310,9 +330,9 @@ public partial class BbCombobox<TValue> : ComponentBase
             await Task.Delay(50);
             await _commandInputRef.FocusAsync();
         }
-        catch
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
         {
-            // Ignore focus errors
+            // Expected during circuit disconnect or disposal
         }
     }
 

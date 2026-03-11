@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
@@ -280,9 +281,9 @@ public partial class BbTreeView : IAsyncDisposable
 
                 await keyboardModule.InvokeVoidAsync("initialize", elementRef, dotNetRef, context.Id);
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
-                // Circuit disconnected, ignore
+                // Circuit disconnected or module loading failure, ignore
             }
         }
     }
@@ -323,6 +324,7 @@ public partial class BbTreeView : IAsyncDisposable
     /// Called from JavaScript when a node is activated via click or keyboard (Enter/Space).
     /// </summary>
     [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public async Task JsOnNodeActivate(string value, bool hasChildren = false)
     {
         context.FocusedNodeValue = value;
@@ -357,6 +359,7 @@ public partial class BbTreeView : IAsyncDisposable
     /// Called from JavaScript when a node checkbox is toggled via keyboard (Space).
     /// </summary>
     [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public void JsOnNodeCheck(string value)
     {
         context.FocusedNodeValue = value;
@@ -367,6 +370,7 @@ public partial class BbTreeView : IAsyncDisposable
     /// Called from JavaScript when a node should be expanded.
     /// </summary>
     [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public async Task JsOnNodeExpand(string value)
     {
         context.FocusedNodeValue = value;
@@ -381,6 +385,7 @@ public partial class BbTreeView : IAsyncDisposable
     /// Called from JavaScript when a node should be collapsed.
     /// </summary>
     [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public async Task JsOnNodeCollapse(string value)
     {
         context.FocusedNodeValue = value;
@@ -395,13 +400,17 @@ public partial class BbTreeView : IAsyncDisposable
     /// Called from JavaScript to expand all siblings of a node.
     /// </summary>
     [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public void JsOnExpandSiblings(string value)
     {
         context.FocusedNodeValue = value;
         context.ExpandSiblings(value);
     }
 
-    private async void HandleContextStateChanged()
+    private void HandleContextStateChanged() =>
+        _ = InvokeAsync(HandleContextStateChangedAsync);
+
+    private async Task HandleContextStateChangedAsync()
     {
         // Propagate context state changes to bound parameters via EventCallbacks.
         // Do NOT call StateHasChanged() here — BbTreeItem instances re-render via their
@@ -430,10 +439,9 @@ public partial class BbTreeView : IAsyncDisposable
                 await CheckedValuesChanged.InvokeAsync(new HashSet<string>(context.State.CheckedValues));
             }
         }
-        catch (Exception)
+        catch (Exception ex) when (ex is ObjectDisposedException or TaskCanceledException)
         {
-            // Consumer callback exception — prevent unobserved task exceptions
-            // from crashing the application.
+            // Component may be disposed during async operation
         }
     }
 

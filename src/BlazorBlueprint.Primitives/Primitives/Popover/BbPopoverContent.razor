@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Primitives.Popover
+@using System.ComponentModel
 @using BlazorBlueprint.Primitives.Floating
 @using BlazorBlueprint.Primitives.Services
 @inject IJSRuntime JSRuntime
@@ -114,6 +115,14 @@
     public EventCallback OnClickOutside { get; set; }
 
     /// <summary>
+    /// The ARIA role for the popover content.
+    /// Default is "dialog" per WAI-ARIA 1.2 for interactive popovers.
+    /// Set to null for simple supplemental content that doesn't need a role.
+    /// </summary>
+    [Parameter]
+    public string? Role { get; set; } = "dialog";
+
+    /// <summary>
     /// Whether to keep the content mounted in the DOM when closed.
     /// When true, enables CSS exit animations.
     /// Default is false.
@@ -152,7 +161,7 @@
     private RenderFragment RenderPopoverContent() => __builder =>
     {
         <div id="@Context.ContentId"
-             role="group"
+             role="@Role"
              tabindex="-1"
              @onkeydown="HandleKeyDown"
              @attributes="AdditionalAttributes"
@@ -202,12 +211,12 @@
                 "onClickOutsideByIds",
                 Context.ContentId,      // Element ID (not ElementReference)
                 _dotNetRef,
-                "HandleClickOutside",
+                "JsOnClickOutside",
                 Context.TriggerId);     // Trigger ID (not ElementReference)
         }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
         {
-            // Expected during circuit disconnect in Blazor Server
+            // Expected during circuit disconnect or module loading failure
         }
         catch (InvalidOperationException)
         {
@@ -216,7 +225,8 @@
     }
 
     [JSInvokable]
-    public async Task HandleClickOutside()
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public async Task JsOnClickOutside()
     {
         // Guard against callbacks after disposal
         if (_disposed || !Context.IsOpen) return;
@@ -234,24 +244,26 @@
         }
     }
 
-    private async void HandleContextStateChanged()
+    private void HandleContextStateChanged()
+    {
+        _ = InvokeAsync(HandleContextStateChangedAsync);
+    }
+
+    private async Task HandleContextStateChangedAsync()
     {
         try
         {
             if (!Context.IsOpen)
             {
-                await InvokeAsync(async () =>
-                {
-                    await CleanupAsync();
-                    StateHasChanged();
-                });
+                await CleanupAsync();
+                StateHasChanged();
             }
             else
             {
-                await InvokeAsync(StateHasChanged);
+                StateHasChanged();
             }
         }
-        catch (ObjectDisposedException)
+        catch (Exception ex) when (ex is ObjectDisposedException or TaskCanceledException)
         {
             // Component may be disposed during async operation
         }
@@ -285,9 +297,9 @@
                 await _clickOutsideCleanup.InvokeVoidAsync("dispose");
                 await _clickOutsideCleanup.DisposeAsync();
             }
-            catch
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
-                // Cleanup may already be disposed
+                // Cleanup may already be disposed or circuit disconnected
             }
             _clickOutsideCleanup = null;
         }

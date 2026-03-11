@@ -79,8 +79,8 @@ public partial class BbInput : ComponentBase
     /// Gets or sets the callback invoked when the input value changes.
     /// </summary>
     /// <remarks>
-    /// When <see cref="UpdateTiming"/> is <see cref="Components.UpdateTiming.OnChange"/> (default),
-    /// fires only on blur or Enter. Use <see cref="Components.UpdateTiming.Immediate"/> for per-keystroke updates.
+    /// When <see cref="UpdateTiming"/> is <see cref="UpdateTiming.OnChange"/> (default),
+    /// fires only on blur or Enter. Use <see cref="UpdateTiming.Immediate"/> for per-keystroke updates.
     /// </remarks>
     [Parameter]
     public EventCallback<string?> ValueChanged { get; set; }
@@ -167,6 +167,12 @@ public partial class BbInput : ComponentBase
     /// </remarks>
     [Parameter]
     public bool? AriaInvalid { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the input element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     /// <summary>
     /// Gets or sets the HTML name attribute for the input element.

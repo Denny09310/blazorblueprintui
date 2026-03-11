@@ -47,14 +47,13 @@ function getFocusedIndex(container) {
 function scrollIntoContainerView(element, container, center = false) {
     if (!element || !container) return;
 
-    const containerRect = container.getBoundingClientRect();
-    const elementRect = element.getBoundingClientRect();
-
     // Calculate the element's position relative to the container's scroll position
     const elementTop = element.offsetTop;
     const elementHeight = element.offsetHeight;
     const containerScrollTop = container.scrollTop;
     const containerHeight = container.clientHeight;
+
+    if (containerHeight <= 0 || elementHeight <= 0) return;
 
     if (center) {
         // Center the element in the container
@@ -217,13 +216,13 @@ export function setupKeyboardNavigation(contentId, dotNetRef) {
             case 'Escape':
                 e.preventDefault();
                 if (dotNetRef) {
-                    await dotNetRef.invokeMethodAsync('HandleEscapeKey');
+                    await dotNetRef.invokeMethodAsync('JsOnEscapeKey');
                 }
                 break;
 
             case 'Tab':
                 if (dotNetRef) {
-                    await dotNetRef.invokeMethodAsync('HandleTabKey');
+                    await dotNetRef.invokeMethodAsync('JsOnTabKey');
                 }
                 break;
         }
