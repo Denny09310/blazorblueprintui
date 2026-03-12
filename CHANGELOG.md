@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-12
+
+### Added
+
+- **BbDateRangePicker: Customizable Presets** — New `Presets` parameter accepts `IReadOnlyList<DateRangeQuickPick>` to override the default quick-pick list. Supports built-in presets (with automatic localization via implicit conversion from `DateRangePreset`) and fully custom entries via `DateRangeQuickPick.Custom(label, rangeFactory)`. Desktop sidebar scrolls when many presets are provided. Mobile view uses a native select dropdown instead of a horizontal scroll strip.
+
+### Fixed
+
+- **BbNativeSelect** — Fix placeholder not displaying for value types and chevron icon not rendering. Moved SVG chevron from Tailwind arbitrary-value classes to CSS for Tailwind v4 compatibility. Fixed `Convert.ChangeType` failing silently for nullable `TValue` types.
+- **BbSidebarProvider** — Add missing `bg-sidebar` background class to the provider wrapper when using the `Inset` variant, so the inset content area renders with proper visual contrast. (#239)
+
+---
+
 ## 2026-03-11
 
 ### Added
