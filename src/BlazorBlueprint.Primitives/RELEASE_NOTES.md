@@ -1,5 +1,10 @@
-## What's New in v3.6.1
+## What's New in v3.7.1
 
-### Bug Fixes
+### New Features
 
-- **Select** — Fixed dropdown reopening when clicking the trigger button a second time to close it. The trigger now correctly syncs its element ID with the select context, ensuring click-outside detection works properly when a custom `id` attribute is present (e.g. inside form fields).
+- **HierarchyManager** — Added `Count` property to get the total number of items in the hierarchy
+- **HierarchyManager** — Added `GetAllItems()` method to retrieve all items without traversal
+
+### Performance
+
+- **DataGrid** — Improved hierarchy rendering performance for large datasets by exposing efficient item access on `HierarchyManager`
