@@ -41,7 +41,16 @@
     </PackageReference>
   </ItemGroup>
 
-  <!-- Use ProjectReference for local development, PackageReference for packing -->
+  <!-- Use ProjectReference for local development, PackageReference for packing.
+       The release script passes -p:UsePackageReferences=true so the nupkg always
+       references stable published versions rather than MinVer-computed prerelease
+       versions from ProjectReference. NU5104 is suppressed because
+       TreatWarningsAsErrors promotes it to an error when packing with ProjectReference
+       during development; the release script handles this correctly via UsePackageReferences. -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup Condition="'$(UsePackageReferences)' != 'true'">
     <ProjectReference Include="..\BlazorBlueprint.Icons.Lucide\BlazorBlueprint.Icons.Lucide.csproj" />
     <ProjectReference Include="..\BlazorBlueprint.Primitives\BlazorBlueprint.Primitives.csproj" />
