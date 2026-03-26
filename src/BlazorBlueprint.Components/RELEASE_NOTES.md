@@ -1,19 +1,27 @@
-## What's New in v3.8.0
+## What's New in v3.8.1
+
+### New Components
+
+- **ThemeService** — scoped service for managing dark mode, base color, primary color, and border radius with `localStorage` persistence and OS preference detection
+- **BbThemeSwitcher** — interactive theme customization panel for switching primary color, base color, radius, and light/dark mode
+- **BbDarkModeToggle** — button component for toggling between light and dark mode
 
 ### New Features
 
-- **Sidebar CSS custom property theming** — All sidebar layout, sizing, and styling values are now driven by ~70 CSS custom properties with sensible defaults. Override variables on `:root` to fully theme the sidebar without `!important` or specificity battles.
-- **BbSidebarMenuButton OnClick** — Added `OnClick` EventCallback for custom click handling alongside built-in collapsible toggle behavior.
-- **Sidebar active state variables** — Active menu button appearance (background, color, shadow, font-weight) is now controlled via `--sidebar-menu-button-active-*` variables.
-- **Sidebar badge theming** — Badge background and color are now configurable via `--sidebar-badge-bg` and `--sidebar-badge-color` variables.
-
-### Bug Fixes
-
-- **BbSidebarMenuButton data-active** — Fixed `data-active` attribute rendering boolean `"True"` instead of lowercase `"true"`.
-- **BbSidebarMenuButton size variants** — Fixed size variant switch comparing against wrong string values (`"small"`/`"large"` instead of `"sm"`/`"lg"` from `ToValue()`).
+- **DataGrid** global search — new `ShowSearch` parameter renders a built-in debounced search input; filters across all `Filterable` columns client-side or passes `SearchText` to `ItemsProvider` via `DataGridRequest.SearchText` for server-side filtering
+- **DataGrid** virtualized server-side scrolling — when both `Virtualize` and `ItemsProvider` are set, the grid uses Blazor's `Virtualize` component to stream rows on scroll instead of loading all data at once
+- **DataGrid** `Striped` and `StripeClass` parameters for alternating row backgrounds
+- **DataGrid** `OverscanCount` parameter to control how many extra rows are rendered outside the visible area during virtual scrolling
+- **DataGrid** `VirtualScrollHeight` parameter to set the scroll container height in virtualized server-side mode
+- **DataGrid** `TableContainerClass` parameter for styling the inner scrollable container
+- **DataView** `GridColumnMinWidth` parameter — uses CSS `repeat(auto-fill, minmax(...))` for fluid grid layouts instead of fixed breakpoint columns
+- **BbChartTooltip** `AppendToBody` parameter to render chart tooltips outside the chart container, preventing clipping by `overflow: hidden` parents
+- **Theme system** CSS with OKLCH color definitions for 5 base color palettes (Zinc, Slate, Gray, Neutral, Stone) and 18 primary accent colors
 
 ### Improvements
 
-- **Sidebar data attributes** — Added missing `data-sidebar` attributes to 10 sidebar components (`BbSidebarContent`, `BbSidebarFooter`, `BbSidebarHeader`, `BbSidebarHeaderContent`, `BbSidebarMenu`, `BbSidebarMenuBadge`, `BbSidebarMenuItem`, `BbSidebarMenuSub`, `BbSidebarMenuButton`, `BbSidebarMenuSubButton`) for consistent CSS targeting.
-- **Sidebar data-size attributes** — Added `data-size` attributes to `BbSidebarMenuButton` and `BbSidebarMenuSubButton` for size-aware CSS styling.
-- **Sidebar collapsible icon mode** — Icon-mode overrides for collapsed sidebar are now handled via CSS custom properties instead of inline Tailwind utilities.
+- **Menubar** components now delegate to Primitives-layer counterparts for keyboard navigation, focus management, and ARIA semantics, significantly reducing duplicated logic
+- **DataGrid** pagination controls are now responsive — page size selector, page display, and first/last buttons hide on smaller screens
+- **Localization** keys added for DataGrid search placeholder and all Theme components
+- **ThemeService** registered via `AddBlazorBlueprintComponents()` with optional `Action<ThemeOptions>` configuration
+- Bumped **BlazorBlueprint.Primitives** dependency to 3.8.0

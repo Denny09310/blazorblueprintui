@@ -69,6 +69,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private readonly string gridId = Guid.NewGuid().ToString("N");
     private bool jsInitialized;
 
+    // Search state
+    private string? _searchInputValue;
+    private CancellationTokenSource? _searchDebounceCts;
+
+    // Virtualized provider state
+    private Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize<TData>? _virtualizeRef;
+
     // Context menu state
     private BbContextMenu? rowContextMenu;
     private TData? contextMenuItem;
@@ -88,6 +95,12 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private int _stateVersion;
     private int _lastStateVersion;
     private int _lastGridStateVersion;
+
+    /// <summary>
+    /// Whether the grid is in server-side virtual scroll mode
+    /// (both Virtualize and ItemsProvider set with a valid ItemSize).
+    /// </summary>
+    private bool IsVirtualizedProvider => Virtualize && ItemSize > 0 && ItemsProvider != null;
 
     [Inject]
     private IJSRuntime Js { get; set; } = null!;
@@ -220,6 +233,44 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     public Func<TData, string?>? RowClass { get; set; }
 
     /// <summary>
+    /// When <c>true</c>, applies alternating row background colors using <see cref="StripeClass"/>.
+    /// Composes with <see cref="RowClass"/> — user-provided classes take precedence for conflicts.
+    /// </summary>
+    [Parameter]
+    public bool Striped { get; set; }
+
+    /// <summary>
+    /// CSS classes applied to even rows when <see cref="Striped"/> is <c>true</c>.
+    /// Defaults to <c>"even:bg-muted/30 even:hover:bg-muted/70"</c>.
+    /// </summary>
+    [Parameter]
+    public string StripeClass { get; set; } = "even:bg-muted/30 even:hover:bg-muted/70";
+
+    /// <summary>
+    /// Number of extra items rendered outside the visible area when <see cref="Virtualize"/>
+    /// is <c>true</c>. Higher values reduce blank flashes during fast scrolling at the cost
+    /// of more DOM nodes. Default is 5.
+    /// </summary>
+    [Parameter]
+    public int OverscanCount { get; set; } = 5;
+
+    /// <summary>
+    /// CSS height for the scroll container when using virtualized server-side mode
+    /// (both <see cref="Virtualize"/> and <see cref="ItemsProvider"/> are set).
+    /// Required in this mode to give the Virtualize component a bounded scroll area.
+    /// Accepts any CSS length value. Default is <c>"400px"</c>.
+    /// </summary>
+    [Parameter]
+    public string VirtualScrollHeight { get; set; } = "400px";
+
+    /// <summary>
+    /// Additional CSS classes applied to the inner scrollable container that wraps the
+    /// <c>&lt;table&gt;</c> element. Use this to control border radius, borders, max-height, etc.
+    /// </summary>
+    [Parameter]
+    public string? TableContainerClass { get; set; }
+
+    /// <summary>
     /// Whether to show the active-filter indicator bar below the header.
     /// When shown, it displays a count of active filters and a "Clear all" button.
     /// Default is true.
@@ -238,6 +289,40 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// When <c>true</c>, renders a built-in search input above the grid.
+    /// Filters across all columns with <c>Filterable=true</c> (client-side)
+    /// or passes <see cref="SearchText"/> to the <see cref="ItemsProvider"/> via
+    /// <see cref="DataGridRequest.SearchText"/> (server-side).
+    /// </summary>
+    [Parameter]
+    public bool ShowSearch { get; set; }
+
+    /// <summary>
+    /// The current global search text. Use with <c>@bind-SearchText</c> for two-way binding.
+    /// </summary>
+    [Parameter]
+    public string? SearchText { get; set; }
+
+    /// <summary>
+    /// Callback invoked when the search text changes (after debounce).
+    /// </summary>
+    [Parameter]
+    public EventCallback<string?> SearchTextChanged { get; set; }
+
+    /// <summary>
+    /// Placeholder text for the search input.
+    /// Defaults to the localized <c>"DataGrid.SearchPlaceholder"</c> string.
+    /// </summary>
+    [Parameter]
+    public string? SearchPlaceholder { get; set; }
+
+    /// <summary>
+    /// Debounce delay in milliseconds for the search input. Default is 300.
+    /// </summary>
+    [Parameter]
+    public int SearchDebounceMs { get; set; } = 300;
 
     /// <summary>
     /// Toolbar content rendered above the grid. Use for column visibility toggles,
@@ -944,7 +1029,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             var sorted = filtered.ApplyMultiSort(
                 _gridState.Sorting.Definitions, columns);
 
-            var sortedList = sorted.ToList();
+            var sortedList = ApplyGlobalSearch(sorted.ToList()).ToList();
 
             if (_groupByAccessor != null)
             {
@@ -975,7 +1060,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             var sorted = filtered.ApplyMultiSort(
                 _gridState.Sorting.Definitions, columns);
 
-            var list = sorted as IList<TData> ?? sorted.ToList();
+            var searched = ApplyGlobalSearch(sorted);
+            var list = searched as IList<TData> ?? searched.ToList();
 
             if (_groupByAccessor != null)
             {
@@ -1239,6 +1325,46 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             result = 0;
             return false;
         }
+    }
+
+    /// <summary>
+    /// Bridge between Blazor's <see cref="Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderRequest"/>
+    /// and BlazorBlueprint's <see cref="DataGridRequest"/>. Called by the Virtualize component as the user scrolls.
+    /// </summary>
+    private async ValueTask<Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<TData>> VirtualItemsProviderAsync(
+        Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderRequest request)
+    {
+        // Grouping is not supported with virtualized provider mode
+        if (_groupByAccessor != null)
+        {
+            return new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<TData>(
+                Array.Empty<TData>(), 0);
+        }
+
+        var aggregateColumns = _columns
+            .Where(c => c.Aggregate != AggregateFunction.None)
+            .Select(c => c.ColumnId)
+            .ToList();
+
+        var dataGridRequest = new DataGridRequest
+        {
+            SortDefinitions = _gridState.Sorting.Definitions,
+            StartIndex = request.StartIndex,
+            Count = request.Count,
+            CancellationToken = request.CancellationToken,
+            Filters = _gridState.Filtering.Filters,
+            GroupDefinition = _gridState.Grouping.ActiveGroup,
+            AggregateColumns = aggregateColumns.Count > 0 ? aggregateColumns : null,
+            SearchText = SearchText
+        };
+
+        var result = await ItemsProvider!(dataGridRequest);
+
+        // Update pagination total for info display (e.g., "Showing X of Y")
+        _gridState.Pagination.TotalItems = result.TotalItemCount;
+
+        return new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<TData>(
+            result.Items, result.TotalItemCount);
     }
 
     private void UpdateVirtualizationList()
@@ -1936,6 +2062,18 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     private async Task LoadFromProviderAsync()
     {
+        // In virtualized provider mode, the Virtualize component drives data loading.
+        // Refresh it so it re-queries with the current sort/filter state.
+        if (IsVirtualizedProvider)
+        {
+            if (_virtualizeRef != null)
+            {
+                await _virtualizeRef.RefreshDataAsync();
+            }
+
+            return;
+        }
+
         var oldCts = _loadCts;
         oldCts?.Cancel();
         oldCts?.Dispose();
@@ -1961,7 +2099,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 CancellationToken = token,
                 Filters = _gridState.Filtering.Filters,
                 GroupDefinition = _gridState.Grouping.ActiveGroup,
-                AggregateColumns = aggregateColumns.Count > 0 ? aggregateColumns : null
+                AggregateColumns = aggregateColumns.Count > 0 ? aggregateColumns : null,
+                SearchText = SearchText
             };
 
             // Use grouped provider when grouping is active and provider is available
@@ -2143,6 +2282,77 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
 
         return queryable;
+    }
+
+    private async Task HandleSearchInput(string? value)
+    {
+        _searchInputValue = value;
+
+        _searchDebounceCts?.Cancel();
+        _searchDebounceCts?.Dispose();
+        _searchDebounceCts = new CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(SearchDebounceMs, _searchDebounceCts.Token);
+
+            SearchText = string.IsNullOrWhiteSpace(value) ? null : value;
+            await SearchTextChanged.InvokeAsync(SearchText);
+
+            _gridState.Pagination.CurrentPage = 1;
+            await ProcessDataAsync();
+            StateHasChanged();
+        }
+        catch (TaskCanceledException)
+        {
+            // Debounce superseded
+        }
+    }
+
+    private IEnumerable<TData> ApplyGlobalSearch(IEnumerable<TData> data)
+    {
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            return data;
+        }
+
+        var searchText = SearchText.Trim();
+        var searchableColumns = _columns.Where(c => c.Filterable).ToList();
+
+        if (searchableColumns.Count == 0)
+        {
+            return data;
+        }
+
+        return data.Where(item =>
+        {
+            foreach (var column in searchableColumns)
+            {
+                // Check formatted value (e.g., "$113,876")
+                var value = column.GetValue(item);
+                if (value != null)
+                {
+                    var str = value.ToString();
+                    if (str != null && str.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+
+                // Also check raw value (e.g., 113876) for numeric/date columns with formatting
+                var rawValue = column.GetRawValue(item);
+                if (rawValue != null && !ReferenceEquals(rawValue, value))
+                {
+                    var rawStr = rawValue.ToString();
+                    if (rawStr != null && rawStr.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        });
     }
 
     private IEnumerable<TData> ApplyColumnFilters(IEnumerable<TData> data)

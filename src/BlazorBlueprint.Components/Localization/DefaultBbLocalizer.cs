@@ -93,6 +93,7 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataGrid.FilterColumnSelectValue"] = "Select value...",
         ["DataGrid.FilterColumnClear"] = "Clear",
         ["DataGrid.FilterColumnApply"] = "Apply",
+        ["DataGrid.SearchPlaceholder"] = "Search...",
 
         // DataTable
         ["DataTable.Loading"] = "Loading...",
@@ -256,6 +257,18 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["TagInput.RemoveTag"] = "Remove {0}",
         ["TagInput.ClearAllTags"] = "Clear all tags",
         ["TagInput.TagSuggestions"] = "Tag suggestions",
+
+        // Theme
+        ["Theme.Switcher.Label"] = "Customize theme",
+        ["Theme.Switcher.Title"] = "Customize",
+        ["Theme.Switcher.Description"] = "Pick a color and radius for your components.",
+        ["Theme.Color"] = "Color",
+        ["Theme.Radius"] = "Radius",
+        ["Theme.Mode"] = "Mode",
+        ["Theme.Light"] = "Light",
+        ["Theme.Dark"] = "Dark",
+        ["Theme.SwitchToLight"] = "Switch to light mode",
+        ["Theme.SwitchToDark"] = "Switch to dark mode",
 
         // Timeline
         ["Timeline.Timeline"] = "Timeline",
