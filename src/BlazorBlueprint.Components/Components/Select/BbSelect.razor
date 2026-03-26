@@ -10,6 +10,7 @@
                  ValueChanged="@HandleValueChanged"
                  @bind-Open="IsOpen"
                  Disabled="Disabled"
+                 Required="Required"
                  DisplayTextSelector="@GetDisplayTextSelector()"
                  class="@CssClass">
     @if (Options is not null)
@@ -62,6 +63,12 @@
     /// </summary>
     [Parameter]
     public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the select is required.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
 
     /// <summary>
     /// Gets or sets whether the dropdown is open (controlled mode).
