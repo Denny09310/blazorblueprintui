@@ -371,6 +371,7 @@
   - ParentChart : BbChartBase [CascadingParameter]
 
 ### BbChartTooltip (BlazorBlueprint.Components)
+  - AppendToBody : Boolean?
   - BackgroundColor : String
   - BorderColor : String
   - Indicator : TooltipIndicator
@@ -605,6 +606,17 @@
   - CascadedEditContext : EditContext [CascadingParameter]
   - FieldIsInvalid : Boolean? [CascadingParameter]
 
+### BbDarkModeToggle (BlazorBlueprint.Components)
+  - Class : String
+  - DarkIcon : RenderFragment
+  - DarkLabel : String
+  - LightIcon : RenderFragment
+  - LightLabel : String
+  - ShowIcon : Boolean
+  - ShowLabel : Boolean
+  - Size : ButtonSize
+  - Variant : ButtonVariant
+
 ### BbDashboardGrid (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AllowDrag : Boolean
@@ -831,21 +843,31 @@
   - OnRowCollapse : EventCallback<TData>
   - OnRowExpand : EventCallback<TData>
   - OnSort : EventCallback<IReadOnlyList<SortDefinition>>
+  - OverscanCount : Int32
   - PageSizes : Int32[]
   - ParentValueSelector : Func<TData, String>
   - Reorderable : Boolean
   - Resizable : Boolean
   - RowClass : Func<TData, String>
   - RowContextMenu : RenderFragment<DataGridRowMenuContext<TData>>
+  - SearchDebounceMs : Int32
+  - SearchPlaceholder : String
+  - SearchText : String
+  - SearchTextChanged : EventCallback<String>
   - SelectedItemsChanged : EventCallback<IReadOnlyCollection<TData>>
   - SelectionMode : DataTableSelectionMode
   - ShowExpandAll : Boolean
   - ShowFilterBar : Boolean
   - ShowPagination : Boolean
+  - ShowSearch : Boolean
   - State : DataGridState<TData>
   - StateChanged : EventCallback<DataGridState<TData>>
   - StickyHeader : Boolean
+  - StripeClass : String
+  - Striped : Boolean
+  - TableContainerClass : String
   - Toolbar : RenderFragment
+  - VirtualScrollHeight : String
   - Virtualize : Boolean
 
 ### BbDataTableColumn`2 (BlazorBlueprint.Components)
@@ -917,6 +939,7 @@
   - EnableInfiniteScroll : Boolean
   - Fields : RenderFragment
   - GridClass : String
+  - GridColumnMinWidth : String
   - GridTemplate : RenderFragment<TItem>
   - InitialPageSize : Int32
   - IsLoading : Boolean
@@ -2085,7 +2108,6 @@
   - ChildContent : RenderFragment
   - Class : String
   - Disabled : Boolean
-  - Menu : BbMenubarMenu [CascadingParameter]
 
 ### BbMenubarContent (BlazorBlueprint.Components)
   - Align : MenubarContentAlign
@@ -2124,7 +2146,6 @@
   - ChildContent : RenderFragment
   - Class : String
   - Context : BbMenubar [CascadingParameter]
-  - Menu : BbMenubarMenu [CascadingParameter]
 
 ### BbMultiSelectItem`1 (BlazorBlueprint.Components)
   - ChildContent : RenderFragment
@@ -3040,6 +3061,12 @@
   - CascadedEditContext : EditContext [CascadingParameter]
   - FieldIsInvalid : Boolean? [CascadingParameter]
 
+### BbThemeSwitcher (BlazorBlueprint.Components)
+  - Align : PopoverAlign
+  - PopoverContentClass : String
+  - Strategy : PositioningStrategy
+  - TriggerClass : String
+
 ### BbTimePicker (BlazorBlueprint.Components)
   - Class : String
   - Disabled : Boolean
@@ -3451,6 +3478,13 @@
   - Destructive = 2
   - Outline = 3
 
+### BaseColor (BlazorBlueprint.Components)
+  - Zinc = 0
+  - Slate = 1
+  - Gray = 2
+  - Neutral = 3
+  - Stone = 4
+
 ### ButtonGroupOrientation (BlazorBlueprint.Components)
   - Horizontal = 0
   - Vertical = 1
@@ -3736,6 +3770,26 @@
 ### PaginationLinkSize (BlazorBlueprint.Components)
   - Default = 0
   - Icon = 1
+
+### PrimaryColor (BlazorBlueprint.Components)
+  - Default = 0
+  - Blue = 1
+  - Violet = 2
+  - Purple = 3
+  - Rose = 4
+  - Red = 5
+  - Orange = 6
+  - Amber = 7
+  - Yellow = 8
+  - Lime = 9
+  - Green = 10
+  - Emerald = 11
+  - Teal = 12
+  - Cyan = 13
+  - Sky = 14
+  - Indigo = 15
+  - Fuchsia = 16
+  - Pink = 17
 
 ### RadarShape (BlazorBlueprint.Components)
   - Polygon = 0

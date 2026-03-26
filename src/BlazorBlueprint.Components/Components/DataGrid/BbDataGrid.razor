@@ -7,13 +7,22 @@
 
 <CascadingValue Value="this" IsFixed="true">
     <div class="@ClassNames.cn("w-full", Class)">
-        @if (Toolbar != null)
+        @if (ShowSearch || Toolbar != null)
         {
-            <div class="flex items-center justify-between py-4">
+            <div class="flex items-center justify-between gap-2 py-4">
+                @if (ShowSearch)
+                {
+                    <BbInput Value="@(_searchInputValue ?? SearchText)"
+                             ValueChanged="@HandleSearchInput"
+                             Placeholder="@(SearchPlaceholder ?? Localizer["DataGrid.SearchPlaceholder"])"
+                             Class="max-w-sm" />
+                }
                 @Toolbar
             </div>
         }
-        <div @ref="containerRef" class="@ClassNames.cn("relative w-full", Virtualize ? "" : "overflow-auto")">
+        <div @ref="containerRef"
+             class="@ClassNames.cn("relative w-full", Virtualize ? "" : "overflow-auto", TableContainerClass)"
+             style="@(IsVirtualizedProvider ? $"height: {VirtualScrollHeight}; overflow-y: auto;" : null)">
             @if (IsLoading)
             {
                 @if (LoadingTemplate != null)
@@ -27,7 +36,7 @@
                     </div>
                 }
             }
-            else if ((_groupedRenderItems == null || !_groupedRenderItems.Any()) && !_processedData.Any() && !_gridState.Filtering.HasFilters)
+            else if (!IsVirtualizedProvider && (_groupedRenderItems == null || !_groupedRenderItems.Any()) && !_processedData.Any() && !_gridState.Filtering.HasFilters)
             {
                 @if (EmptyTemplate != null)
                 {
@@ -263,7 +272,7 @@
                         {
                             if (Virtualize && ItemSize > 0 && _groupedRenderItemsList != null)
                             {
-                                <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_groupedRenderItemsList" Context="renderItem" ItemSize="@ItemSize" OverscanCount="5">
+                                <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_groupedRenderItemsList" Context="renderItem" ItemSize="@ItemSize" OverscanCount="@OverscanCount">
                                     @RenderGroupedOrHierarchyItem(renderItem)
                                 </Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize>
                             }
@@ -275,9 +284,17 @@
                                 }
                             }
                         }
+                        else if (IsVirtualizedProvider)
+                        {
+                            <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize @ref="_virtualizeRef"
+                                ItemsProvider="@VirtualItemsProviderAsync" Context="item"
+                                ItemSize="@ItemSize" OverscanCount="@OverscanCount">
+                                @RenderDataRow(item)
+                            </Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize>
+                        }
                         else if (Virtualize && ItemSize > 0)
                         {
-                            <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_processedDataList" Context="item" ItemSize="@ItemSize" OverscanCount="5">
+                            <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_processedDataList" Context="item" ItemSize="@ItemSize" OverscanCount="@OverscanCount">
                                 @RenderDataRow(item)
                             </Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize>
                         }
@@ -326,7 +343,7 @@
             </BbContextMenu>
         }
 
-        @if (ShowPagination && !IsLoading && _processedData.Any())
+        @if (ShowPagination && !IsLoading && !IsVirtualizedProvider && _processedData.Any())
         {
             <BbPagination State="@_gridState.Pagination"
                         PageSizes="@PageSizes"
@@ -340,14 +357,14 @@
                     }
                 </BbPaginationInfo>
                 <BbPaginationContent Class="flex items-center gap-6 lg:gap-8">
-                    <BbPaginationPageSizeSelector />
+                    <div class="hidden sm:flex"><BbPaginationPageSizeSelector /></div>
                     <div class="flex items-center gap-2">
-                        <BbPaginationPageDisplay />
+                        <div class="hidden lg:flex"><BbPaginationPageDisplay /></div>
                         <div class="flex items-center gap-1">
-                            <BbPaginationItem><BbPaginationFirst /></BbPaginationItem>
+                            <div class="hidden sm:flex"><BbPaginationItem><BbPaginationFirst /></BbPaginationItem></div>
                             <BbPaginationItem><BbPaginationPrevious ShowText="false" /></BbPaginationItem>
                             <BbPaginationItem><BbPaginationNext ShowText="false" /></BbPaginationItem>
-                            <BbPaginationItem><BbPaginationLast /></BbPaginationItem>
+                            <div class="hidden sm:flex"><BbPaginationItem><BbPaginationLast /></BbPaginationItem></div>
                         </div>
                     </div>
                 </BbPaginationContent>
@@ -395,7 +412,7 @@
 
     private RenderFragment<TData> RenderDataRow => item =>
         @<BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Item="@item"
-            Class="@ClassNames.cn("group/row bg-background", RowClass?.Invoke(item))">
+            Class="@ClassNames.cn("group/row bg-background", Striped ? StripeClass : null, RowClass?.Invoke(item))">
             @foreach (var column in _cachedVisibleColumns)
             {
                 var isSelectColumn = column.ColumnId == "__select";
@@ -573,6 +590,7 @@
     {
         var item = renderItem.Item!;
         var rowClass = ClassNames.cn("group/row bg-background",
+            Striped ? StripeClass : null,
             !renderItem.MatchesFilter ? "opacity-50" : "",
             RowClass?.Invoke(item));
 
