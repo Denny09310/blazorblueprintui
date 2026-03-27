@@ -43,6 +43,9 @@ NUL
 .env.local
 .env.*.local
 
+# Published output
+publish/
+
 # Local test apps
 tests/BlazorBlueprint.IssueTester/
 
@@ -60,3 +63,4 @@ scripts/release-*.sh
 scripts/compare-theme.sh
 scripts/nuget-versions.sh
 scripts/run-ui-tests.sh
+scripts/publish.sh
