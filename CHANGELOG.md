@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-04-01
+
+### Fixed
+
+- **BbFormFieldSelect: label click opening dropdown** — The `For` attribute on the field label created a native HTML `<label for>` → `<button id>` association that forwarded clicks to the select trigger, causing the dropdown to open on label click and select-all on a second click. Removed the association to match `BbFormFieldCombobox` and `BbFormFieldMultiSelect` behavior.
+- **BbSelect: dropdown not scrolling to active item** — `scrollIntoContainerView` was setting `scrollTop` on the listbox container (`overflow-hidden`) instead of the actual scrollable inner div (`overflow-auto`). Added scroll parent resolution so scroll operations target the correct element. Affects all components using Select: Calendar month/year pickers, FormFieldSelect, DataGridColumnFilter, FilterBuilder, PaginationPageSizeSelector, and TabsList.
+- **Border-radius: calculation inconsistency with shadcn/ui docs** — Switched `--radius-md` and `--radius-sm` from subtraction-based (`- 2px` / `- 4px`) to factor-based (`* 0.8` / `* 0.6`) calculation, matching the official shadcn/ui Tailwind v4 documentation. ([#275](https://github.com/blazorblueprintui/ui/issues/275))
+
+---
+
+## 2026-03-31
+
+### Fixed
+
+- **BbTagInput: stale UI after tag removal** — `ShouldRender()` did not track tag collection changes, so removing a tag only updated the bound state without re-rendering. The component now tracks tag count to trigger re-renders correctly. ([#279](https://github.com/blazorblueprintui/ui/issues/279))
+
+---
+
+## 2026-03-30
+
+### Changed
+
+- **Lucide Icons: updated icon set** — Updated from 1,665 to 1,753 icons (88 new icons added).
+
+---
+
 ## 2026-03-26
 
 ### Added
