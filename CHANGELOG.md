@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-04-03
+
+### Added
+
+- **BbCommandDialog: SearchQueryChanged and FilterFunction parameters** — Forwarded `SearchQueryChanged` and `FilterFunction` from the inner `BbCommand` to `BbCommandDialog`, allowing dialog consumers to react to search query changes and provide custom filtering logic.
+
+---
+
 ## 2026-04-01
 
 ### Fixed
