@@ -487,9 +487,11 @@
   - ChildContent : RenderFragment
   - Class : String
   - CloseOnSelect : Boolean
+  - FilterFunction : Func<CommandItemMetadata, String, Boolean>
   - OnValueChange : EventCallback<String>
   - Open : Boolean
   - OpenChanged : EventCallback<Boolean>
+  - SearchQueryChanged : EventCallback<String>
   - Shortcut : String
 
 ### BbCommandEmpty (BlazorBlueprint.Components)
