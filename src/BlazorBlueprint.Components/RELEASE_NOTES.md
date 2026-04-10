@@ -1,9 +1,5 @@
-## What's New in v3.9.5
+## What's New in v3.9.6
 
-### New Components
+### Bug Fixes
 
-- **BbComboboxGroup** — A new component for visually grouping combobox items under an optional label. Supports `Label`, `LabelClass`, and `ChildContent` parameters.
-
-### Improvements
-
-- **BbCombobox** — When using `ChildContent` instead of the `Options` parameter, the wrapping `BbCommandGroup` is no longer automatically applied, allowing users to define their own grouping structure with `BbComboboxGroup`.
+- **BbFormFieldCombobox** — Fixed search filtering being bypassed when the combobox is used through the form field wrapper without explicitly binding `SearchQuery`. The inner combobox now correctly manages its own search state when the consumer does not provide an external search binding.
