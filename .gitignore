@@ -54,3 +54,5 @@ devkit/
 # External libs
 pro/
 /.vscode-ai-images/
+
+docs/notes/checkpoint.md

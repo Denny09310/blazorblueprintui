@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-06-06
+
+### Fixed
+
+- **BbCombobox: trigger showed placeholder for pre-bound values** — In compositional mode, when `Value` was bound before the dropdown was first opened, the combobox trigger displayed the placeholder instead of the selected item's text, because the item's text was only registered once the item mounted. The trigger now resolves its display text from a caller-supplied `SelectedItemText` parameter and from item registration, so pre-selected values render correctly on first paint. ([#337](https://github.com/blazorblueprintui/ui/pull/337))
+- **Select, DropdownMenu, Popover: keyboard focus lost after closing** — Closing one of these overlays by an intentional action (pressing Escape or selecting an item) left keyboard focus on the now-unmounted content, so focus fell back to the page root and a subsequent Tab resumed from the top of the page. Focus is now returned to the trigger on intentional close; external dismissals (click-outside, Tab) deliberately leave focus where the user moved it. ([#336](https://github.com/blazorblueprintui/ui/issues/336))
+
+---
+
+## 2026-05-28
+
+### Added
+
+- **Font Awesome icon pack** — New `BlazorBlueprint.Icons.FontAwesome` package, joining the existing Lucide, Heroicons, and Feather icon packs. (PR [#333](https://github.com/blazorblueprintui/ui/pull/333), community contribution by [@djb-fnz](https://github.com/djb-fnz))
+
+---
+
+## 2026-05-27
+
+### Added
+
+- **BbDataView: ItemsProvider for on-demand data loading** — New `ItemsProvider` parameter (`DataViewItemsProvider<TItem>`) lets `BbDataView` fetch items asynchronously on demand — returning a `DataViewResult` for each requested range — instead of binding an entire in-memory collection, enabling server-side paging, filtering, and sorting. A demo example was added. (PR [#306](https://github.com/blazorblueprintui/ui/pull/306), community contribution by [@djb-fnz](https://github.com/djb-fnz))
+
+---
+
 ## 2026-05-21
 
 ### Fixed
