@@ -1,0 +1,87 @@
+@namespace BlazorBlueprint.Components
+
+<div class="@RootClass" data-dock-group="@group.Id">
+    <div class="@StripClass"
+         @onpointerdown="HandleStripPointerDown">
+        <div class="flex min-w-0 flex-1 items-stretch overflow-x-auto bb-dock-tabstrip" data-dock-tabstrip="@group.Id">
+            @foreach (var panelId in group.PanelIds)
+            {
+                var panel = Dock.GetPanel(panelId);
+                if (panel is null)
+                {
+                    continue;
+                }
+
+                var isActive = group.ActivePanelId == panelId;
+                <div role="tab"
+                     aria-selected="@(isActive ? "true" : "false")"
+                     class="@TabClass(isActive)"
+                     title="@panel.Title"
+                     data-dock-tab="@panel.Id"
+                     @onpointerdown="e => HandleTabPointerDown(panel, e)"
+                     @onpointerdown:stopPropagation="true"
+                     @onclick="() => Dock.ActivatePanel(group, panel.Id)">
+                    @if (panel.Icon is not null)
+                    {
+                        <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center">@panel.Icon</span>
+                    }
+                    <span class="truncate">@panel.Title</span>
+                    @if (panel.Closable)
+                    {
+                        <button type="button"
+                                class="@CloseClass(isActive)"
+                                aria-label="@($"Close {panel.Title}")"
+                                @onclick="() => Dock.ClosePanelAsync(panel.Id)"
+                                @onclick:stopPropagation="true"
+                                @onpointerdown:stopPropagation="true">
+                            <svg width="11" height="11" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M11.78 4.03a.75.75 0 0 0-1.06-1.06L7.5 6.19 4.28 2.97a.75.75 0 0 0-1.06 1.06L6.44 7.25 3.22 10.47a.75.75 0 1 0 1.06 1.06L7.5 8.31l3.22 3.22a.75.75 0 0 0 1.06-1.06L8.56 7.25l3.22-3.22Z" fill="currentColor" />
+                            </svg>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (!IsFloating)
+        {
+            <div class="flex shrink-0 items-center gap-0.5 border-l border-border/50 px-1">
+                <button type="button"
+                        class="inline-flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                        aria-label="@(IsMaximized ? "Restore panel group" : "Maximize panel group")"
+                        @onclick="() => Dock.ToggleMaximize(group)"
+                        @onpointerdown:stopPropagation="true">
+                    @if (IsMaximized)
+                    {
+                        <svg width="14" height="14" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M5.5 9.5h-3v-1h2v-2h1v3Zm4-4h-1v-3h1v2h2v1h-2Z" fill="currentColor" />
+                            <rect x="1.5" y="1.5" width="12" height="12" rx="1.5" stroke="currentColor" fill="none" />
+                        </svg>
+                    }
+                    else
+                    {
+                        <svg width="14" height="14" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <rect x="2.5" y="2.5" width="10" height="10" rx="1.5" stroke="currentColor" fill="none" />
+                        </svg>
+                    }
+                </button>
+            </div>
+        }
+    </div>
+
+    <div class="relative min-h-0 flex-1 overflow-auto bg-background">
+        @foreach (var panelId in group.PanelIds)
+        {
+            var panel = Dock.GetPanel(panelId);
+            if (panel is null)
+            {
+                continue;
+            }
+
+            var isActive = group.ActivePanelId == panelId;
+            <div class="@(isActive ? "h-full" : "hidden")" @key="panelId">
+                @panel.ChildContent
+            </div>
+        }
+    </div>
+</div>
