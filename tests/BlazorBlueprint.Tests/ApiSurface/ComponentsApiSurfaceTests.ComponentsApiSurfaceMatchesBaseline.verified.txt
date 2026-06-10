@@ -453,6 +453,7 @@
   - Text : String [EditorRequired]
   - Value : TValue [EditorRequired]
   - Parent : BbCombobox<TValue> [CascadingParameter]
+  - RegistrationOnly : Boolean [CascadingParameter]
 
 ### BbCombobox`1 (BlazorBlueprint.Components)
   - ActiveClass : String
@@ -472,6 +473,7 @@
   - SearchPlaceholder : String
   - SearchQuery : String
   - SearchQueryChanged : EventCallback<String>
+  - SelectedItemText : String
   - Value : TValue
   - ValueChanged : EventCallback<TValue>
   - ValueExpression : Expression<Func<TValue>>
@@ -553,7 +555,8 @@
   - ItemSearchText : Func<TItem, String>
   - ItemTemplate : RenderFragment<TItem> [EditorRequired]
   - ItemValue : Func<TItem, String> [EditorRequired]
-  - Items : IReadOnlyList<TItem> [EditorRequired]
+  - Items : IReadOnlyList<TItem>
+  - ItemsProvider : CommandItemsProvider<TItem>
   - LazyLoadBatchSize : Int32
   - MaxDisplayCount : Int32
   - Context : CommandContext [CascadingParameter]
@@ -777,6 +780,8 @@
   - ParentGrid : BbDataGrid<TData> [CascadingParameter]
 
 ### BbDataGridSelectColumn`1 (BlazorBlueprint.Components)
+  - CellClass : String
+  - HeaderClass : String
   - Pinned : ColumnPinning
   - Width : String
   - ParentGrid : BbDataGrid<TData> [CascadingParameter]
@@ -944,7 +949,7 @@
 
 ### BbDataView`1 (BlazorBlueprint.Components)
   - Class : String
-  - Data : IEnumerable<TItem> [EditorRequired]
+  - Data : IEnumerable<TItem>
   - EmptyTemplate : RenderFragment
   - EnableInfiniteScroll : Boolean
   - Fields : RenderFragment
@@ -953,6 +958,7 @@
   - GridTemplate : RenderFragment<TItem>
   - InitialPageSize : Int32
   - IsLoading : Boolean
+  - ItemsProvider : DataViewItemsProvider<TItem>
   - Layout : DataViewLayout
   - ListClass : String
   - ListTemplate : RenderFragment<TItem>
@@ -2405,6 +2411,7 @@
   - OnOpenChange : EventCallback<Boolean>
   - Open : Boolean?
   - OpenChanged : EventCallback<Boolean>
+  - RestoreFocusOnClose : Boolean
 
 ### BbPopoverContent (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
