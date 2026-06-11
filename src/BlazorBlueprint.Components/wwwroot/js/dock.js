@@ -24,6 +24,88 @@ export function disposeDock(dockId) {
     docks.delete(dockId);
 }
 
+// ---------------------------------------------------------------- tab strip overflow
+
+// One entry per observed tab strip, keyed by the tab group's id.
+const tabOverflowObservers = new Map();
+
+// Sets up overflow tracking for a tab strip. Whenever the strip resizes, the set of tabs
+// that no longer fit is recomputed and reported to .NET so it can hide them and surface an
+// overflow ("…") dropdown instead of a scrollbar.
+export function initTabOverflow(groupId, stripEl, dotNetRef) {
+    if (!groupId || !stripEl || !dotNetRef) {
+        return;
+    }
+
+    disposeTabOverflow(groupId);
+
+    const ro = new ResizeObserver(() => reportTabOverflow(groupId));
+    ro.observe(stripEl);
+
+    tabOverflowObservers.set(groupId, { observer: ro, stripEl, dotNetRef });
+    reportTabOverflow(groupId);
+}
+
+// Recomputes overflow for an already-observed strip (e.g. after tabs are added or removed).
+export function remeasureTabOverflow(groupId) {
+    reportTabOverflow(groupId);
+}
+
+export function disposeTabOverflow(groupId) {
+    const entry = tabOverflowObservers.get(groupId);
+    if (entry) {
+        entry.observer.disconnect();
+        tabOverflowObservers.delete(groupId);
+    }
+}
+
+function reportTabOverflow(groupId) {
+    const entry = tabOverflowObservers.get(groupId);
+    if (!entry) {
+        return;
+    }
+
+    const ids = computeOverflowIds(entry.stripEl);
+    entry.dotNetRef.invokeMethodAsync("OnTabOverflowChanged", ids).catch(() => { });
+}
+
+// Returns the ids of tabs that do not fully fit within the strip's visible width, in order.
+// Tabs may currently be hidden (display:none) from a previous pass, so each is temporarily
+// forced visible for measurement and then restored — the natural widths stay stable, which
+// prevents the hide/show feedback loop a naive measurement would cause.
+function computeOverflowIds(stripEl) {
+    if (!stripEl) {
+        return [];
+    }
+
+    const tabs = Array.from(stripEl.querySelectorAll("[data-dock-tab]"));
+    if (tabs.length === 0) {
+        return [];
+    }
+
+    const saved = tabs.map((t) => t.style.display);
+    for (const t of tabs) {
+        t.style.display = "flex";
+    }
+
+    const available = stripEl.clientWidth;
+    const overflow = [];
+    let used = 0;
+    for (const t of tabs) {
+        used += t.offsetWidth;
+        // A 1px tolerance absorbs sub-pixel rounding so a tab that exactly fits is not hidden.
+        if (used > available + 1) {
+            overflow.push(t.getAttribute("data-dock-tab"));
+        }
+    }
+
+    for (let i = 0; i < tabs.length; i++) {
+        tabs[i].style.display = saved[i];
+    }
+
+    return overflow;
+}
+
 // ---------------------------------------------------------------- shared pointer session
 
 function attachSession(handlers) {

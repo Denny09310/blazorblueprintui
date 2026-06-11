@@ -4,7 +4,7 @@
 <div class="@RootClass" data-dock-group="@group.Id">
     <div class="@StripClass"
          @onpointerdown="HandleStripPointerDown">
-        <div class="flex min-w-0 flex-1 items-stretch overflow-x-auto bb-dock-tabstrip" data-dock-tabstrip="@group.Id">
+        <div @ref="stripRef" class="flex min-w-0 flex-1 items-stretch overflow-hidden bb-dock-tabstrip" data-dock-tabstrip="@group.Id">
             @foreach (var panelId in group.PanelIds)
             {
                 var panel = Dock.GetPanel(panelId);
@@ -14,9 +14,10 @@
                 }
 
                 var isActive = group.ActivePanelId == panelId;
+                var isHidden = overflowPanelIds.Contains(panelId);
                 <div role="tab"
                      aria-selected="@(isActive ? "true" : "false")"
-                     class="@TabClass(isActive)"
+                     class="@TabClass(isActive, isHidden)"
                      title="@panel.Title"
                      data-dock-tab="@panel.Id"
                      @onpointerdown="e => HandleTabPointerDown(panel, e)"
@@ -56,16 +57,63 @@
             }
         </div>
 
-        @if (!IsFloating)
+        @if (overflowPanelIds.Count > 0 || !IsFloating)
         {
-            <div class="flex shrink-0 items-center gap-0.5 px-1">
-                <button type="button"
-                        class="inline-flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
-                        aria-label="@(IsMaximized ? "Restore panel group" : "Maximize panel group")"
-                        @onclick="() => Dock.ToggleMaximize(group)"
-                        @onpointerdown:stopPropagation="true">
-                    <LucideIcon Name="@(IsMaximized ? "minimize-2" : "maximize-2")" Size="14" />
-                </button>
+            <div class="flex shrink-0 items-center gap-0.5 px-1" @onpointerdown:stopPropagation="true">
+                @if (overflowPanelIds.Count > 0)
+                {
+                    <BbDropdownMenu>
+                        <BbDropdownMenuTrigger AsChild="false"
+                                               Class="inline-flex h-6 items-center justify-center gap-0.5 rounded-sm px-1 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                                               aria-label="@($"Show {overflowPanelIds.Count} hidden tab(s)")">
+                            <LucideIcon Name="ellipsis" Size="14" />
+                            <span class="text-[10px] font-medium leading-none">@overflowPanelIds.Count</span>
+                        </BbDropdownMenuTrigger>
+                        <BbDropdownMenuContent Align="PopoverAlign.End" Class="min-w-[10rem] max-w-[16rem]">
+                            @foreach (var hiddenId in overflowPanelIds)
+                            {
+                                var hiddenPanel = Dock.GetPanel(hiddenId);
+                                if (hiddenPanel is null)
+                                {
+                                    continue;
+                                }
+
+                                <BbDropdownMenuItem Class="pr-1" OnClick="() => Dock.ActivatePanel(group, hiddenPanel.Id)">
+                                    <div class="flex w-full items-center gap-2">
+                                        @if (hiddenPanel.Icon is not null)
+                                        {
+                                            <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center">@hiddenPanel.Icon</span>
+                                        }
+                                        <span class="truncate">@hiddenPanel.Title</span>
+                                        @if (hiddenPanel.Closable)
+                                        {
+                                            <button type="button"
+                                                    class="ml-auto inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                                                    aria-label="@($"Close {hiddenPanel.Title}")"
+                                                    @onclick="() => Dock.ClosePanelAsync(hiddenPanel.Id)"
+                                                    @onclick:stopPropagation="true">
+                                                <svg width="11" height="11" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                                    <path d="M11.78 4.03a.75.75 0 0 0-1.06-1.06L7.5 6.19 4.28 2.97a.75.75 0 0 0-1.06 1.06L6.44 7.25 3.22 10.47a.75.75 0 1 0 1.06 1.06L7.5 8.31l3.22 3.22a.75.75 0 0 0 1.06-1.06L8.56 7.25l3.22-3.22Z" fill="currentColor" />
+                                                </svg>
+                                            </button>
+                                        }
+                                    </div>
+                                </BbDropdownMenuItem>
+                            }
+                        </BbDropdownMenuContent>
+                    </BbDropdownMenu>
+                }
+
+                @if (!IsFloating)
+                {
+                    <button type="button"
+                            class="inline-flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                            aria-label="@(IsMaximized ? "Restore panel group" : "Maximize panel group")"
+                            @onclick="() => Dock.ToggleMaximize(group)"
+                            @onpointerdown:stopPropagation="true">
+                        <LucideIcon Name="@(IsMaximized ? "minimize-2" : "maximize-2")" Size="14" />
+                    </button>
+                }
             </div>
         }
     </div>
