@@ -1077,6 +1077,11 @@
   - Closable : Boolean
   - Icon : RenderFragment
   - Id : String [EditorRequired]
+  - Locked : Boolean
+  - MaxHeight : Int32?
+  - MaxWidth : Int32?
+  - MinHeight : Int32?
+  - MinWidth : Int32?
   - Order : Int32
   - Region : DockZone
   - Title : String

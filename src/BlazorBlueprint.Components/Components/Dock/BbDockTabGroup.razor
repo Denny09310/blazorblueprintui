@@ -2,7 +2,7 @@
 @using BlazorBlueprint.Icons.Lucide.Components
 @inject IBbLocalizer Localizer
 
-<div class="@RootClass" data-dock-group="@group.Id">
+<div class="@RootClass" style="@ConstraintStyle" data-dock-group="@group.Id">
     <div class="@StripClass"
          @onpointerdown="HandleStripPointerDown">
         <div @ref="stripRef" class="flex min-w-0 flex-1 items-stretch overflow-hidden bb-dock-tabstrip" data-dock-tabstrip="@group.Id">
@@ -38,7 +38,7 @@
                             <LucideIcon Name="pin" Size="11" />
                         </span>
                     }
-                    @if (panel.Closable)
+                    @if (panel.CanClose)
                     {
                         <button type="button"
                                 class="@CloseClass()"
@@ -83,7 +83,7 @@
                                             <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center">@hiddenPanel.Icon</span>
                                         }
                                         <span class="truncate">@hiddenPanel.Title</span>
-                                        @if (hiddenPanel.Closable)
+                                        @if (hiddenPanel.CanClose)
                                         {
                                             <button type="button"
                                                     class="ml-auto inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
@@ -138,19 +138,19 @@
             {
                 var panel = contextPanel;
                 var pinned = Dock.IsPinned(panel.Id);
-                <BbContextMenuItem Disabled="@(!panel.Closable)" OnClick="() => Dock.ClosePanelAsync(panel.Id)">
+                <BbContextMenuItem Disabled="@(!panel.CanClose)" OnClick="() => Dock.ClosePanelAsync(panel.Id)">
                     <Icon><LucideIcon Name="x" Size="16" /></Icon>
                     <ChildContent>@Localizer["Dock.Close"]</ChildContent>
                 </BbContextMenuItem>
-                <BbContextMenuItem Disabled="@(group.PanelIds.Count <= 1)" OnClick="() => Dock.CloseOtherPanelsInGroupAsync(panel.Id)">
+                <BbContextMenuItem Disabled="@(!group.PanelIds.Any(id => id != panel.Id && Dock.GetPanel(id)?.CanClose == true))" OnClick="() => Dock.CloseOtherPanelsInGroupAsync(panel.Id)">
                     <Icon><LucideIcon Name="list-x" Size="16" /></Icon>
                     <ChildContent>@Localizer["Dock.CloseOtherTabs"]</ChildContent>
                 </BbContextMenuItem>
-                <BbContextMenuItem Disabled="@(!group.PanelIds.Any(id => !Dock.IsPinned(id) && Dock.GetPanel(id)?.Closable == true))" OnClick="() => Dock.CloseAllButPinnedPanelsInGroupAsync(panel.Id)">
+                <BbContextMenuItem Disabled="@(!group.PanelIds.Any(id => !Dock.IsPinned(id) && Dock.GetPanel(id)?.CanClose == true))" OnClick="() => Dock.CloseAllButPinnedPanelsInGroupAsync(panel.Id)">
                     <Icon><LucideIcon Name="pin" Size="16" /></Icon>
                     <ChildContent>@Localizer["Dock.CloseAllButPinned"]</ChildContent>
                 </BbContextMenuItem>
-                <BbContextMenuItem Disabled="@(group.PanelIds.All(id => Dock.GetPanel(id)?.Closable != true))" OnClick="() => Dock.CloseAllPanelsInGroupAsync(panel.Id)">
+                <BbContextMenuItem Disabled="@(group.PanelIds.All(id => Dock.GetPanel(id)?.CanClose != true))" OnClick="() => Dock.CloseAllPanelsInGroupAsync(panel.Id)">
                     <Icon><LucideIcon Name="circle-x" Size="16" /></Icon>
                     <ChildContent>@Localizer["Dock.CloseAllTabs"]</ChildContent>
                 </BbContextMenuItem>

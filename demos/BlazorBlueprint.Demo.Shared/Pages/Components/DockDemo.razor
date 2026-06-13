@@ -307,6 +307,77 @@ $ _</code></pre>
     </div>
 
 
+    <!-- Size & movement constraints -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Size &amp; Movement Constraints</h2>
+            <p class="text-sm text-muted-foreground">
+                Lock a panel in place with <code>Locked</code> so it can't be moved, floated or closed — ideal
+                for a mandatory toolbox region. Constrain panel size with <code>MinWidth</code>,
+                <code>MinHeight</code>, <code>MaxWidth</code> and <code>MaxHeight</code> (pixels). Try to drag,
+                float or close the locked <strong>Toolbox</strong> — it stays put. Drag the <strong>Inspector</strong>
+                out to a floating window and resize it: it won't shrink below 240×200 or grow past 420px wide.
+                The <strong>Output</strong> tab can be re-docked but never floated (<code>CanFloat="false"</code>).
+            </p>
+        </div>
+
+        <div class="h-[600px] border">
+            <BbDock>
+                <BbDockPanel Id="toolbox" Title="Toolbox" Region="DockZone.Left" Locked="true" MinWidth="200">
+                    <Icon><LucideIcon Name="wrench" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="space-y-1 p-2 text-sm">
+                            <div class="flex items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                <LucideIcon Name="lock" Size="12" /> Locked region
+                            </div>
+                            @foreach (var (name, icon) in toolboxItems)
+                            {
+                                <div class="flex items-center gap-2 rounded px-2 py-1 hover:bg-accent hover:text-accent-foreground">
+                                    <LucideIcon Name="@icon" Size="14" Class="text-muted-foreground" />
+                                    <span>@name</span>
+                                </div>
+                            }
+                        </div>
+                    </ChildContent>
+                </BbDockPanel>
+
+                <BbDockPanel Id="canvas" Title="Canvas" Region="DockZone.Center">
+                    <Icon><LucideIcon Name="layout-dashboard" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="space-y-2 p-4 text-sm text-muted-foreground">
+                            <p>The <strong>Toolbox</strong> on the left is locked: it has no close button and
+                            can't be dragged, reordered, re-docked or floated.</p>
+                            <p>The <strong>Inspector</strong> on the right enforces its min/max size when floated.</p>
+                        </div>
+                    </ChildContent>
+                </BbDockPanel>
+
+                <BbDockPanel Id="inspector" Title="Inspector" Region="DockZone.Right"
+                             MinWidth="240" MaxWidth="420" MinHeight="200">
+                    <Icon><LucideIcon Name="sliders-horizontal" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="space-y-3 p-3 text-sm">
+                            <p class="text-muted-foreground">Drag this tab out to a floating window, then resize it.</p>
+                            <p class="text-xs text-muted-foreground">Min 240×200 · Max width 420px.</p>
+                        </div>
+                    </ChildContent>
+                </BbDockPanel>
+
+                <BbDockPanel Id="output" Title="Output" Region="DockZone.Bottom" CanFloat="false">
+                    <Icon><LucideIcon Name="terminal" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="p-3 text-xs text-muted-foreground">
+                            This panel can be re-docked anywhere, but dragging it outside the dock won't detach it.
+                        </div>
+                    </ChildContent>
+                </BbDockPanel>
+            </BbDock>
+        </div>
+
+        <CodeBlock Source="Components/Dock/constraints.txt" />
+    </div>
+
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>Tabs use <code>role="tab"</code> with <code>aria-selected</code> reflecting the active panel.</AccessibilityItem>
@@ -375,7 +446,23 @@ $ _</code></pre>
                     Whether the panel can be closed by the user.
                 </ApiParameter>
                 <ApiParameter Name="CanFloat" Type="bool" Default="true">
-                    Whether the panel can be detached into a floating window.
+                    Whether the panel can be detached into a floating window. Ignored when <code>Locked</code> is true.
+                </ApiParameter>
+                <ApiParameter Name="Locked" Type="bool" Default="false">
+                    When true, the panel can't be dragged to move/reorder/re-dock, detached into a floating window,
+                    or closed. Overrides <code>Closable</code> and <code>CanFloat</code>.
+                </ApiParameter>
+                <ApiParameter Name="MinWidth" Type="int?" Default="null">
+                    Minimum panel width in pixels. Enforced while resizing a floating window; applied as a CSS constraint when docked.
+                </ApiParameter>
+                <ApiParameter Name="MinHeight" Type="int?" Default="null">
+                    Minimum panel height in pixels. Enforced while resizing a floating window; applied as a CSS constraint when docked.
+                </ApiParameter>
+                <ApiParameter Name="MaxWidth" Type="int?" Default="null">
+                    Maximum panel width in pixels. Enforced while resizing a floating window; applied as a CSS constraint when docked.
+                </ApiParameter>
+                <ApiParameter Name="MaxHeight" Type="int?" Default="null">
+                    Maximum panel height in pixels. Enforced while resizing a floating window; applied as a CSS constraint when docked.
                 </ApiParameter>
                 <ApiParameter Name="ChildContent" Type="RenderFragment?" Default="null">
                     The content rendered when the panel is the active tab.
@@ -427,6 +514,15 @@ $ _</code></pre>
         ("README.md", "file-text"),
         ("appsettings.json", "braces"),
         (".gitignore", "file"),
+    };
+
+    private readonly (string Name, string Icon)[] toolboxItems =
+    {
+        ("Select", "mouse-pointer-2"),
+        ("Pen", "pencil"),
+        ("Shapes", "shapes"),
+        ("Text", "type"),
+        ("Colors", "palette"),
     };
 
     private readonly (string Label, string Value)[] properties =

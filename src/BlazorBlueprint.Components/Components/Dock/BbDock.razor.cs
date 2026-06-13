@@ -561,7 +561,7 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
 
         var panelId = draggingPanelId;
         draggingPanelId = null;
-        if (panelId is null || !panels.ContainsKey(panelId))
+        if (panelId is null || !panels.TryGetValue(panelId, out var panel))
         {
             return;
         }
@@ -634,12 +634,22 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
 
             case "float":
             {
+                // A locked or non-floatable panel cannot be detached: leave it where it is.
+                if (!panel.CanDetach)
+                {
+                    return;
+                }
+
                 RemovePanelFromLayout(panelId);
+                var floatGroup = new DockTabGroupNode { PanelIds = { panelId }, ActivePanelId = panelId };
+                var (minW, minH, maxW, maxH) = GroupSizeBounds(floatGroup);
                 floatingWindows.Add(new DockFloatingWindow
                 {
-                    Group = new DockTabGroupNode { PanelIds = { panelId }, ActivePanelId = panelId },
+                    Group = floatGroup,
                     X = Math.Max(0, floatX),
-                    Y = Math.Max(0, floatY)
+                    Y = Math.Max(0, floatY),
+                    Width = Math.Clamp(DockFloatingWindow.DefaultWidth, minW, maxW),
+                    Height = Math.Clamp(DockFloatingWindow.DefaultHeight, minH, maxH)
                 });
                 break;
             }
@@ -661,7 +671,7 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
 
     internal async Task ClosePanelAsync(string panelId)
     {
-        if (!panels.ContainsKey(panelId))
+        if (!panels.TryGetValue(panelId, out var panel) || !panel.CanClose)
         {
             return;
         }
@@ -717,7 +727,7 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
 
         foreach (var id in panelIds)
         {
-            if (!panels.TryGetValue(id, out var panel) || !panel.Closable)
+            if (!panels.TryGetValue(id, out var panel) || !panel.CanClose)
             {
                 continue;
             }
@@ -797,10 +807,25 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
 
     private async Task StartWindowResize(string windowId, PointerEventArgs e)
     {
-        if (jsModule is not null && jsInitialized)
+        if (jsModule is null || !jsInitialized)
         {
-            await jsModule.InvokeVoidAsync("startWindowResize", dockId, windowId, e.ClientX, e.ClientY, e.PointerId);
+            return;
         }
+
+        var win = floatingWindows.FirstOrDefault(w => w.Id == windowId);
+        if (win is null)
+        {
+            return;
+        }
+
+        // Feed the live JS resize the same bounds we enforce server-side so the grip stops at
+        // the limit instead of snapping back on release. A max of 0 means "no maximum".
+        var (minW, minH, maxW, maxH) = GroupSizeBounds(win.Group);
+        var maxWArg = double.IsPositiveInfinity(maxW) ? 0 : maxW;
+        var maxHArg = double.IsPositiveInfinity(maxH) ? 0 : maxH;
+
+        await jsModule.InvokeVoidAsync(
+            "startWindowResize", dockId, windowId, e.ClientX, e.ClientY, e.PointerId, minW, minH, maxWArg, maxHArg);
     }
 
     [JSInvokable]
@@ -831,8 +856,9 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
         var win = floatingWindows.FirstOrDefault(w => w.Id == windowId);
         if (win is not null)
         {
-            win.Width = Math.Max(180, width);
-            win.Height = Math.Max(120, height);
+            var (minW, minH, maxW, maxH) = GroupSizeBounds(win.Group);
+            win.Width = Math.Clamp(width, minW, maxW);
+            win.Height = Math.Clamp(height, minH, maxH);
             StateHasChanged();
         }
     }
@@ -861,13 +887,127 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
         _ => DockZone.Center
     };
 
-    private static string FloatingStyle(DockFloatingWindow win)
+    private string FloatingStyle(DockFloatingWindow win)
     {
+        var (minW, minH, maxW, maxH) = GroupSizeBounds(win.Group);
         var x = win.X.ToString("F0", CultureInfo.InvariantCulture);
         var y = win.Y.ToString("F0", CultureInfo.InvariantCulture);
-        var w = win.Width.ToString("F0", CultureInfo.InvariantCulture);
-        var h = win.Height.ToString("F0", CultureInfo.InvariantCulture);
-        return $"left:{x}px;top:{y}px;width:{w}px;height:{h}px;";
+        var w = Math.Clamp(win.Width, minW, maxW).ToString("F0", CultureInfo.InvariantCulture);
+        var h = Math.Clamp(win.Height, minH, maxH).ToString("F0", CultureInfo.InvariantCulture);
+
+        var style = $"left:{x}px;top:{y}px;width:{w}px;height:{h}px;" +
+                    $"min-width:{minW.ToString("F0", CultureInfo.InvariantCulture)}px;" +
+                    $"min-height:{minH.ToString("F0", CultureInfo.InvariantCulture)}px;";
+        if (!double.IsPositiveInfinity(maxW))
+        {
+            style += $"max-width:{maxW.ToString("F0", CultureInfo.InvariantCulture)}px;";
+        }
+        if (!double.IsPositiveInfinity(maxH))
+        {
+            style += $"max-height:{maxH.ToString("F0", CultureInfo.InvariantCulture)}px;";
+        }
+        return style;
+    }
+
+    /// <summary>
+    /// Computes the effective pixel size bounds for a floating window hosting the given group.
+    /// Mins are the largest of the panels' minimums (floored at the usable window minimum); maxes
+    /// are the smallest of the panels' maximums, reconciled so that <c>max &gt;= min</c>.
+    /// </summary>
+    private (double MinW, double MinH, double MaxW, double MaxH) GroupSizeBounds(DockTabGroupNode group)
+    {
+        var minW = DockFloatingWindow.MinFloatingWidth;
+        var minH = DockFloatingWindow.MinFloatingHeight;
+        var maxW = double.PositiveInfinity;
+        var maxH = double.PositiveInfinity;
+
+        foreach (var id in group.PanelIds)
+        {
+            var panel = GetPanel(id);
+            if (panel is null)
+            {
+                continue;
+            }
+
+            if (panel.MinWidth is int pMinW)
+            {
+                minW = Math.Max(minW, pMinW);
+            }
+            if (panel.MinHeight is int pMinH)
+            {
+                minH = Math.Max(minH, pMinH);
+            }
+            if (panel.MaxWidth is int pMaxW)
+            {
+                maxW = Math.Min(maxW, pMaxW);
+            }
+            if (panel.MaxHeight is int pMaxH)
+            {
+                maxH = Math.Min(maxH, pMaxH);
+            }
+        }
+
+        // A minimum larger than the requested maximum wins, so the window stays usable.
+        maxW = Math.Max(maxW, minW);
+        maxH = Math.Max(maxH, minH);
+        return (minW, minH, maxW, maxH);
+    }
+
+    /// <summary>
+    /// Builds the inline CSS min/max size constraints for a docked tab group from the panels it
+    /// hosts, or <c>null</c> when no panel in the group declares any size constraint.
+    /// </summary>
+    internal string? GroupConstraintStyle(DockTabGroupNode group)
+    {
+        double minW = 0, minH = 0;
+        var maxW = double.PositiveInfinity;
+        var maxH = double.PositiveInfinity;
+
+        foreach (var id in group.PanelIds)
+        {
+            var panel = GetPanel(id);
+            if (panel is null)
+            {
+                continue;
+            }
+
+            if (panel.MinWidth is int pMinW)
+            {
+                minW = Math.Max(minW, pMinW);
+            }
+            if (panel.MinHeight is int pMinH)
+            {
+                minH = Math.Max(minH, pMinH);
+            }
+            if (panel.MaxWidth is int pMaxW)
+            {
+                maxW = Math.Min(maxW, pMaxW);
+            }
+            if (panel.MaxHeight is int pMaxH)
+            {
+                maxH = Math.Min(maxH, pMaxH);
+            }
+        }
+
+        var parts = new List<string>();
+        if (minW > 0)
+        {
+            parts.Add($"min-width:{minW.ToString("F0", CultureInfo.InvariantCulture)}px");
+        }
+        if (minH > 0)
+        {
+            parts.Add($"min-height:{minH.ToString("F0", CultureInfo.InvariantCulture)}px");
+        }
+        if (!double.IsPositiveInfinity(maxW))
+        {
+            parts.Add($"max-width:{Math.Max(maxW, minW).ToString("F0", CultureInfo.InvariantCulture)}px");
+        }
+        if (!double.IsPositiveInfinity(maxH))
+        {
+            parts.Add($"max-height:{Math.Max(maxH, minH).ToString("F0", CultureInfo.InvariantCulture)}px");
+        }
+
+        return parts.Count > 0 ? string.Join(';', parts) + ";" : null;
     }
 
     /// <inheritdoc />

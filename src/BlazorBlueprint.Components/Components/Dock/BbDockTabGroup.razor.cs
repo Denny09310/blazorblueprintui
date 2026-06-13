@@ -133,6 +133,12 @@ public partial class BbDockTabGroup : ComponentBase, IAsyncDisposable
             return;
         }
 
+        // A locked panel cannot be dragged to move, reorder, re-dock or float.
+        if (!panel.CanMove)
+        {
+            return;
+        }
+
         await Dock.StartTabDragAsync(panel.Id, e);
     }
 
@@ -159,6 +165,10 @@ public partial class BbDockTabGroup : ComponentBase, IAsyncDisposable
         // Floating windows already have a bordered wrapper; docked groups draw their own
         // outline so adjacent panels read as distinct, framed surfaces (VS-style).
         IsFloating ? null : "border border-border/70");
+
+    // Pixel min/max size constraints declared by the group's panels. The floating window wrapper
+    // already sizes itself from these, so the constraint style only applies to docked groups.
+    private string? ConstraintStyle => IsFloating ? null : Dock.GroupConstraintStyle(group);
 
     private string StripClass => ClassNames.cn(
         "flex h-8 shrink-0 items-stretch border-b border-border/60 bg-muted/50",

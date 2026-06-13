@@ -452,7 +452,9 @@ export function startWindowDrag(dockId, windowId, clientX, clientY, pointerId) {
 
 // ---------------------------------------------------------------- floating window resize
 
-export function startWindowResize(dockId, windowId, clientX, clientY, pointerId) {
+// minWidth/minHeight default to the usable window minimum; a max of 0 (or omitted) means
+// "no maximum". These mirror the per-panel size constraints enforced on the .NET side.
+export function startWindowResize(dockId, windowId, clientX, clientY, pointerId, minWidth, minHeight, maxWidth, maxHeight) {
     const dock = docks.get(dockId);
     if (!dock) {
         return;
@@ -462,6 +464,11 @@ export function startWindowResize(dockId, windowId, clientX, clientY, pointerId)
     if (!winEl) {
         return;
     }
+
+    const minW = minWidth > 0 ? minWidth : 180;
+    const minH = minHeight > 0 ? minHeight : 120;
+    const maxW = maxWidth > 0 ? maxWidth : Infinity;
+    const maxH = maxHeight > 0 ? maxHeight : Infinity;
 
     const startWidth = winEl.offsetWidth;
     const startHeight = winEl.offsetHeight;
@@ -473,8 +480,8 @@ export function startWindowResize(dockId, windowId, clientX, clientY, pointerId)
             if (e.pointerId !== pointerId) {
                 return;
             }
-            const width = Math.max(180, startWidth + (e.clientX - startX));
-            const height = Math.max(120, startHeight + (e.clientY - startY));
+            const width = Math.min(maxW, Math.max(minW, startWidth + (e.clientX - startX)));
+            const height = Math.min(maxH, Math.max(minH, startHeight + (e.clientY - startY)));
             winEl.style.width = `${width}px`;
             winEl.style.height = `${height}px`;
         },

@@ -106,6 +106,18 @@ internal sealed class DockTabGroupNode : DockNode
 /// </summary>
 internal sealed class DockFloatingWindow
 {
+    /// <summary>The default width (pixels) a floating window is created with, before constraints.</summary>
+    public const double DefaultWidth = 360;
+
+    /// <summary>The default height (pixels) a floating window is created with, before constraints.</summary>
+    public const double DefaultHeight = 260;
+
+    /// <summary>The smallest width (pixels) a floating window may be, regardless of panel constraints.</summary>
+    public const double MinFloatingWidth = 180;
+
+    /// <summary>The smallest height (pixels) a floating window may be, regardless of panel constraints.</summary>
+    public const double MinFloatingHeight = 120;
+
     /// <summary>Stable identity for the window.</summary>
     public string Id { get; init; } = Guid.NewGuid().ToString("N");
 
@@ -119,8 +131,8 @@ internal sealed class DockFloatingWindow
     public double Y { get; set; }
 
     /// <summary>Window width in pixels.</summary>
-    public double Width { get; set; } = 360;
+    public double Width { get; set; } = DefaultWidth;
 
     /// <summary>Window height in pixels.</summary>
-    public double Height { get; set; } = 260;
+    public double Height { get; set; } = DefaultHeight;
 }

@@ -53,15 +53,61 @@ public partial class BbDockPanel : ComponentBase, IDisposable
 
     /// <summary>
     /// Whether the panel can be detached into a floating window. Defaults to <c>true</c>.
+    /// Ignored when <see cref="Locked"/> is <c>true</c>.
     /// </summary>
     [Parameter]
     public bool CanFloat { get; set; } = true;
+
+    /// <summary>
+    /// When <c>true</c>, the panel is locked in place: it cannot be dragged to move, reorder or
+    /// re-dock, detached into a floating window, or closed. Useful for a mandatory region such as
+    /// a toolbox. Overrides <see cref="Closable"/> and <see cref="CanFloat"/>. Defaults to <c>false</c>.
+    /// </summary>
+    [Parameter]
+    public bool Locked { get; set; }
+
+    /// <summary>
+    /// The minimum width of the panel in pixels. Enforced while resizing a floating window and
+    /// applied as a CSS constraint when docked. <c>null</c> (the default) means no minimum.
+    /// </summary>
+    [Parameter]
+    public int? MinWidth { get; set; }
+
+    /// <summary>
+    /// The minimum height of the panel in pixels. Enforced while resizing a floating window and
+    /// applied as a CSS constraint when docked. <c>null</c> (the default) means no minimum.
+    /// </summary>
+    [Parameter]
+    public int? MinHeight { get; set; }
+
+    /// <summary>
+    /// The maximum width of the panel in pixels. Enforced while resizing a floating window and
+    /// applied as a CSS constraint when docked. <c>null</c> (the default) means no maximum.
+    /// </summary>
+    [Parameter]
+    public int? MaxWidth { get; set; }
+
+    /// <summary>
+    /// The maximum height of the panel in pixels. Enforced while resizing a floating window and
+    /// applied as a CSS constraint when docked. <c>null</c> (the default) means no maximum.
+    /// </summary>
+    [Parameter]
+    public int? MaxHeight { get; set; }
 
     /// <summary>
     /// The content rendered inside the panel when it is the active tab.
     /// </summary>
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Whether the user may close this panel. <c>false</c> when locked.</summary>
+    internal bool CanClose => Closable && !Locked;
+
+    /// <summary>Whether the user may detach this panel into a floating window. <c>false</c> when locked.</summary>
+    internal bool CanDetach => CanFloat && !Locked;
+
+    /// <summary>Whether the user may drag this panel to move, reorder or re-dock it. <c>false</c> when locked.</summary>
+    internal bool CanMove => !Locked;
 
     private bool registered;
 
