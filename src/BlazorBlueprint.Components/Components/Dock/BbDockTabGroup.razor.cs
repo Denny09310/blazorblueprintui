@@ -171,9 +171,8 @@ public partial class BbDockTabGroup : ComponentBase, IAsyncDisposable
             ? "z-10 -mb-px border-b border-background bg-background text-foreground after:absolute after:inset-x-0 after:top-0 after:h-[2px] after:bg-primary"
             : "bg-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground");
 
-    private static string CloseClass(bool isActive) => ClassNames.cn(
-        "ml-auto inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm transition-opacity hover:bg-foreground/10 hover:!opacity-100",
-        isActive ? "opacity-60" : "opacity-0 group-hover/tab:opacity-60");
+    private static string CloseClass() => ClassNames.cn(
+        "ml-auto inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm opacity-60 transition-opacity hover:bg-foreground/10 hover:!opacity-100");
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()

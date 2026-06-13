@@ -26,21 +26,21 @@
                      @oncontextmenu="e => HandleTabContextMenu(panel, e)"
                      @oncontextmenu:preventDefault="true"
                      @oncontextmenu:stopPropagation="true">
+                    @if (panel.Icon is not null)
+                    {
+                        <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center">@panel.Icon</span>
+                    }
+                    <span class="truncate">@panel.Title</span>
                     @if (Dock.IsPinned(panel.Id))
                     {
                         <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center" aria-hidden="true">
                             <LucideIcon Name="pin" Size="11" />
                         </span>
                     }
-                    else if (panel.Icon is not null)
-                    {
-                        <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center">@panel.Icon</span>
-                    }
-                    <span class="truncate">@panel.Title</span>
                     @if (panel.Closable)
                     {
                         <button type="button"
-                                class="@CloseClass(isActive)"
+                                class="@CloseClass()"
                                 aria-label="@($"Close {panel.Title}")"
                                 title="@($"Close {panel.Title}")"
                                 @onclick="() => Dock.ClosePanelAsync(panel.Id)"
