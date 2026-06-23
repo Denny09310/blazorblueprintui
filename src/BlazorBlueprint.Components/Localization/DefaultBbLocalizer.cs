@@ -43,6 +43,10 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Command.CommandMenu"] = "Command menu",
         ["Command.CommandList"] = "Command list",
 
+        // CopyText
+        ["CopyText.Copied"] = "Copied!",
+        ["CopyText.ClickToCopy"] = "Click to copy",
+
         // DashboardGrid
         ["DashboardGrid.Loading"] = "Loading dashboard",
         ["DashboardGrid.NoWidgets"] = "No widgets to display",

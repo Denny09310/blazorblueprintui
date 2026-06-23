@@ -1,0 +1,28 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<span class="@TextCssClass"
+      role="button"
+      tabindex="0"
+      aria-describedby="@tooltipId"
+      @onclick="HandleClickAsync"
+      @onmouseenter="HandleMouseEnter"
+      @onmouseleave="HandleMouseLeave"
+      @attributes="AdditionalAttributes">
+
+    @ChildContent
+
+    <span id="@tooltipId"
+          role="tooltip"
+          aria-hidden="@(isHovered ? "false" : "true")"
+          class="@TooltipCssClass">
+        <LucideIcon Name="@CurrentIconName" Class="@TooltipIconCssClass" />
+
+        <span class="@TooltipTextCssClass">@CurrentTooltipText</span>
+
+    </span>
+</span>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}
