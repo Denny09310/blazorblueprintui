@@ -1,0 +1,7 @@
+<BbBubble Variant="BubbleVariant.Muted">
+    <BbBubbleContent AsChild="button" @onclick="() => { }">I forgot my password</BbBubbleContent>
+</BbBubble>
+
+<BbBubble Variant="BubbleVariant.Outline">
+    <BbBubbleContent AsChild="a" Href="#">Open troubleshooting guide</BbBubbleContent>
+</BbBubble>

@@ -1,0 +1,27 @@
+<BbAttachment Size="AttachmentSize.Default" Class="w-full">
+    <BbAttachmentMedia>
+        <LucideIcon Name="file"/>
+    </BbAttachmentMedia>
+    <BbAttachmentContent>
+        <BbAttachmentTitle>Default attachment</BbAttachmentTitle>
+        <BbAttachmentDescription>PDF · 2.4 MB</BbAttachmentDescription>
+    </BbAttachmentContent>
+</BbAttachment>
+<BbAttachment Size="AttachmentSize.Sm" Class="w-full">
+    <BbAttachmentMedia>
+        <LucideIcon Name="file"/>
+    </BbAttachmentMedia>
+    <BbAttachmentContent>
+        <BbAttachmentTitle>Small attachment</BbAttachmentTitle>
+        <BbAttachmentDescription>PDF · 2.4 MB</BbAttachmentDescription>
+    </BbAttachmentContent>
+</BbAttachment>
+<BbAttachment Size="AttachmentSize.Xs" Class="w-full">
+    <BbAttachmentMedia>
+        <LucideIcon Name="file"/>
+    </BbAttachmentMedia>
+    <BbAttachmentContent>
+        <BbAttachmentTitle>Extra small attachment</BbAttachmentTitle>
+        <BbAttachmentDescription>PDF · 2.4 MB</BbAttachmentDescription>
+    </BbAttachmentContent>
+</BbAttachment>

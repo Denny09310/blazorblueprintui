@@ -1,0 +1,10 @@
+@namespace BlazorBlueprint.Components
+
+<CascadingValue Value="this" IsFixed="true">
+    <div data-slot="message"
+         data-align="@Align.ToString().ToLowerInvariant()"
+         class="@CssClass"
+         @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+</CascadingValue>

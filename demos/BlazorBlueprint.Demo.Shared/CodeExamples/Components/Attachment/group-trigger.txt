@@ -1,0 +1,30 @@
+<BbAttachmentGroup>
+    <BbAttachment Class="min-w-64">
+        <BbAttachmentMedia><LucideIcon Name="file-code" Size="18" /></BbAttachmentMedia>
+        <BbAttachmentContent>
+            <BbAttachmentTitle>renderer.tsx</BbAttachmentTitle>
+            <BbAttachmentDescription>TSX · 12 KB</BbAttachmentDescription>
+        </BbAttachmentContent>
+    </BbAttachment>
+    <BbAttachment Class="min-w-64">
+        <BbAttachmentMedia><LucideIcon Name="file-text" Size="18" /></BbAttachmentMedia>
+        <BbAttachmentContent>
+            <BbAttachmentTitle>briefing-notes.pdf</BbAttachmentTitle>
+            <BbAttachmentDescription>PDF · 1.4 MB</BbAttachmentDescription>
+        </BbAttachmentContent>
+    </BbAttachment>
+</BbAttachmentGroup>
+
+<BbAttachment>
+    <BbAttachmentMedia><LucideIcon Name="file-search" Size="18" /></BbAttachmentMedia>
+    <BbAttachmentContent>
+        <BbAttachmentTitle>research-summary.pdf</BbAttachmentTitle>
+        <BbAttachmentDescription>Open preview dialog</BbAttachmentDescription>
+    </BbAttachmentContent>
+    <BbAttachmentActions>
+        <BbAttachmentAction aria-label="Copy research-summary.pdf link">
+            <LucideIcon Name="copy" Size="14" />
+        </BbAttachmentAction>
+    </BbAttachmentActions>
+    <BbAttachmentTrigger AsChild="a" Href="#" aria-label="Open research-summary.pdf" />
+</BbAttachment>

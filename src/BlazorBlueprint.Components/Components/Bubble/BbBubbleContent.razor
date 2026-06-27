@@ -1,0 +1,14 @@
+@namespace BlazorBlueprint.Components
+
+@if (!string.IsNullOrEmpty(AsChild))
+{
+    <DynamicComponent Type="@GetElementType()" Parameters="@GetElementAttributes()" />
+}
+else
+{
+    <div data-slot="bubble-content"
+         class="@CssClass"
+         @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+}
