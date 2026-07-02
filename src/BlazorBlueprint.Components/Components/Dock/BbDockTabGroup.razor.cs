@@ -30,11 +30,12 @@ public partial class BbDockTabGroup : ComponentBase, IAsyncDisposable
     [Parameter]
     public string? FloatingWindowId { get; set; }
 
-    private DockTabGroupNode group => (DockTabGroupNode)Group;
+    private DockTabGroupNode GroupNode => (DockTabGroupNode)Group;
 
     private BbContextMenu? tabMenu;
     private BbDockPanel? contextPanel;
 
+    private readonly Dictionary<string, ElementReference> tabRefs = new();
     private ElementReference stripRef;
     private IJSObjectReference? jsModule;
     private DotNetObjectReference<BbDockTabGroup>? dotNetRef;
@@ -45,11 +46,11 @@ public partial class BbDockTabGroup : ComponentBase, IAsyncDisposable
 
     private bool IsFloating => FloatingWindowId is not null;
 
-    private bool IsMaximized => Dock is not null && Dock.IsMaximized(group);
+    private bool IsMaximized => Dock is not null && Dock.IsMaximized(GroupNode);
 
     // Changes whenever the set, order or active state of tabs changes, so the strip is
     // re-measured for overflow even when its own size did not change.
-    private string TabSignature => $"{string.Join('|', group.PanelIds)}#{group.ActivePanelId}";
+    private string TabSignature => $"{string.Join('|', GroupNode.PanelIds)}#{GroupNode.ActivePanelId}";
 
     /// <inheritdoc />
     protected override void OnInitialized()
@@ -75,7 +76,7 @@ public partial class BbDockTabGroup : ComponentBase, IAsyncDisposable
 
             // (Re)attach the overflow observer whenever this instance starts rendering a
             // different tab group (Blazor reuses component instances across layout changes).
-            if (observedGroupId != group.Id)
+            if (observedGroupId != GroupNode.Id)
             {
                 if (observedGroupId is not null)
                 {
@@ -83,15 +84,15 @@ public partial class BbDockTabGroup : ComponentBase, IAsyncDisposable
                 }
 
                 dotNetRef ??= DotNetObjectReference.Create(this);
-                observedGroupId = group.Id;
+                observedGroupId = GroupNode.Id;
                 lastTabSignature = TabSignature;
-                await jsModule.InvokeVoidAsync("initTabOverflow", group.Id, stripRef, dotNetRef);
+                await jsModule.InvokeVoidAsync("initTabOverflow", GroupNode.Id, stripRef, dotNetRef);
             }
             else if (lastTabSignature != TabSignature)
             {
                 // Tabs were added, removed or reordered: re-measure without a size change.
                 lastTabSignature = TabSignature;
-                await jsModule.InvokeVoidAsync("remeasureTabOverflow", group.Id);
+                await jsModule.InvokeVoidAsync("remeasureTabOverflow", GroupNode.Id);
             }
         }
         catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
@@ -117,11 +118,92 @@ public partial class BbDockTabGroup : ComponentBase, IAsyncDisposable
             return;
         }
 
-        var next = ids.Where(id => group.PanelIds.Contains(id)).ToList();
+        var next = ids.Where(id => GroupNode.PanelIds.Contains(id)).ToList();
         if (!next.SequenceEqual(overflowPanelIds))
         {
             overflowPanelIds = next;
             StateHasChanged();
+        }
+    }
+
+    // Stable DOM ids so each tab and its panel can be linked with aria-controls /
+    // aria-labelledby per the WAI-ARIA tabs pattern.
+    private string TabDomId(string panelId) => $"bb-dock-tab-{GroupNode.Id}-{panelId}";
+
+    private string PanelDomId(string panelId) => $"bb-dock-panel-{GroupNode.Id}-{panelId}";
+
+    // The tabs currently reachable with the keyboard, in strip order. Overflowed tabs are
+    // display:none and surfaced through the overflow dropdown instead, so they are skipped.
+    private List<string> VisibleTabIds() =>
+        GroupNode.PanelIds
+            .Where(id => !overflowPanelIds.Contains(id) && Dock.GetPanel(id) is not null)
+            .ToList();
+
+    private async Task HandleTabKeyDown(BbDockPanel panel, KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "Enter" or " ":
+                Dock.ActivatePanel(GroupNode, panel.Id);
+                break;
+
+            case "ArrowLeft":
+                await FocusAdjacentTabAsync(panel.Id, -1);
+                break;
+
+            case "ArrowRight":
+                await FocusAdjacentTabAsync(panel.Id, 1);
+                break;
+
+            case "Home":
+            {
+                var visible = VisibleTabIds();
+                if (visible.Count > 0)
+                {
+                    await FocusTabAsync(visible[0]);
+                }
+                break;
+            }
+
+            case "End":
+            {
+                var visible = VisibleTabIds();
+                if (visible.Count > 0)
+                {
+                    await FocusTabAsync(visible[^1]);
+                }
+                break;
+            }
+        }
+    }
+
+    private async Task FocusAdjacentTabAsync(string panelId, int direction)
+    {
+        var visible = VisibleTabIds();
+        var current = visible.IndexOf(panelId);
+        if (current < 0 || visible.Count < 2)
+        {
+            return;
+        }
+
+        var next = (current + direction + visible.Count) % visible.Count;
+        await FocusTabAsync(visible[next]);
+    }
+
+    private async Task FocusTabAsync(string panelId)
+    {
+        if (!tabRefs.TryGetValue(panelId, out var el))
+        {
+            return;
+        }
+
+        try
+        {
+            await el.FocusAsync();
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Element may not be rendered yet or the circuit disconnected.
         }
     }
 
@@ -168,7 +250,7 @@ public partial class BbDockTabGroup : ComponentBase, IAsyncDisposable
 
     // Pixel min/max size constraints declared by the group's panels. The floating window wrapper
     // already sizes itself from these, so the constraint style only applies to docked groups.
-    private string? ConstraintStyle => IsFloating ? null : Dock.GroupConstraintStyle(group);
+    private string? ConstraintStyle => IsFloating ? null : Dock.GroupConstraintStyle(GroupNode);
 
     private string StripClass => ClassNames.cn(
         "flex h-8 shrink-0 items-stretch border-b border-border/60 bg-muted/50",

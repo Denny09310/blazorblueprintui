@@ -8,9 +8,9 @@
     @ChildContent
 
     <div @ref="rootRef" class="@CssClass" data-dock-root="@dockId">
-        @if (maximizedGroup is not null)
+        @if (MaximizedGroup is not null)
         {
-            <BbDockNode Node="maximizedGroup" />
+            <BbDockNode Node="MaximizedGroup" />
         }
         else if (layout is not null)
         {

@@ -10,17 +10,25 @@
 
 const docks = new Map();
 const DRAG_THRESHOLD = 4;
-const ACCENT_BG = "rgba(59, 130, 246, 0.28)";
-const ACCENT_BORDER = "2px solid rgba(59, 130, 246, 0.9)";
+// Theme design tokens (full color values, oklch) so the overlays match both light and dark themes.
+const ACCENT_BG = "color-mix(in oklab, var(--primary) 25%, transparent)";
+const ACCENT_BORDER = "2px solid var(--primary)";
+const ACCENT_SOLID = "var(--primary)";
 
 export function initializeDock(dockId, rootEl, dotNetRef) {
     if (!dockId || !rootEl || !dotNetRef) {
         return;
     }
-    docks.set(dockId, { rootEl, dotNetRef });
+    docks.set(dockId, { rootEl, dotNetRef, cancelSession: null });
 }
 
 export function disposeDock(dockId) {
+    const dock = docks.get(dockId);
+    if (dock && dock.cancelSession) {
+        // Abort any in-flight drag so ghost/indicator elements and document-level
+        // listeners are not orphaned when the component is disposed mid-gesture.
+        dock.cancelSession();
+    }
     docks.delete(dockId);
 }
 
@@ -42,7 +50,20 @@ export function initTabOverflow(groupId, stripEl, dotNetRef) {
     const ro = new ResizeObserver(() => reportTabOverflow(groupId));
     ro.observe(stripEl);
 
-    tabOverflowObservers.set(groupId, { observer: ro, stripEl, dotNetRef });
+    // The tabs are divs, so keys the tablist handles (roving focus + activation, done in
+    // .NET) would otherwise also scroll the page. Buttons inside a tab (e.g. close) are
+    // left alone so Space/Enter still click them.
+    const onKeyDown = (e) => {
+        if (!e.target.closest || !e.target.closest("[data-dock-tab]") || e.target.closest("button")) {
+            return;
+        }
+        if (e.key === " " || e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "Home" || e.key === "End") {
+            e.preventDefault();
+        }
+    };
+    stripEl.addEventListener("keydown", onKeyDown);
+
+    tabOverflowObservers.set(groupId, { observer: ro, stripEl, dotNetRef, onKeyDown });
     reportTabOverflow(groupId);
 }
 
@@ -55,6 +76,7 @@ export function disposeTabOverflow(groupId) {
     const entry = tabOverflowObservers.get(groupId);
     if (entry) {
         entry.observer.disconnect();
+        entry.stripEl.removeEventListener("keydown", entry.onKeyDown);
         tabOverflowObservers.delete(groupId);
     }
 }
@@ -108,25 +130,56 @@ function computeOverflowIds(stripEl) {
 
 // ---------------------------------------------------------------- shared pointer session
 
-function attachSession(handlers) {
-    const onMove = (e) => handlers.move(e);
+// Runs a document-level pointer session for a single pointer. Events from other pointers
+// (a second finger, a touch during a mouse drag) are ignored entirely so they can neither
+// commit nor tear down the session. pointerup commits via handlers.up; pointercancel
+// aborts via handlers.cancel (no commit). The session registers a cancel handle on the
+// dock so disposeDock can abort an in-flight gesture.
+function attachSession(dock, pointerId, handlers) {
+    const onMove = (e) => {
+        if (e.pointerId !== pointerId) {
+            return;
+        }
+        handlers.move(e);
+    };
     const onUp = (e) => {
-        cleanup();
+        if (e.pointerId !== pointerId) {
+            return;
+        }
+        detach();
         handlers.up(e);
     };
-    const cleanup = () => {
+    const onCancel = (e) => {
+        if (e.pointerId !== pointerId) {
+            return;
+        }
+        cancel();
+    };
+    const detach = () => {
         document.removeEventListener("pointermove", onMove);
         document.removeEventListener("pointerup", onUp);
-        document.removeEventListener("pointercancel", onUp);
+        document.removeEventListener("pointercancel", onCancel);
         document.body.style.userSelect = "";
         document.body.style.cursor = "";
+        if (dock && dock.cancelSession === cancel) {
+            dock.cancelSession = null;
+        }
+    };
+    const cancel = () => {
+        detach();
+        if (handlers.cancel) {
+            handlers.cancel();
+        }
     };
 
     document.addEventListener("pointermove", onMove);
     document.addEventListener("pointerup", onUp);
-    document.addEventListener("pointercancel", onUp);
+    document.addEventListener("pointercancel", onCancel);
     document.body.style.userSelect = "none";
-    return cleanup;
+
+    if (dock) {
+        dock.cancelSession = cancel;
+    }
 }
 
 // ---------------------------------------------------------------- tab drag → docking
@@ -149,20 +202,20 @@ export function startTabDrag(dockId, title, clientX, clientY, pointerId) {
         target: null
     };
 
-    attachSession({
-        move: (e) => {
-            if (e.pointerId !== pointerId) {
-                return;
-            }
-            onTabMove(state, e);
-        },
-        up: (e) => {
-            if (e.pointerId !== pointerId) {
-                return;
-            }
-            onTabUp(state, e);
-        }
+    attachSession(dock, pointerId, {
+        move: (e) => onTabMove(state, e),
+        up: (e) => onTabUp(state, e),
+        cancel: () => abortTabDrag(state)
     });
+}
+
+// A cancelled gesture (pointercancel, or the dock being disposed mid-drag) aborts the
+// drag: the ghost and drop indicator are removed and no drop is reported to .NET.
+function abortTabDrag(state) {
+    removeEl(state.ghost);
+    removeEl(state.indicator);
+    state.ghost = null;
+    state.indicator = null;
 }
 
 function onTabMove(state, e) {
@@ -333,7 +386,7 @@ function drawIndicator(state, t) {
         }
         box = insertionLineBox(stripEl, t.index);
         // A solid caret line between tabs rather than a translucent fill.
-        ind.style.background = "rgba(59, 130, 246, 0.95)";
+        ind.style.background = ACCENT_SOLID;
         ind.style.border = "none";
     } else {
         ind.style.background = ACCENT_BG;
@@ -390,7 +443,8 @@ function createGhost(title) {
     g.textContent = title;
     g.style.cssText =
         "position:fixed;z-index:10002;pointer-events:none;padding:4px 10px;font-size:12px;font-weight:500;" +
-        "border-radius:6px;background:#1f2937;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,0.28);opacity:.92;" +
+        "border-radius:6px;background:var(--background);color:var(--foreground);border:1px solid var(--border);" +
+        "box-shadow:0 6px 20px rgba(0,0,0,0.28);opacity:.92;" +
         "white-space:nowrap;transform:translate(10px,10px);";
     document.body.appendChild(g);
     return g;
@@ -428,23 +482,22 @@ export function startWindowDrag(dockId, windowId, clientX, clientY, pointerId) {
     const offsetX = clientX - (rootRect.left + startLeft);
     const offsetY = clientY - (rootRect.top + startTop);
 
-    attachSession({
+    attachSession(dock, pointerId, {
         move: (e) => {
-            if (e.pointerId !== pointerId) {
-                return;
-            }
             const left = Math.max(0, e.clientX - rootRect.left - offsetX);
             const top = Math.max(0, e.clientY - rootRect.top - offsetY);
             winEl.style.left = `${left}px`;
             winEl.style.top = `${top}px`;
         },
-        up: (e) => {
-            if (e.pointerId !== pointerId) {
-                return;
-            }
+        up: () => {
             const left = parseFloat(winEl.style.left) || 0;
             const top = parseFloat(winEl.style.top) || 0;
             dock.dotNetRef.invokeMethodAsync("OnWindowMoved", windowId, left, top).catch(() => { });
+        },
+        cancel: () => {
+            // Cancelled gesture: put the window back where it started, commit nothing.
+            winEl.style.left = `${startLeft}px`;
+            winEl.style.top = `${startTop}px`;
         }
     });
     document.body.style.cursor = "move";
@@ -475,23 +528,22 @@ export function startWindowResize(dockId, windowId, clientX, clientY, pointerId,
     const startX = clientX;
     const startY = clientY;
 
-    attachSession({
+    attachSession(dock, pointerId, {
         move: (e) => {
-            if (e.pointerId !== pointerId) {
-                return;
-            }
             const width = Math.min(maxW, Math.max(minW, startWidth + (e.clientX - startX)));
             const height = Math.min(maxH, Math.max(minH, startHeight + (e.clientY - startY)));
             winEl.style.width = `${width}px`;
             winEl.style.height = `${height}px`;
         },
-        up: (e) => {
-            if (e.pointerId !== pointerId) {
-                return;
-            }
+        up: () => {
             dock.dotNetRef
                 .invokeMethodAsync("OnWindowResized", windowId, winEl.offsetWidth, winEl.offsetHeight)
                 .catch(() => { });
+        },
+        cancel: () => {
+            // Cancelled gesture: restore the original size, commit nothing.
+            winEl.style.width = `${startWidth}px`;
+            winEl.style.height = `${startHeight}px`;
         }
     });
     document.body.style.cursor = "nwse-resize";

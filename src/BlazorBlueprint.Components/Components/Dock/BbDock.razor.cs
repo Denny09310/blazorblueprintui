@@ -65,7 +65,7 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
 
     private string? draggingPanelId;
 
-    private DockTabGroupNode? maximizedGroup =>
+    private DockTabGroupNode? MaximizedGroup =>
         maximizedGroupId is null ? null : FindGroup(maximizedGroupId);
 
     private string CssClass => ClassNames.cn(
@@ -488,12 +488,6 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
     internal bool IsPinned(string panelId) => pinnedPanels.Contains(panelId);
 
     /// <summary>
-    /// The number of pinned panels at the front of the given group's tab strip.
-    /// </summary>
-    private int PinnedCount(DockTabGroupNode group) =>
-        group.PanelIds.Count(pinnedPanels.Contains);
-
-    /// <summary>
     /// Stable-partitions a group's tabs so pinned tabs sit at the front in pin order,
     /// followed by unpinned tabs in their existing order.
     /// </summary>
@@ -562,6 +556,13 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
         var panelId = draggingPanelId;
         draggingPanelId = null;
         if (panelId is null || !panels.TryGetValue(panelId, out var panel))
+        {
+            return;
+        }
+
+        // Re-validate server-side: JS input cannot move a locked panel regardless of what
+        // drop target it reports. The float case additionally requires CanDetach below.
+        if (!panel.CanMove)
         {
             return;
         }

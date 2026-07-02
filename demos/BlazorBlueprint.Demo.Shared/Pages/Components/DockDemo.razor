@@ -380,11 +380,18 @@ $ _</code></pre>
 
     <AccessibilityList>
         <AriaAttributes>
-            <AccessibilityItem>Tabs use <code>role="tab"</code> with <code>aria-selected</code> reflecting the active panel.</AccessibilityItem>
+            <AccessibilityItem>Each tab strip is a <code>role="tablist"</code>; tabs use <code>role="tab"</code> with <code>aria-selected</code> reflecting the active panel and a roving <code>tabindex</code> (the active tab is in the tab order, the rest are reachable with the arrow keys).</AccessibilityItem>
+            <AccessibilityItem>Panel content renders in a <code>role="tabpanel"</code> linked to its tab via <code>aria-controls</code> and <code>aria-labelledby</code>.</AccessibilityItem>
             <AccessibilityItem>Close and maximize controls expose descriptive <code>aria-label</code>s.</AccessibilityItem>
             <AccessibilityItem>Resize handles between docked panels reuse the Resizable separator semantics.</AccessibilityItem>
         </AriaAttributes>
         <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move focus between tabs in a strip">
+                <BbKbd>Arrow Left</BbKbd> / <BbKbd>Arrow Right</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move focus to the first / last tab">
+                <BbKbd>Home</BbKbd> / <BbKbd>End</BbKbd>
+            </KeyboardShortcutItem>
             <KeyboardShortcutItem Description="Activate the focused tab">
                 <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
             </KeyboardShortcutItem>
