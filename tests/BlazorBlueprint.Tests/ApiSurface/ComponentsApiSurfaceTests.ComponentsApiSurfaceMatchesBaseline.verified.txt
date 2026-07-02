@@ -1004,6 +1004,7 @@
   - CascadedEditContext : EditContext [CascadingParameter]
 
 ### BbDateRangePicker (BlazorBlueprint.Components)
+  - AutoApply : Boolean
   - Class : String
   - CustomDayNames : String[]
   - DateFormat : String
@@ -1017,6 +1018,7 @@
   - MonthNames : String[]
   - Placeholder : String
   - Presets : IReadOnlyList<DateRangeQuickPick>
+  - ShowButtons : Boolean
   - ShowPresets : Boolean
   - ShowTwoMonths : Boolean
   - Value : DateRange
@@ -1431,6 +1433,7 @@
 
 ### BbFormFieldDateRangePicker (BlazorBlueprint.Components)
   - AriaLabel : String
+  - AutoApply : Boolean
   - Class : String
   - DateFormat : String
   - Disabled : Boolean
@@ -1447,6 +1450,7 @@
   - Orientation : FieldOrientation
   - Placeholder : String
   - Presets : IReadOnlyList<DateRangeQuickPick>
+  - ShowButtons : Boolean
   - ShowPresets : Boolean
   - ShowTwoMonths : Boolean
   - Value : DateRange

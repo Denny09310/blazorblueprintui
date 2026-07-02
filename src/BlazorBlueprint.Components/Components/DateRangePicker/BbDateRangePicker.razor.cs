@@ -38,6 +38,8 @@ public partial class BbDateRangePicker : ComponentBase
     private DateTime? _lastMaxDate;
     private bool _lastShowTwoMonths;
     private bool _lastShowPresets;
+    private bool _lastShowButtons;
+    private bool _lastAutoApply;
     private bool _lastDisabled;
     private IReadOnlyList<DateRangeQuickPick>? _lastPresets;
 
@@ -161,6 +163,22 @@ public partial class BbDateRangePicker : ComponentBase
     [Parameter]
     public string? Class { get; set; }
 
+    /// <summary>
+    /// Whether to show the Clear and Apply buttons in the popover footer.
+    /// When <c>false</c>, a completed selection is applied automatically (as if <see cref="AutoApply"/>
+    /// were <c>true</c>), since no Apply button is available. Defaults to <c>true</c>.
+    /// </summary>
+    [Parameter]
+    public bool ShowButtons { get; set; } = true;
+
+    /// <summary>
+    /// Whether to apply the selection automatically once a complete valid range is selected,
+    /// without requiring the Apply button. When a range is auto-applied the popover closes.
+    /// Auto-apply is always active when <see cref="ShowButtons"/> is <c>false</c>. Defaults to <c>false</c>.
+    /// </summary>
+    [Parameter]
+    public bool AutoApply { get; set; }
+
     private string[] DayNames => _cachedDayNames ??= BuildDayNames();
 
     private string[] BuildDayNames()
@@ -281,7 +299,7 @@ public partial class BbDateRangePicker : ComponentBase
         _cachedWeeksMonth2 = null;
     }
 
-    private void SelectDate(DateTime date)
+    private async Task SelectDate(DateTime date)
     {
         if (IsDateDisabled(date))
         {
@@ -321,6 +339,13 @@ public partial class BbDateRangePicker : ComponentBase
                 _selectionEnd = null;
                 return;
             }
+
+            // Auto-apply the completed range (always when buttons are hidden, since
+            // there is no Apply button to confirm with)
+            if (AutoApply || !ShowButtons)
+            {
+                await Apply();
+            }
         }
     }
 
@@ -349,16 +374,16 @@ public partial class BbDateRangePicker : ComponentBase
 
     private int _selectedPresetIndex;
 
-    private void OnPresetSelectChanged(int index)
+    private async Task OnPresetSelectChanged(int index)
     {
         if (index >= 0 && index < EffectivePresets.Count)
         {
             _selectedPresetIndex = index;
-            ApplyPreset(EffectivePresets[index]);
+            await ApplyPreset(EffectivePresets[index]);
         }
     }
 
-    private void ApplyPreset(DateRangeQuickPick quickPick)
+    private async Task ApplyPreset(DateRangeQuickPick quickPick)
     {
         var range = ResolveRange(quickPick);
         if (range != null && CountSelectedDays(range.Start, range.End) > 0)
@@ -369,6 +394,13 @@ public partial class BbDateRangePicker : ComponentBase
             _displayMonth2 = _displayMonth1.AddMonths(1);
             _cachedWeeksMonth1 = null;
             _cachedWeeksMonth2 = null;
+
+            // Auto-apply the preset range (always when buttons are hidden, since
+            // there is no Apply button to confirm with)
+            if (AutoApply || !ShowButtons)
+            {
+                await Apply();
+            }
         }
     }
 
@@ -635,6 +667,8 @@ public partial class BbDateRangePicker : ComponentBase
             _lastMaxDate = MaxDate;
             _lastShowTwoMonths = ShowTwoMonths;
             _lastShowPresets = ShowPresets;
+            _lastShowButtons = ShowButtons;
+            _lastAutoApply = AutoApply;
             _lastDisabled = Disabled;
             _lastPresets = Presets;
             return true;
@@ -650,6 +684,8 @@ public partial class BbDateRangePicker : ComponentBase
             || _lastMaxDate != MaxDate
             || _lastShowTwoMonths != ShowTwoMonths
             || _lastShowPresets != ShowPresets
+            || _lastShowButtons != ShowButtons
+            || _lastAutoApply != AutoApply
             || _lastDisabled != Disabled
             || !ReferenceEquals(_lastPresets, Presets);
 
@@ -665,6 +701,8 @@ public partial class BbDateRangePicker : ComponentBase
             _lastMaxDate = MaxDate;
             _lastShowTwoMonths = ShowTwoMonths;
             _lastShowPresets = ShowPresets;
+            _lastShowButtons = ShowButtons;
+            _lastAutoApply = AutoApply;
             _lastDisabled = Disabled;
             _lastPresets = Presets;
             return true;
