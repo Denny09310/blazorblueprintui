@@ -176,6 +176,12 @@
                 <ApiParameter Name="FirstDayOfWeek" Type="DayOfWeek?" Default="null">
                     The first day of the week. Defaults to current culture setting.
                 </ApiParameter>
+                <ApiParameter Name="Editable" Type="bool" Default="false">
+                    Lets the date be typed directly into a text input, with a calendar toggle alongside. Typed text parses on blur or Enter; ISO (yyyy-MM-dd) is always accepted.
+                </ApiParameter>
+                <ApiParameter Name="InputFormats" Type="string[]?" Default="null">
+                    Date formats accepted when typing in Editable mode. Falls back to DateFormat when null.
+                </ApiParameter>
                 <ApiParameter Name="Disabled" Type="bool" Default="false">
                     Whether the date picker is disabled.
                 </ApiParameter>
