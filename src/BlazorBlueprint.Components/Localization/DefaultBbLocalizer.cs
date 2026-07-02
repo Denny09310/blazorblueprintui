@@ -124,6 +124,7 @@ public class DefaultBbLocalizer : IBbLocalizer
 
         // DatePicker
         ["DatePicker.Placeholder"] = "Pick a date",
+        ["DatePicker.OpenCalendar"] = "Open calendar",
 
         // DateRangePicker
         ["DateRangePicker.Placeholder"] = "Select date range",

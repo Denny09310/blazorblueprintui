@@ -1076,7 +1076,9 @@
   - DayTemplate : RenderFragment<CalendarDayContext>
   - Disabled : Boolean
   - DisabledDates : Func<DateTime, Boolean>
+  - Editable : Boolean
   - FirstDayOfWeek : DayOfWeek?
+  - InputFormats : String[]
   - MaxDate : DateTime?
   - MinDate : DateTime?
   - Placeholder : String
@@ -1085,6 +1087,16 @@
   - ValueChanged : EventCallback<DateTime?>
   - ValueExpression : Expression<Func<DateTime?>>
   - CascadedEditContext : EditContext [CascadingParameter]
+
+### BbDatePickerInput (BlazorBlueprint.Components)
+  - Class : String
+  - Disabled : Boolean
+  - IsInvalid : Boolean
+  - OnCommit : EventCallback<String>
+  - Placeholder : String
+  - Required : Boolean
+  - Text : String
+  - TriggerContext : TriggerContext [CascadingParameter]
 
 ### BbDateRangePicker (BlazorBlueprint.Components)
   - AutoApply : Boolean
@@ -1574,10 +1586,12 @@
   - DateFormat : String
   - Disabled : Boolean
   - DisabledDates : Func<DateTime, Boolean>
+  - Editable : Boolean
   - ErrorText : String
   - FirstDayOfWeek : DayOfWeek?
   - HelperText : String
   - InputClass : String
+  - InputFormats : String[]
   - Label : String
   - MaxDate : DateTime?
   - MinDate : DateTime?
