@@ -25,12 +25,8 @@ public partial class BbMessageFooter : ComponentBase
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
-    [CascadingParameter]
-    private BbMessage? Message { get; set; }
-
     private string CssClass => ClassNames.cn(
-        "flex max-w-full min-w-0 items-center px-3 text-xs font-medium text-muted-foreground group-has-data-[variant=ghost]/message:px-0 group-data-[align=end]/message:justify-end",
-        Message?.Align == MessageAlign.End ? "self-end text-right" : "self-start text-left",
+        "flex max-w-full min-w-0 items-center self-start px-3 text-left text-xs font-medium text-muted-foreground group-has-data-[variant=ghost]/message:px-0 group-data-[align=end]/message:justify-end group-data-[align=end]/message:self-end group-data-[align=end]/message:text-right",
         Class
     );
 }

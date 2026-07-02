@@ -20,7 +20,7 @@
             </p>
         </div>
         <div class="rounded-lg border p-4">
-            <div className="mx-auto flex w-full max-w-sm flex-col gap-2 py-12">
+            <div class="mx-auto flex w-full max-w-sm flex-col gap-2 py-12">
                 <BbAttachment>
                     <BbAttachmentMedia>
                         <LucideIcon Name="file-text" Size="18"/>
@@ -48,7 +48,7 @@
             </p>
         </div>
         <div class="space-y-2 rounded-lg border p-4">
-            <div className="mx-auto flex w-full max-w-sm flex-col gap-2 py-12">
+            <div class="mx-auto flex w-full max-w-sm flex-col gap-2 py-12">
                 <BbAttachment State="AttachmentState.Idle" Class="w-full">
                     <BbAttachmentMedia>
                         <LucideIcon Name="clock"/>
@@ -58,7 +58,7 @@
                         <BbAttachmentDescription>PDF · 2.4 MB</BbAttachmentDescription>
                     </BbAttachmentContent>
                     <BbAttachmentActions>
-                        <BbAttachmentAction aria-label="Remove sales-dashboard.pdf">
+                        <BbAttachmentAction aria-label="Remove selected-file.pdf">
                             <LucideIcon Name="x"/>
                         </BbAttachmentAction>
                     </BbAttachmentActions>
@@ -72,7 +72,7 @@
                         <BbAttachmentDescription>Uploading · 64%</BbAttachmentDescription>
                     </BbAttachmentContent>
                     <BbAttachmentActions>
-                        <BbAttachmentAction aria-label="Remove sales-dashboard.pdf">
+                        <BbAttachmentAction aria-label="Remove design-system.zip">
                             <LucideIcon Name="x"/>
                         </BbAttachmentAction>
                     </BbAttachmentActions>
@@ -100,7 +100,7 @@
                         <BbAttachmentDescription>Upload failed. Try again.</BbAttachmentDescription>
                     </BbAttachmentContent>
                     <BbAttachmentActions>
-                        <BbAttachmentAction aria-label="Remove market-research.pdf">
+                        <BbAttachmentAction aria-label="Remove financial-model.xlsx">
                             <LucideIcon Name="x"/>
                         </BbAttachmentAction>
                     </BbAttachmentActions>
@@ -114,7 +114,7 @@
                         <BbAttachmentDescription>Uploaded · 1.8 MB</BbAttachmentDescription>
                     </BbAttachmentContent>
                     <BbAttachmentActions>
-                        <BbAttachmentAction aria-label="Remove market-research.pdf">
+                        <BbAttachmentAction aria-label="Remove uploaded-report.pdf">
                             <LucideIcon Name="x"/>
                         </BbAttachmentAction>
                     </BbAttachmentActions>
@@ -129,11 +129,13 @@
             <h2 class="text-2xl font-semibold">Sizes and Orientation</h2>
             <p class="text-sm text-muted-foreground">
                 Use <code class="text-xs bg-muted px-1 py-0.5 rounded">Size</code> and <code
-                    class="text-xs bg-muted px-1 py-0.5 rounded">Orientation</code> for different contexts.
+                    class="text-xs bg-muted px-1 py-0.5 rounded">Orientation</code> for different contexts. Vertical
+                cards stack the media above the content and pair well with
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">AttachmentMediaVariant.Image</code> previews.
             </p>
         </div>
         <div class="space-y-2 rounded-lg border p-4">
-            <div className="mx-auto flex w-full max-w-sm flex-col gap-2 py-12">
+            <div class="mx-auto flex w-full max-w-sm flex-col gap-2 py-12">
                 <BbAttachment Size="AttachmentSize.Default" Class="w-full">
                     <BbAttachmentMedia>
                         <LucideIcon Name="file"/>
@@ -161,6 +163,27 @@
                         <BbAttachmentDescription>PDF · 2.4 MB</BbAttachmentDescription>
                     </BbAttachmentContent>
                 </BbAttachment>
+                <div class="flex items-start justify-center gap-3 pt-4">
+                    <BbAttachment Orientation="AttachmentOrientation.Vertical">
+                        <BbAttachmentMedia>
+                            <LucideIcon Name="file-text"/>
+                        </BbAttachmentMedia>
+                        <BbAttachmentContent>
+                            <BbAttachmentTitle>release-notes.md</BbAttachmentTitle>
+                            <BbAttachmentDescription>MD · 8 KB</BbAttachmentDescription>
+                        </BbAttachmentContent>
+                    </BbAttachment>
+                    <BbAttachment Orientation="AttachmentOrientation.Vertical">
+                        <BbAttachmentMedia Variant="AttachmentMediaVariant.Image">
+                            <img src="_content/BlazorBlueprint.Demo.Shared/images/b-icon-blueprint.png"
+                                 alt="Preview of blueprint-logo.png"/>
+                        </BbAttachmentMedia>
+                        <BbAttachmentContent>
+                            <BbAttachmentTitle>blueprint-logo.png</BbAttachmentTitle>
+                            <BbAttachmentDescription>PNG · 24 KB</BbAttachmentDescription>
+                        </BbAttachmentContent>
+                    </BbAttachment>
+                </div>
             </div>
         </div>
         <CodeBlock Source="Components/Attachment/sizes-orientation.txt"/>
@@ -196,19 +219,8 @@
             </BbAttachmentGroup>
 
             <BbAttachment>
-                <dialog id="preview-dialog" class="bg-transparent items-center justify-center">
-                    <BbCard Class="max-w-lg w-full">
-                        <BbCardContent>
-                            Dialogs
-                        </BbCardContent>
-                        <BbCardFooter>
-                            <BbCardAction>
-                                <button commandfor="preview-dialog" command="close">Close</button>
-                            </BbCardAction>
-                        </BbCardFooter>
-                    </BbCard>
-                </dialog>
-                <BbAttachmentTrigger AsChild="button" aria-label="Open research-summary.pdf" command="show-modal" commandfor="preview-dialog"/>
+                <BbAttachmentTrigger aria-label="Open research-summary.pdf preview"
+                                     @onclick="() => previewOpen = true"/>
                 <BbAttachmentMedia>
                     <LucideIcon Name="file-search" Size="18"/>
                 </BbAttachmentMedia>
@@ -221,8 +233,30 @@
                         <LucideIcon Name="copy" Size="14"/>
                     </BbAttachmentAction>
                 </BbAttachmentActions>
-
             </BbAttachment>
+
+            <BbAttachment>
+                <BbAttachmentTrigger Href="#" aria-label="Open annual-report.pdf"/>
+                <BbAttachmentMedia>
+                    <LucideIcon Name="file-text" Size="18"/>
+                </BbAttachmentMedia>
+                <BbAttachmentContent>
+                    <BbAttachmentTitle>annual-report.pdf</BbAttachmentTitle>
+                    <BbAttachmentDescription>Whole card links to the file</BbAttachmentDescription>
+                </BbAttachmentContent>
+            </BbAttachment>
+
+            <BbDialog @bind-Open="previewOpen">
+                <BbDialogContent>
+                    <BbDialogHeader>
+                        <BbDialogTitle>research-summary.pdf</BbDialogTitle>
+                        <BbDialogDescription>Preview of the attached document.</BbDialogDescription>
+                    </BbDialogHeader>
+                    <BbDialogFooter>
+                        <BbButton Variant="ButtonVariant.Outline" @onclick="() => previewOpen = false">Close</BbButton>
+                    </BbDialogFooter>
+                </BbDialogContent>
+            </BbDialog>
         </div>
         <CodeBlock Source="Components/Attachment/group-trigger.txt"/>
     </div>
@@ -259,5 +293,36 @@
                 Layout direction. Options: Horizontal, Vertical.
             </ApiParameter>
         </ApiReference>
+
+        <ApiReference ComponentName="AttachmentMedia">
+            <ApiParameter Name="Variant" Type="AttachmentMediaVariant" Default="Icon">
+                Media rendering mode. Options: Icon, Image.
+            </ApiParameter>
+        </ApiReference>
+
+        <ApiReference ComponentName="AttachmentAction">
+            <ApiParameter Name="Variant" Type="ButtonVariant" Default="Ghost">
+                Button variant for the action control.
+            </ApiParameter>
+            <ApiParameter Name="Size" Type="ButtonSize" Default="IconSmall">
+                Button size for the action control.
+            </ApiParameter>
+        </ApiReference>
+
+        <ApiReference ComponentName="AttachmentTrigger">
+            <ApiParameter Name="AsChild" Type="AttachmentTriggerElement" Default="Button">
+                Element type to render. Options: Button, Anchor. Automatically switches to Anchor when Href is set.
+            </ApiParameter>
+            <ApiParameter Name="Href" Type="string?">
+                Link target when rendering as an anchor.
+            </ApiParameter>
+            <ApiParameter Name="Class" Type="string?">
+                Additional CSS classes for the trigger overlay.
+            </ApiParameter>
+        </ApiReference>
     </section>
 </div>
+
+@code {
+    private bool previewOpen;
+}

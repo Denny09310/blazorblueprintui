@@ -1,8 +1,11 @@
 @namespace BlazorBlueprint.Components
 
-@if (!string.IsNullOrEmpty(AsChild))
+@if (ResolvedElement == AttachmentTriggerElement.Anchor)
 {
-    <DynamicComponent Type="@GetElementType()" Parameters="@GetElementAttributes()" />
+    <a data-slot="attachment-trigger"
+       class="@CssClass"
+       href="@Href"
+       @attributes="AdditionalAttributes"></a>
 }
 else
 {

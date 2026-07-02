@@ -83,3 +83,19 @@ public enum AttachmentMediaVariant
     /// </summary>
     Image
 }
+
+/// <summary>
+/// Element type to render for <see cref="BbAttachmentTrigger"/>.
+/// </summary>
+public enum AttachmentTriggerElement
+{
+    /// <summary>
+    /// Render as a button element for actions.
+    /// </summary>
+    Button,
+
+    /// <summary>
+    /// Render as an anchor element for navigation links.
+    /// </summary>
+    Anchor
+}

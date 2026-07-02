@@ -1,8 +1,22 @@
 @namespace BlazorBlueprint.Components
 
-@if (!string.IsNullOrEmpty(AsChild))
+@if (ResolvedElement == BubbleContentElement.Anchor)
 {
-    <DynamicComponent Type="@GetElementType()" Parameters="@GetElementAttributes()" />
+    <a data-slot="bubble-content"
+       class="@CssClass"
+       href="@Href"
+       @attributes="AdditionalAttributes">
+        @ChildContent
+    </a>
+}
+else if (ResolvedElement == BubbleContentElement.Button)
+{
+    <button data-slot="bubble-content"
+            type="button"
+            class="@CssClass"
+            @attributes="AdditionalAttributes">
+        @ChildContent
+    </button>
 }
 else
 {
