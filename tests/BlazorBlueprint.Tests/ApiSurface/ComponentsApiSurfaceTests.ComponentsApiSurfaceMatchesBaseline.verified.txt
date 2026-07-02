@@ -3272,6 +3272,7 @@
 
 ### BbThemeSwitcher (BlazorBlueprint.Components)
   - Align : PopoverAlign
+  - ColorLayout : ThemeSwitcherColorLayout
   - PopoverContentClass : String
   - Strategy : PositioningStrategy
   - TriggerClass : String
@@ -4182,6 +4183,10 @@
   - Default = 0
   - Outline = 1
   - Secondary = 2
+
+### ThemeSwitcherColorLayout (BlazorBlueprint.Components)
+  - Split = 0
+  - Combined = 1
 
 ### TimeFormat (BlazorBlueprint.Components)
   - Hour12 = 0
