@@ -30,6 +30,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **BbSidebarMenuButton: OnClick never fired for navigation items** — The anchor render branch (used whenever `Href` is set) didn't wire the click handler, so `OnClick` silently never fired — breaking patterns like closing the mobile sidebar after tapping a nav link. ([#386](https://github.com/blazorblueprintui/ui/pull/386))
 - **WebView2: JSException crash on page reload** — Component disposal during a WebView2 page reload throws `JSException` ("JS object instance with ID N does not exist") rather than Server's `JSDisconnectedException`. All JS-interop dispose paths in Components (and four missed in Primitives) now include `JSException` in their catch filters, following the pattern established in #232. Reported by @SimonDD7. ([#384](https://github.com/blazorblueprintui/ui/pull/384))
 
+### Changed
+
+- **README refreshed** — Component catalog updated with the new additions (Dock, Event Calendar, Date Time Picker, Copy Text, the Chat & AI family, Theme Switcher) and corrected counts (110 styled components, 260+ localizable strings). ([#395](https://github.com/blazorblueprintui/ui/pull/395))
+
 ---
 
 ## 2026-06-17
