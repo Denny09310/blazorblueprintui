@@ -1,23 +1,18 @@
-## What's New in v3.13.0
-
-### New Components
-- **BbDock** — IDE-style docking container whose panels can be dragged, re-docked as tabs or splits, detached into floating windows, maximized, pinned, closed and reopened, with min/max size constraints.
-- **BbEventCalendar** — generic event calendar with month, week and agenda views, per-event coloring and templating, two-way bindable `View`/`CurrentDate`, built-in navigation, and event/date/range callbacks.
-- **BbDateTimePicker** & **BbFormFieldDateTimePicker** — combined date and time picker with calendar plus hour/minute/second and AM/PM steppers, 12/24h formats, Now/Clear actions and EditForm integration.
-- **BbCopyText** — copy-to-clipboard component with a hover tooltip that reflects copy state and an `OnCopied` callback.
-- **BbMessage**, **BbBubble**, **BbAttachment** & **BbMarker** — chat and messaging component families for building conversation UIs (message groups, chat bubbles with reactions, file attachments, and markers).
+## What's New in v3.14.0
 
 ### New Features
-- **BbDatePicker** — manual date entry via `Editable` and `InputFormats`, letting users type dates that are parsed against configured formats (ISO always accepted) and reverted when invalid.
-- **BbThemeSwitcher** — independent base and primary color selection via the new `ColorLayout` (`Split`/`Combined`); selecting a base color no longer resets the primary.
-- **BbCalendar**, **BbDatePicker** & **BbDateRangePicker** — per-day customization through `DayTemplate` (custom day content via `CalendarDayContext`) and `DayClassFunc` (conditional per-day CSS).
-- **BbDataGrid** — `CellClassFunc` on property, template and hierarchy columns for conditional per-cell styling from the row's data.
-- **BbDateRangePicker** — `ShowButtons` and `AutoApply` parameters; `AutoApply` applies and closes the popover once a complete valid range is selected.
-- **Input components** — public `FocusAsync()` method and `Element` reference on `BbInput`, `BbTextarea`, `BbInputField`, `BbInputGroupInput`, `BbInputGroupTextarea`, `BbNumericInput`, `BbCurrencyInput`, `BbMaskedInput`, `BbTagInput` and the FormField wrappers.
-- **BbCheckbox** — new `Name` parameter (forwarded by `BbFormFieldCheckbox`) for form submission.
+- **BbDataGrid** — runtime grouping via the new `Groupable` parameter on property and template columns; a header ellipsis menu offers "Group by" / "Remove grouping", also available imperatively through `GroupByColumnAsync(columnId, direction)` and `ClearGroupingAsync()`.
+- **BbDataGrid** — public `RefreshDataAsync()` to re-process the current data after in-place collection mutations, mirroring QuickGrid.
+- **BbDataGrid** — `INotifyCollectionChanged` support: an `ObservableCollection` passed to `Items` refreshes the grid automatically, with subscriptions cleaned up on dispose and source swap.
+- **BbSidebarProvider** — new `EnableToggleShortcut` parameter (default `true`) to opt out of the Ctrl/Cmd+B sidebar shortcut so the keys can reach the page (e.g. a rich-text editor's bold command); reactive after first render.
 
 ### Bug Fixes
-- **Forms** — input components now emit the full model path (e.g. `Input.Username`) in the `name` attribute so `[SupplyParameterFromForm]` binds on SSR/enhanced form submissions; `BbCheckbox` now renders a hidden native checkbox so it posts a value.
-- **BbPopover** — pointer-events open-guard is now applied to `AsChild` triggers.
-- **BbSidebar** — menu buttons now fire `OnClick` when rendered as an anchor.
-- **JS interop** — swallow `JSException` on dispose paths to avoid errors during WebView2 reloads.
+- **BbDataGrid** — grouping set programmatically through the state object now actually applies and round-trips through `Save()`/`Restore()`; previously only markup-configured grouping took effect while the state reported a grouping the grid ignored.
+- **BbDataGrid** — group definitions targeting a column that registers later no longer silently resolve to nothing, and `Reset()` now genuinely clears grouping applied via the `GroupBy` parameter.
+- **Theming** — the applied theme (dark mode class, base/primary color attributes, radius) is now restored when Blazor's enhanced page refresh re-merges the document and strips it from `<html>` (e.g. on every `dotnet watch` hot reload); the dark-mode toggle no longer needs two clicks afterwards.
+- **CSS** — border color utilities (`border-primary`, `border-alert-*/30`, and consumer `.border-*` classes) are no longer flattened to the default border color; the global border reset moved from the `bb` cascade layer to `base` so utilities win again.
+- **BbSidebar** — multiple `BbSidebarProvider` instances on one page now each receive the toggle shortcut and mobile-change notifications; previously module-level JS state meant only the last-initialized provider responded and disposal leaked listeners.
+
+### Improvements
+- **BbDataGrid** — grouping combined with `Virtualize` + `ItemsProvider` (unsupported) now hides the header group action and logs a warning naming the column instead of silently rendering an empty grid.
+- Bumped the `BlazorBlueprint.Primitives` dependency to 3.14.0.
