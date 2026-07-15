@@ -1,0 +1,40 @@
+@* Mark columns Groupable to let users group by them from the column header menu. *@
+<BbDataGrid @ref="grid" TData="Person" Items="@people" InitialPageSize="50">
+    <Toolbar>
+        <div class="flex items-center gap-2">
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                      OnClick="@(() => grid!.GroupByColumnAsync("department"))">
+                Group by Department
+            </BbButton>
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                      OnClick="@(() => grid!.ClearGroupingAsync())">
+                Clear grouping
+            </BbButton>
+        </div>
+    </Toolbar>
+    <Columns>
+        @* No Groupable flag — this column shows no menu. *@
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Groupable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Sortable Groupable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Groupable />
+
+        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
+            Aggregate="AggregateFunction.Sum" />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private BbDataGrid<Person>? grid;
+    private List<Person> people = new();
+
+    // Grouping can also be driven from code, without the header menu:
+    //   await grid.GroupByColumnAsync("department");
+    //   await grid.GroupByColumnAsync("status", SortDirection.Descending);
+    //   await grid.ClearGroupingAsync();
+    //
+    // One column is grouped at a time — grouping by another replaces the current grouping.
+    // The active group is held on DataGridState.Grouping, so it is captured by Save()
+    // and reapplied by Restore().
+}
