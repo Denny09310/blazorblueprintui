@@ -302,36 +302,55 @@
         }
     }
 
+    // Cleanup has two callers — the close path and DisposeAsync — and a close racing a teardown
+    // puts both in flight at once. It therefore takes ownership of what it is about to release,
+    // clearing the field before the first await, so the second caller sees nothing to do rather
+    // than dereferencing a field the first one nulled while suspended. Reading the field after
+    // an await instead threw a NullReferenceException, which no filter here catches, so it
+    // escaped DisposeAsync into the renderer's disposal queue and took the circuit down (#441).
     private async Task CleanupAsync()
     {
         // Remove click-outside listener by invoking dispose method
-        if (_clickOutsideCleanup != null)
+        var clickOutsideCleanup = _clickOutsideCleanup;
+        if (clickOutsideCleanup != null)
         {
+            _clickOutsideCleanup = null;
+
             try
             {
-                await _clickOutsideCleanup.InvokeVoidAsync("dispose");
-                await _clickOutsideCleanup.DisposeAsync();
+                await clickOutsideCleanup.InvokeVoidAsync("dispose");
+                await clickOutsideCleanup.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Cleanup may already be disposed or circuit disconnected
             }
-            _clickOutsideCleanup = null;
         }
 
         // Dispose DotNetObjectReference to prevent stale callbacks
-        if (_dotNetRef != null)
+        var dotNetRef = _dotNetRef;
+        if (dotNetRef != null)
         {
-            _dotNetRef.Dispose();
             _dotNetRef = null;
+            dotNetRef.Dispose();
         }
     }
 
     public async ValueTask DisposeAsync()
     {
+        if (_disposed) { return; }
         _disposed = true;
 
-        await CleanupAsync();
+        try
+        {
+            await CleanupAsync();
+        }
+        catch (Exception)
+        {
+            // Disposal runs inside the renderer's disposal queue, where anything that escapes
+            // is unhandled and tears down the whole circuit. A teardown-time cleanup failure is
+            // not worth that, so it stops here — the races it can hit are handled above.
+        }
 
         if (_clickOutsideModule != null)
         {
