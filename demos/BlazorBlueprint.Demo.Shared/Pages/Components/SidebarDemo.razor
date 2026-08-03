@@ -1336,20 +1336,78 @@
     <div class="space-y-4">
         <h2 class="text-2xl font-semibold border-b pb-2">Controlling the Sidebar</h2>
         <p class="text-sm text-muted-foreground">
-            <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSidebar</code> has no
-            <code class="text-xs bg-muted px-1 py-0.5 rounded">Open</code> /
-            <code class="text-xs bg-muted px-1 py-0.5 rounded">OpenChanged</code> parameter pair. The open state is owned by
-            <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSidebarProvider</code> and reached through the cascaded
-            <code class="text-xs bg-muted px-1 py-0.5 rounded">SidebarContext</code> — set the starting value with
-            <code class="text-xs bg-muted px-1 py-0.5 rounded">DefaultOpen</code>, toggle from markup with
-            <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSidebarTrigger</code>, and drive it from your own code by
-            taking the context as a <code class="text-xs bg-muted px-1 py-0.5 rounded">[CascadingParameter]</code>.
+            Open state lives on <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSidebarProvider</code>, not on
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSidebar</code>. Leave it alone and the provider owns it —
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">DefaultOpen</code> seeds it,
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">CookieKey</code> persists it, and
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSidebarTrigger</code> toggles it. Bind
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Open</code> and your value becomes the source of truth
+            instead, the same controlled/uncontrolled pattern as Dialog, Sheet, Popover and the rest of the library.
         </p>
         <p class="text-sm text-muted-foreground">
-            Prefer <code class="text-xs bg-muted px-1 py-0.5 rounded">IsOpen</code> over
-            <code class="text-xs bg-muted px-1 py-0.5 rounded">Open</code> when reading: it resolves to the mobile drawer state
-            below the mobile breakpoint and the desktop state above it, so it stays correct on both.
+            <strong>Binding <code class="text-xs bg-muted px-1 py-0.5 rounded">Open</code> turns cookie persistence off</strong>
+            — both the read on startup and the write on change. With the state owned outside the component, a cookie would
+            compete with your bound value on reload rather than restore it, so persist it yourself if you need it to survive.
         </p>
+        <p class="text-sm text-muted-foreground">
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">Open</code> is the <em>desktop</em> state, matching
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">DefaultOpen</code>. Below the mobile breakpoint the sidebar is a
+            drawer with its own state — bind <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-OpenMobile</code> as well
+            if you need both, and when merely <em>reading</em> from the cascaded
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">SidebarContext</code>, prefer
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">IsOpen</code> over
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">Open</code>: it resolves to whichever applies to the current
+            viewport, so it stays correct on both.
+        </p>
+
+        <div class="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+            <span class="text-sm font-medium">@@bind-Open:</span>
+            <div class="flex items-center gap-2">
+                <button type="button"
+                        @onclick="() => _controlledOpen = true"
+                        class="@(_controlledOpen ? "bg-primary text-primary-foreground" : "bg-background text-foreground") px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:opacity-90">
+                    Open
+                </button>
+                <button type="button"
+                        @onclick="() => _controlledOpen = false"
+                        class="@(!_controlledOpen ? "bg-primary text-primary-foreground" : "bg-background text-foreground") px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:opacity-90">
+                    Closed
+                </button>
+            </div>
+            <span class="text-xs text-muted-foreground ml-auto">Bound value: <code class="text-xs">@_controlledOpen</code> — the sidebar's own trigger updates it too</span>
+        </div>
+
+        <div class="border rounded-lg overflow-hidden h-[300px]">
+            <BbSidebarProvider @bind-Open="_controlledOpen" HeightClass="h-full" CookieKey="@null">
+                <BbSidebar>
+                    <BbSidebarContent>
+                        <BbSidebarGroup>
+                            <BbSidebarGroupLabel>Controlled</BbSidebarGroupLabel>
+                            <BbSidebarGroupContent>
+                                <BbSidebarMenu>
+                                    <BbSidebarMenuItem>
+                                        <BbSidebarMenuButton Tooltip="Home">Home</BbSidebarMenuButton>
+                                    </BbSidebarMenuItem>
+                                    <BbSidebarMenuItem>
+                                        <BbSidebarMenuButton Tooltip="Settings">Settings</BbSidebarMenuButton>
+                                    </BbSidebarMenuItem>
+                                </BbSidebarMenu>
+                            </BbSidebarGroupContent>
+                        </BbSidebarGroup>
+                    </BbSidebarContent>
+                </BbSidebar>
+                <BbSidebarInset>
+                    <div class="p-4 space-y-2">
+                        <BbSidebarTrigger />
+                        <p class="text-sm text-muted-foreground">
+                            Toggle from either side — the buttons above set the bound value, the trigger raises
+                            <code class="text-xs">OpenChanged</code>, and both stay in sync.
+                        </p>
+                    </div>
+                </BbSidebarInset>
+            </BbSidebarProvider>
+        </div>
+
         <CodeBlock Source="Components/Sidebar/programmatic-control.txt" />
     </div>
 
@@ -1375,7 +1433,31 @@
                                 <td class="p-3"><code class="text-sm">DefaultOpen</code></td>
                                 <td class="p-3 text-sm">bool</td>
                                 <td class="p-3 text-sm">true</td>
-                                <td class="p-3 text-sm">Initial open state</td>
+                                <td class="p-3 text-sm">Initial desktop open state, for uncontrolled usage. Ignored when <code class="text-sm">Open</code> is bound.</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Open</code></td>
+                                <td class="p-3 text-sm">bool?</td>
+                                <td class="p-3 text-sm">null</td>
+                                <td class="p-3 text-sm">Desktop open state, for controlled usage with <code class="text-sm">@@bind-Open</code>. Leave null and the provider owns the state. Binding it turns cookie persistence off — see below.</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">OpenChanged</code></td>
+                                <td class="p-3 text-sm">EventCallback&lt;bool&gt;</td>
+                                <td class="p-3 text-sm">—</td>
+                                <td class="p-3 text-sm">Raised when the desktop state changes, from the trigger, the rail, the keyboard shortcut or <code class="text-sm">SetOpen</code></td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">OpenMobile</code></td>
+                                <td class="p-3 text-sm">bool?</td>
+                                <td class="p-3 text-sm">null</td>
+                                <td class="p-3 text-sm">Mobile drawer state, for controlled usage with <code class="text-sm">@@bind-OpenMobile</code>. Independent of <code class="text-sm">Open</code>.</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">OpenMobileChanged</code></td>
+                                <td class="p-3 text-sm">EventCallback&lt;bool&gt;</td>
+                                <td class="p-3 text-sm">—</td>
+                                <td class="p-3 text-sm">Raised when the mobile drawer state changes</td>
                             </tr>
                             <tr class="border-b">
                                 <td class="p-3"><code class="text-sm">Variant</code></td>
@@ -1393,7 +1475,7 @@
                                 <td class="p-3"><code class="text-sm">CookieKey</code></td>
                                 <td class="p-3 text-sm">string</td>
                                 <td class="p-3 text-sm">"sidebar:state"</td>
-                                <td class="p-3 text-sm">Cookie key for persistence</td>
+                                <td class="p-3 text-sm">Cookie key for persistence. Set null to disable. Ignored while <code class="text-sm">Open</code> is bound.</td>
                             </tr>
                             <tr class="border-b">
                                 <td class="p-3"><code class="text-sm">EnableToggleShortcut</code></td>
@@ -1662,6 +1744,7 @@
 
 @code {
     private bool isBasicCollapsible = true;
+    private bool _controlledOpen = true;
     private bool shortcutEnabled = true;
     private string selectedVersion = "v1.0.1";
 
