@@ -22,7 +22,7 @@
             @* Color Area (Saturation/Brightness) *@
             <div @ref="_areaRef"
                  class="relative h-[150px] w-full rounded-md cursor-crosshair overflow-hidden touch-none"
-                 style="background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(@_hue.ToString(CultureInfo.InvariantCulture), 100%, 50%));">
+                 style="background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(@_hue.ToString("0.##", CultureInfo.InvariantCulture), 100%, 50%));">
                 <div class="absolute h-4 w-4 border-2 border-white rounded-full shadow-md -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                      style="left: @((_saturation * 100).ToString("0.##", CultureInfo.InvariantCulture))%; top: @(((1 - _brightness) * 100).ToString("0.##", CultureInfo.InvariantCulture))%;">
                 </div>
