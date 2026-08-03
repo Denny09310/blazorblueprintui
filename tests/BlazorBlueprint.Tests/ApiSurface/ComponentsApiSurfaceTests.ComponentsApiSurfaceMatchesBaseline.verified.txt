@@ -3189,6 +3189,10 @@
   - DefaultOpen : Boolean
   - EnableToggleShortcut : Boolean
   - HeightClass : String
+  - Open : Boolean?
+  - OpenChanged : EventCallback<Boolean>
+  - OpenMobile : Boolean?
+  - OpenMobileChanged : EventCallback<Boolean>
   - Side : SidebarSide
   - Variant : SidebarVariant
 

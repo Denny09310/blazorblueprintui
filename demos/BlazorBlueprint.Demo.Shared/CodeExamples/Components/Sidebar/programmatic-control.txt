@@ -1,7 +1,7 @@
-<!-- Sidebar has no Open / OpenChanged parameter pair. The open state is owned by
-     SidebarProvider and reached through the cascaded SidebarContext. -->
+<!-- ── Uncontrolled (the default) ────────────────────────────────────────────
+     The provider owns the state: DefaultOpen seeds it, CookieKey persists it
+     across reloads, and SidebarTrigger toggles it. Nothing to wire up. -->
 
-<!-- 1. From markup: SidebarTrigger toggles it, no wiring needed. -->
 <BbSidebarProvider DefaultOpen="true">
     <BbSidebar>
         <BbSidebarContent>...</BbSidebarContent>
@@ -12,21 +12,73 @@
     </BbSidebarInset>
 </BbSidebarProvider>
 
-<!-- 2. From your own component: take the context and call it. -->
-<button @onclick="() => Sidebar.SetOpen(true)">Open</button>
-<button @onclick="() => Sidebar.SetOpen(false)">Close</button>
-<button @onclick="Sidebar.ToggleSidebar">Toggle</button>
 
-<p>Currently @(Sidebar.IsOpen ? "open" : "closed")</p>
+<!-- ── Controlled ────────────────────────────────────────────────────────────
+     Bind Open and your value becomes the source of truth. The trigger, the
+     rail and Ctrl/Cmd + B all still work — they raise OpenChanged rather than
+     changing state behind your back.
+
+     Binding Open turns cookie persistence off, both the read on startup and
+     the write on change: with the state owned outside the component, a cookie
+     would compete with your value on reload rather than restore it. Persist it
+     yourself if you need it to survive — from a user profile, for example. -->
+
+<BbSidebarProvider @bind-Open="_sidebarOpen">
+    <BbSidebar>
+        <BbSidebarContent>...</BbSidebarContent>
+    </BbSidebar>
+    <BbSidebarInset>
+        <BbSidebarTrigger />
+        <p>Sidebar is @(_sidebarOpen ? "open" : "closed")</p>
+    </BbSidebarInset>
+</BbSidebarProvider>
 
 @code {
-    [CascadingParameter]
-    private SidebarContext Sidebar { get; set; } = null!;
+    private bool _sidebarOpen = true;
 }
 
-<!-- 3. To re-render when it changes, subscribe to StateChanged.
-     SidebarTrigger and the sidebar itself already do this; you only need it
-     if your own markup reflects the open state, as the <p> above does. -->
+
+<!-- Open and OpenChanged separately, to run your own logic on change -->
+
+<BbSidebarProvider Open="_sidebarOpen" OpenChanged="OnSidebarToggled">
+    ...
+</BbSidebarProvider>
+
+@code {
+    private bool _sidebarOpen = true;
+
+    private async Task OnSidebarToggled(bool open)
+    {
+        _sidebarOpen = open;
+        await Prefs.SaveSidebarState(open);   // your own persistence
+    }
+}
+
+
+<!-- ── The mobile drawer is separate state ───────────────────────────────────
+     Below the mobile breakpoint the sidebar renders as a drawer with its own
+     open state. Open/OpenChanged is the DESKTOP state, matching DefaultOpen;
+     bind OpenMobile as well if you need both. Either may be controlled
+     without the other. -->
+
+<BbSidebarProvider @bind-Open="_sidebarOpen" @bind-OpenMobile="_drawerOpen">
+    ...
+</BbSidebarProvider>
+
+@code {
+    private bool _sidebarOpen = true;
+    private bool _drawerOpen;
+}
+
+
+<!-- ── Reading state without controlling it ──────────────────────────────────
+     Take the cascaded SidebarContext. Prefer IsOpen over Open: it resolves to
+     the mobile drawer state below the mobile breakpoint and the desktop state
+     above it, so it stays correct on both. -->
+
+<button @onclick="() => Sidebar.SetOpen(true)">Open</button>
+<button @onclick="Sidebar.ToggleSidebar">Toggle</button>
+<p>Currently @(Sidebar.IsOpen ? "open" : "closed")</p>
 
 @implements IDisposable
 
@@ -34,6 +86,7 @@
     [CascadingParameter]
     private SidebarContext Sidebar { get; set; } = null!;
 
+    // Only needed if your own markup reflects the open state, as the <p> does.
     protected override void OnInitialized()
         => Sidebar.StateChanged += OnSidebarChanged;
 
@@ -43,8 +96,3 @@
     public void Dispose()
         => Sidebar.StateChanged -= OnSidebarChanged;
 }
-
-<!-- Note: IsOpen is the effective state for the current viewport — it reads
-     OpenMobile below the mobile breakpoint and Open above it. Prefer it over
-     Open unless you specifically mean the desktop value. Likewise ToggleSidebar()
-     targets whichever applies, while SetOpen/SetOpenMobile are explicit. -->
