@@ -1,0 +1,50 @@
+<!-- Sidebar has no Open / OpenChanged parameter pair. The open state is owned by
+     SidebarProvider and reached through the cascaded SidebarContext. -->
+
+<!-- 1. From markup: SidebarTrigger toggles it, no wiring needed. -->
+<BbSidebarProvider DefaultOpen="true">
+    <BbSidebar>
+        <BbSidebarContent>...</BbSidebarContent>
+    </BbSidebar>
+    <BbSidebarInset>
+        <BbSidebarTrigger />
+        <MyPage />
+    </BbSidebarInset>
+</BbSidebarProvider>
+
+<!-- 2. From your own component: take the context and call it. -->
+<button @onclick="() => Sidebar.SetOpen(true)">Open</button>
+<button @onclick="() => Sidebar.SetOpen(false)">Close</button>
+<button @onclick="Sidebar.ToggleSidebar">Toggle</button>
+
+<p>Currently @(Sidebar.IsOpen ? "open" : "closed")</p>
+
+@code {
+    [CascadingParameter]
+    private SidebarContext Sidebar { get; set; } = null!;
+}
+
+<!-- 3. To re-render when it changes, subscribe to StateChanged.
+     SidebarTrigger and the sidebar itself already do this; you only need it
+     if your own markup reflects the open state, as the <p> above does. -->
+
+@implements IDisposable
+
+@code {
+    [CascadingParameter]
+    private SidebarContext Sidebar { get; set; } = null!;
+
+    protected override void OnInitialized()
+        => Sidebar.StateChanged += OnSidebarChanged;
+
+    private void OnSidebarChanged(object? sender, EventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Sidebar.StateChanged -= OnSidebarChanged;
+}
+
+<!-- Note: IsOpen is the effective state for the current viewport — it reads
+     OpenMobile below the mobile breakpoint and Open above it. Prefer it over
+     Open unless you specifically mean the desktop value. Likewise ToggleSidebar()
+     targets whichever applies, while SetOpen/SetOpenMobile are explicit. -->

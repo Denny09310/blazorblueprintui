@@ -1334,6 +1334,26 @@
 
     <!-- API Reference -->
     <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">Controlling the Sidebar</h2>
+        <p class="text-sm text-muted-foreground">
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSidebar</code> has no
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">Open</code> /
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">OpenChanged</code> parameter pair. The open state is owned by
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSidebarProvider</code> and reached through the cascaded
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">SidebarContext</code> — set the starting value with
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">DefaultOpen</code>, toggle from markup with
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSidebarTrigger</code>, and drive it from your own code by
+            taking the context as a <code class="text-xs bg-muted px-1 py-0.5 rounded">[CascadingParameter]</code>.
+        </p>
+        <p class="text-sm text-muted-foreground">
+            Prefer <code class="text-xs bg-muted px-1 py-0.5 rounded">IsOpen</code> over
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">Open</code> when reading: it resolves to the mobile drawer state
+            below the mobile breakpoint and the desktop state above it, so it stays correct on both.
+        </p>
+        <CodeBlock Source="Components/Sidebar/programmatic-control.txt" />
+    </div>
+
+    <div class="space-y-4">
         <h2 class="text-2xl font-semibold border-b pb-2">API Reference</h2>
 
         <div class="space-y-6">
@@ -1393,6 +1413,142 @@
             </div>
 
             <div>
+                <h3 class="text-lg font-semibold mb-2">Sidebar</h3>
+                <p class="text-sm text-muted-foreground mb-3">The sidebar panel itself. Open state lives on the provider, not here — see SidebarContext below.</p>
+                <div class="rounded-lg border overflow-hidden">
+                    <table class="w-full">
+                        <thead class="border-b bg-muted/50">
+                            <tr>
+                                <th class="p-3 text-left font-medium">Prop</th>
+                                <th class="p-3 text-left font-medium">Type</th>
+                                <th class="p-3 text-left font-medium">Default</th>
+                                <th class="p-3 text-left font-medium">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Collapsible</code></td>
+                                <td class="p-3 text-sm">bool</td>
+                                <td class="p-3 text-sm">true</td>
+                                <td class="p-3 text-sm">Whether the sidebar can collapse. Set false to pin it open.</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3"><code class="text-sm">Class</code></td>
+                                <td class="p-3 text-sm">string?</td>
+                                <td class="p-3 text-sm">null</td>
+                                <td class="p-3 text-sm">Additional CSS classes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-semibold mb-2">SidebarTrigger</h3>
+                <p class="text-sm text-muted-foreground mb-3">Toggles the sidebar. This is the supported way to open and close it from markup.</p>
+                <div class="rounded-lg border overflow-hidden">
+                    <table class="w-full">
+                        <thead class="border-b bg-muted/50">
+                            <tr>
+                                <th class="p-3 text-left font-medium">Prop</th>
+                                <th class="p-3 text-left font-medium">Type</th>
+                                <th class="p-3 text-left font-medium">Default</th>
+                                <th class="p-3 text-left font-medium">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">OnClick</code></td>
+                                <td class="p-3 text-sm">EventCallback&lt;MouseEventArgs&gt;</td>
+                                <td class="p-3 text-sm">—</td>
+                                <td class="p-3 text-sm">Invoked in addition to toggling, for observing the toggle</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">ChildContent</code></td>
+                                <td class="p-3 text-sm">RenderFragment?</td>
+                                <td class="p-3 text-sm">null</td>
+                                <td class="p-3 text-sm">Replaces the default toggle icon</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3"><code class="text-sm">Class</code></td>
+                                <td class="p-3 text-sm">string?</td>
+                                <td class="p-3 text-sm">null</td>
+                                <td class="p-3 text-sm">Additional CSS classes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-semibold mb-2">SidebarContext</h3>
+                <p class="text-sm text-muted-foreground mb-3">
+                    Cascaded by <code class="text-sm">SidebarProvider</code>. Take it with a
+                    <code class="text-sm">[CascadingParameter]</code> to read or change the open state from your own code.
+                    There is no <code class="text-sm">Open</code>/<code class="text-sm">OpenChanged</code> parameter pair on
+                    <code class="text-sm">Sidebar</code> — state is owned by the provider and reached through this context.
+                </p>
+                <div class="rounded-lg border overflow-hidden">
+                    <table class="w-full">
+                        <thead class="border-b bg-muted/50">
+                            <tr>
+                                <th class="p-3 text-left font-medium">Member</th>
+                                <th class="p-3 text-left font-medium">Type</th>
+                                <th class="p-3 text-left font-medium">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">IsOpen</code></td>
+                                <td class="p-3 text-sm">bool</td>
+                                <td class="p-3 text-sm">Effective open state — resolves to the mobile or desktop value for the current viewport. Read this one unless you specifically need the other two.</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Open</code></td>
+                                <td class="p-3 text-sm">bool</td>
+                                <td class="p-3 text-sm">Desktop open state (read-only)</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">OpenMobile</code></td>
+                                <td class="p-3 text-sm">bool</td>
+                                <td class="p-3 text-sm">Mobile drawer open state (read-only)</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">IsMobile</code></td>
+                                <td class="p-3 text-sm">bool</td>
+                                <td class="p-3 text-sm">Whether the viewport is currently below the mobile breakpoint</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Side</code></td>
+                                <td class="p-3 text-sm">SidebarSide</td>
+                                <td class="p-3 text-sm">Side the sidebar renders on</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">ToggleSidebar()</code></td>
+                                <td class="p-3 text-sm">void</td>
+                                <td class="p-3 text-sm">Toggles whichever state applies to the current viewport</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">SetOpen(bool)</code></td>
+                                <td class="p-3 text-sm">void</td>
+                                <td class="p-3 text-sm">Sets the desktop open state</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">SetOpenMobile(bool)</code></td>
+                                <td class="p-3 text-sm">void</td>
+                                <td class="p-3 text-sm">Sets the mobile drawer open state</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3"><code class="text-sm">StateChanged</code></td>
+                                <td class="p-3 text-sm">event EventHandler?</td>
+                                <td class="p-3 text-sm">Raised whenever any of the above changes — subscribe to re-render on toggle, and unsubscribe on dispose</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div>
                 <h3 class="text-lg font-semibold mb-2">SidebarMenuButton</h3>
                 <p class="text-sm text-muted-foreground mb-3">Clickable menu item with tooltip support.</p>
                 <div class="rounded-lg border overflow-hidden">
@@ -1414,27 +1570,45 @@
                             </tr>
                             <tr class="border-b">
                                 <td class="p-3"><code class="text-sm">Size</code></td>
-                                <td class="p-3 text-sm">string</td>
-                                <td class="p-3 text-sm">"default"</td>
-                                <td class="p-3 text-sm">Size variant (sm, default, lg)</td>
+                                <td class="p-3 text-sm">SidebarMenuButtonSize</td>
+                                <td class="p-3 text-sm">Default</td>
+                                <td class="p-3 text-sm">Size variant (Small, Default, Large)</td>
                             </tr>
                             <tr class="border-b">
                                 <td class="p-3"><code class="text-sm">Variant</code></td>
-                                <td class="p-3 text-sm">string</td>
-                                <td class="p-3 text-sm">"default"</td>
-                                <td class="p-3 text-sm">Style variant (default, outline)</td>
+                                <td class="p-3 text-sm">SidebarMenuButtonVariant</td>
+                                <td class="p-3 text-sm">Default</td>
+                                <td class="p-3 text-sm">Style variant (Default, Outline)</td>
                             </tr>
                             <tr class="border-b">
                                 <td class="p-3"><code class="text-sm">IsActive</code></td>
-                                <td class="p-3 text-sm">bool</td>
-                                <td class="p-3 text-sm">false</td>
-                                <td class="p-3 text-sm">Active/selected state</td>
+                                <td class="p-3 text-sm">bool?</td>
+                                <td class="p-3 text-sm">null</td>
+                                <td class="p-3 text-sm">Active/selected state. Leave unset to derive it from <code class="text-sm">Href</code> and <code class="text-sm">Match</code>.</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">AsChild</code></td>
+                                <td class="p-3 text-sm">SidebarMenuButtonElement</td>
+                                <td class="p-3 text-sm">Button</td>
+                                <td class="p-3 text-sm">Element to render (Button, Anchor)</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Href</code></td>
+                                <td class="p-3 text-sm">string?</td>
+                                <td class="p-3 text-sm">null</td>
+                                <td class="p-3 text-sm">Navigation target. Setting it renders an anchor and drives <code class="text-sm">IsActive</code> from the current route.</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Match</code></td>
+                                <td class="p-3 text-sm">NavLinkMatch</td>
+                                <td class="p-3 text-sm">Prefix</td>
+                                <td class="p-3 text-sm">How <code class="text-sm">Href</code> is matched against the route for active state</td>
                             </tr>
                             <tr>
-                                <td class="p-3"><code class="text-sm">AsChild</code></td>
-                                <td class="p-3 text-sm">string</td>
-                                <td class="p-3 text-sm">"button"</td>
-                                <td class="p-3 text-sm">Element type (button, a)</td>
+                                <td class="p-3"><code class="text-sm">OnClick</code></td>
+                                <td class="p-3 text-sm">EventCallback&lt;MouseEventArgs&gt;</td>
+                                <td class="p-3 text-sm">—</td>
+                                <td class="p-3 text-sm">Invoked when the button is clicked</td>
                             </tr>
                         </tbody>
                     </table>
