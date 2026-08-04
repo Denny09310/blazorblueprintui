@@ -250,7 +250,7 @@ public partial class BbTextarea : ComponentBase
         "bg-transparent dark:bg-input/30 px-3 py-2 text-base shadow-xs",
         "placeholder:text-muted-foreground",
         // Focus states
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         // Error states (aria-invalid)
         "aria-[invalid=true]:border-destructive",
         // Disabled state
