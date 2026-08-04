@@ -836,7 +836,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// </summary>
     private string TriggerCssClass => ClassNames.cn(
         "inline-flex items-center justify-between rounded-md text-sm font-medium",
-        "transition-colors focus-visible:outline-none",
+        "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "disabled:opacity-50 disabled:pointer-events-none",
         "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         _isOpen ? ActiveClass : null,
@@ -865,7 +865,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// Gets the CSS class for the tag remove button.
     /// </summary>
     private static string TagRemoveButtonCssClass =>
-        "ml-0.5 rounded-full outline-none hover:bg-secondary-foreground/20";
+        "ml-0.5 rounded-full outline-none hover:bg-secondary-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
     /// <summary>
     /// Gets the CSS class for the dropdown item.

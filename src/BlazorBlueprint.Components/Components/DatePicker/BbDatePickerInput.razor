@@ -86,7 +86,7 @@
 
     private string ToggleCssClass => ClassNames.cn(
         "inline-flex h-full items-center justify-center px-3 text-muted-foreground",
-        "hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "disabled:pointer-events-none",
         // Mirror the pointer-events guard trigger buttons apply while the popover is
         // open, so one click can't close it via click-outside and immediately re-open it.
