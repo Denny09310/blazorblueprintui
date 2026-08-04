@@ -170,7 +170,7 @@ public partial class BbInputGroupTextarea : ComponentBase
         "flex-1 bg-transparent px-3 py-2 text-base min-h-[60px]",
         "border-0 rounded-none", // No border or radius for seamless integration
         "placeholder:text-muted-foreground",
-        "focus-visible:outline-none",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "resize-none", // Prevent resize for cleaner appearance
         // Medium screens and up: smaller text

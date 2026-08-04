@@ -296,7 +296,8 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
     private string CssClass => ClassNames.cn(
         "flex h-10 w-full border border-input bg-background px-3 py-2 text-base",
         "placeholder:text-muted-foreground",
-        ShowButtons ? "rounded-l-md focus-visible:outline-none" : "rounded-md focus-visible:outline-none",
+        ShowButtons ? "rounded-l-md" : "rounded-md",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "aria-[invalid=true]:border-destructive",
         "transition-colors",
@@ -308,7 +309,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
     private static string ButtonClass => ClassNames.cn(
         "flex items-center justify-center w-8 h-5 border border-input bg-background",
         "hover:bg-accent hover:text-accent-foreground",
-        "focus-visible:outline-none",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "first:border-b-0",
         "first:rounded-tr-md last:rounded-br-md",
