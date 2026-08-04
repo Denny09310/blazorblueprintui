@@ -11,6 +11,8 @@ namespace BlazorBlueprint.Components;
 public partial class BbCopyText : ComponentBase, IAsyncDisposable
 {
     private IJSObjectReference? clipboardModule;
+    private ElementReference anchorRef;
+    private readonly string portalId = $"copytext-portal-{Guid.NewGuid():N}";
     private bool isHovered;
     private bool copied;
 
@@ -69,12 +71,13 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
         "relative inline-flex gap-1 items-center cursor-pointer text-primary font-semibold",
         Class);
 
-    private string? TooltipCssClass => ClassNames.cn(
-        "pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 inline-flex " +
-        "-translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-md border " +
-        "bg-popover px-2.5 py-1 text-xs font-medium shadow-md " +
-        "transition-all duration-150 ease-out",
-        isHovered ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0");
+    // Positioning, offset and z-index now come from the floating portal, so only the visual
+    // chrome is left here. The opacity/translate pair went with it: the portal mounts the
+    // tooltip when it opens rather than keeping a transparent copy in the layout. With no
+    // state left to vary on, this is a constant rather than a computed class string.
+    private const string TooltipCssClass =
+        "pointer-events-none inline-flex items-center gap-1.5 whitespace-nowrap " +
+        "rounded-md border bg-popover px-2.5 py-1 text-xs font-medium shadow-md";
 
     private void HandleMouseEnter()
     {
