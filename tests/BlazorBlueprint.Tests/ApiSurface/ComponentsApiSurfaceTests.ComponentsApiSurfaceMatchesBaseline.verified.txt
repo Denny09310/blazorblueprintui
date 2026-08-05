@@ -104,6 +104,7 @@
   - StackGroup : String
   - Stacked : Boolean
   - StrokeWidth : Int32
+  - XDataKey : String
 
 ### BbAreaChart (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -2299,6 +2300,7 @@
   - StackGroup : String
   - Stacked : Boolean
   - StrokeWidth : Int32
+  - XDataKey : String
 
 ### BbLineChart (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -2915,6 +2917,7 @@
   - Stacked : Boolean
   - SymbolSize : Int32
   - SymbolSizeKey : String
+  - XDataKey : String
 
 ### BbScatterChart (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -3688,6 +3691,7 @@
   - Max : Object
   - Min : Object
   - Name : String
+  - Scale : Boolean?
   - Show : Boolean
   - ShowAxisLine : Boolean
   - ShowGrid : Boolean
