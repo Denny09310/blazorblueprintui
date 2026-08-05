@@ -20,6 +20,11 @@ namespace BlazorBlueprint.Components;
 public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where TData : class
 {
     private DataGridState<TData> _gridState = new();
+
+    // Columns in the order their components registered, which is the order they initialize in.
+    // _columns is derived from this by RebuildColumnOrder and is the display order everything
+    // else reads.
+    private readonly List<IDataGridColumn<TData>> _registeredColumns = new();
     private readonly List<IDataGridColumn<TData>> _columns = new();
     private IEnumerable<TData> _processedData = Array.Empty<TData>();
     private IEnumerable<TData> _allSortedData = Array.Empty<TData>();
@@ -30,6 +35,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private readonly Dictionary<string, bool> _filterPopoverOpen = new();
     private bool _needsDataRefresh = true;
     private bool columnStateInitialized;
+    private int columnStateSyncedVersion = -1;
     private readonly Dictionary<string, bool> _headerMenuOpen = new();
 
     // Grouping/hierarchy state
@@ -846,8 +852,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     internal void RegisterColumn<TProp>(BbDataGridPropertyColumn<TData, TProp> column)
     {
-        _columns.Add(column);
-        OnColumnRegistered();
+        AddColumn(column);
     }
 
     /// <summary>
@@ -855,18 +860,15 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     internal void RegisterColumn(BbDataGridTemplateColumn<TData> column)
     {
-        _columns.Add(column);
-        OnColumnRegistered();
+        AddColumn(column);
     }
 
     /// <summary>
-    /// Registers a select column.
+    /// Registers a select column. Always laid out first, ahead of every data column.
     /// </summary>
     internal void RegisterColumn(BbDataGridSelectColumn<TData> column)
     {
-        // Insert select column at the beginning
-        _columns.Insert(0, column);
-        OnColumnRegistered();
+        AddColumn(column);
     }
 
     /// <summary>
@@ -874,26 +876,107 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     internal void RegisterHierarchyColumnDef(IDataGridColumn<TData> column)
     {
-        _columns.Add(column);
-        OnColumnRegistered();
+        AddColumn(column);
     }
 
     /// <summary>
-    /// Registers an expand column. Inserted after the select column (if present),
-    /// or at position 0.
+    /// Registers an expand column. Laid out after the select column (if present),
+    /// or first when there is none.
     /// </summary>
     internal void RegisterColumn(BbDataGridExpandColumn<TData> column)
     {
         _expandColumn = column;
-        var selectIndex = _columns.FindIndex(c => c.ColumnId == "__select");
-        var insertIndex = selectIndex >= 0 ? selectIndex + 1 : 0;
-        _columns.Insert(insertIndex, column);
-        OnColumnRegistered();
+        AddColumn(column);
 
         if (column.DetailRows != null)
         {
             StateHasChanged();
         }
+    }
+
+    /// <summary>
+    /// Records a column in registration order and recomputes the display order.
+    /// </summary>
+    private void AddColumn(IDataGridColumn<TData> column)
+    {
+        _registeredColumns.Add(column);
+        RebuildColumnOrder();
+        OnColumnRegistered();
+    }
+
+    /// <summary>
+    /// Recomputes <see cref="_columns"/> (the display order) from the registration order.
+    /// </summary>
+    /// <remarks>
+    /// Columns that leave <c>Order</c> unset keep their registration order, so a grid where no
+    /// column sets it is laid out exactly as it was before <c>Order</c> existed. Columns that do
+    /// set it are then inserted at that index, lowest value first, with ties falling back to
+    /// registration order. The select and expand columns hold fixed leading positions and take
+    /// no part in the index.
+    /// </remarks>
+    private void RebuildColumnOrder()
+    {
+        BbDataGridSelectColumn<TData>? selectColumn = null;
+        BbDataGridExpandColumn<TData>? expandColumn = null;
+        var result = new List<IDataGridColumn<TData>>(_registeredColumns.Count);
+        List<IDataGridColumn<TData>>? ordered = null;
+
+        foreach (var column in _registeredColumns)
+        {
+            if (column is BbDataGridSelectColumn<TData> select && selectColumn == null)
+            {
+                selectColumn = select;
+                continue;
+            }
+
+            if (column is BbDataGridExpandColumn<TData> expand && expandColumn == null)
+            {
+                expandColumn = expand;
+                continue;
+            }
+
+            if (column.Order == null)
+            {
+                result.Add(column);
+            }
+            else
+            {
+                ordered ??= new List<IDataGridColumn<TData>>();
+                ordered.Add(column);
+            }
+        }
+
+        if (ordered != null)
+        {
+            // OrderBy is stable, so columns sharing an Order stay in registration order. Each
+            // insert is forced past the previous one so the second of a tied pair lands after
+            // the first rather than displacing it.
+            var lastIndex = -1;
+            foreach (var column in ordered.OrderBy(c => c.Order!.Value))
+            {
+                var index = Math.Clamp(column.Order!.Value, 0, result.Count);
+                if (index <= lastIndex)
+                {
+                    index = Math.Min(lastIndex + 1, result.Count);
+                }
+
+                result.Insert(index, column);
+                lastIndex = index;
+            }
+        }
+
+        if (expandColumn != null)
+        {
+            result.Insert(0, expandColumn);
+        }
+
+        if (selectColumn != null)
+        {
+            result.Insert(0, selectColumn);
+        }
+
+        _columns.Clear();
+        _columns.AddRange(result);
     }
 
     private void OnColumnRegistered()
@@ -1189,15 +1272,40 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         await NotifyStateChangedAsync();
     }
 
+    /// <summary>
+    /// Keeps the column state's entry list in step with the registered columns.
+    /// </summary>
+    /// <remarks>
+    /// Columns register from their own <c>OnInitialized</c>, and a column produced indirectly —
+    /// by a wrapper component, or a fragment that only renders after an await — registers in a
+    /// later render pass than the columns declared alongside it. The first pass to see any column
+    /// initializes the state, and because
+    /// <see cref="GetVisibleColumns"/> renders strictly what the state lists, every column
+    /// arriving after that used to be dropped from the grid without a warning. Anything that
+    /// arrives late is therefore merged into the existing state rather than ignored.
+    /// </remarks>
     private void InitializeColumnState()
     {
-        if (columnStateInitialized || _columns.Count == 0)
+        if (_columns.Count == 0)
         {
             return;
         }
 
-        _gridState.Columns.Initialize(_columns.Select(c => (c.ColumnId, c.Visible)));
-        columnStateInitialized = true;
+        if (!columnStateInitialized)
+        {
+            _gridState.Columns.Initialize(_columns.Select(c => (c.ColumnId, c.Visible)));
+            columnStateInitialized = true;
+            columnStateSyncedVersion = _columnsVersion;
+            return;
+        }
+
+        if (columnStateSyncedVersion == _columnsVersion)
+        {
+            return;
+        }
+
+        columnStateSyncedVersion = _columnsVersion;
+        _gridState.Columns.SyncColumns(_columns.Select(c => (c.ColumnId, c.Visible)));
     }
 
     private async Task ProcessDataAsync()
@@ -2793,11 +2901,55 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     }
 
     /// <summary>
-    /// Called from JS when a column is reordered via drag-and-drop.
+    /// Called from JS when a column is dropped onto another header cell during a reorder drag.
     /// </summary>
+    /// <param name="columnId">The column being dragged.</param>
+    /// <param name="targetColumnId">The column whose header cell received the drop.</param>
+    /// <param name="placeAfter">
+    /// True when the pointer was released on the right half of the target (drop after it),
+    /// false for the left half (drop before it).
+    /// </param>
+    /// <remarks>
+    /// <para>
+    /// This method is the single owner of the conversion from a drop gesture into a
+    /// <see cref="DataGridColumnState"/> position. Keep it that way: the JS layer deliberately
+    /// reports only <em>which</em> column was dropped on and on <em>which side</em> of it, never a
+    /// positional index. A header-cell index cannot be translated safely, because the header row is
+    /// not a one-to-one view of the column order — hidden columns have no header cell at all, and
+    /// pinned columns are re-partitioned to the edges of the row by
+    /// <c>PartitionByPinning</c> regardless of their stored order.
+    /// </para>
+    /// <para>
+    /// <see cref="DataGridColumnState.ReorderColumn"/> has remove-then-insert semantics: the dragged
+    /// column is lifted out of the order first, and its <c>newIndex</c> argument is the insertion
+    /// point in what remains. The index is therefore resolved here against the entry list with the
+    /// dragged column already excluded. Resolving it against a list that still contained the dragged
+    /// column is what made rightward drags land one position too far to the right (issue #434).
+    /// </para>
+    /// </remarks>
     [JSInvokable]
-    public async Task OnColumnReordered(string columnId, int newIndex)
+    public async Task OnColumnReordered(string columnId, string targetColumnId, bool placeAfter)
     {
+        if (string.IsNullOrEmpty(columnId) || columnId == targetColumnId)
+        {
+            return;
+        }
+
+        // The order the columns will be in once the dragged one is lifted out.
+        var remaining = _gridState.Columns.Entries
+            .Where(e => e.ColumnId != columnId)
+            .OrderBy(e => e.Order)
+            .Select(e => e.ColumnId)
+            .ToList();
+
+        var targetIndex = remaining.IndexOf(targetColumnId);
+        if (targetIndex < 0)
+        {
+            return;
+        }
+
+        var newIndex = placeAfter ? targetIndex + 1 : targetIndex;
+
         _gridState.Columns.ReorderColumn(columnId, newIndex);
         _stateVersion++;
 
@@ -3088,6 +3240,31 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     private bool HasTableFixed() =>
         Resizable || _columns.Any(c => c.Pinned != ColumnPinning.None);
+
+    /// <summary>
+    /// Computes the accessible name for a column's header cell, returning null when the cell
+    /// should keep being named from its own rendered content.
+    /// </summary>
+    /// <remarks>
+    /// A header cell has no <c>aria-label</c> by default, so assistive technology names it from
+    /// its content — which is exactly right for the default header, where the content is the
+    /// column's title text. A <c>HeaderTemplate</c> replaces that text with arbitrary markup, and
+    /// the case the template exists to serve — an icon on its own — contributes no text at all,
+    /// leaving the column silently unnamed. So the title is supplied as an explicit label only
+    /// when a template is in play and a title is actually available to fall back to.
+    /// <para>
+    /// Because <c>aria-label</c> overrides content rather than adding to it, a template that does
+    /// render its own text is announced as <c>Title</c> rather than as that text. That is
+    /// deliberate: <c>Title</c> is already the canonical name for the column everywhere else in
+    /// the grid — the column chooser, the column menu, the filter and group-by labels — so the
+    /// header now agrees with them instead of drifting. It also means a template that already
+    /// carries hand-written screen-reader-only text is announced once, not twice.
+    /// </para>
+    /// </remarks>
+    private static string? GetHeaderAriaLabel(IDataGridColumn<TData> column) =>
+        column.HeaderTemplate != null && !string.IsNullOrWhiteSpace(column.Title)
+            ? column.Title
+            : null;
 
     private string GetHeaderCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
         bool isExpandColumn, bool isLastLeft, bool isFirstRight)

@@ -67,6 +67,34 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     public bool Visible { get; set; } = true;
 
     /// <summary>
+    /// Explicit position for this column, as a zero-based index among the grid's data columns.
+    /// When not set (the default), the column keeps its registration order — the order in which
+    /// its component initializes, which for a column written directly in the grid's markup is
+    /// the order it was declared in.
+    /// </summary>
+    /// <remarks>
+    /// Set this on a column produced indirectly — by a wrapper component, or by a fragment that
+    /// only renders after an await — where initialization order does not match declaration order.
+    /// <para>
+    /// Columns that leave <c>Order</c> unset are laid out first, in registration order. Each
+    /// column that sets it is then inserted at that index, lowest value first; an index past the
+    /// end appends. Two columns sharing an <c>Order</c> keep their registration order relative to
+    /// each other. Because unset columns retain their relative positions, a grid where no column
+    /// sets <c>Order</c> is laid out exactly as it would be without this parameter.
+    /// </para>
+    /// <para>
+    /// <see cref="BbDataGridSelectColumn{TData}"/> and <see cref="BbDataGridExpandColumn{TData}"/>
+    /// keep their fixed leading positions and are not counted by this index.
+    /// </para>
+    /// <para>
+    /// The value is read when the column registers with the grid; changing it afterwards has no
+    /// effect on an already rendered grid.
+    /// </para>
+    /// </remarks>
+    [Parameter]
+    public int? Order { get; set; }
+
+    /// <summary>
     /// Column width (e.g., "200px", "20%", "auto").
     /// </summary>
     [Parameter]
@@ -165,6 +193,26 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     public RenderFragment<TData>? CellTemplate { get; set; }
 
     /// <summary>
+    /// Custom header content. If provided, replaces the header title text only — the grid
+    /// still renders its own sort indicator, filter icon, pin icon, column menu and resize
+    /// handle around it, so a <see cref="Sortable"/> or <see cref="Groupable"/> column keeps
+    /// every affordance. Use it to show an icon or richer markup instead of
+    /// <see cref="Title"/>.
+    /// </summary>
+    /// <remarks>
+    /// While a template is supplied, the grid names the header cell with the column's title
+    /// (<c>aria-label</c>), so an icon-only header is still announced — no <c>sr-only</c> span of
+    /// your own is needed, and one that is already there is not announced twice. That label
+    /// replaces the template's own text rather than adding to it, which keeps the header agreeing
+    /// with the column chooser, the column menu and the filter labels, all of which already use
+    /// the title. Leave <see cref="Title"/> set to something meaningful for this reason; if it is
+    /// blank, no label is applied and the cell falls back to being announced from the template's
+    /// content.
+    /// </remarks>
+    [Parameter]
+    public RenderFragment? HeaderTemplate { get; set; }
+
+    /// <summary>
     /// The parent DataGrid component. Set via cascading parameter.
     /// </summary>
     [CascadingParameter]
@@ -184,6 +232,8 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
 
     bool IDataGridColumn<TData>.Visible => Visible;
 
+    int? IDataGridColumn<TData>.Order => Order;
+
     string? IDataGridColumn<TData>.Width => Width;
 
     bool IDataGridColumn<TData>.Hideable => Hideable;
@@ -199,7 +249,10 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
             ? context => CellTemplate(context.Item)
             : null;
 
-    RenderFragment<DataGridHeaderContext<TData>>? IDataGridColumn<TData>.HeaderTemplate => null;
+    RenderFragment<DataGridHeaderContext<TData>>? IDataGridColumn<TData>.HeaderTemplate =>
+        HeaderTemplate != null
+            ? _ => HeaderTemplate
+            : null;
 
     string? IDataGridColumn<TData>.CellClass => CellClass;
 

@@ -88,6 +88,13 @@ public class PositioningService : IPositioningService, IAsyncDisposable
     }
 
     /// <inheritdoc />
+    public async Task HidePositionAsync(ElementReference floating)
+    {
+        var module = await GetModuleAsync();
+        await module.InvokeVoidAsync("hidePosition", floating);
+    }
+
+    /// <inheritdoc />
     public async Task<IAsyncDisposable> AutoUpdateAsync(
         ElementReference reference,
         ElementReference floating,

@@ -181,6 +181,7 @@
 
 ### BbDataGridHeaderCell`1 (BlazorBlueprint.Primitives.DataGrid)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - ChildContent : RenderFragment
   - Class : String
   - ColumnId : String
@@ -1117,6 +1118,7 @@
   - HeaderTemplate : RenderFragment<DataGridHeaderContext<TData>> { get; }
   - Hideable : Boolean { get; }
   - NoWrap : Boolean { get; }
+  - Order : Int32? { get; }
   - Pinned : ColumnPinning { get; }
   - Reorderable : Boolean { get; }
   - Resizable : Boolean { get; }
@@ -1172,6 +1174,7 @@
   - ApplyPositionAsync(ElementReference floating, PositionResult position, Boolean makeVisible) : Task
   - AutoUpdateAsync(ElementReference reference, ElementReference floating, PositioningOptions options) : Task<IAsyncDisposable>
   - ComputePositionAsync(ElementReference reference, ElementReference floating, PositioningOptions options) : Task<PositionResult>
+  - HidePositionAsync(ElementReference floating) : Task
 
 ### IColumnDefinition<TData> (BlazorBlueprint.Primitives.Table)
   - CanSort : Boolean { get; }
