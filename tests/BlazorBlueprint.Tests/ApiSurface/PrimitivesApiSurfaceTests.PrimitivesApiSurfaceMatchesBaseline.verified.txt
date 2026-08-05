@@ -1174,6 +1174,7 @@
   - ApplyPositionAsync(ElementReference floating, PositionResult position, Boolean makeVisible) : Task
   - AutoUpdateAsync(ElementReference reference, ElementReference floating, PositioningOptions options) : Task<IAsyncDisposable>
   - ComputePositionAsync(ElementReference reference, ElementReference floating, PositioningOptions options) : Task<PositionResult>
+  - HidePositionAsync(ElementReference floating) : Task
 
 ### IColumnDefinition<TData> (BlazorBlueprint.Primitives.Table)
   - CanSort : Boolean { get; }
