@@ -289,7 +289,9 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
     private static string InputMode => IsFloatingPoint ? "decimal" : "numeric";
 
     private string ContainerClass => ClassNames.cn(
-        "flex items-center",
+        // items-stretch, not items-center: the stepper column sizes itself from the row rather than
+        // from a height of its own, so it tracks whatever the input resolves to.
+        "flex items-stretch",
         ShowButtons ? "rounded-md" : null
     );
 
@@ -306,8 +308,19 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         Class
     );
 
+    /// <summary>
+    /// Classes for the increment/decrement buttons.
+    /// </summary>
+    /// <remarks>
+    /// Each button takes half the stepper column via <c>flex-1</c> rather than a fixed height. It was
+    /// <c>h-5</c>, which summed across the two buttons to exactly the input's default <c>h-10</c> — so
+    /// they lined up until something changed the input's height, and sizing is done entirely through
+    /// <see cref="Class"/> since there is no size parameter. A consumer passing <c>h-8</c> got a 40px
+    /// stepper beside a 32px field, overhanging it at both ends with the rounded corners no longer
+    /// meeting the input's border. <c>min-h-0</c> lets them shrink past the icon's intrinsic height.
+    /// </remarks>
     private static string ButtonClass => ClassNames.cn(
-        "flex items-center justify-center w-8 h-5 border border-input bg-background",
+        "flex flex-1 min-h-0 items-center justify-center w-8 border border-input bg-background",
         "hover:bg-accent hover:text-accent-foreground",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "disabled:cursor-not-allowed disabled:opacity-50",
