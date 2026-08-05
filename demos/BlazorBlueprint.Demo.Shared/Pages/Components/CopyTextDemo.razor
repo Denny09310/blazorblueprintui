@@ -78,6 +78,36 @@
         <CodeBlock Source="Components/CopyText/scrollable-container.txt" />
     </div>
 
+    <!-- Value from a function -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Value From a Function</h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">ValueFunc</code> is evaluated when the
+                user copies, not on every render — for text derived from state that moves, or expensive
+                enough that computing it up front would be wasted. Copy the token below, change the
+                selection, and copy again.
+            </p>
+        </div>
+        <div class="border rounded-lg p-4 text-sm space-y-3">
+            <div class="flex items-center gap-2">
+                <span class="text-muted-foreground">Environment:</span>
+                <span class="font-mono">@_environment</span>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="CycleEnvironment">
+                    Change
+                </BbButton>
+            </div>
+            <div>
+                Connection token:
+                <BbCopyText ValueFunc="@(() => $"{_environment}-{DateTime.Now:HHmmss}")"
+                            OnCopied='(token) => ToastService.Success($"Copied {token}")'>
+                    @_environment-&lt;generated at copy time&gt;
+                </BbCopyText>
+            </div>
+        </div>
+        <CodeBlock Source="Components/CopyText/value-func.txt" />
+    </div>
+
     <!-- API Reference -->
     <section class="space-y-4">
         <div class="space-y-2">
@@ -87,7 +117,15 @@
         <div class="space-y-4">
             <ApiReference ComponentName="BbCopyText">
                 <ApiParameter Name="Value" Type="string?" Default="null">
-                    The text to copy to clipboard when clicked.
+                    The text to copy to clipboard when clicked. Takes precedence over
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">ValueFunc</code> when non-empty.
+                </ApiParameter>
+                <ApiParameter Name="ValueFunc" Type="Func<string?>?" Default="null">
+                    A function producing the text to copy, evaluated at click time rather than on every
+                    render. Used when <code class="text-xs bg-muted px-1 py-0.5 rounded">Value</code> is
+                    null or empty — the test is emptiness, not null, so a bound-but-unset
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Value</code> falls through to the
+                    function instead of copying nothing.
                 </ApiParameter>
                 <ApiParameter Name="ChildContent" Type="RenderFragment?" Default="null">
                     The content displayed inside the copy text element.
@@ -121,3 +159,12 @@
     opts.CopyText.Copied = ""Kopiert!"";
 });")" />
 </div>
+
+@code {
+    private static readonly string[] Environments = ["dev", "staging", "prod"];
+
+    private string _environment = Environments[0];
+
+    private void CycleEnvironment() =>
+        _environment = Environments[(Array.IndexOf(Environments, _environment) + 1) % Environments.Length];
+}

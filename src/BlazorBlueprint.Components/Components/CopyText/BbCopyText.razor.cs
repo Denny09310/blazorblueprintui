@@ -25,8 +25,36 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
     /// <summary>
     /// Sets the value to be copied to the clipboard when clicked.
     /// </summary>
-    [Parameter, EditorRequired]
+    /// <remarks>
+    /// Takes precedence over <see cref="ValueFunc"/> when non-empty. Not <c>EditorRequired</c>, because
+    /// supplying <see cref="ValueFunc"/> instead is a complete configuration.
+    /// </remarks>
+    [Parameter]
     public string? Value { get; set; }
+
+    /// <summary>
+    /// Gets or sets a function producing the value to copy, evaluated at click time.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Use this where the text is not known up front — derived from state that moves, or expensive
+    /// enough that computing it for every render would be wasteful. It is only called when the user
+    /// actually copies.
+    /// </para>
+    /// <para>
+    /// <see cref="Value"/> wins when it is a non-empty string. The test is emptiness rather than null
+    /// so that an unset-but-bound <c>Value</c> — the empty string, which a plain <c>string</c> binding
+    /// reaches naturally — falls through to the function instead of silently copying nothing.
+    /// </para>
+    /// <para>
+    /// This is the synchronous form deliberately. An asynchronous counterpart cannot simply await a
+    /// consumer's task before writing: clipboard writes require transient user activation, and several
+    /// browsers treat awaiting as spending it. Tracked separately in
+    /// <see href="https://github.com/blazorblueprintui/ui/issues/466">#466</see>.
+    /// </para>
+    /// </remarks>
+    [Parameter]
+    public Func<string?>? ValueFunc { get; set; }
 
     /// <summary>
     /// Gets or sets the content displayed inside the copy text element.
@@ -117,14 +145,24 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Resolves the text to copy: <see cref="Value"/> when non-empty, otherwise <see cref="ValueFunc"/>.
+    /// </summary>
+    private string? ResolveValue() =>
+        !string.IsNullOrEmpty(Value) ? Value : ValueFunc?.Invoke();
+
     private async Task HandleClickAsync()
     {
-        if (string.IsNullOrEmpty(Value))
+        // Resolved once per click, not per render — ValueFunc may be expensive, and copying then
+        // reporting two different strings through OnCopied would be worse than either.
+        var value = ResolveValue();
+
+        if (string.IsNullOrEmpty(value))
         {
             return;
         }
 
-        var success = await CopyToClipboardAsync(Value);
+        var success = await CopyToClipboardAsync(value);
         if (!success)
         {
             return;
@@ -134,7 +172,7 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
 
         if (OnCopied.HasDelegate)
         {
-            await OnCopied.InvokeAsync(Value);
+            await OnCopied.InvokeAsync(value);
         }
     }
 

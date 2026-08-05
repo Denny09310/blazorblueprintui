@@ -685,7 +685,8 @@
   - ChildContent : RenderFragment
   - Class : String
   - OnCopied : EventCallback<String>
-  - Value : String [EditorRequired]
+  - Value : String
+  - ValueFunc : Func<String>
 
 ### BbCurrencyInput (BlazorBlueprint.Components)
   - AllowNegative : Boolean
