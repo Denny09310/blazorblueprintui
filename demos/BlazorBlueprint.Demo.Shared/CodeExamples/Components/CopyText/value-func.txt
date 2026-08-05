@@ -1,5 +1,5 @@
 Environment: @_environment
-<BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="CycleEnvironment">
+<BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="CycleEnvironment">
     Change
 </BbButton>
 
