@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-08-05
+
+### Fixed
+
+- **Scatter, line and area series could not plot against a real X value** — Reported in [#439](https://github.com/blazorblueprintui/ui/issues/439), where every scatter example on the docs site appeared to compare a Y value against another Y value rather than X against Y. It did, and the cause was not the demo data. `BbScatter`, `BbLine` and `BbArea` emitted a flat list of Y values, which leaves ECharts to derive each point's X from its *index*. That is right for a category axis, and it is why the ordinary categorical chart has always looked correct. It is wrong for a value axis: an axis of `Type="AxisType.Value"` ignores the `data` it is given, so the X values passed to `BbXAxis` via `DataKey` were dropped and the points were plotted against ordinal position regardless. The two halves failed in a way that hid each other — the axis looked configured, the labels came from the right property, and the plot was a Y-over-position chart wearing X's labels. There was no arrangement of the existing parameters that produced a genuine X:Y plot, which also made the answer to the reporter's follow-up question "you can't", and made the example in `BbScatter`'s own XML documentation — which advertised exactly that arrangement — wrong. The three series now take **`XDataKey`**, naming the property that holds each point's X value, and emit explicit `[x, y]` pairs. Leave it unset and nothing changes: the flat list is still emitted, categorical charts are untouched, and the composite bar-plus-scatter overlay keeps working as before. Rows missing either coordinate become a null entry rather than a partial pair, which ECharts would otherwise render against a coerced zero; the returned list stays parallel to the source data rather than being compacted, because `SymbolSizeKey` zips against it by index and a compacted list would have silently misassigned every bubble size after the first gap.
+
+### Added
+
+- **`BbXAxis.Scale`** — `BbYAxis` has carried `Scale` for some time; the X axis had no equivalent, which went unnoticed while no chart in the library used a numeric X axis. Plotting the first genuine one surfaced it immediately: a value axis includes zero by default, so heights of 160-190 occupied the last sixth of the plot and the correlation they were meant to show was squeezed into a corner. Set it to scale the axis to the data range instead. It is deliberately opt-in on both axes — suppressing zero exaggerates small differences, so it should be a decision rather than a default, and it is the wrong choice wherever the distance from zero is part of what the reader should take away.
+
+---
+
 ## 2026-08-03
 
 ### Added
