@@ -256,6 +256,12 @@ public partial class BbCurrencyInput : ComponentBase
     /// <summary>
     /// Builds the JS configuration object from current parameters.
     /// </summary>
+    /// <remarks>
+    /// The separator handed to the JS sanitiser must be the one <see cref="TryParseValue"/> will read
+    /// back, which is the <em>currency's</em> — see <see cref="CultureInfo"/>. Using the ambient culture
+    /// here made the two disagree whenever they differed, and on Blazor Server the ambient culture is
+    /// the server's rather than the user's, so they differed for everyone.
+    /// </remarks>
     private object GetJsConfig() => new
     {
         disableDebounce = DisableDebounce,
@@ -263,7 +269,7 @@ public partial class BbCurrencyInput : ComponentBase
         stepKeys = new[] { "ArrowUp", "ArrowDown" },
         allowDecimal = true,
         allowNegative = AllowNegative,
-        decimalSeparator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator,
+        decimalSeparator = CultureInfo.NumberFormat.NumberDecimalSeparator,
         enableWheelStep = EnableWheelStep
     };
 
@@ -373,8 +379,11 @@ public partial class BbCurrencyInput : ComponentBase
     {
         if (disposed) { return; }
 
-        // Show raw number without formatting for easier editing
-        editingValue = Value.ToString($"F{Currency.DecimalPlaces}", CultureInfo.InvariantCulture);
+        // Show the raw number without group separators for easier editing. Formatted through the
+        // currency's culture, not the invariant one: TryParseValue reads this string back through
+        // that same culture on blur, so an invariant "999.99" against a de-DE parse would have its
+        // dot stripped as a group separator and come back as 99999.
+        editingValue = Value.ToString($"F{Currency.DecimalPlaces}", CultureInfo);
         isEditing = true;
         StateHasChanged();
     }
@@ -410,7 +419,7 @@ public partial class BbCurrencyInput : ComponentBase
         if (clampedValue != Value)
         {
             Value = clampedValue;
-            editingValue = clampedValue.ToString($"F{Currency.DecimalPlaces}", CultureInfo.InvariantCulture);
+            editingValue = clampedValue.ToString($"F{Currency.DecimalPlaces}", CultureInfo);
             await ValueChanged.InvokeAsync(clampedValue);
             NotifyFieldChanged();
         }
