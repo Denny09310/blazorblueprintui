@@ -1,4 +1,4 @@
-## What's New in v4.0.0-beta.7
+## What's New in v4.0.0-beta.8
 
 **This is a prerelease.** The API may still change before the stable v4.0.0 release.
 
