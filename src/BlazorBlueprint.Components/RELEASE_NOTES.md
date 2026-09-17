@@ -1,11 +1,11 @@
-## What's New in v4.0.0-beta.6
+## What's New in v4.0.0-beta.7
 
 **This is a prerelease.** The API may still change before the stable v4.0.0 release.
 
 ### Breaking Changes
 
 - **.NET 10**: the package now targets `net10.0` only and depends on `Microsoft.AspNetCore.Components.Web` 10.0.12. .NET 8 and .NET 9 are no longer supported.
-- **BlazorBlueprint.Primitives**: the dependency is now 4.0.0-beta.6, which has its own breaking changes. Keep Components and Primitives on matching v4 versions. See the Primitives release notes and `V4-MIGRATION-GUIDE.md`.
+- **BlazorBlueprint.Primitives**: the dependency is now 4.0.0-beta.7, which has its own breaking changes. Keep Components and Primitives on matching v4 versions. See the Primitives release notes and `V4-MIGRATION-GUIDE.md`.
 - **Stylesheet**: every Tailwind utility in `blazorblueprint.css` is now prefixed `bb:` (`.bb\:flex`) and lives in its own `bb-utilities` cascade layer, so your Tailwind build and the library's can no longer emit the same class. The layer order is `properties, theme, base, components, bb-utilities, utilities, bb`.
 - **Class parameter**: no markup change is needed. `ClassNames.cn` merges across the prefix, so `Class="p-6"` still replaces the library's `bb:p-4`.
 - **Tailwind `@source`**: remove any `@source` that points at the Blazor Blueprint package or sources. Under a prefixed build it emits nothing.
@@ -23,6 +23,8 @@
 - **JavaScript modules**: components import their module once per circuit through `JsModules.GetAsync` / `PrimitiveModules.GetAsync` and no longer dispose it. Primitive modules are reached through `bb-primitives.js` under a namespace (`elementUtils.isNearBottom`). Custom code that imported individual primitive files must be updated.
 - **Core bundle**: `theme.js`, `sidebar.js`, `sidebar-inset.js`, `text-input.js` and `composition-guard.js` ship as `bb-components-core.js` under a namespace (`theme.initialize`). Import it through `ComponentModules.GetCoreAsync`.
 - **BbPopoverContent**, **BbSelectContent**, **BbDropdownMenuContent**: `BbFloatingPortal` wires dismissal and listbox keys in the call that opens the overlay. JavaScript owns `data-side`, `data-focused` and `aria-activedescendant`, so stop rendering them from C#.
+- **BbSortable**: keyboard sorting is on by default, so each item, or its drag handle, is now a tab stop. Set `KeyboardSorting="false"` to keep the old tab order.
+- **BbSortable**: in a drop between two connected lists, the source list's `OnRemove` now runs before the target list's `OnAdd`.
 - **IVirtualizedGroupHandler**: gains `TryHoverItem(string elementId)`. Custom implementations must add it.
 - **BbRichTextEditor**: Quill 2 is now required. The Quill 1 fallback for `getSemanticHTML` is removed, and the setup notes pin `quill@2.0.3`.
 
@@ -64,7 +66,7 @@
 - **BbFilterBuilder**: saved `Presets` shown as buttons or a dropdown (`PresetDisplay`, `ApplyPresetAsync`), `SearchableFields`, and per-field `ValueEditors` templates.
 - **BbCarousel**: autoplay with a pause/play button, multiple or fractional `SlidesPerView`, `Gap`, built-in indicators, bindable `ActiveIndex`, `OnSlideChanged` and `GoToAsync`.
 - **BbDrawer**: `SnapPoints` with a bindable `SnapIndex`, pointer and arrow-key resizing, and `DismissOnDrag`.
-- **BbSortable**: keyboard sorting (pick up, move, move to a connected list with Control+Left/Right, drop, cancel), `CanMove` and `CanDrop` rules, and a `DragOverlayTemplate` preview.
+- **BbSortable**: keyboard sorting (pick up, move, move to a connected list with Control+Left/Right, drop, cancel) with `KeyboardSorting` and `KeyboardInstructions`, `CanMove` and `CanDrop` rules, and a `DragOverlayTemplate` preview.
 - **BbSidebarProvider**: new `CollapsedMode`. `Pill` replaces the icon rail with floating pill navigation when the sidebar collapses.
 - **Theme presets**: `ThemeDesign` sets density, font stack, card and menu surfaces, and menu colours, and is saved with the theme. Fonts are not downloaded; your app supplies them.
 - **ThemeService**: new `SetPresetAsync`, `SetDesignAsync` and `Preset`. **ThemeOptions** gains `DefaultPreset`, and `ThemePresets` offers seven starting points.
@@ -104,6 +106,10 @@
 - **BbCopyText**: the `execCommand` fallback runs only in insecure contexts, so it no longer reports success with an empty clipboard.
 - **BbDrawerTrigger**, **BbDrawerClose**: now show the themed focus ring.
 - **BbPopoverContent**, **BbDropdownMenuContent**: no longer render twice on open.
+- **BbDialog**, **BbAlertDialog**, **BbSheet**, **BbDrawer**: Tab no longer escapes the modal when focus is on the container or on a listbox outside the tab order, which WebKit allowed.
+- **BbDropdownMenu**, **BbContextMenu**, **BbMenubar**: keys pressed with Ctrl, Alt or Meta are ignored, and in a right-to-left **BbMenubar** Left and Right move to the correct menu.
+- **BbToggleGroup**: without a bound value, items show the pressed state as soon as they are toggled.
+- **BbSortable**: no longer calls `OnUpdate` for an out-of-range or unchanged index, or when `Sort` is false.
 
 ### Improvements
 
@@ -117,6 +123,7 @@
 - **BbCommandInput**: the focus ring moves from the `<input>` to its row.
 - **ThemeService**: invalid colour names in `localStorage` fall back to the default in the browser, without an extra round trip.
 - **BbNavigationMenuTrigger**: ArrowDown no longer waits 50 ms before focusing the first item.
+- **BbSortable**: items render with `role="listitem"`, and the live status region and keyboard instructions have stable ids.
 
 ### Performance
 
