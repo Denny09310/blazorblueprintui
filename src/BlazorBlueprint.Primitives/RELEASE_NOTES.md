@@ -1,4 +1,4 @@
-## What's New in v4.0.0-beta.6
+## What's New in v4.0.0-beta.7
 
 **This is a prerelease.** The API may still change before the stable v4.0.0 release.
 
@@ -11,6 +11,14 @@
 - **BbFloatingPortal**: JavaScript now owns the resolved `data-side` attribute and a listbox's `data-focused` and `aria-activedescendant` state. Owners that rendered these from C# must stop, or the two writers will conflict.
 - **click-outside.js**: the `onClickOutside` and `onEscapeKey` exports are removed. Use `BbFloatingPortal` with `FloatingDismissOptions` instead.
 - **BbTableRow**, **BbDataGridRow**, **BbMenubarContent**, **BbSortable**: the Tailwind utilities these primitives render (row focus ring, menubar backdrop, sortable `sr-only` live region) are now `bb:`-prefixed. A consumer's own Tailwind build no longer emits them, so remove any `@source` that points at the library and update CSS or test selectors that matched the old class names.
+- **BbSortable**: keyboard sorting is on by default, so each item, or its drag handle, is now a tab stop. Set `KeyboardSorting="false"` to keep the previous tab order.
+- **BbSortable**: in a cross-list drop between two `BbSortable` lists, the source list's `OnRemove` now runs before the target list's `OnAdd`. Code that relied on the old order must be updated.
+
+### New Components
+
+- **BbMenuSub**, **BbMenuSubTrigger** and **BbMenuSubContent**: nested submenus for dropdown menus, context menus and menubars. The trigger opens on hover or click, and the arrow keys move into and back out of the submenu, including in right-to-left layouts.
+- **BbMenuRadioGroup** and **BbMenuRadioItem**: generic single-choice items inside any menu, with `Value`, `ValueChanged` and `CloseOnSelect`.
+- **BbContextMenuCheckboxItem**: a checkbox item for context menus, with `Checked`, `CheckedChanged` and `CloseOnSelect`.
 
 ### New Features
 
@@ -22,6 +30,7 @@
 - **BbFloatingPortal** gains `Keyboard` (`FloatingKeyboardOptions`). Listbox or menu keyboard handling is wired inside the open call, with `FloatingKeyboardKind` selecting the behaviour.
 - **BbFloatingPortal** gains `SideElementId`, so JavaScript writes the resolved `data-side` attribute on a named element without a C# re-render.
 - **BbFloatingPortal** gains `ScrollToCurrentIn` and `ScrollToCurrentSelector`, which scroll a chosen item into view before the overlay is revealed.
+- **FloatingKeyboardOptions** gains `InitialFocus` (`"first"`, `"last"` or `"container"`), which moves focus into a menu after the overlay is revealed.
 - **BbFloatingPortal** gains `AutoFocusId`, which focuses a named element one frame after the reveal, inside the call that opens the overlay.
 - **BbFloatingPortal** gains `RestoreFocusToId` and `RestoreFocusOnClose`, so the browser returns focus to the trigger inside the close call for an intentional close only.
 - **BbPopoverContent** gains `AutoFocusId`, `ScrollToSelected` and `ScrollToSelectedSelector`, so a popover-based list can focus its search box and open already scrolled to its current item.
@@ -32,6 +41,13 @@
 - **JsModules.GetAsync** and **PrimitiveModules.GetAsync**: shared, per-circuit module references that any component can use without owning or disposing them. **JsModules.TryGetLoaded** and **PrimitiveModules.TryGetLoaded** return an already-loaded module synchronously.
 - **JsModules.Versioned** appends an assembly's informational version to a module path as a `v` query, so a new release is a new URL. **PrimitiveModules.ModuleUrl** exposes the versioned bundle URL.
 - **elementUtils.observeNearBottom** and **observeHover**: new JavaScript observers that call .NET once when a list scrolls near its bottom or when the pointer moves onto a different item.
+- **BbSortable keyboard sorting**: Space or Enter picks up an item, the arrow keys, Home and End move it, Space or Enter drops it, and Escape cancels. Ctrl plus Left or Right moves the item to the next connected list. `KeyboardInstructions` sets the accessible instructions linked to each handle.
+- **BbSortable** gains `CanMove` and `CanDrop`, which reject a reorder or a cross-list drop before any list callback runs.
+- **BbSortable** gains `DragOverlayTemplate`, a decorative preview that follows the pointer during a drag. Setting it turns on the fallback renderer.
+- **BbSortable**: when `Handle` is not set, an element marked `data-bb-sortable-handle` inside an item becomes the drag handle. A disabled handle cannot start a drag.
+- **BbToggleGroup** gains `Required`, which stops the user from clearing the last selected value.
+- **Theme scopes**: an overlay or a sortable drag preview opened from inside an element marked `data-bb-theme-scope` copies that element's theme CSS variables and font, and follows changes to them while open.
+- **Tree keyboard navigation**: in a tree marked `data-tree-select="true"`, Space expands or collapses a branch without changing the value, and Enter selects the item or toggles its checkbox.
 
 ### Bug Fixes
 
@@ -50,6 +66,10 @@
 - **BbSlider**: right and middle clicks no longer start a drag, and a lost pointer capture now ends the drag.
 - **elementUtils.focusElement** waits for the element to become visible before focusing it, so focus reaches portal content that is revealed after positioning, such as a nested calendar.
 - **Tree view keyboard navigation** skips items marked `hidden` and keeps a tabbable item when filtering hides the previous tab stop.
+- **Focus trap**: Tab no longer leaves a modal when focus is on the container or on a listbox outside the tab order, which WebKit allowed. With nothing focusable inside, Tab keeps focus on the container.
+- **Menu keyboard navigation**: a parent menu no longer handles keys pressed inside a nested menu, and keys pressed with Ctrl, Alt or Meta are ignored. In a right-to-left menubar, Left and Right now move to the correct menu.
+- **BbToggleGroup**: without a bound value, items now show the new pressed state as soon as they are toggled.
+- **BbSortable** no longer calls `OnUpdate` for a move with an out-of-range or unchanged index, or when `Sort` is false.
 - **JavaScript modules**: a browser or CDN that serves a stale copy of a bundled module no longer kills the circuit at the first call. The bundle fails at load with an error that names the file and says what to do.
 - **NavigationMenuContext**: the close timer catches every exception, so an unexpected error in the fire-and-forget handler can no longer close the Blazor Server circuit.
 
@@ -57,6 +77,7 @@
 
 - **Package licensing**: the NuGet package now includes `LICENSE`, `NOTICE` and `THIRD-PARTY-NOTICES.txt` (also served at `_content/BlazorBlueprint.Primitives/THIRD-PARTY-NOTICES.txt`), and the bundled Floating UI file carries its MIT license header.
 - **README** documents the JavaScript bundle, the `overlay.open` pattern, the rules for adding a primitive that needs JavaScript, and the bundled license notices.
+- **BbSortable** renders each item with `role="listitem"` and a `data-bb-sortable-item` attribute, and gives its live status region and keyboard instructions stable ids.
 
 ### Performance
 
