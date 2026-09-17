@@ -1,81 +1,137 @@
-## Unreleased v4 — .NET 10
-
-**Breaking:** all library projects now target .NET 10. .NET 8 and .NET 9 are no longer supported.
-
-- **DataGrid:** cell and batch editing with isolated drafts, DataAnnotations validation, rejection/retry, cancel, keyboard save/cancel and focus restoration. Editors preserve column widths and use inline InputGroup actions. Initial sorting and ordering after saves are covered by demos with text, number, date, select and checkbox editors.
-- **Scheduler:** day/week/work-week time slots, resource lanes, overlapping appointments, create/edit/delete with confirmation, drag-to-move, top/bottom resizing, recurrence exceptions, IANA time zones and explicit DST handling. Moving and resizing snap to SlotMinutes (including 15, 30 and 60); rejected changes retain the original events. EnableTimeZones=false provides a single-zone editor without zone controls. Week view offers a bindable Monday/Sunday start; WorkWeek always shows Monday–Friday and navigates in seven-day steps.
-- **TreeSelect / Cascader:** searchable hierarchy pickers with stable keys and EditContext bindings. TreeSelect uses the standard picker chevron and search styling, with cascading parent checkboxes and indeterminate states; leaf-only values preserve parent selection behavior across collapsed and filtered branches.
-- **Hierarchy picker polish:** Cascader now shares the standard chevron/search styling, matches the trigger width, and supports arrow keys, Home/End, branch navigation, search-result selection and RTL. Opening selected paths and expanding branches scrolls the newest level into view. TreeSelect preserves its search during the exit animation to avoid flashing unfiltered content on close.
-- **FileUpload:** pluggable transport, progress, cancellation and retry; browser file references survive subsequent selections.
-- **Demos:** Scheduler, TreeSelect, Cascader and Data Grid Editing now follow the shared example, accessibility and API structure and appear alphabetically in the component catalog.
-- **Scrolling and event layout:** native component scrollbars use theme colors in light and dark modes; appointment content stays top aligned.
-- **Picker keyboard behavior:** date selection returns focus to its trigger; Enter opens a Select without the following native click closing it again.
-
-## What's New in v4.0.0-beta.5
+## What's New in v4.0.0-beta.6
 
 **This is a prerelease.** The API may still change before the stable v4.0.0 release.
 
 ### Breaking Changes
-- **Stylesheet** — every Tailwind utility in `blazorblueprint.css` is now prefixed `bb:` (`.bb\:flex`, `.bb\:sm\:hidden`, `.bb\:data-\[state\=open\]\:bg-accent`) and lives in a `bb-utilities` cascade layer of its own. In v3 the utilities were unprefixed and written into the shared `utilities` layer, so a consumer's own Tailwind build and the library's fought over the same class names and whichever `<link>` came second won; no load order fixed both sides. The two builds can no longer emit the same class, and load order no longer matters. The layer order is now `properties, theme, base, components, bb-utilities, utilities, bb`.
-- **Class parameter** — nothing changes in your markup. `ClassNames.cn` strips the `bb:` prefix for the merge and restores it on the survivors, so a consumer `Class="p-6"` still replaces the library's `bb:p-4` and `cn("bb:p-4", "bb:p-8")` yields `bb:p-8`.
-- **Tailwind `@source`** — remove any `@source` in your Tailwind input that points at the Blazor Blueprint package or sources. It was never needed, and under a prefixed build it finds only `bb:` tokens, does not recognise the `bb` variant, and emits nothing.
-- **Projects without a Tailwind build** — bare utilities in your own markup (`class="flex gap-4"`) that relied on `blazorblueprint.css` happening to contain them now match nothing. Add a Tailwind build, or use the prefixed classes directly (`class="bb:flex bb:gap-4"`) as a stopgap; that set is whatever the components use and is not a stable API.
-- **shimmer**, **scroll-fade-x** — the two safelisted chat utilities are now `bb:shimmer` and `bb:scroll-fade-x`. Update any `Class="shimmer"` or `Class="scroll-fade-x"`.
-- **Theme variables** — Tailwind's generated theme variables in `blazorblueprint.css` carry the prefix too (`--bb-spacing`, `--bb-default-transition-duration`). The library's own semantic tokens (`--background`, `--border`, `--muted` and friends) are unchanged, so a shadcn or tweakcn theme still drops in as before.
-- **CursorExtensions.ToClass** — returns the prefixed class (`bb:cursor-pointer` instead of `cursor-pointer`). Code that compared or concatenated the result must be updated.
-- **Internal class names** — CSS, JavaScript or tests that select the library's internal elements by utility class (`.flex-col`, `.group\/row`, `.hidden`) now need the prefix. Prefer the `data-slot` and other data attributes the components render; those are stable.
-- **BbTooltipTrigger** — `AsChild` now defaults to `false`. A bare icon, plain text or arbitrary markup opens the tooltip with no opt-in. Add `AsChild="true"` where the child consumes the trigger context itself, such as a `BbButton`. The wrapper `<span>` uses `display: contents`, so layout is unaffected, but DOM-walking selectors and test hooks may need updating.
-- **BbDrawerTrigger**, **BbDrawerClose** — now render a real `<button type="button">` instead of a bare `<div @onclick>`, so they are reachable by keyboard and announced as controls. Both gain `AsChild`; set it to `true` when the child is already a control, otherwise you get a button nested inside a button.
-- **JavaScript modules** — every component now imports its JS module once per circuit through `JsModules.GetAsync` / `PrimitiveModules.GetAsync` and no longer disposes it. Primitive modules are addressed through the `bb-primitives.js` bundle under a namespace (`elementUtils.isNearBottom`, `portal.lockBodyScroll`, `escapeKeydown.initialize`). Custom code that imported the individual primitive files or called the unnamespaced exports must be updated.
-- **Core bundle** — `theme.js`, `sidebar.js`, `sidebar-inset.js`, `text-input.js` and `composition-guard.js` ship as `bb-components-core.js` and are addressed under a namespace (`theme.initialize`, `sidebarInset.scrollToTop`). Custom code that imported the individual files must be updated. Import it through `ComponentModules.GetCoreAsync`; the URL now carries the library version as a query string, so a stale browser or CDN cache can never serve an old entry file for a new release.
-- **BbPopoverContent**, **BbSelectContent**, **BbDropdownMenuContent** — dismissal and listbox keyboard handling are wired by `BbFloatingPortal` inside the call that opens the overlay. JavaScript now owns `data-side`, `data-focused` and `aria-activedescendant`; code that rendered these from C# must stop, or the two writers will conflict.
-- **IVirtualizedGroupHandler** — gains `TryHoverItem(string elementId)`. Custom implementations must add it so a real hover inside a virtualized group can move keyboard focus.
-- **BbRichTextEditor** — Quill 2 is now required. The interop no longer falls back to a Quill 1 code path for `getSemanticHTML`, and the demo and setup notes pin `quill@2.0.3` instead of the floating `quill@2` tag. The editor has required Quill 2 since it was rewritten for it; the fallback only hid a wrong script version behind subtly different HTML.
-- Updated the `BlazorBlueprint.Primitives` dependency to 4.0.0-beta.5, which carries its own breaking changes, including the same `bb:` prefix on the few utilities primitives render themselves. See the Primitives release notes and `V4-MIGRATION-GUIDE.md`.
+
+- **.NET 10**: the package now targets `net10.0` only and depends on `Microsoft.AspNetCore.Components.Web` 10.0.12. .NET 8 and .NET 9 are no longer supported.
+- **BlazorBlueprint.Primitives**: the dependency is now 4.0.0-beta.6, which has its own breaking changes. Keep Components and Primitives on matching v4 versions. See the Primitives release notes and `V4-MIGRATION-GUIDE.md`.
+- **Stylesheet**: every Tailwind utility in `blazorblueprint.css` is now prefixed `bb:` (`.bb\:flex`) and lives in its own `bb-utilities` cascade layer, so your Tailwind build and the library's can no longer emit the same class. The layer order is `properties, theme, base, components, bb-utilities, utilities, bb`.
+- **Class parameter**: no markup change is needed. `ClassNames.cn` merges across the prefix, so `Class="p-6"` still replaces the library's `bb:p-4`.
+- **Tailwind `@source`**: remove any `@source` that points at the Blazor Blueprint package or sources. Under a prefixed build it emits nothing.
+- **Projects without a Tailwind build**: bare utilities in your own markup (`class="flex gap-4"`) that relied on `blazorblueprint.css` now match nothing. Add a Tailwind build, or use the prefixed classes as a stopgap; that class set is not a stable API.
+- **shimmer**, **scroll-fade-x**: renamed to `bb:shimmer` and `bb:scroll-fade-x`.
+- **Theme variables**: Tailwind's generated variables are prefixed too (`--bb-spacing`, `--bb-default-transition-duration`). Semantic tokens such as `--background` and `--border` are unchanged.
+- **CursorExtensions.ToClass**: returns the prefixed class (`bb:cursor-pointer`).
+- **Internal class names**: CSS, JavaScript or tests that select internal elements by utility class (`.flex-col`, `.hidden`) need the prefix. Prefer the `data-slot` and other data attributes, which are stable.
+- **Menus**: **BbDropdownMenu**, **BbContextMenu** and **BbMenubar** content and items now take their colours from `--bb-menu-*` tokens. The default hover and focus highlight is a tint of the menu foreground, not `--accent`. Set `--bb-menu-accent: var(--accent)` and `--bb-menu-accent-foreground: var(--accent-foreground)` to restore the old highlight.
+- **BbCarousel**: drag and swipe navigation is now on by default (`Draggable="true"`), and the root element is keyboard-focusable. JavaScript now positions the slides, so **BbCarouselContent** no longer renders an inline `transform`. `SlidesPerView` below 1, a negative `Gap` or an `AutoplayInterval` below 1000 now throws.
+- **BbDataGrid**: a paged `IQueryable` source without search, grouping or virtualization now runs the full query only when a CSV export is requested. Keep its query provider (for example a `DbContext`) alive until then.
+- **ThemeService**: `SetRadiusAsync` throws for values outside 0–4 rem, and invalid `ThemeOptions` defaults throw when the service is created. A stored radius outside that range is ignored.
+- **BbTooltipTrigger**: `AsChild` now defaults to `false`. Add `AsChild="true"` where the child consumes the trigger context itself, such as a `BbButton`.
+- **BbDrawerTrigger**, **BbDrawerClose**: now render a real `<button type="button">` and gain `AsChild`. Set `AsChild="true"` when the child is already a control, or you get a button inside a button.
+- **JavaScript modules**: components import their module once per circuit through `JsModules.GetAsync` / `PrimitiveModules.GetAsync` and no longer dispose it. Primitive modules are reached through `bb-primitives.js` under a namespace (`elementUtils.isNearBottom`). Custom code that imported individual primitive files must be updated.
+- **Core bundle**: `theme.js`, `sidebar.js`, `sidebar-inset.js`, `text-input.js` and `composition-guard.js` ship as `bb-components-core.js` under a namespace (`theme.initialize`). Import it through `ComponentModules.GetCoreAsync`.
+- **BbPopoverContent**, **BbSelectContent**, **BbDropdownMenuContent**: `BbFloatingPortal` wires dismissal and listbox keys in the call that opens the overlay. JavaScript owns `data-side`, `data-focused` and `aria-activedescendant`, so stop rendering them from C#.
+- **IVirtualizedGroupHandler**: gains `TryHoverItem(string elementId)`. Custom implementations must add it.
+- **BbRichTextEditor**: Quill 2 is now required. The Quill 1 fallback for `getSemanticHTML` is removed, and the setup notes pin `quill@2.0.3`.
+
+### New Components
+
+- **BbScheduler**: day, week and work-week time slots with resource lanes, overlapping events, an event editor with delete confirmation, and drag-to-move and resize that snap to `SlotMinutes`. Supports recurrence (edit one occurrence or the series), IANA time zones with DST checks, `FirstDayOfWeek`, `InitialScrollHour`, and `OnEventChange` with `Cancel` to reject a change.
+- **SchedulerEngine**: public helpers to expand recurring events (`Expand`), apply an edit (`ApplyChange`), validate an event and convert a local time to an instant (`ToInstant`).
+- **BbTreeSelect**: searchable hierarchy picker with single or multiple selection, cascading checkboxes with indeterminate states, `LeafOnly`, clearing and `EditContext` binding.
+- **BbCascader**: column-based hierarchy picker with full-path search, optional branch selection (`ChangeOnSelect`), keyboard and RTL navigation, and `EditContext` binding.
+- **BbDateInput**, **BbTimeInput**: culture-aware segmented date and time entry with keyboard increments, min/max bounds, an optional calendar or time picker, and `EditContext` validation.
+- **BbAppBar**: top app bar with title, description, back button, actions, sticky positioning and safe-area padding.
+- **BbBottomNav**, **BbBottomNavItem**: bottom tab navigation with a bindable `Value`, links, icons, fixed positioning and safe-area padding.
+- **BbNotificationBadge**: count or dot badge over any content, with `Maximum`, `ShowZero`, `Position` and `Variant`.
+- **BbQuantityStepper**: integer stepper with `Min`, `Max` and `Step`, `EditContext` binding, and an `OnRemove` callback when decreasing at the minimum.
+- **BbSectionHeader**: section title with description, actions and an optional separator.
+- **BbMotion**: preset or custom keyframe animations, triggered on visibility, in view, hover, press or from code (`PlayAsync`). Respects reduced motion.
+- **BbHeightAnimation**: animates expanding, collapsing and content resizing while keeping the content mounted.
+- **BbSelectionIndicator**: an indicator that slides to the active element and can follow hover and keyboard focus.
+- **BbPageTransition**, **BbScreenTransition**: animate incoming page content, or new screen content when `TransitionKey` changes.
+- **BbRenderStateProvider**: cascades a `RenderState` that tells content when the app is interactive.
+- **BbThemeScope**: applies a `ThemeDesign` and an optional radius to a subtree, including its floating overlays.
+- **BbSidebarPillNav**, **BbSidebarPillNavItem**, **BbSidebarPillInset**: floating pill navigation for the collapsed `SidebarCollapsedMode.Pill` sidebar.
+- **BbSidebarSelectionIndicator**: animated selection indicator for sidebar menus.
+- **Menu submenus and radio items**: **BbDropdownMenu**, **BbContextMenu** and **BbMenubar** each gain `Sub`, `SubTrigger`, `SubContent`, `RadioGroup` and `RadioItem` components. **BbContextMenuCheckboxItem** is also new.
+- **BbSortableHandle**: accessible drag handle with a default grip icon.
+- **BbBadgeIcon**: small decorative icon for a **BbBadge**, by Lucide `Name` or custom content.
 
 ### New Features
-- **BbRichTextEditor** — tables, through Quill 2's built-in table module, so there is no extra script to load. The `Full` toolbar gains a table button: a 6 × 6 size picker outside a table, and insert row above/below, insert column left/right, delete row, delete column and delete table with the caret inside one. The same actions are on the component reference as `InsertTableAsync(rows, columns)`, `InsertRowAboveAsync`, `InsertRowBelowAsync`, `InsertColumnLeftAsync`, `InsertColumnRightAsync`, `DeleteRowAsync`, `DeleteColumnAsync` and `DeleteTableAsync`. Output is a plain `<table>` and cell borders follow `--border`. Cell merging and column resizing are not part of Quill's module and are not offered.
-- **BbRichTextEditor** — the `Standard` toolbar gains undo and redo, backed by Quill's history module in `userOnly` mode, so a programmatic `Value` update is never undoable. The buttons grey out when there is nothing to do, `TextChangeEventArgs` reports `CanUndo` and `CanRedo`, and `UndoAsync` and `RedoAsync` join the public methods.
-- **BbRichTextEditor** — the `Standard` toolbar gains a checklist toggle. Checklist state round-trips: Quill writes `<li data-list="checked">` but only reads `data-checked` on the list, so the interop adds a clipboard matcher and the sanitizer keeps `data-list`.
-- **BbRichTextEditor** — the `Full` toolbar gains inline code, an alignment menu, and text colour and highlight palettes. Alignment uses Quill's style attributor, so the output carries `text-align` inline rather than `ql-align-*` classes that mean nothing outside Quill's stylesheet; colour and highlight are inline styles too.
-- **BbRichTextEditor** — new `ImageUploader` parameter and an image button on the `Full` toolbar. Every image the user picks, drops or pastes is streamed to the handler, which returns the URL to embed or `null` to reject the file. `MaxImageSize` caps what is sent and defaults to 10 MB. Without a handler, images embed as data URLs, as Quill does on its own. `InsertImageAsync(url)` inserts an image you stored yourself, and `EditorImageUpload` is the new public type handed to the uploader.
-- **BbDialog** — new `RenderingStrategy` parameter. Set it to `OverlayRenderingStrategy.Native` to render through the browser's built-in `<dialog>` element via `showModal()`, which works across Blazor render-mode boundaries and needs no portal host. When null, the global default configured through `AddBlazorBlueprintPrimitives` applies.
-- **BbDialogContent** — in native mode the JavaScript overlay is omitted and the `::backdrop` provides the scrim. `CloseOnOverlayClick` now also controls whether a backdrop click closes a native dialog. New stylesheet rules style `dialog[data-state]` and its backdrop to match the JavaScript path.
-- **BbPopoverContent** — new `ScrollToSelected` and `ScrollToSelectedSelector` parameters. A popover-based list opens already scrolled to its chosen item, and the scroll runs inside the interop call that positions the popover, before it is revealed.
-- **BbPopoverContent** — new `AutoFocusId` parameter. The named element is focused one frame after the popover is revealed, inside the call that positions it, with no extra round trip.
-- **BbCommandInput** — new `Id` parameter, so an owner can name the search box as an auto-focus target.
-- **BbCopyText** — new `ValueFuncAsync` for text that has to be fetched or computed. The copy happens inside the real click or keydown gesture in JavaScript, and the browser is handed a promise, so the clipboard write survives however long the callback takes. `Value` still wins when non-empty, then `ValueFunc`, then `ValueFuncAsync`.
-- **BbCopyText** — new `OnCopyFailed` callback with a `CopyTextFailure` of `Refused` or `NoValue`. A failed copy was previously invisible.
-- **ComponentModules** — new static helper exposing `CorePath`, `CoreUrl`, `GetCoreAsync` and `TryGetCoreLoaded` for code that needs the core JavaScript bundle.
+
+- **BbDataGrid**: `DataGridEditMode.Cell` and `Batch` editing. Drafts are isolated copies from `EditItemFactory` (required for these modes), validated before save, and kept when a save is rejected.
+- **BbDataGrid**: batch editing adds `OnBatchCommit`, `OnBatchCancel`, `CommitBatchAsync` and `CancelBatchAsync`, and `StartCellEditAsync` opens a cell editor from code.
+- **DataGridRowCommitContext**: new `OriginalItem`, the unchanged source record in cell mode. **DataGridBatchCommitContext** is new.
+- **BbFileUpload**: optional `UploadHandler` transport with progress, cancellation and retry. Adds `AutoUpload`, `OnUploadFinished`, `UploadFilesAsync`, `UploadFileAsync` and `CancelUpload`.
+- **FileUploadItem**: new `Status`, `BytesTransferred`, `Progress` and `UploadError`. **FileUploadContext** reports progress through `ReportProgressAsync`.
+- **BbDataView**: selection (`SelectionMode`, `SelectedItems`, `ItemKey`, `IsItemDisabled`), grouping (`GroupBy`, `GroupHeaderTemplate`) and list virtualization (`EnableVirtualization`).
+- **BbDataView**: `MobileToolbar` moves sorting and the new `FilterContent` into a bottom sheet.
+- **BbSelect**: `Presentation="SelectPresentation.BottomSheet"` shows the options in a modal bottom sheet, titled by `SheetTitle`.
+- **BbMultiSelect**: `FooterContent` replaces the default footer, and `CloseAsync` closes the list from code.
+- **BbFilterBuilder**: saved `Presets` shown as buttons or a dropdown (`PresetDisplay`, `ApplyPresetAsync`), `SearchableFields`, and per-field `ValueEditors` templates.
+- **BbCarousel**: autoplay with a pause/play button, multiple or fractional `SlidesPerView`, `Gap`, built-in indicators, bindable `ActiveIndex`, `OnSlideChanged` and `GoToAsync`.
+- **BbDrawer**: `SnapPoints` with a bindable `SnapIndex`, pointer and arrow-key resizing, and `DismissOnDrag`.
+- **BbSortable**: keyboard sorting (pick up, move, move to a connected list with Control+Left/Right, drop, cancel), `CanMove` and `CanDrop` rules, and a `DragOverlayTemplate` preview.
+- **BbSidebarProvider**: new `CollapsedMode`. `Pill` replaces the icon rail with floating pill navigation when the sidebar collapses.
+- **Theme presets**: `ThemeDesign` sets density, font stack, card and menu surfaces, and menu colours, and is saved with the theme. Fonts are not downloaded; your app supplies them.
+- **ThemeService**: new `SetPresetAsync`, `SetDesignAsync` and `Preset`. **ThemeOptions** gains `DefaultPreset`, and `ThemePresets` offers seven starting points.
+- **BbThemeSwitcher**: `ShowDesignOptions` shows the design settings.
+- **BbBadge**: new `Success`, `Warning` and `Info` variants, plus soft variants (`Soft`, `SoftDestructive`, `SoftSuccess`, `SoftWarning`, `SoftInfo`).
+- **BbToggleGroup**: `Required` keeps the last selection, and `Scrollable` scrolls the items horizontally.
+- **BbSeparator**: `LineStyle` for solid, dashed or dotted lines.
+- **BbRichTextEditor**: tables through Quill 2's built-in table module. The `Full` toolbar gains a table button, and the component gains `InsertTableAsync`, `InsertRowAboveAsync`, `InsertRowBelowAsync`, `InsertColumnLeftAsync`, `InsertColumnRightAsync`, `DeleteRowAsync`, `DeleteColumnAsync` and `DeleteTableAsync`.
+- **BbRichTextEditor**: the `Standard` toolbar gains undo, redo and a checklist. `UndoAsync` and `RedoAsync` are new, and `TextChangeEventArgs` reports `CanUndo` and `CanRedo`.
+- **BbRichTextEditor**: the `Full` toolbar gains inline code, alignment, text colour, highlight and images. Alignment and colours are written as inline styles.
+- **BbRichTextEditor**: new `ImageUploader` and `MaxImageSize` (10 MB default) to store picked, dropped or pasted images, plus `InsertImageAsync` and the `EditorImageUpload` type. Without an uploader, images embed as data URLs.
+- **BbDialog**: new `RenderingStrategy`. `OverlayRenderingStrategy.Native` renders a browser `<dialog>` that needs no portal host and works across render-mode boundaries.
+- **BbDialogContent**: in native mode, `CloseOnOverlayClick` controls backdrop clicks, and the stylesheet styles the native backdrop.
+- **BbPopoverContent**: new `ScrollToSelected`, `ScrollToSelectedSelector` and `AutoFocusId`, applied in the call that positions the popover.
+- **BbCommandInput**: new `Id`, so an owner can target the search box for focus.
+- **BbCopyText**: new `ValueFuncAsync` for text that must be fetched, copied inside the user gesture so the write survives a slow callback.
+- **BbCopyText**: new `OnCopyFailed` callback with a `CopyTextFailure` of `Refused` or `NoValue`.
+- **ComponentModules**: new static helper with `CorePath`, `CoreUrl`, `GetCoreAsync` and `TryGetCoreLoaded` for the core JavaScript bundle.
 
 ### Bug Fixes
-- **BbSidebarInset** — client-side navigation no longer kills the circuit. The scroll-to-top call used the pre-bundle function name, so every link click threw `Could not find 'scrollToTop'` from an `async void` handler and dropped the connection. The call is now namespaced, and a `JSException` from it is swallowed, since scrolling a new page to the top is not worth a dead circuit. Present in 4.0.0-beta.1.
-- **BbCommand**, **BbCommandInput**, **BbCommandVirtualizedGroup**, **BbNavigationMenu**, **BbResponsiveNavProvider**, **BbSidebarProvider**, **BbSidebarInset** — every fire-and-forget handler (close timers, debounce, state-change and location-change subscribers) now catches all exceptions. An exception escaping an `async void` handler is fatal on Blazor Server and showed the reconnect overlay.
-- **Core bundle** — a stale cached module now fails loudly instead of killing the circuit. Each bundle asserts one export from every module it imports at load and throws an error naming the stale file; the C# import rejects, consumers degrade gracefully, and the console says which file to refresh.
-- **BbCombobox** — closing no longer discards a paged list. `SearchQueryChanged` fired with an empty string on every close, even when nothing had been typed, which an infinite-scroll consumer reads as "reload your first page". It now fires only when there is a search to clear, which also removes the flicker the reload caused mid-close-animation.
-- **BbCombobox** — reopens scrolled to the chosen item, as `BbSelect` has always done. The chosen item is marked with `data-bb-current` in both `Options` and compositional modes, since `aria-selected` on a command item means "keyboard-focused" rather than "chosen".
-- **BbCopyText** — the clipboard write is now made inside the user gesture, so Safari no longer refuses it. Enter and Space are handled in JavaScript, since a `span` with `role="button"` gets no native click from them. The Blazor handlers take over if the module fails to load or during prerendering.
-- **BbCopyText** — the `execCommand` fallback now runs only for the insecure-context case it was written for, instead of on every failure, where it could report success while the clipboard stayed empty.
-- **BbDrawerTrigger**, **BbDrawerClose** — now show the themed focus ring, since they are focusable for the first time.
-- **BbPopoverContent**, **BbDropdownMenuContent** — no longer call `StateHasChanged` on open. Their roots already re-render the subtree, and the duplicate render raised a portal refresh mid-cycle that the host had to defer.
+
+- **BbDataGrid**: initial sorting now applies to the first rows, so they match the sort indicators.
+- **BbDataView**: with `ShowPagination="false"`, local data is no longer cut to the first page.
+- **BbDataView**: a parent re-render no longer undoes a layout the user toggled, and infinite scroll keeps working after a provider load replaces the scroll container.
+- **BbDrawer**: closing returns focus to the trigger that opened it, including composed triggers.
+- **BbDatePicker**: focus returns to the trigger after a date is picked.
+- **BbMultiSelect**: Escape closes the list and stops there, so it no longer reaches an enclosing overlay.
+- **BbTreeView**: in checkable, non-strict mode, checking a parent now reaches children hidden by the search filter.
+- **BbColorPicker**: dragging does nothing while `Disabled` is set.
+- **Core bundle**: the modules inside `bb-components-core.js` now load from revised URLs, so a cached older `sidebar.js` cannot break an upgraded app.
+- **Core bundle**: a stale cached module now fails at load with an error that names the file, instead of killing the circuit.
+- **BbSidebarInset**: client-side navigation no longer kills the circuit with `Could not find 'scrollToTop'` (a regression in 4.0.0-beta.1).
+- **BbCommand**, **BbCommandInput**, **BbCommandVirtualizedGroup**, **BbNavigationMenu**, **BbResponsiveNavProvider**, **BbSidebarProvider**, **BbSidebarInset**: fire-and-forget handlers now catch all exceptions, so none can end a Blazor Server circuit.
+- **BbCombobox**: closing no longer fires `SearchQueryChanged` with an empty string when nothing was typed, so an infinite-scroll list is not reloaded.
+- **BbCombobox**: reopens scrolled to the chosen item, which is marked with `data-bb-current`.
+- **BbCopyText**: the clipboard write happens inside the user gesture, so Safari accepts it. Enter and Space are handled in JavaScript.
+- **BbCopyText**: the `execCommand` fallback runs only in insecure contexts, so it no longer reports success with an empty clipboard.
+- **BbDrawerTrigger**, **BbDrawerClose**: now show the themed focus ring.
+- **BbPopoverContent**, **BbDropdownMenuContent**: no longer render twice on open.
 
 ### Improvements
-- **BbRichTextEditor** — `table`, `code`, `align`, `color`, `background` and `image` are now registered formats. Pasted or bound HTML that carries them keeps them, where it used to flatten to plain paragraphs and text. The sanitizer also lets `data:image/*` through, on `<img src>` only; `script` and other `data:` links are still stripped.
-- **BbDarkModeToggle** — the sun and moon icons are now `h-4 w-4` (1rem) instead of 1.2rem, matching the icon size in `BbThemeSwitcher`.
-- **Reduced motion** — the `.bb-no-animate` exemption for looping status indicators now matches both the library's `bb:animate-spin` / `bb:animate-pulse` and a consumer's bare `animate-spin` / `animate-pulse`.
-- **BbCommandInput** — the focus ring moves from the `<input>` to its row on `focus-within`, inset and rounded at the top to match the popover. It was a third box drawn inside the bordered row inside the bordered popover, on screen the whole time a combobox was open. The indicator is larger, not smaller, so the accessibility fix it came from still holds. `BbCommand` used on its own gets the same treatment.
-- **ThemeService** — invalid colour names in `localStorage` now fall back to the configured default in the browser instead of being applied and corrected a round trip later.
-- **BbNavigationMenuTrigger** — ArrowDown no longer sleeps 50ms before focusing the first item; the content focuses it itself after the render that puts it on screen.
+
+- **Scrollbars**: native scrollbars inside library components follow the theme in light and dark mode, and the stylesheet sets `color-scheme` for each mode.
+- **BbSidebar**: a closed non-collapsible sidebar is now `inert` and `aria-hidden`, and its width transition respects reduced motion.
+- **Localization**: `DefaultBbLocalizer` adds strings for the new components and features.
+- **Package**: adds a dependency on `Ical.Net` 5.2.3 for scheduler recurrence. The package now includes `LICENSE`, `NOTICE` and `THIRD-PARTY-NOTICES.txt`, also served at `_content/BlazorBlueprint.Components/THIRD-PARTY-NOTICES.txt`.
+- **BbRichTextEditor**: `table`, `code`, `align`, `color`, `background` and `image` are registered formats, so bound or pasted HTML keeps them. The sanitizer allows `data:image/*` on `<img src>` only.
+- **BbDarkModeToggle**: icons are now `h-4 w-4`, matching **BbThemeSwitcher**.
+- **Reduced motion**: the `.bb-no-animate` exemption matches both `bb:animate-spin` / `bb:animate-pulse` and bare `animate-spin` / `animate-pulse`.
+- **BbCommandInput**: the focus ring moves from the `<input>` to its row.
+- **ThemeService**: invalid colour names in `localStorage` fall back to the default in the browser, without an extra round trip.
+- **BbNavigationMenuTrigger**: ArrowDown no longer waits 50 ms before focusing the first item.
 
 ### Performance
-- **BbSelect**, **BbPopover**, **BbDropdownMenu**, **BbCombobox** and other floating overlays — open and close in one interop call each instead of five, through the Primitives update. Median time from click to visible for a select dropped from 147ms to 81ms on a 20ms round trip, and the first open now costs the same as a reopen. Arrow keys and option hover in a listbox no longer send a message to the server.
-- **BbCombobox**, **BbMultiSelect** — the search box is focused inside the call that opens the popover, replacing a render, a 50ms sleep and a further round trip before it would take a keystroke.
-- **BbSelect**, **BbPopover**, **BbDropdownMenu** — focus returns to the trigger inside the close call in the browser, instead of a round trip after the close render on every Escape and every selection. A click outside still leaves focus where the user clicked.
-- **BbPopoverContent** — only requests the portal's ready callback when a consumer has set `OnContentReady`, saving an acknowledged round trip that notified no one.
-- **BbCommandItem** — one delegated hover listener per list replaces `@onmouseenter` and `@onmousemove` on every item. Only a genuine change of item reaches .NET; the browser tells a real hover from the list scrolling under a stationary pointer. Across five items at one pixel a step, 157 pointer steps now send 11 messages instead of 157.
-- **BbCommandItem** — gains `ShouldRender`, so a focus move no longer re-renders every item in the list. A 200-item list was 200 renders per keystroke.
-- **BbCommandList**, **BbSelectContent**, **BbMultiSelect**, **BbDataView** — infinite scroll watches for near-bottom in the browser with a passive listener coalesced to one check per animation frame, and calls .NET once when the zone is entered. Previously every scroll event was a circuit message plus a round trip for the answer, around sixty a second while the wheel turned.
-- **JavaScript modules** — each module is imported once per circuit and shared across every component instance, instead of once per component. Thirteen inputs on a page previously issued thirteen import calls for the same file, each a round trip on Blazor Server.
-- **Core bundle** — the five modules that load on every page, or on every page with a form control, ship as one file. Distinct module imports per page drop from 3–6 to 1–3. The remaining modules stay lazy.
-- **ThemeService**, **BbSidebarProvider** — initialise in one interop call each instead of two to four. Reading storage, the OS dark-mode preference and applying the result now happen in the browser and return what was applied.
-- **BbDataGrid** — key and click handlers are attached once to the grid container and delegated, instead of once per row. Rows opt in via `data-bb-row-keys` and `data-bb-row-click`. A 465-row grid went from 240 client-to-server messages on load to 111.
+
+- **BbDataGrid**: paged `IQueryable` sources without search, grouping or virtualization count and page on the query provider instead of loading every row.
+- **BbCommand**: filtered results and item positions are cached and shared, so items no longer rescan the filtered list.
+- **BbSlider**, **BbRangeSlider**, **BbColorPicker**: drag feedback updates in the browser. Value updates during a drag are sent at most about every 50 ms, and the final value is sent on release.
+- **BbRating**: hover updates when the pointer enters an icon, not on every mouse move.
+- **BbTreeView**: search indexes parents and visible nodes, so rendering no longer repeats descendant searches.
+- **Overlays**: **BbSelect**, **BbPopover**, **BbDropdownMenu**, **BbCombobox** and other floating overlays open and close in one interop call each instead of five, through the Primitives update.
+- **BbCombobox**, **BbMultiSelect**: the search box is focused inside the call that opens the popover, not after a render, a 50 ms wait and another round trip.
+- **BbSelect**, **BbPopover**, **BbDropdownMenu**: focus returns to the trigger inside the close call.
+- **BbPopoverContent**: requests the portal ready callback only when `OnContentReady` is set.
+- **BbCommandItem**: one delegated hover listener per list replaces per-item mouse handlers, and `ShouldRender` stops a focus move from re-rendering every item.
+- **BbCommandList**, **BbSelectContent**, **BbMultiSelect**, **BbDataView**: infinite scroll watches for the bottom in the browser and calls .NET once, instead of a round trip per scroll event.
+- **JavaScript modules**: each module is imported once per circuit and shared by all component instances.
+- **Core bundle**: the five modules used on most pages ship as one file, cutting module imports per page from 3–6 to 1–3.
+- **ThemeService**, **BbSidebarProvider**: initialize in one interop call each instead of two to four.
+- **BbDataGrid**: key and click handlers are attached once to the grid and delegated, instead of once per row.
