@@ -1,0 +1,39 @@
+# Browser interaction checks
+
+These tests drive the real demos in Chromium and WebKit. Each test gets an isolated browser context; failures retain screenshots and traces in the ignored `test-results` directory. There are no automatic retries.
+
+Build the solution while the demos are stopped, then start each host in a separate terminal from the repository root:
+
+```sh
+dotnet build BlazorBlueprint.sln
+dotnet run --project demos/BlazorBlueprint.Demo.Server --no-build --launch-profile http
+dotnet run --project demos/BlazorBlueprint.Demo.Wasm --no-build --launch-profile http
+dotnet run --project demos/BlazorBlueprint.Demo.Auto --no-build --launch-profile http
+```
+
+The HTTP profiles use ports 7172, 5184 and 5185 respectively. The WebAssembly and Auto HTTPS profiles use 7173 and 7174. Override the test targets with `BB_SERVER_URL`, `BB_WASM_URL` and `BB_AUTO_URL` if needed.
+
+Install the test dependencies and browsers, then run the suite:
+
+```sh
+cd tests/browser
+npm ci
+npx playwright install chromium webkit
+npm test
+```
+
+To run one host/browser combination, use `npm test -- --project=wasm-chromium`. To use an installed Google Chrome instead of the bundled Chromium, set `BB_CHROMIUM_CHANNEL=chrome`.
+
+Coverage includes:
+
+- Segmented input editing and validation, nested pickers and focus return.
+- TreeSelect expansion, single selection and cascading checkbox selection.
+- Nested menu keyboard navigation in LTR and RTL, radio selection and dismissal.
+- Scoped theme inheritance into portals, dark mode and consumer class overrides.
+- Sortable keyboard reordering and transfers between lists.
+- Scheduler full-day scrolling, day/week switching, recurrence editing, backdrop draft retention and Today navigation.
+- Mobile Drawer sizing and focus restoration, Select bottom-sheet focus containment, and the Mobile Shop recipe.
+- Reduced-motion behavior and the interactive render-state provider.
+- Interactive Auto using a Server circuit on the first visit and WebAssembly on a subsequent visit, followed by functional input interaction.
+
+These are targeted interaction regressions, not a screen-reader certification or exhaustive coverage of every component.

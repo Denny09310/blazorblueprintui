@@ -27,7 +27,7 @@
 import * as clickOutside from './click-outside.js';
 import * as elementUtils from './element-utils.js';
 import * as escapeKeydown from './escape-keydown.js';
-import * as focusTrap from './focus-trap.js';
+import * as focusTrap from './focus-trap.js?rev=1';
 import * as keyboardNav from './keyboard-nav.js';
 import * as keyboardShortcuts from './keyboard-shortcuts.js';
 import * as matchTriggerWidth from './match-trigger-width.js';

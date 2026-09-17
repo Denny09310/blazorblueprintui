@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Small controls.** Semantic/soft Badge variants and BadgeIcon, ToggleGroup Required/Scrollable options, and solid/dashed/dotted Separator patterns. Required toggle groups retain the last selection; applications supply the initial value.
 - **Discoverable component inventory.** Document all 37 new styled components and six supporting headless menu components in README. The component homepage, sidebar and command search share the same grouped demo-page catalog, with one destination per actual demo. Standalone mobile and motion components have focused pages; composition helpers stay in their owning component's examples and API references. Sidebar and homepage badges identify new components only; API-reference badges mark specific v4 additions against the v3.17 release.
 - Permanent live examples, copyable snippets and API reference entries accompany each addition.
+- **Browser regression coverage.** Add a Playwright suite for Server, WebAssembly and Interactive Auto in Chromium and WebKit, covering keyboard navigation, mobile overlays, scoped themes, scheduler editing and Auto's transition to WebAssembly.
 
 ### Breaking Changes
 
@@ -38,6 +39,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Modal keyboard containment.** Tab and Shift+Tab enter the trapped controls when initial focus is on a container or non-tabbable listbox, preventing WebKit from moving focus behind a Select bottom sheet. Empty modals retain focus on their container.
+- **Drawer focus restoration.** Closing a drawer with Escape, its close button, the backdrop or a dismiss gesture returns focus to the trigger that opened it, including composed triggers. Navigating away does not restore focus into the departing page.
+- **Menu demo documentation.** Remove empty secondary API headings from Dropdown Menu, Context Menu and Menubar; their references remain in the final API section.
 - **Scheduler vertical scrolling.** Demo schedules now include all 24 hours and initially scroll to 8 AM, instead of omitting hours outside short example ranges. The scroll region fits the viewport, retains sticky day headings and can receive keyboard focus. `InitialScrollHour` sets the initial display-zone hour without changing the rendered range or resetting scrolling on later renders.
 - **Cached core scripts.** Revise both the core JavaScript entry URL and its relative dependency URLs so stale sidebar exports cannot disable an upgraded demo circuit.
 - **Demo sidebar sizing.** Restore the standard sidebar width and align v4 badges at the trailing edge of each component row, while keeping long labels wrapped.

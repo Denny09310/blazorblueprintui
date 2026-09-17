@@ -9,6 +9,8 @@ obj/
 *.exe
 *.pdb
 TestResults/
+test-results/
+playwright-report/
 *.csproj.user
 .dotnet/
 packages/

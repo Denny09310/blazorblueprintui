@@ -57,9 +57,9 @@ public static class PrimitiveModules
     /// checks for that itself as it loads and fails with a message that names the file.
     /// </para>
     /// </remarks>
-    // Asset revision 2 updates the entry URL along with the revised tree-keyboard import,
+    // Asset revision 3 updates the entry URL along with the revised focus-trap import,
     // including local builds that retain the same informational assembly version.
-    public static string ModuleUrl { get; } = JsModules.Versioned($"{ModulePath}?assets=2", typeof(PrimitiveModules).Assembly);
+    public static string ModuleUrl { get; } = JsModules.Versioned($"{ModulePath}?assets=3", typeof(PrimitiveModules).Assembly);
 
     /// <summary>
     /// Gets the shared primitive bundle for the given runtime, importing it on first use.
