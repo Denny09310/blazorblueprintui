@@ -20,7 +20,7 @@
 }
 else
 {
-    <button type="button" class="@CssClass" @onclick="HandleClick" @attributes="AdditionalAttributes">
+    <button @ref="triggerElement" type="button" class="@CssClass" @onclick="HandleClick" @attributes="AdditionalAttributes">
         @ChildContent
     </button>
 }
@@ -58,18 +58,22 @@ else
         "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2",
         Class);
 
+    private ElementReference triggerElement;
+
     private TriggerContext TriggerContext => new()
     {
         IsOpen = Context?.IsOpen ?? false,
-        Toggle = () => _ = Context?.SetOpen(true),
-        Open = () => _ = Context?.SetOpen(true),
+        Toggle = () => _ = HandleClick(),
+        Open = () => _ = HandleClick(),
         AriaHasPopup = "dialog",
+        SetTriggerElement = element => triggerElement = element,
     };
 
     private async Task HandleClick()
     {
         if (Context != null)
         {
+            Context.TriggerElement = triggerElement;
             await Context.SetOpen(true);
         }
     }

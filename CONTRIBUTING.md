@@ -69,6 +69,8 @@ We welcome all contributions — whether it's bug fixes, new features, documenta
    ```
    Stop the demo before rebuilding and restart it afterward; this project does not support hot reload. Tailwind must run before static asset discovery so that fingerprints and compressed files describe the current CSS.
 
+   For browser interaction coverage across Server, WebAssembly and Interactive Auto, see [the Playwright suite](tests/browser/README.md). It exercises keyboard and RTL behavior, mobile overlays, scoped themes, scheduler editing and scrolling, and Auto's transition from Server to WebAssembly. Browser dependencies are separate from the library build and the dependency-free JavaScript unit tests above.
+
 When updating bundled JavaScript, CSS, or icon data, preserve upstream copyright headers and refresh the affected package's `THIRD-PARTY-NOTICES.txt` from the corresponding upstream release. Components and Primitives keep this file under `wwwroot`; icon packages keep it in the project directory. Record the upstream source and version when known, then inspect a locally built `.nupkg` to confirm that its license and notice files are included.
 
 ---

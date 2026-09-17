@@ -188,6 +188,9 @@
         else if (Context?.IsOpen != true && _isInitialized)
         {
             await CleanupAsync();
+            // Only an intentional close restores focus. Disposal during navigation must not
+            // move focus back into the page being removed, and the trap must be released first.
+            await FocusManager.RestoreFocus(Context?.TriggerElement);
         }
         await ConfigureSnapsAsync();
     }

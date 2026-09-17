@@ -52,6 +52,7 @@
 
     internal bool IsControlled => Open.HasValue;
     internal bool IsOpen => Open ?? _internalOpen;
+    internal ElementReference? TriggerElement { get; set; }
     private bool _internalOpen;
 
     internal async Task SetOpen(bool open)
