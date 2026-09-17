@@ -46,8 +46,8 @@
   </ItemGroup>
 
   <!-- Use ProjectReference for local development, PackageReference for packing.
-       The release script can pass -p:UsePackageReferences=true and an explicit
-       PrimitivesPackageVersion after publishing the matching .NET 10 primitives.
+       The release scripts update the Primitives PackageReference below to the selected
+       published version, then pass -p:UsePackageReferences=true.
        Otherwise ProjectReference keeps the package dependency aligned with the source build. NU5104 is suppressed because
        TreatWarningsAsErrors promotes it to an error when packing with ProjectReference
        during development; the release script handles this correctly via UsePackageReferences. -->
@@ -59,11 +59,6 @@
     <ProjectReference Include="..\BlazorBlueprint.Icons.Lucide\BlazorBlueprint.Icons.Lucide.csproj" />
     <ProjectReference Include="..\BlazorBlueprint.Primitives\BlazorBlueprint.Primitives.csproj" />
   </ItemGroup>
-
-  <Target Name="RequireV4PrimitivesPackageVersion" BeforeTargets="CollectPackageReferences"
-          Condition="'$(UsePackageReferences)' == 'true' and '$(PrimitivesPackageVersion)' == ''">
-    <Error Text="Set PrimitivesPackageVersion to the matching .NET 10 v4 Primitives release, or omit UsePackageReferences to build and pack the current projects together." />
-  </Target>
 
   <ItemGroup Condition="'$(UsePackageReferences)' == 'true'">
     <PackageReference Include="BlazorBlueprint.Icons.Lucide" Version="2.0.0" />
