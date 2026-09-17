@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 using System.Linq.Expressions;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -167,14 +168,14 @@ public partial class BbInputGroupTextarea : ComponentBase
     /// </summary>
     private string CssClass => ClassNames.cn(
         // Base styles - minimal for group context
-        "flex-1 bg-transparent px-3 py-2 text-base min-h-[60px]",
-        "border-0 rounded-none", // No border or radius for seamless integration
-        "placeholder:text-muted-foreground",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        "resize-none", // Prevent resize for cleaner appearance
+        "bb:flex-1 bb:bg-transparent bb:px-3 bb:py-2 bb:text-base bb:min-h-[60px]",
+        "bb:border-0 bb:rounded-none", // No border or radius for seamless integration
+        "bb:placeholder:text-muted-foreground",
+        "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
+        "bb:resize-none", // Prevent resize for cleaner appearance
         // Medium screens and up: smaller text
-        "md:text-sm",
+        "bb:md:text-sm",
         // Custom classes
         Class
     );
@@ -194,10 +195,9 @@ public partial class BbInputGroupTextarea : ComponentBase
         {
             try
             {
-                jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/text-input.js");
+                jsModule = await ComponentModules.GetCoreAsync(JSRuntime);
                 dotNetRef = DotNetObjectReference.Create(this);
-                await jsModule.InvokeVoidAsync("initialize", inputRef, dotNetRef, instanceId, GetJsConfig());
+                await jsModule.InvokeVoidAsync("textInput.initialize", inputRef, dotNetRef, instanceId, GetJsConfig());
                 jsInitialized = true;
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
@@ -294,8 +294,7 @@ public partial class BbInputGroupTextarea : ComponentBase
         {
             try
             {
-                await jsModule.InvokeVoidAsync("dispose", instanceId);
-                await jsModule.DisposeAsync();
+                await jsModule.InvokeVoidAsync("textInput.dispose", instanceId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

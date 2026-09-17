@@ -1,4 +1,5 @@
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -26,6 +27,10 @@ public class ThemeService : IAsyncDisposable
     private PrimaryColor primaryColor;
     private double radius;
     private bool isInitialized;
+    private ThemeDesign design;
+
+    /// <summary>The full current configuration.</summary>
+    public ThemePreset Preset => new() { DarkMode = isDarkMode, BaseColor = baseColor, PrimaryColor = primaryColor, Radius = radius, Design = design };
 
     /// <summary>
     /// Raised after any theme property changes. Subscribe to trigger <c>StateHasChanged</c> in consuming components.
@@ -66,10 +71,17 @@ public class ThemeService : IAsyncDisposable
     {
         this.jsRuntime = jsRuntime;
         this.options = options;
-        isDarkMode = options.DefaultDarkMode;
-        baseColor = options.DefaultBaseColor;
-        primaryColor = options.DefaultPrimaryColor;
-        radius = options.DefaultRadius;
+        var preset = options.DefaultPreset ?? new ThemePreset
+        {
+            DarkMode = options.DefaultDarkMode, BaseColor = options.DefaultBaseColor,
+            PrimaryColor = options.DefaultPrimaryColor, Radius = options.DefaultRadius
+        };
+        preset.Validate();
+        isDarkMode = preset.DarkMode;
+        baseColor = preset.BaseColor;
+        primaryColor = preset.PrimaryColor;
+        radius = preset.Radius;
+        design = preset.Design;
     }
 
     /// <summary>
@@ -86,8 +98,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            module = await jsRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Components/js/theme.js");
+            module = await ComponentModules.GetCoreAsync(jsRuntime);
         }
         catch (JSDisconnectedException)
         {
@@ -103,33 +114,51 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            // Only read localStorage when persistence is enabled. Reading it regardless meant a
-            // theme saved by an earlier run kept overriding the configured defaults after
-            // PersistToLocalStorage was turned off, with no way to opt out short of the user
-            // clearing site data by hand (#481). Clearing the stale entry closes the same hole
-            // for anyone who already has one.
-            var saved = options.PersistToLocalStorage
-                ? await module.InvokeAsync<ThemeState?>("loadTheme")
-                : null;
-
-            if (!options.PersistToLocalStorage)
+            // One call, not four. Reading localStorage, clearing a stale entry, asking the OS for
+            // its dark-mode preference and applying the result are all browser-side decisions, and
+            // on Blazor Server each separately awaited call was a circuit round trip on every page
+            // load. The valid colour names go with it so that a corrupted entry falls back to the
+            // configured default in the browser, exactly as ParseEnum would here, rather than being
+            // applied and corrected a round trip later.
+            var applied = await module.InvokeAsync<ThemeState?>("theme.initialize", new
             {
-                await module.InvokeVoidAsync("clearTheme");
+                persist = options.PersistToLocalStorage,
+                detectSystemPreference = options.DetectSystemPreference,
+                defaults = new
+                {
+                    isDarkMode,
+                    baseColor = baseColor.ToString().ToLowerInvariant(),
+                    primaryColor = primaryColor.ToString().ToLowerInvariant(),
+                    radius,
+                    design = design.ToJs()
+                },
+                validBaseColors = Enum.GetNames<BaseColor>().Select(n => n.ToLowerInvariant()).ToArray(),
+                validPrimaryColors = Enum.GetNames<PrimaryColor>().Select(n => n.ToLowerInvariant()).ToArray()
+            });
+
+            // Null when interop is stubbed or the browser could not answer. The configured
+            // defaults are already in the fields, so leaving them alone is the right outcome.
+            if (applied is null)
+            {
+                isInitialized = true;
+                return;
             }
 
-            if (saved is not null)
+            isDarkMode = applied.IsDarkMode;
+            baseColor = ParseEnum(applied.BaseColor, baseColor);
+            primaryColor = ParseEnum(applied.PrimaryColor, primaryColor);
+            radius = applied.Radius is >= 0 and <= 4 ? applied.Radius.Value : radius;
+            if (applied.Design is { } restored)
             {
-                isDarkMode = saved.IsDarkMode;
-                baseColor = ParseEnum(saved.BaseColor, options.DefaultBaseColor);
-                primaryColor = ParseEnum(saved.PrimaryColor, options.DefaultPrimaryColor);
-                radius = saved.Radius ?? options.DefaultRadius;
+                design = new ThemeDesign
+                {
+                    Density = ParseEnum(restored.Density, design.Density),
+                    Font = ParseEnum(restored.Font, design.Font),
+                    Surface = ParseEnum(restored.Surface, design.Surface),
+                    MenuColor = ParseEnum(restored.MenuColor, design.MenuColor),
+                    MenuAccent = ParseEnum(restored.MenuAccent, design.MenuAccent)
+                };
             }
-            else if (options.DetectSystemPreference)
-            {
-                isDarkMode = await module.InvokeAsync<bool>("getPrefersDark");
-            }
-
-            await ApplyAllAsync();
         }
         catch (JSDisconnectedException)
         {
@@ -202,6 +231,10 @@ public class ThemeService : IAsyncDisposable
     /// <param name="value">The radius in rem (e.g., 0, 0.3, 0.5, 0.75, 1.0).</param>
     public async Task SetRadiusAsync(double value)
     {
+        if (!double.IsFinite(value) || value < 0 || value > 4)
+        {
+            throw new ArgumentOutOfRangeException(nameof(value), "Radius must be between 0 and 4 rem.");
+        }
         if (Math.Abs(radius - value) < 0.001)
         {
             return;
@@ -213,6 +246,31 @@ public class ThemeService : IAsyncDisposable
         OnThemeChanged?.Invoke();
     }
 
+    /// <summary>Applies and persists a complete preset in one update.</summary>
+    public async Task SetPresetAsync(ThemePreset preset)
+    {
+        ArgumentNullException.ThrowIfNull(preset);
+        preset.Validate();
+        await InitializeAsync();
+        isDarkMode = preset.DarkMode;
+        baseColor = preset.BaseColor;
+        primaryColor = preset.PrimaryColor;
+        radius = preset.Radius;
+        design = preset.Design;
+        await ApplyAllAsync();
+        await SaveAsync();
+        OnThemeChanged?.Invoke();
+    }
+
+    /// <summary>Changes appearance while preserving the current colors, radius and dark mode.</summary>
+    public async Task SetDesignAsync(ThemeDesign value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        value.Validate();
+        await InitializeAsync();
+        await SetPresetAsync(Preset with { Design = value });
+    }
+
     private async Task ApplyAllAsync()
     {
         if (module is null)
@@ -222,11 +280,11 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("applyTheme",
+            await module.InvokeVoidAsync("theme.applyTheme",
                 isDarkMode,
                 baseColor.ToString().ToLowerInvariant(),
                 primaryColor.ToString().ToLowerInvariant(),
-                radius);
+                radius, design.ToJs());
         }
         catch
         {
@@ -243,7 +301,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("applyDarkMode", isDarkMode);
+            await module.InvokeVoidAsync("theme.applyDarkMode", isDarkMode);
         }
         catch
         {
@@ -260,7 +318,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("applyBaseColor", baseColor.ToString().ToLowerInvariant());
+            await module.InvokeVoidAsync("theme.applyBaseColor", baseColor.ToString().ToLowerInvariant());
         }
         catch
         {
@@ -277,7 +335,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("applyPrimaryColor", primaryColor.ToString().ToLowerInvariant());
+            await module.InvokeVoidAsync("theme.applyPrimaryColor", primaryColor.ToString().ToLowerInvariant());
         }
         catch
         {
@@ -294,7 +352,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("applyRadius", radius);
+            await module.InvokeVoidAsync("theme.applyRadius", radius);
         }
         catch
         {
@@ -311,11 +369,11 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("saveTheme",
+            await module.InvokeVoidAsync("theme.saveTheme",
                 isDarkMode,
                 baseColor.ToString().ToLowerInvariant(),
                 primaryColor.ToString().ToLowerInvariant(),
-                radius);
+                radius, design.ToJs());
         }
         catch
         {
@@ -330,27 +388,15 @@ public class ThemeService : IAsyncDisposable
             return fallback;
         }
 
-        return Enum.TryParse<TEnum>(value, ignoreCase: true, out var result) ? result : fallback;
+        return Enum.TryParse<TEnum>(value, ignoreCase: true, out var result) && Enum.IsDefined(result) ? result : fallback;
     }
 
     /// <inheritdoc />
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        if (module is not null)
-        {
-            try
-            {
-                await module.DisposeAsync();
-            }
-            catch
-            {
-                // Ignore disposal errors during circuit disconnect
-            }
-
-            module = null;
-        }
-
+        // Nothing to release: the theme module is shared and owned by JsModules.
         GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
@@ -369,5 +415,15 @@ public class ThemeService : IAsyncDisposable
 
         /// <summary>Gets or sets the border radius in rem.</summary>
         public double? Radius { get; set; }
+        public ThemeDesignState? Design { get; set; }
+    }
+
+    private sealed class ThemeDesignState
+    {
+        public string? Density { get; set; }
+        public string? Font { get; set; }
+        public string? Surface { get; set; }
+        public string? MenuColor { get; set; }
+        public string? MenuAccent { get; set; }
     }
 }

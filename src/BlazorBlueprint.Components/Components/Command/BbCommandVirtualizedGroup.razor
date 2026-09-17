@@ -14,14 +14,14 @@
     @if (!string.IsNullOrWhiteSpace(Heading))
     {
         <div id="@($"command-group-{_id}")"
-             class="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+             class="bb:px-2 bb:py-1.5 bb:text-xs bb:font-medium bb:text-muted-foreground">
             @Heading
             @if (_totalCount > 0)
             {
                 var displayedCount = EnableLazyLoading ? _filteredCount : (_filteredItems?.Count ?? 0);
                 @if (displayedCount != _totalCount)
                 {
-                    <span class="ml-1 opacity-70">(@displayedCount of @_totalCount)</span>
+                    <span class="bb:ml-1 bb:opacity-70">(@displayedCount of @_totalCount)</span>
                 }
             }
         </div>
@@ -44,14 +44,12 @@
                          aria-selected="@(IsItemFocusedByIndex(indexed.Index) ? "true" : "false")"
                          data-focused="@(IsItemFocusedByIndex(indexed.Index) ? "true" : "false")"
                          @onclick="@(() => SelectItem(indexed.Item))"
-                         @onmouseenter="@(() => FocusItemByIndex(indexed.Index))"
-                         @onmousemove="HandleMouseMove"
                          class="@GetItemCssClassByIndex(indexed.Index)">
                         @ItemTemplate(indexed.Item)
                     </div>
                 </ItemContent>
                 <Placeholder>
-                    <div class="px-2 py-1.5 text-sm text-muted-foreground animate-pulse">Loading...</div>
+                    <div class="bb:px-2 bb:py-1.5 bb:text-sm bb:text-muted-foreground bb:animate-pulse">Loading...</div>
                 </Placeholder>
             </Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize>
         }
@@ -67,8 +65,6 @@
                          aria-selected="@(IsItemFocusedByIndex(indexed.Index) ? "true" : "false")"
                          data-focused="@(IsItemFocusedByIndex(indexed.Index) ? "true" : "false")"
                          @onclick="@(() => SelectItem(indexed.Item))"
-                         @onmouseenter="@(() => FocusItemByIndex(indexed.Index))"
-                         @onmousemove="HandleMouseMove"
                          class="@GetItemCssClassByIndex(indexed.Index)">
                         @ItemTemplate(indexed.Item)
                     </div>
@@ -276,11 +272,9 @@
                 var containerId = $"vgroup-container-{_id}";
 
                 // Scroll using the virtualization-scroll module
-                var virtualizationScrollModule = await JS.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/virtualization-scroll.js");
+                var virtualizationScrollModule = await JsModules.GetAsync(JS, "./_content/BlazorBlueprint.Components/js/virtualization-scroll.js");
                 await virtualizationScrollModule.InvokeVoidAsync(
                     "scrollToVirtualizedIndex", listId, containerId, index, 32, 32);
-                await virtualizationScrollModule.DisposeAsync();
 
                 // Give Virtualize a moment to render items at the new scroll position
                 await Task.Delay(50);
@@ -295,7 +289,7 @@
     }
 
     private string CssClass => ClassNames.cn(
-        "p-1 text-foreground",
+        "bb:p-1 bb:text-foreground",
         Class
     );
 
@@ -388,10 +382,8 @@
                 // Use 'start' for first item in first group to show group heading
                 var isFirstGroupFirstItem = _focusedIndex == 0 && Context != null && IsFirstVisibleGroup();
                 var scrollBlock = isFirstGroupFirstItem ? "start" : "nearest";
-                var virtualizationScrollModule = await JS.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/virtualization-scroll.js");
+                var virtualizationScrollModule = await JsModules.GetAsync(JS, "./_content/BlazorBlueprint.Components/js/virtualization-scroll.js");
                 await virtualizationScrollModule.InvokeVoidAsync("scrollElementIntoView", elementId, scrollBlock);
-                await virtualizationScrollModule.DisposeAsync();
             }
             catch
             {
@@ -608,40 +600,49 @@
 
     private async void HandleSearchChanged()
     {
-        _cachedSearchQuery = null; // Force rebuild
-
-        if (UseProvider)
+        try
         {
-            // Drop the cached slices and optimistically re-show so the (kept-mounted) Virtualize
-            // re-queries the provider with the new search; the response resets the real count.
-            _loadedItems.Clear();
-            _lazyLoadedCount = 0;
-            _hasVisibleItems = true;
+            _cachedSearchQuery = null; // Force rebuild
+
+            if (UseProvider)
+            {
+                // Drop the cached slices and optimistically re-show so the (kept-mounted) Virtualize
+                // re-queries the provider with the new search; the response resets the real count.
+                _loadedItems.Clear();
+                _lazyLoadedCount = 0;
+                _hasVisibleItems = true;
+                _focusedIndex = -1;
+                StateHasChanged();
+                if (_virtualizeRef != null)
+                {
+                    await _virtualizeRef.RefreshDataAsync();
+                }
+                return;
+            }
+
+            if (EnableLazyLoading)
+            {
+                UpdateLazyFilteredSource();
+                _lazyLoadedCount = 0;
+                if (_virtualizeRef != null)
+                {
+                    await _virtualizeRef.RefreshDataAsync();
+                }
+            }
+            else
+            {
+                UpdateFilteredItems();
+            }
+
             _focusedIndex = -1;
             StateHasChanged();
-            if (_virtualizeRef != null)
-            {
-                await _virtualizeRef.RefreshDataAsync();
-            }
-            return;
         }
-
-        if (EnableLazyLoading)
+        catch (Exception)
         {
-            UpdateLazyFilteredSource();
-            _lazyLoadedCount = 0;
-            if (_virtualizeRef != null)
-            {
-                await _virtualizeRef.RefreshDataAsync();
-            }
+            // async void: nothing awaits this, so an exception that escapes has no caller to reach and
+            // Blazor Server treats it as fatal — the circuit closes and the user sees the reconnect
+            // overlay. Everything this method does is best-effort, and none of it is worth that.
         }
-        else
-        {
-            UpdateFilteredItems();
-        }
-
-        _focusedIndex = -1;
-        StateHasChanged();
     }
 
     private void HandleKeyboardNavigationChanged(bool isKeyboardNavigating)
@@ -655,17 +656,24 @@
         return _focusedIndex >= 0 && _focusedIndex == index;
     }
 
-    private void HandleMouseMove()
+    // Hover arrives through BbCommandList's delegated listener and CommandContext.HoverItemById,
+    // which has already ruled out a scroll under a stationary pointer — so there is no keyboard
+    // gate here any more, and no @onmousemove per item to clear one.
+    bool IVirtualizedGroupHandler.TryHoverItem(string elementId)
     {
-        // Re-enable hover focus when mouse actually moves
-        Context?.OnMouseMove();
+        var prefix = $"vgroup-{_id}-item-";
+        if (!elementId.StartsWith(prefix, StringComparison.Ordinal)
+            || !int.TryParse(elementId.AsSpan(prefix.Length), out var index))
+        {
+            return false;
+        }
+
+        FocusItemByIndex(index);
+        return true;
     }
 
     private void FocusItemByIndex(int index)
     {
-        // Ignore hover during keyboard navigation
-        if (Context?.IsKeyboardNavigating == true) return;
-
         if (index >= 0 && index != _focusedIndex)
         {
             _focusedIndex = index;
@@ -692,9 +700,9 @@
     {
         var isFocused = IsItemFocusedByIndex(index);
         var isKeyboardNav = Context?.IsKeyboardNavigating == true;
-        var baseClasses = "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none";
-        var hoverClasses = isKeyboardNav ? "" : " hover:bg-accent hover:text-accent-foreground";
-        var focusClasses = isFocused ? " bg-accent text-accent-foreground" : "";
+        var baseClasses = "bb:relative bb:flex bb:cursor-pointer bb:select-none bb:items-center bb:rounded-sm bb:px-2 bb:py-1.5 bb:text-sm bb:outline-none";
+        var hoverClasses = isKeyboardNav ? "" : " bb:hover:bg-accent bb:hover:text-accent-foreground";
+        var focusClasses = isFocused ? " bb:bg-accent bb:text-accent-foreground" : "";
         return $"{baseClasses}{hoverClasses}{focusClasses}";
     }
 

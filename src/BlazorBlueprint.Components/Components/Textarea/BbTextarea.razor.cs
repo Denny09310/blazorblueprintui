@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 using System.Linq.Expressions;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -246,19 +247,19 @@ public partial class BbTextarea : ComponentBase
     /// </summary>
     private string CssClass => ClassNames.cn(
         // Base textarea styles (from shadcn/ui v4)
-        "flex field-sizing-content min-h-16 w-full rounded-md border border-input",
-        "bg-transparent dark:bg-input/30 px-3 py-2 text-base shadow-xs",
-        "placeholder:text-muted-foreground",
+        "bb:flex bb:field-sizing-content bb:min-h-16 bb:w-full bb:rounded-md bb:border bb:border-input",
+        "bb:bg-transparent bb:dark:bg-input/30 bb:px-3 bb:py-2 bb:text-base bb:shadow-xs",
+        "bb:placeholder:text-muted-foreground",
         // Focus states
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
         // Error states (aria-invalid)
-        "aria-[invalid=true]:border-destructive",
+        "bb:aria-[invalid=true]:border-destructive",
         // Disabled state
-        "disabled:cursor-not-allowed disabled:opacity-50",
+        "bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
         // Smooth transitions
-        "transition-[color,box-shadow]",
+        "bb:transition-[color,box-shadow]",
         // Responsive text sizing
-        "md:text-sm",
+        "bb:md:text-sm",
         // Custom classes (if provided)
         Class
     );
@@ -278,10 +279,9 @@ public partial class BbTextarea : ComponentBase
         {
             try
             {
-                jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/text-input.js");
+                jsModule = await ComponentModules.GetCoreAsync(JSRuntime);
                 dotNetRef = DotNetObjectReference.Create(this);
-                await jsModule.InvokeVoidAsync("initialize", inputRef, dotNetRef, instanceId, GetJsConfig());
+                await jsModule.InvokeVoidAsync("textInput.initialize", inputRef, dotNetRef, instanceId, GetJsConfig());
                 jsInitialized = true;
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
@@ -381,8 +381,7 @@ public partial class BbTextarea : ComponentBase
         {
             try
             {
-                await jsModule.InvokeVoidAsync("dispose", instanceId);
-                await jsModule.DisposeAsync();
+                await jsModule.InvokeVoidAsync("textInput.dispose", instanceId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

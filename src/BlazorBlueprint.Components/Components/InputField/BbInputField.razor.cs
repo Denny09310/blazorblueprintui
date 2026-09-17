@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -300,14 +301,14 @@ public partial class BbInputField<TValue> : ComponentBase
     }
 
     private string CssClass => ClassNames.cn(
-        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base",
-        "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
-        "placeholder:text-muted-foreground",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        "aria-[invalid=true]:border-destructive",
-        "transition-colors",
-        "md:text-sm",
+        "bb:flex bb:h-10 bb:w-full bb:rounded-md bb:border bb:border-input bb:bg-background bb:px-3 bb:py-2 bb:text-base",
+        "bb:file:border-0 bb:file:bg-transparent bb:file:text-sm bb:file:font-medium bb:file:text-foreground",
+        "bb:placeholder:text-muted-foreground",
+        "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
+        "bb:aria-[invalid=true]:border-destructive",
+        "bb:transition-colors",
+        "bb:md:text-sm",
         Class
     );
 
@@ -332,17 +333,11 @@ public partial class BbInputField<TValue> : ComponentBase
 
         if (CascadedEditContext != subscribedEditContext)
         {
-            if (subscribedEditContext is not null)
-            {
-                subscribedEditContext.OnValidationStateChanged -= OnValidationStateChanged;
-            }
+            subscribedEditContext?.OnValidationStateChanged -= OnValidationStateChanged;
 
             subscribedEditContext = CascadedEditContext;
 
-            if (subscribedEditContext is not null)
-            {
-                subscribedEditContext.OnValidationStateChanged += OnValidationStateChanged;
-            }
+            subscribedEditContext?.OnValidationStateChanged += OnValidationStateChanged;
         }
 
         validation.Update(CascadedEditContext, ValueExpression);
@@ -355,10 +350,9 @@ public partial class BbInputField<TValue> : ComponentBase
         {
             try
             {
-                jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/text-input.js");
+                jsModule = await ComponentModules.GetCoreAsync(JSRuntime);
                 dotNetRef = DotNetObjectReference.Create(this);
-                await jsModule.InvokeVoidAsync("initialize", inputRef, dotNetRef, instanceId, GetJsConfig());
+                await jsModule.InvokeVoidAsync("textInput.initialize", inputRef, dotNetRef, instanceId, GetJsConfig());
                 jsInitialized = true;
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
@@ -592,17 +586,13 @@ public partial class BbInputField<TValue> : ComponentBase
     {
         disposed = true;
 
-        if (subscribedEditContext is not null)
-        {
-            subscribedEditContext.OnValidationStateChanged -= OnValidationStateChanged;
-        }
+        subscribedEditContext?.OnValidationStateChanged -= OnValidationStateChanged;
 
         if (jsModule != null && jsInitialized)
         {
             try
             {
-                await jsModule.InvokeVoidAsync("dispose", instanceId);
-                await jsModule.DisposeAsync();
+                await jsModule.InvokeVoidAsync("textInput.dispose", instanceId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

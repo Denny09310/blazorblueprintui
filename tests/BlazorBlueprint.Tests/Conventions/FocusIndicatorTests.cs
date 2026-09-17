@@ -56,7 +56,6 @@ public class FocusIndicatorTests
         ["BbInputGroup"] = "Wrapper element; the inner input carries the ring.",
         ["BbSidebarInset"] = "Layout container for page content, not a control.",
         ["BbDashboardWidget"] = "Widget shell; the focusable controls inside it carry their own.",
-        ["BbDataGrid"] = "Grid container; header cells and rows manage their own focus.",
     };
 
     [Fact]
@@ -115,7 +114,7 @@ public class FocusIndicatorTests
             + $"{nameof(Allowed)}:{Environment.NewLine}  " + string.Join($"{Environment.NewLine}  ", stale));
     }
 
-    private static string BuildMessage(IReadOnlyCollection<string> violations)
+    private static string BuildMessage(List<string> violations)
     {
         var message = new StringBuilder()
             .AppendLine(CultureInfo.InvariantCulture,
@@ -124,7 +123,7 @@ public class FocusIndicatorTests
             .AppendLine("A focused control then looks identical to an unfocused one, which fails WCAG 2.4.7.")
             .AppendLine()
             .AppendLine("Add the library's ring:")
-            .AppendLine("  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2")
+            .AppendLine("  bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2")
             .AppendLine()
             .AppendLine("Drop ring-offset-2 for controls that sit directly under a label — form rows")
             .AppendLine("leave a 3px gap and an offset ring extends 4px, so it overlaps the label.")

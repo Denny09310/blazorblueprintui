@@ -22,14 +22,19 @@
                 Strategy="@Strategy"
                 ZIndex="@ZIndex"
                 ForceMount="@ForceMount"
-                OnReady="@HandleFloatingReady"
-                OnPlacementChanged="@HandlePlacementChanged">
+                SideElementId="@Context.ContentId"
+                ScrollToCurrentIn="@(ScrollToSelected ? Context.ContentId : null)"
+                ScrollToCurrentSelector="@ScrollToSelectedSelector"
+                AutoFocusId="@AutoFocusId"
+                RestoreFocusToId="@Context.TriggerId"
+                RestoreFocusOnClose="@Context.State.RestoreFocusOnClose"
+                Dismiss="@BuildDismissOptions()"
+                OnDismiss="@HandleDismissAsync"
+                OnReady="@_readyCallback">
     @RenderPopoverContent()
 </BbFloatingPortal>
 
 @code {
-    private string _actualPlacement = "bottom";
-
     [CascadingParameter]
     private PopoverContext Context { get; set; } = null!;
 
@@ -44,6 +49,36 @@
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Whether to scroll the currently chosen item into view each time the popover opens, before
+    /// it is revealed.
+    /// </summary>
+    /// <remarks>
+    /// For list content in a popover — a combobox, for instance — which otherwise reopens at the
+    /// top of the list however far down the chosen value sits. The scroll happens in the same
+    /// interop call that positions the popover, so it costs no round trip and the list is already
+    /// in the right place the first frame it is on screen.
+    /// </remarks>
+    [Parameter]
+    public bool ScrollToSelected { get; set; }
+
+    /// <summary>
+    /// CSS selector identifying the chosen item for <see cref="ScrollToSelected"/>.
+    /// </summary>
+    [Parameter]
+    public string ScrollToSelectedSelector { get; set; } = "[role=\"option\"][aria-selected=\"true\"]";
+
+    /// <summary>
+    /// The <c>id</c> of an element inside the popover to focus one frame after it is revealed.
+    /// </summary>
+    /// <remarks>
+    /// For a search box or similar. It happens inside the interop call that positions the
+    /// popover, so it costs no round trip — where focusing from <see cref="OnContentReady"/>
+    /// costs one before the callback runs and another for <c>FocusAsync</c>.
+    /// </remarks>
+    [Parameter]
+    public string? AutoFocusId { get; set; }
 
     /// <summary>
     /// Whether pressing Escape should close the popover.
@@ -138,15 +173,24 @@
     [Parameter]
     public EventCallback OnContentReady { get; set; }
 
-    private IJSObjectReference? _clickOutsideModule;
-    private IJSObjectReference? _clickOutsideCleanup;
-    private IJSObjectReference? _escapeKeyCleanup;
-    private DotNetObjectReference<BbPopoverContent>? _dotNetRef;
     private bool _disposed = false;
     private string _portalId = "";
 
+    // Handed to the portal only when a consumer has asked for OnContentReady. The portal raises
+    // OnReady from OnAfterRenderAsync — a round trip behind the render on Blazor Server — and an
+    // EventCallback re-renders its receiver, which is a second round trip on every open. Nothing
+    // in the library listens to Context.OnContentReady, so with no consumer callback the whole
+    // thing is a round trip spent notifying no one. Created once: a fresh EventCallback on each
+    // render would read as a changed parameter and re-render the portal every time.
+    private EventCallback _readyCallback;
+
     protected override void OnInitialized()
     {
+        if (OnContentReady.HasDelegate)
+        {
+            _readyCallback = EventCallback.Factory.Create(this, HandleFloatingReady);
+        }
+
         if (Context == null)
         {
             throw new InvalidOperationException(
@@ -168,36 +212,18 @@
              @onkeydown="HandleKeyDown"
              @attributes="AdditionalAttributes"
              data-state="@(Context.IsOpen ? "open" : "closed")"
-             data-side="@_actualPlacement">
+             data-side="@Side.ToValue()">
             @ChildContent
         </div>
     };
 
-    private void HandlePlacementChanged(string placement)
-    {
-        _actualPlacement = string.IsNullOrEmpty(placement) ? "bottom" : placement.Split('-')[0];
-        StateHasChanged();
-    }
+    // data-side is JS's to write now, through SideElementId above. Routing it through C# meant a
+    // render batch — a round trip on Blazor Server — to record a measurement the browser had
+    // already made, and it landed between computing the position and revealing the element, so a
+    // popover that flipped paid for the re-render before anything appeared.
 
     private async Task HandleFloatingReady()
     {
-        // Set up click-outside detection
-        if (CloseOnClickOutside)
-        {
-            await SetupClickOutsideAsync();
-        }
-
-        // Escape has to be watched at the document, not on the content element. The element
-        // handler below only sees the key when focus is already inside the popover, and opening
-        // a popover does not move focus — it stays on the trigger, which lives in a different
-        // subtree entirely since the content renders through the portal. So the keydown never
-        // bubbled anywhere near the content and Escape did nothing, leaving the popover open with
-        // its trigger pointer-events-disabled and therefore no way to close it from the keyboard.
-        if (CloseOnEscape)
-        {
-            await SetupEscapeKeyAsync();
-        }
-
         // Notify subscribers that content is ready (for focus management, etc.)
         Context.NotifyContentReady();
 
@@ -208,70 +234,40 @@
         }
     }
 
-    private async Task SetupClickOutsideAsync()
+    // Declared rather than wired. BbFloatingPortal registers both listeners inside the same
+    // interop call that positions and reveals the content; wiring them here afterwards cost a
+    // network round trip each, and until they landed the popover was on screen and ignored a
+    // click outside it.
+    //
+    // Escape is watched at the document, not on the content element. The element handler only
+    // sees the key when focus is already inside the popover, and opening one does not move focus
+    // — it stays on the trigger, which lives in a different subtree entirely once the content
+    // renders through the portal. So the keydown never bubbled anywhere near the content and
+    // Escape did nothing, leaving the popover open with its trigger pointer-events-disabled and
+    // therefore no way to close it from the keyboard.
+    private FloatingDismissOptions? BuildDismissOptions()
     {
-        try
+        if (!CloseOnClickOutside && !CloseOnEscape)
         {
-            _clickOutsideModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/click-outside.js");
+            return null;
+        }
 
-            _dotNetRef = DotNetObjectReference.Create(this);
-
-            // Use ID-based lookup instead of ElementReference
-            // This ensures we always reference the current DOM element, not a stale one
-            // that may have been replaced during Blazor re-renders
-            _clickOutsideCleanup = await _clickOutsideModule.InvokeAsync<IJSObjectReference>(
-                "onClickOutsideByIds",
-                Context.ContentId,      // Element ID (not ElementReference)
-                _dotNetRef,
-                "JsOnClickOutside",
-                Context.TriggerId);     // Trigger ID (not ElementReference)
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+        return new FloatingDismissOptions
         {
-            // Expected during circuit disconnect or module loading failure
-        }
-        catch (InvalidOperationException)
-        {
-            // JS interop not available during prerendering
-        }
+            ContentId = Context.ContentId,
+            TriggerId = Context.TriggerId,
+            OnOutsideInteraction = CloseOnClickOutside,
+            OnEscapeKey = CloseOnEscape
+        };
     }
 
-    private async Task SetupEscapeKeyAsync()
+    private Task HandleDismissAsync(FloatingDismissReason reason) => reason switch
     {
-        try
-        {
-            _clickOutsideModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/click-outside.js");
+        FloatingDismissReason.EscapeKey => HandleEscapeDismissAsync(),
+        _ => HandleOutsideDismissAsync()
+    };
 
-            _dotNetRef ??= DotNetObjectReference.Create(this);
-
-            _escapeKeyCleanup = await _clickOutsideModule.InvokeAsync<IJSObjectReference>(
-                "onEscapeKey",
-                _dotNetRef,
-                "JsOnEscapeKey");
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-        {
-            // Expected during circuit disconnect or module loading failure
-        }
-        catch (InvalidOperationException)
-        {
-            // JS interop not available during prerendering
-        }
-    }
-
-    /// <summary>
-    /// Called from JavaScript when Escape is pressed anywhere in the document.
-    /// </summary>
-    /// <remarks>
-    /// The document listener fires on bubble, so when focus <em>is</em> inside the popover the
-    /// element-level handler has already closed it and the <see cref="PopoverContext.IsOpen"/>
-    /// guard below makes this a no-op rather than a second dismissal.
-    /// </remarks>
-    [JSInvokable]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public async Task JsOnEscapeKey()
+    private async Task HandleEscapeDismissAsync()
     {
         if (_disposed || !Context.IsOpen || !CloseOnEscape) return;
 
@@ -284,20 +280,15 @@
         Context.Close(restoreFocus: true);
     }
 
-    [JSInvokable]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public async Task JsOnClickOutside()
+    private async Task HandleOutsideDismissAsync()
     {
-        // Guard against callbacks after disposal
         if (_disposed || !Context.IsOpen) return;
 
-        // Invoke custom handler if provided
         if (OnClickOutside.HasDelegate)
         {
             await OnClickOutside.InvokeAsync();
         }
 
-        // Close popover if configured
         if (CloseOnClickOutside)
         {
             Context.Close();
@@ -309,37 +300,32 @@
         _ = InvokeAsync(HandleContextStateChangedAsync);
     }
 
-    private async Task HandleContextStateChangedAsync()
+    private Task HandleContextStateChangedAsync()
     {
         try
         {
             if (!Context.IsOpen)
             {
                 // Capture both the trigger ref and the restore flag before teardown.
-                var trigger = Context.State.TriggerElement;
-                var shouldRestoreFocus = Context.State.RestoreFocusOnClose;
-
-                await CleanupAsync();
-                StateHasChanged();
-
-                // Restore focus to the trigger AFTER cleanup so the now-unmounted popover
-                // isn't the active element when the user next presses Tab. Only restore
-                // for intentional closes (Escape) — click-outside leaves focus where the
-                // user clicked.
-                if (shouldRestoreFocus && trigger.HasValue)
-                {
-                    await FocusManager.RestoreFocus(trigger);
-                }
-            }
-            else
-            {
+                // Focus goes back to the trigger inside overlay.close, through the portal's
+                // RestoreFocusToId and RestoreFocusOnClose above — for an intentional close
+                // only. Awaiting FocusAsync from here was a round trip on every Escape.
                 StateHasChanged();
             }
+            // No StateHasChanged for the open. BbPopover re-renders unconditionally on every context
+            // change (#437), and this content is in its subtree, so it is already re-rendered
+            // in that same batch. Rendering it a second time here made BbFloatingPortal raise
+            // RefreshPortal while the host's render cycle was still open — the host had drawn
+            // this exact content moments earlier in the same batch — and the host, unable to
+            // tell that from a genuine mid-cycle update (#418), deferred a flush that landed one
+            // round trip after the overlay was already on screen. Every open paid for it.
         }
         catch (Exception ex) when (ex is ObjectDisposedException or TaskCanceledException)
         {
             // Component may be disposed during async operation
         }
+
+        return Task.CompletedTask;
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs args)
@@ -361,91 +347,19 @@
         }
     }
 
-    // Cleanup has two callers — the close path and DisposeAsync — and a close racing a teardown
-    // puts both in flight at once. It therefore takes ownership of what it is about to release,
-    // clearing the field before the first await, so the second caller sees nothing to do rather
-    // than dereferencing a field the first one nulled while suspended. Reading the field after
-    // an await instead threw a NullReferenceException, which no filter here catches, so it
-    // escaped DisposeAsync into the renderer's disposal queue and took the circuit down (#441).
-    private async Task CleanupAsync()
+    public ValueTask DisposeAsync()
     {
-        // Remove click-outside listener by invoking dispose method
-        var clickOutsideCleanup = _clickOutsideCleanup;
-        if (clickOutsideCleanup != null)
-        {
-            _clickOutsideCleanup = null;
-
-            try
-            {
-                await clickOutsideCleanup.InvokeVoidAsync("dispose");
-                await clickOutsideCleanup.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Cleanup may already be disposed or circuit disconnected
-            }
-        }
-
-        // Same for the document-level Escape listener. Taking ownership of the field before the
-        // first await keeps a close racing a teardown from both disposing it (#441).
-        var escapeKeyCleanup = _escapeKeyCleanup;
-        if (escapeKeyCleanup != null)
-        {
-            _escapeKeyCleanup = null;
-
-            try
-            {
-                await escapeKeyCleanup.InvokeVoidAsync("dispose");
-                await escapeKeyCleanup.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Cleanup may already be disposed or circuit disconnected
-            }
-        }
-
-        // Dispose DotNetObjectReference to prevent stale callbacks
-        var dotNetRef = _dotNetRef;
-        if (dotNetRef != null)
-        {
-            _dotNetRef = null;
-            dotNetRef.Dispose();
-        }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_disposed) { return; }
+        if (_disposed) { return ValueTask.CompletedTask; }
         _disposed = true;
 
-        try
-        {
-            await CleanupAsync();
-        }
-        catch (Exception)
-        {
-            // Disposal runs inside the renderer's disposal queue, where anything that escapes
-            // is unhandled and tears down the whole circuit. A teardown-time cleanup failure is
-            // not worth that, so it stops here — the races it can hit are handled above.
-        }
-
-        if (_clickOutsideModule != null)
-        {
-            try
-            {
-                await _clickOutsideModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
-
-        _dotNetRef?.Dispose();
-
+        // The dismissal listeners and the .NET reference they call back into both belong to
+        // BbFloatingPortal now, and it releases them when the overlay closes. There is nothing
+        // left here that could throw into the renderer's disposal queue.
         if (Context != null)
         {
             Context.OnStateChanged -= HandleContextStateChanged;
         }
+
+        return ValueTask.CompletedTask;
     }
 }

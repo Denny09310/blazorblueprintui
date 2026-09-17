@@ -169,8 +169,7 @@
 
         try
         {
-            _jsModule = await JS.InvokeAsync<IJSObjectReference>("import",
-                "./_content/BlazorBlueprint.Components/js/resizable.js");
+            _jsModule = await JsModules.GetAsync(JS, "./_content/BlazorBlueprint.Components/js/resizable.js");
             _dotNetRef = DotNetObjectReference.Create(this);
 
             var isHorizontal = Direction == ResizableDirection.Horizontal;
@@ -192,7 +191,7 @@
         : "display: flex; flex-direction: column; height: 100%; width: 100%;";
 
     private string CssClass => ClassNames.cn(
-        "overflow-hidden",
+        "bb:overflow-hidden",
         Class
     );
 
@@ -212,7 +211,6 @@
 
             try
             {
-                await _jsModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {

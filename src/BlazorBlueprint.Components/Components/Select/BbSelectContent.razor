@@ -1,32 +1,72 @@
 @typeparam TValue
 @namespace BlazorBlueprint.Components
-@inject IJSRuntime JSRuntime
+@inject IBbLocalizer Localizer
+@using Microsoft.JSInterop
 @implements IAsyncDisposable
 
 @* Styled SelectContent wrapper around SelectContent primitive *@
-<BlazorBlueprint.Primitives.Select.BbSelectContent TValue="TValue"
-                                               class="@OuterCssClass"
-                                               @attributes="AdditionalAttributes">
-    <div @ref="_scrollRef" @onscroll="HandleScroll" class="@InnerCssClass">
+@if (IsSheet && Context is not null)
+{
+    <BbSheet Open="Context.IsOpen" OpenChanged="HandleSheetOpenChanged" Side="SheetSide.Bottom">
+        <BbSheetContent Class="@ClassNames.cn("bb:max-h-[85dvh] bb:rounded-t-xl bb:pb-[max(1.5rem,env(safe-area-inset-bottom))]", Class)" @attributes="AdditionalAttributes">
+            <BbSheetHeader>
+                <BbSheetTitle>@(SheetTitle ?? Parent?.SheetTitle ?? Localizer["Select.ChooseOption"])</BbSheetTitle>
+            </BbSheetHeader>
+            @RenderSheetOptions()
+        </BbSheetContent>
+    </BbSheet>
+}
+else
+{
+    <BlazorBlueprint.Primitives.Select.BbSelectContent TValue="TValue" class="@OuterCssClass" @attributes="AdditionalAttributes">
+        @RenderOptions()
+    </BlazorBlueprint.Primitives.Select.BbSelectContent>
+}
+
+@code {
+    [CascadingParameter] private BbSelect<TValue>? Parent { get; set; }
+    /// <summary>Overrides the parent Select's presentation when supplied.</summary>
+    [Parameter] public SelectPresentation? Presentation { get; set; }
+    /// <summary>Overrides the parent Select's sheet title.</summary>
+    [Parameter] public string? SheetTitle { get; set; }
+    private bool IsSheet => (Presentation ?? Parent?.Presentation ?? SelectPresentation.Popover) == SelectPresentation.BottomSheet;
+    private RenderFragment RenderOptions() => builder =>
+    {
+        builder.OpenComponent<SelectOptionsViewport>(0);
+        builder.AddAttribute(1, nameof(SelectOptionsViewport.Class), InnerCssClass);
+        builder.AddAttribute(2, nameof(SelectOptionsViewport.OnLoadMore), OnLoadMore);
+        builder.AddAttribute(3, nameof(SelectOptionsViewport.IsLoading), IsLoading);
+        builder.AddAttribute(4, nameof(SelectOptionsViewport.ChildContent), RenderOptionItems());
+        builder.CloseComponent();
+    };
+    private RenderFragment RenderOptionItems() => __builder =>
+    {
         @ChildContent
         @if (IsLoading)
         {
-            <div class="flex items-center justify-center py-2">
+            <div class="bb:flex bb:items-center bb:justify-center bb:py-2">
                 <BbSpinner Size="SpinnerSize.Small" />
             </div>
         }
         else if (!string.IsNullOrEmpty(EndOfListMessage))
         {
-            <div class="py-2 text-center text-xs text-muted-foreground">
+            <div class="bb:py-2 bb:text-center bb:text-xs bb:text-muted-foreground">
                 @EndOfListMessage
             </div>
         }
-    </div>
-</BlazorBlueprint.Primitives.Select.BbSelectContent>
+    };
+    private RenderFragment RenderSheetOptions() => builder =>
+    {
+        builder.OpenComponent<SelectSheetOptions<TValue>>(0);
+        builder.AddAttribute(1, nameof(SelectSheetOptions<TValue>.Context), Context);
+        builder.AddAttribute(2, nameof(SelectSheetOptions<TValue>.ChildContent), RenderOptions());
+        builder.CloseComponent();
+    };
+    private void HandleSheetOpenChanged(bool open)
+    {
+        if (!open) { Context?.Close(restoreFocus: true); }
+    }
 
-@code {
-    private ElementReference _scrollRef;
-    private IJSObjectReference? _jsModule;
 
     /// <summary>
     /// Cascading parameter to infer TValue from parent Select context.
@@ -78,58 +118,35 @@
     /// Outer container: border, shadow, animation — no scrolling.
     /// </summary>
     private string OuterCssClass => ClassNames.cn(
-        "z-50 w-full overflow-hidden rounded-md border",
-        "bg-popover text-popover-foreground shadow-md",
-        "data-[state=open]:animate-in data-[state=closed]:animate-out",
-        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-        "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
+        "bb:z-50 bb:w-full bb:overflow-hidden bb:rounded-md bb:border",
+        "bb:bg-popover bb:text-popover-foreground bb:shadow-md",
+        "bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out",
+        "bb:data-[state=closed]:fade-out-0 bb:data-[state=open]:fade-in-0",
+        "bb:data-[state=closed]:zoom-out-95 bb:data-[state=open]:zoom-in-95",
+        "bb:data-[side=bottom]:slide-in-from-top-2 bb:data-[side=top]:slide-in-from-bottom-2",
         Class
     );
 
     /// <summary>
     /// Inner container: scrollable area with max height.
     /// </summary>
-    private static string InnerCssClass => "max-h-60 overflow-auto p-1 [&::-webkit-scrollbar]:hidden";
+    private string InnerCssClass => IsSheet
+        ? "bb:max-h-[65dvh] bb:overflow-y-auto bb:p-1 bb:[&_[role=option]]:min-h-[44px]"
+        : "bb:max-h-60 bb:overflow-auto bb:p-1 bb:[&::-webkit-scrollbar]:hidden";
 
-    private async Task HandleScroll()
+    /// <summary>
+    /// Called from JavaScript when the list scrolls near its bottom.
+    /// </summary>
+    [JSInvokable]
+    public async Task JsOnNearBottom()
     {
         if (!OnLoadMore.HasDelegate || IsLoading)
         {
             return;
         }
 
-        _jsModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-            "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
-
-        try
-        {
-            var nearBottom = await _jsModule.InvokeAsync<bool>("isNearBottom", _scrollRef, 80.0);
-            if (nearBottom)
-            {
-                await OnLoadMore.InvokeAsync();
-            }
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-        {
-            // Expected during circuit disconnect or disposal
-        }
+        await OnLoadMore.InvokeAsync();
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        if (_jsModule != null)
-        {
-            try
-            {
-                await _jsModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Circuit disconnected — safe to ignore
-            }
-
-            _jsModule = null;
-        }
-    }
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }

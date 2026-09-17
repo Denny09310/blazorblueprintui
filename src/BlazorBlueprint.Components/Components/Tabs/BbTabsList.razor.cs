@@ -2,6 +2,7 @@ using BlazorBlueprint.Primitives;
 using BlazorBlueprint.Primitives.Tabs;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -56,22 +57,22 @@ public partial class BbTabsList : IAsyncDisposable
     public TabsContext Context { get; set; } = null!;
 
     private string CssClass => ClassNames.cn(
-        "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
+        "bb:inline-flex bb:h-10 bb:items-center bb:justify-center bb:rounded-md bb:bg-muted bb:p-1 bb:text-muted-foreground",
         Class
     );
 
     // Use invisible (not hidden/display:none) so the tablist keeps its measured width
     // for the ResizeObserver. pointer-events-none prevents interaction while invisible.
-    private string TabListVisibilityClass => _isOverflowing ? "invisible pointer-events-none" : "";
+    private string TabListVisibilityClass => _isOverflowing ? "bb:invisible bb:pointer-events-none" : "";
 
     // The select is absolutely positioned over the tablist area to avoid affecting layout.
     // When not overflowing, it's hidden entirely.
     private string SelectWrapperClass => _isOverflowing
-        ? "absolute inset-x-0 top-0"
-        : "hidden";
+        ? "bb:absolute bb:inset-x-0 bb:top-0"
+        : "bb:hidden";
 
     private string SelectCssClass => ClassNames.cn(
-        "w-full",
+        "bb:w-full",
         SelectClass
     );
 
@@ -114,8 +115,7 @@ public partial class BbTabsList : IAsyncDisposable
             try
             {
                 _dotNetRef = DotNetObjectReference.Create(this);
-                _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/responsive-tabs.js");
+                _jsModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/responsive-tabs.js");
                 await _jsModule.InvokeVoidAsync("initialize", _dotNetRef, _componentId, _containerRef);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
@@ -140,7 +140,6 @@ public partial class BbTabsList : IAsyncDisposable
             try
             {
                 await _jsModule.InvokeVoidAsync("dispose", _componentId);
-                await _jsModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

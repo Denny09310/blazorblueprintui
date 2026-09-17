@@ -239,7 +239,7 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// Ignored when MatchTriggerWidth is true.
     /// </remarks>
     [Parameter]
-    public string PopoverWidth { get; set; } = "w-[200px]";
+    public string PopoverWidth { get; set; } = "bb:w-[200px]";
 
     /// <summary>
     /// Gets or sets whether to match the dropdown width to the trigger element width.
@@ -280,7 +280,7 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// Set to <c>null</c> or empty to disable the active style.
     /// </summary>
     [Parameter]
-    public string? ActiveClass { get; set; } = "bg-accent text-accent-foreground";
+    public string? ActiveClass { get; set; } = "bb:bg-accent bb:text-accent-foreground";
 
     /// <summary>
     /// Tracks whether the popover is currently open.
@@ -290,12 +290,15 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// <summary>
     /// Reference to the CommandInput for focus management.
     /// </summary>
-    private BbCommandInput? _commandInputRef;
+    // The search input's id, handed to both BbCommandInput and the popover's AutoFocusId so the
+    // input is focused inside the call that reveals the popover. It used to be focused from the
+    // popover's ready callback — a round trip after the content rendered, then a 50ms sleep, then
+    // another round trip for FocusAsync — on every open.
+    private readonly string _searchInputId = $"combobox-search-{Guid.NewGuid():N}";
 
     /// <summary>
     /// Tracks whether focus has been done for the current open.
     /// </summary>
-    private bool _focusDone;
 
     /// <summary>
     /// Whether the next controlled close should return focus to the trigger. Set true on
@@ -386,37 +389,6 @@ public partial class BbCombobox<TValue> : ComponentBase
     }
 
     /// <summary>
-    /// Handles the popover content ready event to focus the search input.
-    /// This is called when the popover is fully positioned and visible.
-    /// </summary>
-    private async Task HandleContentReady()
-    {
-        // Guard against multiple calls per open
-        if (_focusDone)
-        {
-            return;
-        }
-
-        _focusDone = true;
-
-        if (_commandInputRef == null)
-        {
-            return;
-        }
-
-        try
-        {
-            // Small delay to let browser finish processing DOM changes
-            await Task.Delay(50);
-            await _commandInputRef.FocusAsync();
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-        {
-            // Expected during circuit disconnect or disposal
-        }
-    }
-
-    /// <summary>
     /// Handles the open state change of the popover.
     /// Resets focus tracking and search query when the popover closes.
     /// </summary>
@@ -432,12 +404,22 @@ public partial class BbCombobox<TValue> : ComponentBase
         }
         if (!isOpen)
         {
-            _focusDone = false; // Reset for next open
-
-            // Reset search query and notify the consumer so it can reload
-            // the default dataset (e.g. initial top-N results) for the next open.
-            SearchQuery = string.Empty;
-            await SearchQueryChanged.InvokeAsync(string.Empty);
+            // Reset the search query and notify the consumer so it can reload the default dataset
+            // (e.g. initial top-N results) for the next open — but only when there is a search to
+            // clear.
+            //
+            // It used to fire on every close, including the overwhelmingly common one where the
+            // user never typed anything. For a paged list that reads the notification as "reload
+            // your first page", which is exactly what it means, the cost was severe: scroll in
+            // seven pages, pick an item from the last of them, and closing threw all seven away.
+            // Reopening showed page one, the chosen item was no longer in the list, and so the
+            // reopen could not scroll to it either. The extra renders the reload provoked landed
+            // in the middle of the close animation, which is what made the dropdown flicker.
+            if (!string.IsNullOrEmpty(SearchQuery))
+            {
+                SearchQuery = string.Empty;
+                await SearchQueryChanged.InvokeAsync(string.Empty);
+            }
         }
     }
 
@@ -476,7 +458,6 @@ public partial class BbCombobox<TValue> : ComponentBase
         // next Tab restarts from the top of the document).
         _restoreFocusOnClose = true;
         _isOpen = false;
-        // Note: _focusDone is reset by HandleOpenChanged
     }
 
     /// <summary>
@@ -489,18 +470,18 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// <summary>
     /// Gets the CSS class for the combobox container.
     /// </summary>
-    private static string ContainerClass => "relative";
+    private static string ContainerClass => "bb:relative";
 
     /// <summary>
     /// Gets the CSS class for the button element (styled like ButtonVariant.Outline).
     /// </summary>
     private string ButtonCssClass => ClassNames.cn(
-        "inline-flex items-center justify-between rounded-md text-sm font-medium",
-        "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "disabled:opacity-50 disabled:pointer-events-none",
-        "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        "bb:inline-flex bb:items-center bb:justify-between bb:rounded-md bb:text-sm bb:font-medium",
+        "bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:disabled:opacity-50 bb:disabled:pointer-events-none",
+        "bb:border bb:border-input bb:bg-background bb:hover:bg-accent bb:hover:text-accent-foreground",
         _isOpen ? ActiveClass : null,
-        "h-10 px-3",
+        "bb:h-10 bb:px-3",
         string.IsNullOrWhiteSpace(Class) ? PopoverWidth : null,
         Class
     );

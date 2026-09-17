@@ -5,6 +5,23 @@
  */
 
 const STORAGE_KEY = 'bb-theme';
+const designOptions = {
+  density: ['standard', 'compact', 'dense', 'spacious'],
+  font: ['system', 'inter', 'geist', 'roboto', 'nunitosans', 'serif', 'mono'],
+  surface: ['standard', 'flat', 'elevated', 'glass'],
+  menuColor: ['default', 'muted', 'primary', 'inverse'],
+  menuAccent: ['subtle', 'primary']
+};
+const designAttributes = {
+  density: 'data-bb-density', font: 'data-bb-font', surface: 'data-bb-surface',
+  menuColor: 'data-bb-menu-color', menuAccent: 'data-bb-menu-accent'
+};
+function validDesign(value, defaults = {}) {
+  return Object.fromEntries(Object.entries(designOptions).map(([key, allowed]) => {
+    const name = typeof value?.[key] === 'string' ? value[key].toLowerCase() : null;
+    return [key, allowed.includes(name) ? name : (defaults[key] ?? allowed[0])];
+  }));
+}
 
 /**
  * The theme state the document is meant to have.
@@ -57,6 +74,10 @@ function writeToDom() {
       }
     }
 
+    for (const [key, attribute] of Object.entries(designAttributes)) {
+      if (desired.design) root.setAttribute(attribute, desired.design[key]);
+    }
+
     if (desired.radius !== null) {
       root.style.setProperty('--radius', desired.radius + 'rem');
     }
@@ -96,6 +117,7 @@ function hasDrifted() {
     return true;
   }
 
+  if (desired.design && Object.entries(designAttributes).some(([key, attribute]) => root.getAttribute(attribute) !== desired.design[key])) return true;
   return false;
 }
 
@@ -118,7 +140,7 @@ function startGuard() {
 
   guard.observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ['class', 'data-base-color', 'data-primary-color', 'style']
+    attributeFilter: ['class', 'data-base-color', 'data-primary-color', 'style', ...Object.values(designAttributes)]
   });
 }
 
@@ -129,8 +151,8 @@ function startGuard() {
  * @param {string} primaryColor
  * @param {number} radius
  */
-export function applyTheme(isDark, baseColor, primaryColor, radius) {
-  desired = { isDark, baseColor, primaryColor, radius };
+export function applyTheme(isDark, baseColor, primaryColor, radius, design) {
+  desired = { isDark, baseColor, primaryColor, radius, design: validDesign(design) };
   writeToDom();
   startGuard();
 }
@@ -204,15 +226,73 @@ export function loadTheme() {
 }
 
 /**
+ * Resolves and applies the startup theme in one call.
+ *
+ * This used to be two to four separate calls from C# — loadTheme, then maybe clearTheme, then
+ * maybe getPrefersDark, then applyTheme — and on Blazor Server each one is a circuit round trip,
+ * paid on every page load before the page settles. None of the decisions between them need the
+ * server: they are reads of localStorage and a media query.
+ *
+ * Colour names are validated here against the lists C# supplies, so a corrupted or outdated entry
+ * in localStorage falls back to the configured default exactly as C#'s enum parse would, rather
+ * than being applied and corrected a round trip later.
+ *
+ * @param {Object} config
+ * @param {boolean} config.persist - Whether saved preferences should be honoured at all.
+ * @param {boolean} config.detectSystemPreference - Whether to fall back to the OS dark-mode setting.
+ * @param {Object} config.defaults - isDarkMode, baseColor, primaryColor, radius.
+ * @param {string[]} config.validBaseColors - Accepted base colour names, lower case.
+ * @param {string[]} config.validPrimaryColors - Accepted primary colour names, lower case.
+ * @returns {{ isDarkMode: boolean, baseColor: string, primaryColor: string, radius: number }}
+ *   The state that was applied.
+ */
+export function initialize(config) {
+  const defaults = config.defaults;
+
+  // Only read localStorage when persistence is enabled. Reading it regardless meant a theme saved
+  // by an earlier run kept overriding the configured defaults after persistence was turned off,
+  // with no way out short of the user clearing site data by hand (#481). Clearing the stale entry
+  // closes the same hole for anyone who already has one.
+  const saved = config.persist ? loadTheme() : null;
+  if (!config.persist) {
+    clearTheme();
+  }
+
+  const pick = (value, allowed, fallback) => {
+    const name = typeof value === 'string' ? value.toLowerCase() : null;
+    return name && allowed.includes(name) ? name : fallback;
+  };
+
+  const state = saved
+    ? {
+        isDarkMode: !!saved.isDarkMode,
+        baseColor: pick(saved.baseColor, config.validBaseColors, defaults.baseColor),
+        primaryColor: pick(saved.primaryColor, config.validPrimaryColors, defaults.primaryColor),
+        radius: Number.isFinite(saved.radius) && saved.radius >= 0 && saved.radius <= 4 ? saved.radius : defaults.radius,
+      }
+    : {
+        isDarkMode: config.detectSystemPreference ? getPrefersDark() : defaults.isDarkMode,
+        baseColor: defaults.baseColor,
+        primaryColor: defaults.primaryColor,
+        radius: defaults.radius,
+      };
+
+  state.design = validDesign(saved?.design, validDesign(defaults.design));
+  applyTheme(state.isDarkMode, state.baseColor, state.primaryColor, state.radius, state.design);
+
+  return state;
+}
+
+/**
  * Save theme preferences to localStorage.
  * @param {boolean} isDarkMode
  * @param {string} baseColor
  * @param {string} primaryColor
  * @param {number} radius
  */
-export function saveTheme(isDarkMode, baseColor, primaryColor, radius) {
+export function saveTheme(isDarkMode, baseColor, primaryColor, radius, design) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ isDarkMode, baseColor, primaryColor, radius }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ isDarkMode, baseColor, primaryColor, radius, design: validDesign(design) }));
   } catch {
     // localStorage unavailable — silently ignore
   }

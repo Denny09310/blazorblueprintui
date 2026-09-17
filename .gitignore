@@ -9,6 +9,8 @@ obj/
 *.exe
 *.pdb
 TestResults/
+test-results/
+playwright-report/
 *.csproj.user
 .dotnet/
 packages/
@@ -54,7 +56,6 @@ devkit/
 # External libs
 pro/
 /.vscode-ai-images/
-
 
 # Internal documentation belongs in the private development toolkit
 /docs/

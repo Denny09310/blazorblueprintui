@@ -12,18 +12,19 @@
          stroke-width="2"
          stroke-linecap="round"
          stroke-linejoin="round"
-         class="mr-2 h-4 w-4 shrink-0 opacity-50">
+         class="bb:mr-2 bb:h-4 bb:w-4 bb:shrink-0 bb:opacity-50">
         <circle cx="11" cy="11" r="8"></circle>
         <path d="m21 21-4.35-4.35"></path>
     </svg>
     <input @ref="_inputRef"
+           id="@_inputId"
            type="text"
            placeholder="@Placeholder"
            disabled="@Disabled"
            value="@_displayValue"
            @oninput="HandleInput"
            @onkeydown="HandleKeyDown"
-           class="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 ml-2"
+           class="bb:flex bb:h-11 bb:w-full bb:rounded-md bb:bg-transparent bb:py-3 bb:text-sm bb:outline-none bb:placeholder:text-muted-foreground bb:disabled:cursor-not-allowed bb:disabled:opacity-50 bb:ml-2"
            role="combobox"
            aria-autocomplete="list"
            aria-expanded="true"
@@ -51,6 +52,19 @@
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Gets or sets the <c>id</c> of the input element. Generated when not set.
+    /// </summary>
+    /// <remarks>
+    /// An owner that wants the input focused as its popover opens passes this same id as the
+    /// popover's <c>AutoFocusId</c>, so the focus happens inside the call that reveals the popover
+    /// rather than a round trip after it.
+    /// </remarks>
+    [Parameter]
+    public string? Id { get; set; }
+
+    private string _inputId = string.Empty;
 
     /// <summary>
     /// Gets or sets the placeholder text for the input.
@@ -106,13 +120,36 @@
     /// <summary>
     /// Gets the computed CSS classes for the input container.
     /// </summary>
+    // The focus ring belongs to the row, not to the input inside it.
+    //
+    // On the input it drew a third box: a ring inside this bordered row inside the bordered
+    // popover, floating clear of both. And it was not an occasional look — a combobox focuses its
+    // search field every time it opens, so the ring was showing the whole time the dropdown was
+    // on screen, marking the one element that could possibly have focus.
+    //
+    // focus-within moves it out to the full width of the row, where it reads as "the search area
+    // is active" rather than as a box drawn around a box. ring-inset keeps it inside the row's
+    // own edges rather than bleeding over the popover's border.
+    //
+    // rounded-t-md is what stops the ring squaring off the popover's top corners. An inset ring is
+    // an inset box-shadow, and an inset shadow follows its own element's radius — not an
+    // ancestor's — so a square-cornered row drew square corners straight across the popover's
+    // rounded ones. The radius matches because rounded-md is the popover's own.
+    //
+    // The bottom border goes transparent while the ring shows, so the divider between the search
+    // box and the list is the ring rather than a 2px ring stacked on a 1px line.
     private string CssClass => ClassNames.cn(
-        "flex items-center border-b border-border px-3",
+        "bb:flex bb:items-center bb:rounded-t-md bb:border-b bb:border-border bb:px-3",
+        "bb:focus-within:ring-2 bb:focus-within:ring-ring bb:focus-within:ring-inset bb:focus-within:border-b-transparent",
         Class
     );
 
     protected override void OnParametersSet()
     {
+        _inputId = Id ?? (_inputId.Length > 0 && _inputId.StartsWith("command-input-", StringComparison.Ordinal)
+            ? _inputId
+            : $"command-input-{Guid.NewGuid():N}");
+
         // Check if AutoFocus changed from false to true
         if (AutoFocus && !_previousAutoFocus)
         {
@@ -137,10 +174,9 @@
             // select a list item while the IME still owns the keystroke.
             try
             {
-                _guardModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/composition-guard.js");
+                _guardModule = await ComponentModules.GetCoreAsync(JSRuntime);
                 await _guardModule.InvokeVoidAsync(
-                    "attach", _inputRef, _guardId, new { suppress = GuardSuppressedEvents });
+"compositionGuard.attach", _inputRef, _guardId, new { suppress = GuardSuppressedEvents });
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
@@ -158,8 +194,10 @@
             _shouldFocus = false;
             try
             {
-                // Small delay to ensure the element is ready in the DOM (especially after portal rendering)
-                await Task.Delay(50);
+                // No delay. This runs after the render that put the input on screen has been
+                // acknowledged, so the element is there. The 50ms sleep it used to carry was a
+                // guess at portal timing, and the portal case now focuses through AutoFocusId
+                // inside the open call instead.
                 await _inputRef.FocusAsync();
             }
             catch
@@ -201,6 +239,12 @@
         catch (TaskCanceledException)
         {
             // Timer was cancelled — either by a new keystroke or disposal.
+        }
+        catch (Exception)
+        {
+            // async void: nothing awaits this, so an exception that escapes has no caller to reach and
+            // Blazor Server treats it as fatal — the circuit closes and the user sees the reconnect
+            // overlay. Everything this method does is best-effort, and none of it is worth that.
         }
     }
 
@@ -245,8 +289,7 @@
 
         try
         {
-            await _guardModule.InvokeVoidAsync("detach", _guardId);
-            await _guardModule.DisposeAsync();
+            await _guardModule.InvokeVoidAsync("compositionGuard.detach", _guardId);
         }
         catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
         {
