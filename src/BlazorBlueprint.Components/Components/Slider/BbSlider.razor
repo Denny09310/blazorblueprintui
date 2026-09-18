@@ -72,24 +72,41 @@
             ? BlazorBlueprint.Primitives.Slider.SliderOrientation.Vertical
             : BlazorBlueprint.Primitives.Slider.SliderOrientation.Horizontal;
 
+    /// <summary>
+    /// Whether the slider runs bottom-to-top rather than left-to-right.
+    /// </summary>
+    private bool IsVertical => Orientation == SliderOrientation.Vertical;
+
+    // A vertical slider must stack on the cross axis: the track carries `grow`, which follows the
+    // flex main axis, so a row container would stretch the 8px track across the full container width.
     private string CssClass => ClassNames.cn(
-        "bb:relative bb:flex bb:w-full bb:touch-none bb:select-none bb:items-center",
+        IsVertical
+            ? "bb:relative bb:flex bb:flex-col bb:h-full bb:min-h-40 bb:w-5 bb:shrink-0 bb:touch-none bb:select-none bb:items-center"
+            : "bb:relative bb:flex bb:w-full bb:touch-none bb:select-none bb:items-center",
         Disabled ? "bb:opacity-50 bb:cursor-not-allowed" : "bb:cursor-pointer",
         Class
     );
 
     private string ComputedTrackClass => ClassNames.cn(
-        "bb:relative bb:h-2 bb:w-full bb:grow bb:overflow-hidden bb:rounded-full bb:bg-secondary",
+        IsVertical
+            ? "bb:relative bb:w-2 bb:h-full bb:grow bb:overflow-hidden bb:rounded-full bb:bg-secondary"
+            : "bb:relative bb:h-2 bb:w-full bb:grow bb:overflow-hidden bb:rounded-full bb:bg-secondary",
         TrackClass
     );
 
-    private string ComputedIndicatorClass => "bb:absolute bb:h-full bb:bg-primary";
+    // The primitive sets only the length of the fill (height when vertical, width otherwise), so the
+    // styled layer pins the fill to the edge it grows from.
+    private string ComputedIndicatorClass => IsVertical
+        ? "bb:absolute bb:bottom-0 bb:w-full bb:bg-primary"
+        : "bb:absolute bb:h-full bb:bg-primary";
 
     private string ComputedThumbClass => ClassNames.cn(
         "bb:absolute bb:block bb:h-5 bb:w-5 bb:rounded-full bb:border-2 bb:border-primary bb:bg-background bb:ring-offset-background bb:transition-colors",
         "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2",
         "bb:disabled:pointer-events-none bb:disabled:opacity-50",
-        "bb:-translate-x-1/2 bb:top-1/2 bb:-translate-y-1/2",
+        IsVertical
+            ? "bb:-translate-x-1/2 bb:left-1/2 bb:translate-y-1/2"
+            : "bb:-translate-x-1/2 bb:top-1/2 bb:-translate-y-1/2",
         Disabled ? "" : "bb:cursor-grab bb:active:cursor-grabbing",
         ThumbClass
     );

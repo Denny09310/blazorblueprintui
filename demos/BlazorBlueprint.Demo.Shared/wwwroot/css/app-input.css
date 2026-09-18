@@ -37,19 +37,31 @@
 }
 
 
-/* Documentation labels stay readable beside version badges, including in the mobile drawer. */
+/* Documentation labels stay on one line; a long name ends in an ellipsis and the full
+   text is still available from the row's title attribute. */
 .demo-component-link[data-sidebar="menu-sub-button"] {
-  height: auto;
-  min-height: var(--sidebar-sub-button-height);
-  padding-block: 0.375rem;
+  height: var(--sidebar-sub-button-height);
   gap: 0.5rem;
 }
 
 .demo-component-link > .demo-component-label {
   flex: 1;
   min-width: 0;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* `flex: 1` on the label pushes the badge to the row's right edge; `margin-left: auto`
+   states that intent for any row whose label is replaced later. */
+.demo-component-link > .demo-version-badge {
+  margin-left: auto;
+}
+
+/* A sub-menu insets both edges, and a nested one insets again, so badges would stagger and
+   sit well short of the sidebar's right gutter. Drop the right inset at every level: rows
+   then end where the top-level rows end, and every badge lands on the same vertical line. */
+.demo-component-menu[data-sidebar="menu-sub"] {
+  margin-right: 0;
+  padding-right: 0;
 }

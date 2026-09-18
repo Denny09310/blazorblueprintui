@@ -246,7 +246,7 @@
                             </BbSidebarMenuChevron>
                         </BbSidebarMenuButton>
                         <BbCollapsibleContent>
-                            <BbSidebarMenuSub>
+                            <BbSidebarMenuSub Class="demo-component-menu">
                                 @foreach (var group in ComponentCatalog.NavigationGroups)
                                 {
                                     <BbSidebarMenuSubItem @key="group.Entry.Url">
@@ -254,12 +254,12 @@
                                             <span class="demo-component-label">@group.Entry.Name</span>
                                             @if (group.Entry.IsNew)
                                             {
-                                                <span class="shrink-0 rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary" title="Added in v4">v4</span>
+                                                <span class="demo-version-badge shrink-0 rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary" title="Added in v4">v4</span>
                                             }
                                         </BbSidebarMenuSubButton>
                                         @if (group.Children.Count > 0)
                                         {
-                                            <BbSidebarMenuSub Class="my-1" aria-label="@($"{group.Entry.Name} related demos")">
+                                            <BbSidebarMenuSub Class="demo-component-menu my-1" aria-label="@($"{group.Entry.Name} related demos")">
                                                 @foreach (var child in group.Children)
                                                 {
                                                     <BbSidebarMenuSubItem @key="child.Url">
@@ -267,7 +267,7 @@
                                                             <span class="demo-component-label">@ComponentCatalog.NavigationLabel(group.Entry, child)</span>
                                                             @if (child.IsNew)
                                                             {
-                                                                <span class="shrink-0 rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary" title="Added in v4">v4</span>
+                                                                <span class="demo-version-badge shrink-0 rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary" title="Added in v4">v4</span>
                                                             }
                                                         </BbSidebarMenuSubButton>
                                                     </BbSidebarMenuSubItem>

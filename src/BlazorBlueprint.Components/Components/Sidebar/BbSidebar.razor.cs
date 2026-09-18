@@ -50,6 +50,17 @@ public partial class BbSidebar : IDisposable
             : SheetSide.Left;
     }
 
+    /// <summary>
+    /// Unprefixed Tailwind group/peer markers, carried alongside the library's own prefixed pair.
+    /// </summary>
+    /// <remarks>
+    /// Tailwind resolves <c>group-*</c> and <c>peer-*</c> against a literal marker class, and a
+    /// consumer's build emits <c>:where(.group)</c> — never <c>:where(.bb\:group)</c>, because it
+    /// never sees the <c>bb</c> prefix. Without these, a consumer writing
+    /// <c>group-data-[collapsible=icon]:hidden</c> against the sidebar silently matches nothing.
+    /// </remarks>
+    private const string BareMarkers = "group peer";
+
     private string GetDesktopClasses()
     {
         // hidden md:flex prevents the desktop sidebar from flashing on mobile screens
@@ -95,7 +106,9 @@ public partial class BbSidebar : IDisposable
             }
         }
 
-        return ClassNames.cn(
+        // BareMarkers stays outside cn(): `group` and `peer` are markers rather than utilities, so
+        // they never conflict, and cn() would rewrite them to the prefixed form while merging.
+        return BareMarkers + " " + ClassNames.cn(
             baseClasses,
             variantClasses,
             sideClasses,
