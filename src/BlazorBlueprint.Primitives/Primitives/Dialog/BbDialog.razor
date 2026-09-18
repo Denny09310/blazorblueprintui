@@ -2,6 +2,7 @@
 @using BlazorBlueprint.Primitives.Services
 @using Microsoft.Extensions.Logging
 @inject ILogger<BbDialog> Logger
+@implements IDisposable
 
 @* Dialog primitive root component - headless, unstyled behavior only *@
 <CascadingValue Value="@_context" IsFixed="false">
@@ -155,8 +156,17 @@
         StateHasChanged();
     }
 
+    /// <summary>
+    /// Unsubscribes from the context.
+    /// </summary>
+    /// <remarks>
+    /// The method was here all along, but the component never declared <c>IDisposable</c>, so
+    /// Blazor never called it: every root left a handler attached to a context it no longer
+    /// rendered, and the closure kept the disposed component alive with it.
+    /// </remarks>
     public void Dispose()
     {
         _context.OnStateChanged -= HandleContextStateChanged;
+        GC.SuppressFinalize(this);
     }
 }

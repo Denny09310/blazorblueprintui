@@ -1,6 +1,21 @@
 @namespace BlazorBlueprint.Components
+@using System.Globalization
+@inject IBbLocalizer Localizer
 
-<div class="@CssClass" @onpointerdown="HandlePointerDown" @attributes="AdditionalAttributes">
+<div class="@CssClass"
+     role="separator"
+     tabindex="0"
+     aria-orientation="@(IsHorizontal ? "vertical" : "horizontal")"
+     aria-label="@(AriaLabel ?? Localizer["Resizable.ResizeHandle"])"
+     aria-controls="@PrimaryPanelId"
+     aria-valuenow="@AriaValue(Group?.GetPanelSize(_handleIndex))"
+     aria-valuemin="@AriaValue(Group?.GetPanelMinSize(_handleIndex))"
+     aria-valuemax="@AriaValue(Group?.GetPanelMaxSize(_handleIndex))"
+     @onpointerdown="HandlePointerDown"
+     @onkeydown="HandleKeyDown"
+     @onkeydown:preventDefault="_preventKeyDefault"
+     @onkeyup="HandleKeyUp"
+     @attributes="AdditionalAttributes">
     @if (WithHandle)
     {
         <div class="@HandleIconClass">
@@ -33,9 +48,38 @@
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
+    /// <summary>How far one arrow key moves the handle, as a percentage of the group.</summary>
+    private const double ArrowStep = 5;
+
+    /// <summary>How far Page Up / Page Down move it.</summary>
+    private const double PageStep = 20;
+
     private int _handleIndex = -1;
+    private bool _preventKeyDefault;
+
+    /// <summary>
+    /// An accessible name for the separator. Defaults to the localized
+    /// <c>Resizable.ResizeHandle</c> string.
+    /// </summary>
+    [Parameter]
+    public string? AriaLabel { get; set; }
 
     private bool IsHorizontal => Group?.GetDirection() == ResizableDirection.Horizontal;
+
+    /// <summary>
+    /// The panel this separator sizes — the one in front of it. Named through
+    /// <c>aria-controls</c> so the value the separator reports has something to belong to.
+    /// </summary>
+    private string? PrimaryPanelId => Group is not null && _handleIndex >= 0
+        ? Group.PanelElementId(_handleIndex)
+        : null;
+
+    /// <summary>
+    /// Formats a percentage for an <c>aria-value*</c> attribute, or returns null so the attribute is
+    /// omitted before the panels have registered.
+    /// </summary>
+    private static string? AriaValue(double? percentage) =>
+        percentage?.ToString("0.##", CultureInfo.InvariantCulture);
 
     protected override void OnInitialized()
     {
@@ -53,8 +97,75 @@
         }
     }
 
+    /// <summary>
+    /// Keyboard resizing: the arrows move the handle a step at a time, Page Up/Down move it further,
+    /// and Home/End take the panel to its smallest and largest.
+    /// </summary>
+    /// <remarks>
+    /// The handle used to be a plain <c>div</c> with only a pointer handler — no role, no tab stop
+    /// and no keys — while the documentation described all three. A pointer is the one input that
+    /// cannot be assumed, so resizing was unreachable for anyone using a keyboard.
+    /// </remarks>
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (Group is null || _handleIndex < 0)
+        {
+            return;
+        }
+
+        // Which arrows act depends on which way the panels are laid out: a side-by-side group grows
+        // its first panel with Right, a stacked one with Down.
+        var grow = IsHorizontal ? "ArrowRight" : "ArrowDown";
+        var shrink = IsHorizontal ? "ArrowLeft" : "ArrowUp";
+
+        double delta;
+
+        if (args.Key == grow)
+        {
+            delta = ArrowStep;
+        }
+        else if (args.Key == shrink)
+        {
+            delta = -ArrowStep;
+        }
+        else if (args.Key == "PageUp")
+        {
+            delta = PageStep;
+        }
+        else if (args.Key == "PageDown")
+        {
+            delta = -PageStep;
+        }
+        else if (args.Key is "Home" or "End")
+        {
+            // Far enough to reach either limit; NudgeAsync clamps to what the neighbours allow.
+            delta = args.Key == "Home" ? -100 : 100;
+        }
+        else
+        {
+            // Everything else, Tab included, keeps its default action.
+            _preventKeyDefault = false;
+            return;
+        }
+
+        _preventKeyDefault = true;
+        await Group.NudgeAsync(_handleIndex, delta);
+    }
+
+    /// <summary>
+    /// Releases the suppression as soon as the key is let go.
+    /// </summary>
+    /// <remarks>
+    /// Blazor evaluates <c>@onkeydown:preventDefault</c> when the element renders, not when the
+    /// event fires, so the flag always describes the previous keystroke. Left set, the Tab that
+    /// follows a resize would be swallowed and focus could never leave the handle.
+    /// </remarks>
+    private void HandleKeyUp() => _preventKeyDefault = false;
+
     private string CssClass => ClassNames.cn(
         "bb:relative bb:flex bb:items-center bb:justify-center bb:bg-border",
+        // The handle is in the tab order now, so it needs a visible focus indicator.
+        "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-1 bb:focus-visible:z-10",
         IsHorizontal
             ? "bb:w-px bb:cursor-col-resize bb:hover:bg-primary/50 bb:active:bg-primary"
             : "bb:h-px bb:cursor-row-resize bb:hover:bg-primary/50 bb:active:bg-primary",

@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Primitives.NavigationMenu
+@implements IDisposable
 
 <button @ref="buttonRef"
         type="button"
@@ -39,32 +40,34 @@
     public ElementReference ButtonRef => buttonRef;
 
     /// <summary>
-    /// This trigger's slot in the menu's trigger list, so the real element reference replaces the
-    /// placeholder in the right place.
+    /// Takes this trigger's place in the menu's list, in render order.
     /// </summary>
     /// <remarks>
-    /// The index used to be recomputed after the first render as <c>TriggerCount - 1</c>. Every
-    /// trigger initialises before any of them renders, so by then that expression named the last
-    /// slot for all of them: each trigger overwrote the same entry, and arrow-key navigation could
-    /// reach only one button.
+    /// Registered against <c>this</c>, so the entry can be replaced once the element exists and
+    /// removed when the trigger goes away. The list used to be addressed by an index recomputed
+    /// after the first render as <c>TriggerCount - 1</c>: every trigger initialises before any of
+    /// them renders, so by then that named the last slot for all of them and each one overwrote the
+    /// same entry.
     /// </remarks>
-    private int triggerIndex = -1;
-
-    protected override void OnInitialized()
-    {
-        if (Menu != null)
-        {
-            triggerIndex = Menu.RegisterTrigger(buttonRef);
-        }
-    }
+    protected override void OnInitialized() => Menu?.RegisterTrigger(this, buttonRef);
 
     protected override void OnAfterRender(bool firstRender)
     {
-        if (firstRender && Menu != null && triggerIndex >= 0)
+        if (firstRender)
         {
-            // Update the ref now that the element is rendered.
-            Menu.UpdateTriggerRef(triggerIndex, buttonRef);
+            // The element reference is only real now, so replace the placeholder registered above.
+            Menu?.RegisterTrigger(this, buttonRef);
         }
+    }
+
+    /// <summary>
+    /// Leaves the menu's trigger list, so arrow-key navigation stops stepping onto a button that is
+    /// no longer on the page.
+    /// </summary>
+    public void Dispose()
+    {
+        Menu?.UnregisterTrigger(this);
+        GC.SuppressFinalize(this);
     }
 
     private void HandleClick()

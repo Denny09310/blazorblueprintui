@@ -3,7 +3,7 @@
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
-<div @ref="_groupRef" class="@CssClass" style="@Style" @attributes="AdditionalAttributes">
+<div @ref="_groupRef" class="@CssClass" style="@MergedStyle" @attributes="@InlineStyleMerge.WithoutStyle(AdditionalAttributes)">
     <CascadingValue Value="this" IsFixed="false">
         @ChildContent
     </CascadingValue>
@@ -99,6 +99,98 @@
         return _handleCount++;
     }
 
+    /// <summary>The element id given to the panel at <paramref name="index"/>.</summary>
+    /// <remarks>
+    /// A handle points <c>aria-controls</c> at the panel in front of it, so assistive technology can
+    /// say what the separator resizes.
+    /// </remarks>
+    internal string PanelElementId(int index) => $"{_groupId}-panel-{index}";
+
+    /// <summary>The smallest size the panel at <paramref name="index"/> may take, as a percentage.</summary>
+    /// <remarks>Zero for a collapsible panel: it is allowed all the way shut.</remarks>
+    internal double GetPanelMinSize(int index) =>
+        index >= 0 && index < _panelMinSizes.Count
+            ? (IsPanelCollapsible(index) ? 0 : _panelMinSizes[index])
+            : 0;
+
+    /// <summary>The largest size the panel at <paramref name="index"/> may take, as a percentage.</summary>
+    internal double GetPanelMaxSize(int index) =>
+        index >= 0 && index < _panelMaxSizes.Count ? _panelMaxSizes[index] : 100;
+
+    /// <summary>Whether the panel at <paramref name="index"/> may be dragged shut.</summary>
+    internal bool IsPanelCollapsible(int index) =>
+        index >= 0 && index < _panelCollapsible.Count && _panelCollapsible[index];
+
+    /// <summary>
+    /// Moves a handle by <paramref name="deltaPercent"/>, taking the space from the panel on the
+    /// other side of it. This is how keyboard resizing works: it never touches the browser, so the
+    /// component state is authoritative and the change is committed immediately.
+    /// </summary>
+    /// <remarks>
+    /// Clamps to what both neighbours can satisfy — the same bounds the drag loop uses — so a key
+    /// press that would overshoot pins at the limit instead of being dropped. A collapsible panel
+    /// taken below half its declared minimum snaps shut, matching the pointer behaviour.
+    /// </remarks>
+    internal async Task NudgeAsync(int handleIndex, double deltaPercent)
+    {
+        if (handleIndex < 0 || handleIndex + 1 >= _panelSizes.Count)
+        {
+            return;
+        }
+
+        var first = handleIndex;
+        var second = handleIndex + 1;
+        var startFirst = _panelSizes[first];
+        var startSecond = _panelSizes[second];
+
+        var lower = Math.Max(GetPanelMinSize(first) - startFirst, startSecond - GetPanelMaxSize(second));
+        var upper = Math.Min(GetPanelMaxSize(first) - startFirst, startSecond - GetPanelMinSize(second));
+
+        if (lower > upper)
+        {
+            return;
+        }
+
+        var delta = Math.Clamp(deltaPercent, lower, upper);
+        var sizeFirst = SnapCollapse(first, Math.Round(startFirst + delta, 2));
+        var sizeSecond = Math.Round(startFirst + startSecond - sizeFirst, 2);
+
+        if (Math.Abs(sizeFirst - startFirst) < 0.001)
+        {
+            return;
+        }
+
+        _panelSizes[first] = sizeFirst;
+        _panelSizes[second] = sizeSecond;
+        StateHasChanged();
+
+        if (OnResizeEnd.HasDelegate)
+        {
+            await OnResizeEnd.InvokeAsync(new PanelResizeEventArgs { Sizes = _panelSizes.ToArray() });
+        }
+    }
+
+    /// <summary>
+    /// Mirrors the drag loop's collapse snap: below half the declared minimum a collapsible panel
+    /// goes to zero, and anything between zero and that minimum opens back out to it.
+    /// </summary>
+    private double SnapCollapse(int index, double size)
+    {
+        if (!IsPanelCollapsible(index))
+        {
+            return size;
+        }
+
+        var min = index < _panelMinSizes.Count ? _panelMinSizes[index] : 0;
+
+        if (!(min > 0) || size >= min)
+        {
+            return size;
+        }
+
+        return size < min / 2 ? 0 : min;
+    }
+
     internal async Task StartResize(int handleIndex, double clientX, double clientY, long pointerId)
     {
         if (_jsModule != null && _jsInitialized)
@@ -191,6 +283,16 @@
             // JS interop not available during prerendering
         }
     }
+
+    /// <summary>
+    /// The group's own flex layout followed by the consumer's style, so a supplied <c>style</c>
+    /// adds to it rather than replacing it.
+    /// </summary>
+    /// <remarks>
+    /// The splat used to overwrite <c>display: flex</c> and the direction, which stops the panels
+    /// laying out at all.
+    /// </remarks>
+    private string? MergedStyle => InlineStyleMerge.Merge(Style, AdditionalAttributes);
 
     private string Style => Direction == ResizableDirection.Horizontal
         ? "display: flex; flex-direction: row; height: 100%; width: 100%;"

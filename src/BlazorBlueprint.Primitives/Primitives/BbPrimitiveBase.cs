@@ -1,3 +1,4 @@
+using BlazorBlueprint.Primitives.Utilities;
 using Microsoft.AspNetCore.Components;
 
 namespace BlazorBlueprint.Primitives;
@@ -29,37 +30,13 @@ public abstract class BbPrimitiveBase : ComponentBase
     /// The merged style string, or <c>null</c> if both the computed style
     /// and user style are empty.
     /// </returns>
-    protected string? MergeStyles(string? computedStyle)
-    {
-        var userStyle = AdditionalAttributes != null
-            && AdditionalAttributes.TryGetValue("style", out var s)
-                ? s?.ToString()
-                : null;
-
-        if (string.IsNullOrEmpty(computedStyle))
-        {
-            return string.IsNullOrEmpty(userStyle) ? null : userStyle;
-        }
-
-        return string.IsNullOrEmpty(userStyle) ? computedStyle : $"{computedStyle}; {userStyle}";
-    }
+    protected string? MergeStyles(string? computedStyle) =>
+        InlineStyleMerge.Merge(computedStyle, AdditionalAttributes);
 
     /// <summary>
     /// Returns <see cref="AdditionalAttributes"/> with the <c>style</c> key removed,
     /// preventing the user's style from overwriting the merged style via <c>@attributes</c>.
     /// </summary>
-    protected Dictionary<string, object>? FilteredAttributes
-    {
-        get
-        {
-            if (AdditionalAttributes == null || !AdditionalAttributes.ContainsKey("style"))
-            {
-                return AdditionalAttributes;
-            }
-
-            var filtered = new Dictionary<string, object>(AdditionalAttributes);
-            filtered.Remove("style");
-            return filtered.Count > 0 ? filtered : null;
-        }
-    }
+    protected Dictionary<string, object>? FilteredAttributes =>
+        InlineStyleMerge.WithoutStyle(AdditionalAttributes);
 }

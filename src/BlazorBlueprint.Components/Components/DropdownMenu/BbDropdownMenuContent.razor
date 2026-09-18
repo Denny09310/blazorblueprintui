@@ -3,7 +3,7 @@
 @* Styled DropdownMenuContent - wrapper with shadcn Tailwind classes *@
 <BlazorBlueprint.Primitives.DropdownMenu.BbDropdownMenuContent ForceMount="false"
                                                             class="@CssClass"
-                                                            style="@Style"
+                                                            style="@MergedStyle"
                                                             CloseOnEscape="@CloseOnEscape"
                                                             CloseOnClickOutside="@CloseOnClickOutside"
                                                             Side="@Side"
@@ -15,7 +15,7 @@
                                                             Strategy="@Strategy"
                                                             MatchTriggerWidth="@MatchTriggerWidth"
                                                             ZIndex="@ZIndex"
-                                                            @attributes="AdditionalAttributes">
+                                                            @attributes="@InlineStyleMerge.WithoutStyle(AdditionalAttributes)">
     <div class="bb:p-1">
         @ChildContent
     </div>
@@ -109,6 +109,15 @@
     /// </summary>
     [Parameter]
     public string? Style { get; set; }
+
+    /// <summary>
+    /// <see cref="Style"/> followed by any <c>style</c> attribute passed alongside it.
+    /// </summary>
+    /// <remarks>
+    /// Both come from the consumer, and the splat used to silently replace <see cref="Style"/> with
+    /// the loose attribute. They are combined now, so neither is lost.
+    /// </remarks>
+    private string? MergedStyle => InlineStyleMerge.Merge(Style, AdditionalAttributes);
 
     /// <summary>
     /// Gets or sets additional HTML attributes to apply to the root element.

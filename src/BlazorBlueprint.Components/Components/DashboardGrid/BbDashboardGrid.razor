@@ -42,11 +42,11 @@ else if (_useScrollWrapper)
             Context="@_context"
             AriaLabel="@AriaLabel"
             class="@CssClass"
-            style="@GridStyle"
+            style="@MergedGridStyle"
             data-dashboard-id="@_instanceId"
             data-show-grid-guide="@(ShowGridGuide ? "true" : "false")"
             data-positioned="@(_positioned ? "true" : "false")"
-            @attributes="AdditionalAttributes">
+            @attributes="@InlineStyleMerge.WithoutStyle(AdditionalAttributes)">
 
             @if (_hasNoWidgets)
             {
@@ -65,11 +65,11 @@ else
         Context="@_context"
         AriaLabel="@AriaLabel"
         class="@CssClass"
-        style="@GridStyle"
+        style="@MergedGridStyle"
         data-dashboard-id="@_instanceId"
         data-show-grid-guide="@(ShowGridGuide ? "true" : "false")"
         data-positioned="@(_positioned ? "true" : "false")"
-        @attributes="AdditionalAttributes">
+        @attributes="@InlineStyleMerge.WithoutStyle(AdditionalAttributes)">
 
         @if (_hasNoWidgets)
         {
@@ -215,6 +215,16 @@ else
             return string.Join("; ", parts) + ";";
         }
     }
+
+    /// <summary>
+    /// The grid's own template followed by the consumer's style, so a supplied <c>style</c> adds to
+    /// it rather than replacing it.
+    /// </summary>
+    /// <remarks>
+    /// The splat used to overwrite the column and row templates, which is the whole of the grid's
+    /// layout.
+    /// </remarks>
+    private string? MergedGridStyle => InlineStyleMerge.Merge(GridStyle, AdditionalAttributes);
 
     private string GridStyle
     {

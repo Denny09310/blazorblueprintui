@@ -377,6 +377,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         // ResponsiveNav
         ["ResponsiveNav.ToggleMenu"] = "Toggle Menu",
 
+        // Resizable
+        ["Resizable.ResizeHandle"] = "Resize panels",
+
         // RichTextEditor
         ["RichTextEditor.Normal"] = "Normal",
         ["RichTextEditor.Heading1"] = "Heading 1",

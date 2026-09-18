@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Primitives.Menubar
+@using BlazorBlueprint.Primitives.Utilities
 @using BlazorBlueprint.Primitives.Menu
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
@@ -12,12 +13,12 @@
     <div class="bb:fixed bb:inset-0 bb:z-40" @onclick="HandleOverlayClick" @onclick:stopPropagation="true"></div>
 }
 <div @ref="contentRef"
-     style="@(isOpen ? null : "display:none")"
+     style="@MergedContentStyle"
      data-state="@(isOpen ? "open" : "closed")"
      role="menu"
      tabindex="-1"
      @onclick:stopPropagation="true"
-     @attributes="AdditionalAttributes">
+     @attributes="@InlineStyleMerge.WithoutStyle(AdditionalAttributes)">
     <CascadingValue Value="menuScope" IsFixed="true">
         @ChildContent
     </CascadingValue>
@@ -48,6 +49,17 @@
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// The panel's own style followed by the consumer's, so a supplied <c>style</c> adds to it
+    /// rather than replacing it.
+    /// </summary>
+    /// <remarks>
+    /// The splat used to overwrite the <c>display:none</c> that hides a closed menu, so a consumer
+    /// who passed any <c>style</c> at all got a menu that was always on screen.
+    /// </remarks>
+    private string? MergedContentStyle =>
+        InlineStyleMerge.Merge(Menu?.IsOpen == true ? null : "display:none", AdditionalAttributes);
 
     private ElementReference contentRef;
     private bool wasClosed = true;

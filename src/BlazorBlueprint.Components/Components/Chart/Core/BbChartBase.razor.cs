@@ -284,6 +284,16 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
 
     private string ContainerStyle => $"height: {Height}; width: {Width};";
 
+    /// <summary>
+    /// The chart's own size followed by the consumer's style, so a supplied <c>style</c> adds to it
+    /// rather than replacing it.
+    /// </summary>
+    /// <remarks>
+    /// The splat used to overwrite the height and width the chart needs to size its canvas, leaving
+    /// it with no measurable box.
+    /// </remarks>
+    private string? MergedContainerStyle => InlineStyleMerge.Merge(ContainerStyle, AdditionalAttributes);
+
     /// <summary>Called from JS when a data point is clicked. Not part of the public API.</summary>
     [JSInvokable]
     public async Task HandleDataPointClick(ChartClickEventArgs args)

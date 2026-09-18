@@ -2,6 +2,7 @@ using BlazorBlueprint.Components;
 using BlazorBlueprint.Primitives.Extensions;
 using BlazorBlueprint.Primitives.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -172,6 +173,99 @@ public class BehaviourFixTests
             Assert.Contains($"aria-expanded=\"{expected}\"", renderer.Markup(), StringComparison.Ordinal);
         });
     }
+
+    /// <summary>
+    /// The resize handle was a plain div with a pointer handler: no role, no tab stop, no keys —
+    /// while the documentation described all three. Resizing was unreachable without a pointer.
+    /// </summary>
+    [Fact]
+    public async Task ResizeHandleIsASeparatorThatReportsItsPanel()
+    {
+        var markup = await ResizableMarkup();
+
+        Assert.Contains("role=\"separator\"", markup, StringComparison.Ordinal);
+        Assert.Contains("aria-orientation=\"vertical\"", markup, StringComparison.Ordinal);
+        Assert.Contains("aria-valuenow=\"40\"", markup, StringComparison.Ordinal);
+        Assert.Contains("aria-valuemin=\"20\"", markup, StringComparison.Ordinal);
+        Assert.Contains("tabindex=\"0\"", markup, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Arrow keys move the handle, Home and End take the panel to its limits, and everything else —
+    /// Tab above all — keeps its default action.
+    /// </summary>
+    [Theory]
+    [InlineData("ArrowRight", 45d)]
+    [InlineData("ArrowLeft", 35d)]
+    [InlineData("PageUp", 60d)]
+    [InlineData("Home", 20d)]
+    [InlineData("Tab", 40d)]
+    public async Task ResizeHandleRespondsToTheKeyboard(string key, double expected)
+    {
+        await using var provider = Services().BuildServiceProvider();
+        await using var renderer = new ComponentTestRenderer(provider, NullLoggerFactory.Instance);
+
+        await renderer.Dispatcher.InvokeAsync(async () =>
+        {
+            IReadOnlyList<double>? sizes = null;
+
+            await renderer.MountAsync<BbResizablePanelGroup>(new()
+            {
+                [nameof(BbResizablePanelGroup.OnResizeEnd)] =
+                    EventCallback.Factory.Create<PanelResizeEventArgs>(this, e => sizes = e.Sizes),
+                [nameof(BbResizablePanelGroup.ChildContent)] = TwoPanels
+            });
+
+            await renderer.DispatchAsync("onkeydown", new KeyboardEventArgs { Key = key });
+
+            if (key == "Tab")
+            {
+                Assert.Null(sizes);
+                return;
+            }
+
+            Assert.NotNull(sizes);
+            Assert.Equal(expected, sizes![0]);
+
+            // The pair always adds up to what it started with; the space comes from the neighbour.
+            Assert.Equal(100d, sizes[0] + sizes[1]);
+        });
+    }
+
+    private static async Task<string> ResizableMarkup()
+    {
+        await using var provider = Services().BuildServiceProvider();
+        await using var renderer = new ComponentTestRenderer(provider, NullLoggerFactory.Instance);
+        var markup = string.Empty;
+
+        await renderer.Dispatcher.InvokeAsync(async () =>
+        {
+            await renderer.MountAsync<BbResizablePanelGroup>(new()
+            {
+                [nameof(BbResizablePanelGroup.ChildContent)] = TwoPanels
+            });
+            markup = renderer.Markup();
+        });
+
+        return markup;
+    }
+
+    /// <summary>A 40/60 split with one handle between the panels.</summary>
+    private static readonly RenderFragment TwoPanels = builder =>
+    {
+        builder.OpenComponent<BbResizablePanel>(0);
+        builder.AddAttribute(1, nameof(BbResizablePanel.DefaultSize), 40d);
+        builder.AddAttribute(2, nameof(BbResizablePanel.MinSize), 20d);
+        builder.CloseComponent();
+
+        builder.OpenComponent<BbResizableHandle>(3);
+        builder.CloseComponent();
+
+        builder.OpenComponent<BbResizablePanel>(4);
+        builder.AddAttribute(5, nameof(BbResizablePanel.DefaultSize), 60d);
+        builder.AddAttribute(6, nameof(BbResizablePanel.MinSize), 20d);
+        builder.CloseComponent();
+    };
 
     private static ServiceCollection Services()
     {

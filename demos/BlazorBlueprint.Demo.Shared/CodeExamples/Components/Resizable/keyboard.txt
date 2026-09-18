@@ -1,0 +1,11 @@
+@* Tab to a handle, then resize with the keyboard:
+   arrows 5%, Page Up/Down 20%, Home/End to the minimum or maximum. *@
+<BbResizablePanelGroup Direction="ResizableDirection.Horizontal">
+    <BbResizablePanel DefaultSize="40" MinSize="20">
+        Navigation
+    </BbResizablePanel>
+    <BbResizableHandle AriaLabel="Resize the navigation panel" />
+    <BbResizablePanel DefaultSize="60">
+        Content
+    </BbResizablePanel>
+</BbResizablePanelGroup>
