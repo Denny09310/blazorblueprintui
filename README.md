@@ -309,10 +309,10 @@ Production-ready components for complex data-driven applications:
 | **Native Select** | Browser-native select with consistent styling |
 | **Numeric Input** | Numeric input with increment/decrement controls |
 | **Radio Group** | Radio buttons with keyboard navigation |
-| **Range Slider** | Dual-handle slider for selecting value ranges |
+| **Range Slider** | Dual-handle slider for selecting value ranges, horizontal or vertical |
 | **Rating** | Star/icon rating input |
 | **Select** | Keyboard-accessible selection with popover or bottom-sheet presentation |
-| **Slider** | Range input with drag support |
+| **Slider** | Range input with drag support, horizontal or vertical |
 | **Sortable** | Pointer and keyboard sortable lists/grids, connected-list transfer, move/drop permissions, reusable handles and custom drag previews |
 | **Split Button** | Primary action with dropdown for secondary actions |
 | **Switch** | Toggle switch with customizable thumb |
