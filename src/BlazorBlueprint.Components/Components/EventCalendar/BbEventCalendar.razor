@@ -71,11 +71,19 @@
             </div>
             @foreach (var week in MonthWeeks)
             {
-                <div role="row" class="bb:grid bb:grid-cols-7 bb:gap-px">
-                    @foreach (var day in week)
+                @* A multi-day event is one bar per week row, drawn across the columns it covers,
+                   rather than a separate chip in each day (#544). The row is the positioning
+                   context; each bar lives in its starting day's cell so it stays inside a
+                   gridcell and lands at the right point in the tab order. *@
+                var layout = BuildWeekLayout(week, MaxEventsPerDay);
+                <div role="row" class="bb:relative bb:grid bb:grid-cols-7 bb:gap-px">
+                    @for (var index = 0; index < week.Length; index++)
                     {
-                        var dayEvents = GetEventsForDay(day);
-                        var hiddenCount = dayEvents.Count - MaxEventsPerDay;
+                        var day = week[index];
+                        var column = index;
+                        var chips = GetSingleDayEvents(day);
+                        var chipBudget = Math.Max(0, MaxEventsPerDay - layout.BarsPerColumn[column]);
+                        var hiddenCount = layout.HiddenPerColumn[column] + Math.Max(0, chips.Count - chipBudget);
                         <div role="gridcell" aria-label="@day.ToString("D", culture)" class="@GetMonthCellClasses(day)">
                             <button type="button"
                                     class="@GetDayNumberClasses(day)"
@@ -83,10 +91,15 @@
                                     @onclick="@(() => HandleDateClick(day))">
                                 @day.Day
                             </button>
-                            @if (dayEvents.Count > 0)
+                            @if (layout.VisibleLaneCount > 0 || chips.Count > 0 || hiddenCount > 0)
                             {
                                 <div class="bb:mt-1 bb:space-y-0.5">
-                                    @foreach (var item in dayEvents.Take(MaxEventsPerDay))
+                                    @if (layout.VisibleLaneCount > 0)
+                                    {
+                                        @* The bars float above the cell, so their height is reserved here. *@
+                                        <div aria-hidden="true" style="@GetLaneSpacerStyle(layout.VisibleLaneCount)"></div>
+                                    }
+                                    @foreach (var item in chips.Take(chipBudget))
                                     {
                                         <button type="button"
                                                 class="@GetEventChipClasses(item)"
@@ -112,6 +125,27 @@
                                     }
                                 </div>
                             }
+                            @foreach (var bar in layout.Bars)
+                            {
+                                @if (bar.StartColumn == column)
+                                {
+                                    <button type="button"
+                                            class="@GetEventBarClasses(bar)"
+                                            style="@GetEventBarStyle(bar, MonthBarsTopPx)"
+                                            title="@EventTitle(bar.Event)"
+                                            aria-label="@GetEventBarAriaLabel(bar)"
+                                            @onclick="@(() => HandleEventClick(bar.Event))">
+                                        @if (EventTemplate is not null)
+                                        {
+                                            @EventTemplate(bar.Event)
+                                        }
+                                        else
+                                        {
+                                            <span class="bb:block bb:truncate">@EventTitle(bar.Event)</span>
+                                        }
+                                    </button>
+                                }
+                            }
                         </div>
                     }
                 </div>
@@ -136,11 +170,25 @@
                     </div>
                 }
             </div>
-            <div role="row" class="bb:grid bb:grid-cols-7 bb:gap-px">
-                @foreach (var day in WeekDays)
+            @* Multi-day events span the columns they cover, above the timed events, the way an
+               all-day strip does in a desk calendar. The week is one row, so unlike the month view
+               nothing is ever clipped and no lane limit applies (#544). *@
+            @{
+                var weekDays = WeekDays;
+                var weekLayout = BuildWeekLayout(weekDays, int.MaxValue);
+            }
+            <div role="row" class="bb:relative bb:grid bb:grid-cols-7 bb:gap-px">
+                @for (var index = 0; index < weekDays.Length; index++)
                 {
+                    var day = weekDays[index];
+                    var column = index;
                     <div role="gridcell" aria-label="@day.ToString("D", culture)" class="bb:min-h-48 bb:space-y-1 bb:bg-card bb:p-1.5">
-                        @foreach (var item in GetEventsForDay(day))
+                        @if (weekLayout.VisibleLaneCount > 0)
+                        {
+                            @* The bars float above the cell, so their height is reserved here. *@
+                            <div aria-hidden="true" style="@GetLaneSpacerStyle(weekLayout.VisibleLaneCount)"></div>
+                        }
+                        @foreach (var item in GetSingleDayEvents(day))
                         {
                             <button type="button"
                                     class="@GetEventChipClasses(item)"
@@ -156,6 +204,27 @@
                                     <span class="bb:block bb:truncate">@EventTitle(item)</span>
                                 }
                             </button>
+                        }
+                        @foreach (var bar in weekLayout.Bars)
+                        {
+                            @if (bar.StartColumn == column)
+                            {
+                                <button type="button"
+                                        class="@GetEventBarClasses(bar)"
+                                        style="@GetEventBarStyle(bar, WeekBarsTopPx)"
+                                        title="@EventTitle(bar.Event)"
+                                        aria-label="@GetEventBarAriaLabel(bar)"
+                                        @onclick="@(() => HandleEventClick(bar.Event))">
+                                    @if (EventTemplate is not null)
+                                    {
+                                        @EventTemplate(bar.Event)
+                                    }
+                                    else
+                                    {
+                                        <span class="bb:block bb:truncate">@EventTitle(bar.Event)</span>
+                                    }
+                                </button>
+                            }
                         }
                     </div>
                 }

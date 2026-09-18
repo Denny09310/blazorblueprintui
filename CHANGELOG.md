@@ -7,6 +7,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 
+## 2026-09-19
+
+### Changed
+
+- **A multi-day event in `BbEventCalendar` is one bar, not a chip in every day it covers.** An event running Thursday to Saturday drew three identical chips, so it read as three separate events that happened to share a title — the other half of [#544](https://github.com/blazorblueprintui/ui/issues/544). It is now a single bar across the days it covers, in both the month and the week view. Runs that overlap stack into lanes, longest at the top; runs that never touch share a line. An event crossing a week boundary becomes one bar per row, squared off at the join so the two halves read as one event, and both halves carry the whole event's dates in their `aria-label` rather than their own segment's. Bars are positioned with a `calc()` over the seven-column grid, so they stay on the column boundaries at any width with no measuring and no JavaScript.
+
+  **What changes for you.** Tab order: a three-day event was three buttons and is now one, or one per week row when it wraps. `MaxEventsPerDay`: a bar spends that day's budget in every day it covers, so a day carrying a bar shows fewer chips and counts the difference into its "+x more"; bars past the budget are dropped into the same overflow rather than growing the row. The week view has no such limit — it is one tall row — so every bar is drawn there. The agenda view is unchanged: it is a chronological list, and listing each day separately is the point of it. `EventClass` and `EventTemplate` apply to bars exactly as they did to chips.
+
+---
+
 ## 2026-09-18
 
 ### Added — Component expansion
@@ -53,7 +63,7 @@ type that moved. Everything else in the surface is additive.
 
 - **`BbTreeSelect` and `BbCascader`.** Searchable hierarchy pickers with stable keys, form bindings, clear/disabled states and leaf-only selection. TreeSelect supports single/multiple selection with cascading parent checkboxes and indeterminate states. Cascader provides column navigation, full-path search, optional branch selection and keyboard/RTL navigation; opening a selected path or expanding a branch reveals the newest column.
 - **FileUpload transport lifecycle.** Optional `UploadHandler` callbacks receive a size-limited browser stream and cancellation token, report progress, and support cancellation and retry. Browser file references survive subsequent selections; retry starts a fresh attempt from zero. Applications supply the upload destination.
-- **`BbEventCalendar.ContainerClass`.** Styles the view container — the month grid, the week grid or the agenda list — rather than the root, which also wraps the toolbar and so could not be used to size the calendar itself. The same classes apply in every view, so a height survives a switch between Month, Week and Agenda. Pair `Class="flex h-full flex-col"` with `ContainerClass="grow overflow-auto"` to fill the space a page gives you. Requested in [#544](https://github.com/blazorblueprintui/ui/issues/544), along with connected multi-day event bars, which are not in this release.
+- **`BbEventCalendar.ContainerClass`.** Styles the view container — the month grid, the week grid or the agenda list — rather than the root, which also wraps the toolbar and so could not be used to size the calendar itself. The same classes apply in every view, so a height survives a switch between Month, Week and Agenda. Pair `Class="flex h-full flex-col"` with `ContainerClass="grow overflow-auto"` to fill the space a page gives you. Requested in [#544](https://github.com/blazorblueprintui/ui/issues/544).
 - **`BbDataView.SearchDebounceMs`.** The toolbar search now waits out a typing pause before it filters, with the same 300 ms default as `BbDataGrid` ([#543](https://github.com/blazorblueprintui/ui/issues/543)).
 
 ### Fixed
