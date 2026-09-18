@@ -408,7 +408,6 @@
   - FirstDayOfWeek : DayOfWeek?
   - MaxDate : DateTime?
   - MinDate : DateTime?
-  - Mode : CalendarMode
   - MonthNames : String[]
   - OnSelect : EventCallback<DateTime>
   - Selected : DateTime?
@@ -428,8 +427,6 @@
   - LowKey : String
   - Name : String
   - OpenKey : String
-  - StackGroup : String
-  - Stacked : Boolean
 
 ### BbCandlestickChart (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -698,7 +695,6 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - Class : String
-  - CloseOnSelect : Boolean
   - Disabled : Boolean
   - FilterFunction : Func<CommandItemMetadata, String, Boolean>
   - OnValueChange : EventCallback<String>
@@ -1356,6 +1352,7 @@
   - CascadedEditContext : EditContext [CascadingParameter]
 
 ### BbDatePickerInput (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - Class : String
   - Disabled : Boolean
   - IsInvalid : Boolean
@@ -2344,8 +2341,6 @@
   - NameKey : String
   - ShowLabels : Boolean
   - Sort : FunnelSort
-  - StackGroup : String
-  - Stacked : Boolean
 
 ### BbFunnelChart (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -2383,8 +2378,6 @@
   - ShowProgress : Boolean
   - ShowTitle : Boolean
   - SplitNumber : Int32
-  - StackGroup : String
-  - Stacked : Boolean
   - StartAngle : Int32
   - TitleFontSize : Int32
 
@@ -2424,8 +2417,6 @@
   - LabelFormatter : String
   - Name : String
   - ShowLabel : Boolean
-  - StackGroup : String
-  - Stacked : Boolean
   - ValueKey : String
   - XKey : String
   - YKey : String
@@ -3165,8 +3156,6 @@
   - PaddingAngle : Int32
   - ShowLabelLine : Boolean?
   - ShowLabels : Boolean
-  - StackGroup : String
-  - Stacked : Boolean
 
 ### BbPieChart (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -3252,8 +3241,6 @@
   - FillOpacity : Double
   - Name : String
   - ShowDots : Boolean
-  - StackGroup : String
-  - Stacked : Boolean
   - StrokeWidth : Int32
 
 ### BbRadarChart (BlazorBlueprint.Components)
@@ -4635,11 +4622,6 @@
   - Secondary = 3
   - Ghost = 4
   - Link = 5
-
-### CalendarMode (BlazorBlueprint.Components)
-  - Single = 0
-  - Multiple = 1
-  - Range = 2
 
 ### CarouselIndicatorPosition (BlazorBlueprint.Components)
   - Bottom = 0

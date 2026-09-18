@@ -211,7 +211,8 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
                 jsModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/numeric-input.js");
                 dotNetRef = DotNetObjectReference.Create(this);
                 lastWheelStepEnabled = EnableWheelStep;
-                await jsModule.InvokeVoidAsync("initialize", inputRef, dotNetRef, instanceId, GetJsConfig());
+                lastJsConfig = GetJsConfig();
+                await jsModule.InvokeVoidAsync("initialize", inputRef, dotNetRef, instanceId, lastJsConfig);
                 jsInitialized = true;
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
@@ -223,8 +224,37 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
                 // JS interop not available during prerendering
             }
         }
-        else if (jsInitialized && jsModule != null && lastWheelStepEnabled != EnableWheelStep)
+        else if (jsInitialized && jsModule != null)
         {
+            // Keep the browser side in step when a parameter that shapes its behaviour changes
+            // after the first render. The module has always exposed updateConfig and nothing
+            // called it, so the decimal, sign and debounce rules were fixed at whatever they were
+            // when the input first rendered.
+            var config = GetJsConfig();
+
+            if (!config.Equals(lastJsConfig))
+            {
+                lastJsConfig = config;
+
+                try
+                {
+                    await jsModule.InvokeVoidAsync("updateConfig", instanceId, config);
+                }
+                catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+                {
+                    // Expected during circuit disconnect
+                }
+                catch (InvalidOperationException)
+                {
+                    // JS interop not available
+                }
+            }
+
+            if (lastWheelStepEnabled == EnableWheelStep)
+            {
+                return;
+            }
+
             // Keep wheel stepping in sync when the parameter changes after the first render
             lastWheelStepEnabled = EnableWheelStep;
 
@@ -242,6 +272,12 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
             }
         }
     }
+
+    /// <summary>
+    /// The configuration last sent to the browser, so a change can be recognised. Anonymous types
+    /// compare by value, which is all this needs.
+    /// </summary>
+    private object? lastJsConfig;
 
     /// <summary>
     /// Builds the JS configuration object from current parameters.
@@ -446,7 +482,8 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         {
             return;
         }
-        await SetValue(Value + StepValue);
+
+        await SetValue(Offset(StepValue));
     }
 
     private async Task Decrement()
@@ -455,7 +492,8 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         {
             return;
         }
-        await SetValue(Value - StepValue);
+
+        await SetValue(Offset(-StepValue));
     }
 
     private async Task IncrementBy(TValue amount)
@@ -464,7 +502,8 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         {
             return;
         }
-        await SetValue(Value + amount);
+
+        await SetValue(Offset(amount));
     }
 
     private async Task DecrementBy(TValue amount)
@@ -473,7 +512,36 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         {
             return;
         }
-        await SetValue(Value - amount);
+
+        await SetValue(Offset(-amount));
+    }
+
+    /// <summary>
+    /// Adds <paramref name="amount"/> to the current value without wrapping round the end of the
+    /// type's range.
+    /// </summary>
+    /// <remarks>
+    /// The addition used to be unchecked, so one ArrowUp on an <c>int</c> already at
+    /// <see cref="int.MaxValue"/> produced a large negative number — and <c>ClampValue</c>, seeing
+    /// a value below the minimum, pulled it up to <c>Min</c>. A single key press reset the field
+    /// from its largest value to its smallest. On overflow the value now pins to the configured
+    /// bound, or stays where it is when there is none.
+    /// </remarks>
+    private TValue Offset(TValue amount)
+    {
+        try
+        {
+            return checked(Value + amount);
+        }
+        catch (OverflowException)
+        {
+            if (amount > TValue.Zero)
+            {
+                return Max ?? Value;
+            }
+
+            return Min ?? Value;
+        }
     }
 
     private async Task SetValue(TValue value)

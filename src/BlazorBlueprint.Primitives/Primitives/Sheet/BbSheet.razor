@@ -1,4 +1,6 @@
 @namespace BlazorBlueprint.Primitives.Sheet
+@using Microsoft.Extensions.Logging
+@inject ILogger<BbSheet> Logger
 
 @* Sheet primitive root component - headless, unstyled behavior only *@
 <CascadingValue Value="@_context" IsFixed="false">
@@ -21,6 +23,17 @@
     /// </para>
     /// </summary>
     private bool lastNotifiedOpen;
+
+    /// <summary>
+    /// Accepted so that a styled wrapper can splat its own attributes onto this root, but it has
+    /// no effect: BbSheet renders no element of its own — it only supplies context to its children.
+    /// Put extra attributes on BbSheetContent, BbSheetOverlay or BbSheetTrigger instead.
+    /// Supplying attributes here logs a warning once per component instance.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool rootAttributesWarningLogged;
 
     /// <summary>
     /// The child content to render within the sheet context.
@@ -92,6 +105,13 @@
 
     protected override void OnParametersSet()
     {
+        rootAttributesWarningLogged = ContextRootAttributes.WarnOnce(
+            Logger,
+            rootAttributesWarningLogged,
+            "BbSheet",
+            "Put extra attributes on BbSheetContent, BbSheetOverlay or BbSheetTrigger instead.",
+            AdditionalAttributes);
+
         // Update controlled value if it changed
         if (_state.IsControlled && Open.HasValue)
         {

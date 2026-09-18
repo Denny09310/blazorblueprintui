@@ -1,7 +1,7 @@
 @namespace BlazorBlueprint.Components
 @inherits FormFieldBase
 
-<BbField Orientation="@Orientation" IsInvalid="@IsInvalid" Class="@Class" @attributes="AdditionalAttributes">
+<BbField Orientation="@Orientation" IsInvalid="@IsInvalid" Class="@Class">
     @if (Label is not null)
     {
         <BbFieldLabel>@Label</BbFieldLabel>
@@ -18,7 +18,8 @@
                       Placeholder="@Placeholder"
                       Disabled="@Disabled"
                       Required="@Required"
-                      Class="@InputClass" />
+                      Class="@InputClass"
+                      @attributes="AdditionalAttributes" />
         @if (!string.IsNullOrEmpty(HelperText) && !IsInvalid)
         {
             <BbFieldDescription Id="@DescriptionId">@HelperText</BbFieldDescription>

@@ -15,7 +15,7 @@
         var isHovered = _hoverValue > 0 && index <= Math.Ceiling(_hoverValue);
 
         <span role="radio"
-              aria-checked="@(index <= Value)"
+              aria-checked="@(index <= Value ? "true" : "false")"
               aria-label="@($"{index} out of {Max}")"
               class="@GetIconContainerClass(index)"
               @onclick="() => HandleClick(index)"

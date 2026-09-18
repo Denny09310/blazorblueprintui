@@ -106,10 +106,25 @@ A bare icon, plain text or arbitrary markup needs no change, and now works.
 
 ### What actually changes in the DOM
 
-With `AsChild="false"` the trigger wraps its content in a `<span>` carrying the handlers. That span
-uses `display: contents`, so **it generates no layout box** — spacing, flex and inline-block
-behaviour are unaffected. The practical impact is on anything that walks the DOM: `:first-child`
-selectors, `querySelector` paths, and test hooks that assume the child is a direct descendant.
+With `AsChild="false"` the trigger wraps its content in **two** nested `<span>` elements, not one:
+
+```html
+<span class="bb:contents">           <!-- styled wrapper: display: contents, no layout box -->
+  <span id="…" tabindex="0"          <!-- the primitive trigger: an ordinary inline span -->
+        aria-describedby="…">        <!-- this is what carries the hover/focus handlers -->
+    …your content…
+  </span>
+</span>
+```
+
+The outer span uses `display: contents`, so it generates no layout box. The inner one does not — it
+is an ordinary inline element, so it does establish a box. In flow layout that is usually
+invisible, but inside a flex or grid container it becomes the flex item instead of your content,
+and `inline-block` sizing applies to it rather than to the child. Set `Class` on the trigger to
+give that wrapper the layout you need.
+
+Anything that walks the DOM is affected either way: `:first-child` selectors, `querySelector` paths
+and test hooks that assume the child is a direct descendant.
 
 ### Only the styled wrapper changed
 
@@ -160,7 +175,7 @@ builds can no longer produce the same class name, so nothing depends on load ord
 when it merges, so your unprefixed class still replaces the library's for the same property:
 
 ```razor
-<BbCard Class="p-6">        @* renders class="… p-6 …", with the library's bb:p-4 removed *@
+<BbCard Class="p-6">        @* renders class="… bb:rounded-lg bb:border … p-6" *@
 ```
 
 Two things to check:

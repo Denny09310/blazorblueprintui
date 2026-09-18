@@ -12,6 +12,7 @@ public class NativeOverlayService : INativeOverlayService, IAsyncDisposable
     private readonly IJSRuntime jsRuntime;
     private readonly OverlayRenderingOptions options;
     private bool? dialogSupported;
+    private bool nativeUnavailable;
     private bool disposed;
 
     public NativeOverlayService(IJSRuntime jsRuntime, OverlayRenderingOptions options)
@@ -43,10 +44,18 @@ public class NativeOverlayService : INativeOverlayService, IAsyncDisposable
         {
             var objectReference = await GetModuleAsync();
             var supported = await objectReference.InvokeAsync<bool>("nativeDialog.supportsNativeDialog");
+
             if (supported)
             {
                 dialogSupported = true;
             }
+            else
+            {
+                // The probe ran and the browser answered no, so this is settled rather than a
+                // transient interop failure: stop resolving anything to the native strategy.
+                nativeUnavailable = true;
+            }
+
             return supported;
         }
         catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
@@ -57,8 +66,17 @@ public class NativeOverlayService : INativeOverlayService, IAsyncDisposable
     }
 
     /// <inheritdoc />
+    public void FallBackToJavaScript() => nativeUnavailable = true;
+
+    /// <inheritdoc />
     public OverlayRenderingStrategy ResolveStrategy(OverlayRenderingStrategy? requested)
-        => requested ?? options.DefaultStrategy;
+    {
+        var strategy = requested ?? options.DefaultStrategy;
+
+        return nativeUnavailable && strategy == OverlayRenderingStrategy.Native
+            ? OverlayRenderingStrategy.JavaScript
+            : strategy;
+    }
 
     /// <inheritdoc />
     public async Task ShowDialogAsync(ElementReference element)

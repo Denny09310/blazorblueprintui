@@ -635,9 +635,6 @@
                 <ApiParameter Name="Disabled" Type="bool" Default="false">
                     Disables the entire command menu.
                 </ApiParameter>
-                <ApiParameter Name="CloseOnSelect" Type="bool" Default="true">
-                    Whether to close the parent dialog when an item is selected.
-                </ApiParameter>
                 <ApiParameter Name="Class" Type="string?" Default="null">
                     Additional CSS classes for the command container.
                 </ApiParameter>
@@ -766,10 +763,10 @@
             new("CommandMenu", "Command menu", "Aria label for the command dialog"),
             new("CommandList", "Command list", "Aria label for the command list"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.Command.CommandMenu = ""Befehlsmenü"";
-    opts.Command.CommandList = ""Befehlsliste"";
+    localizer.Set(""Command.CommandMenu"", ""Befehlsmenü"");
+    localizer.Set(""Command.CommandList"", ""Befehlsliste"");
 });")" />
 </div>
 

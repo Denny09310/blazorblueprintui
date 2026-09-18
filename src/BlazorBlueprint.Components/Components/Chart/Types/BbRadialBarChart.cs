@@ -71,6 +71,10 @@ public class BbRadialBarChart : BbChartBase
         option.AngleAxis = new EChartsAngleAxisOption
         {
             StartAngle = StartAngle,
+
+            // Previously omitted, so the arc always swept the full circle no matter what
+            // EndAngle said — a half-circle gauge came out as a whole one.
+            EndAngle = EndAngle,
             Show = false
         };
 

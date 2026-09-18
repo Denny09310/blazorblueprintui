@@ -23,6 +23,20 @@ public interface INativeOverlayService
     public OverlayRenderingStrategy ResolveStrategy(OverlayRenderingStrategy? requested);
 
     /// <summary>
+    /// Stops resolving anything to <see cref="OverlayRenderingStrategy.Native"/>, so every overlay
+    /// from now on renders through the JavaScript strategy instead.
+    /// </summary>
+    /// <remarks>
+    /// Called when a component finds that the browser has no <c>&lt;dialog&gt;.showModal()</c>.
+    /// Support can only be established through JS interop, which is not available while the
+    /// strategy is first resolved — so the fallback is applied on the way out rather than
+    /// predicted on the way in. Previously this case only produced a log warning: the element
+    /// rendered, never entered the top layer, and the user got a dialog with no modal behaviour
+    /// and no focus trap at all.
+    /// </remarks>
+    public void FallBackToJavaScript();
+
+    /// <summary>
     /// Opens a <c>&lt;dialog&gt;</c> element as a modal (top layer).
     /// </summary>
     public Task ShowDialogAsync(ElementReference element);

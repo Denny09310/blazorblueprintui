@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using BlazorBlueprint.Primitives.Extensions;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -15,6 +16,9 @@ public static class ServiceCollectionExtensions
     /// <param name="services">The service collection.</param>
     /// <param name="configureLocalizer">Optional action to configure localization keys via <see cref="DefaultBbLocalizer.Set"/>.</param>
     /// <param name="configureTheme">Optional action to configure the theme system via <see cref="ThemeOptions"/>.</param>
+    /// <param name="configureOverlays">Optional action to configure overlay rendering options
+    /// (e.g. opt the whole app into native <c>&lt;dialog&gt;</c> rendering). Equivalent to passing
+    /// the same action to <c>AddBlazorBlueprintPrimitives</c>, which this method calls.</param>
     /// <returns>The service collection for chaining.</returns>
     /// <remarks>
     /// <para>
@@ -30,10 +34,11 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddBlazorBlueprintComponents(
         this IServiceCollection services,
         Action<DefaultBbLocalizer>? configureLocalizer = null,
-        Action<ThemeOptions>? configureTheme = null)
+        Action<ThemeOptions>? configureTheme = null,
+        Action<OverlayRenderingOptions>? configureOverlays = null)
     {
         // Register all primitive services (portal, focus, positioning, dropdown manager, keyboard shortcuts)
-        services.AddBlazorBlueprintPrimitives();
+        services.AddBlazorBlueprintPrimitives(configureOverlays);
 
         // Register ToastService as scoped for user isolation in Blazor Server
         // Each user session gets its own toast notification state

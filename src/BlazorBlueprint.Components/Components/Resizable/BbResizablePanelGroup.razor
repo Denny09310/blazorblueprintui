@@ -57,6 +57,7 @@
     private List<double> _panelDefaultSizes = new();
     private List<double> _panelMinSizes = new();
     private List<double> _panelMaxSizes = new();
+    private List<bool> _panelCollapsible = new();
     private int _panelCount = 0;
     private int _handleCount = 0;
 
@@ -68,12 +69,13 @@
     /// </summary>
     internal string GroupId => _groupId;
 
-    internal int RegisterPanel(double defaultSize, double minSize, double maxSize)
+    internal int RegisterPanel(double defaultSize, double minSize, double maxSize, bool collapsible = false)
     {
         var index = _panelCount++;
         _panelDefaultSizes.Add(defaultSize);
         _panelMinSizes.Add(minSize);
         _panelMaxSizes.Add(maxSize);
+        _panelCollapsible.Add(collapsible);
 
         if (_panelSizes.Count <= index)
         {
@@ -102,7 +104,7 @@
         if (_jsModule != null && _jsInitialized)
         {
             var isHorizontal = Direction == ResizableDirection.Horizontal;
-            await _jsModule.InvokeVoidAsync("startResize", _groupId, handleIndex, clientX, clientY, _panelSizes.ToArray(), pointerId, _panelMinSizes.ToArray(), _panelMaxSizes.ToArray(), isHorizontal);
+            await _jsModule.InvokeVoidAsync("startResize", _groupId, handleIndex, clientX, clientY, _panelSizes.ToArray(), pointerId, _panelMinSizes.ToArray(), _panelMaxSizes.ToArray(), isHorizontal, _panelCollapsible.ToArray());
         }
     }
 
@@ -130,8 +132,12 @@
             if (double.IsNaN(newSizes[i]) || double.IsInfinity(newSizes[i]))
                 continue;
 
-            // Apply min/max constraints
-            var size = Math.Max(_panelMinSizes[i], Math.Min(_panelMaxSizes[i], newSizes[i]));
+            // Apply min/max constraints. A collapsed panel is a legitimate zero, so a collapsible
+            // panel's floor is zero rather than its MinSize.
+            var floor = i < _panelCollapsible.Count && _panelCollapsible[i] && newSizes[i] <= 0
+                ? 0
+                : _panelMinSizes[i];
+            var size = Math.Max(floor, Math.Min(_panelMaxSizes[i], newSizes[i]));
             _panelSizes[i] = size;
         }
         StateHasChanged();

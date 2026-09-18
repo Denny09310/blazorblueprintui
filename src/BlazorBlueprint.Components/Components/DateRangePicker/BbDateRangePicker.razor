@@ -1,11 +1,12 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Icons.Lucide.Components
 
-<BbPopover @bind-Open="_isOpen" @attributes="AdditionalAttributes">
+<BbPopover @bind-Open="_isOpen">
     <BbPopoverTrigger AsChild="true">
         <BbButton Variant="ButtonVariant.Outline"
                 Class="@ButtonCssClass"
-                Disabled="@Disabled">
+                Disabled="@Disabled"
+                @attributes="AdditionalAttributes">
             <LucideIcon Name="calendar" Class="bb:mr-2 bb:h-4 bb:w-4" />
             @if (Value != null)
             {

@@ -4,7 +4,7 @@
 <BlazorBlueprint.Primitives.ScrollArea.BbScrollArea Orientation="@MappedOrientation"
                                                     class="@CssClass"
                                                     style="@MergedRootStyle"
-                                                    @attributes="AdditionalAttributes">
+                                                    @attributes="@InlineStyleMerge.WithoutStyle(AdditionalAttributes)">
     <BlazorBlueprint.Primitives.ScrollArea.BbScrollAreaViewport class="@ComputedViewportClass"
                                                                 style="@ViewportStyle">
         @ChildContent
@@ -97,19 +97,7 @@
         }
     }
 
-    private string? MergedRootStyle
-    {
-        get
-        {
-            var consumerStyle = AdditionalAttributes?.TryGetValue("style", out var s) == true ? s?.ToString() : null;
-            if (string.IsNullOrEmpty(consumerStyle))
-            {
-                return RootStyle;
-            }
-
-            return string.IsNullOrEmpty(RootStyle) ? consumerStyle : $"{RootStyle}; {consumerStyle}";
-        }
-    }
+    private string? MergedRootStyle => InlineStyleMerge.Merge(RootStyle, AdditionalAttributes);
 
     private string? ViewportStyle
     {

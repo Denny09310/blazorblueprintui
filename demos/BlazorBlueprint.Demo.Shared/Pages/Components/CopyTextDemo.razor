@@ -199,10 +199,10 @@
             new("ClickToCopy", "Click to copy", "Tooltip and aria label prompting the user to copy"),
             new("Copied", "Copied!", "Tooltip shown after the value has been copied"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.CopyText.ClickToCopy = ""Zum Kopieren klicken"";
-    opts.CopyText.Copied = ""Kopiert!"";
+    localizer.Set(""CopyText.ClickToCopy"", ""Zum Kopieren klicken"");
+    localizer.Set(""CopyText.Copied"", ""Kopiert!"");
 });")" />
 </div>
 

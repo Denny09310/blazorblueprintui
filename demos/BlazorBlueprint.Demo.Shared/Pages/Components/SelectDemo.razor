@@ -275,6 +275,35 @@
         <CodeBlock Source="Components/Select/form-validation.txt" />
     </section>
 
+    <!-- Controlled Open State -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Controlled Open State</h2>
+        <p class="text-sm text-muted-foreground">
+            <code class="bg-muted px-1 py-0.5 rounded text-sm">@@bind-Open</code> opens and closes the list from
+            your own code, and reports the user's own opens and closes back to you.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <div class="flex items-center gap-3">
+                <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => _selectListOpen = !_selectListOpen)">
+                    @(_selectListOpen ? "Close the list" : "Open the list")
+                </BbButton>
+                <BbSelect TValue="string"
+                        Options="@_controlledOpenFruits"
+                        @bind-Value="_controlledOpenFruit"
+                        @bind-Open="_selectListOpen"
+                        Placeholder="Select a fruit..."
+                        Class="w-[240px]" />
+            </div>
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Open:</span> <span class="font-mono">@_selectListOpen</span></p>
+                <p class="text-sm"><span class="font-medium">Selected:</span> <span class="font-mono">@(_controlledOpenFruit ?? "(none)")</span></p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/Select/controlled-open.txt" />
+    </section>
+
     <!-- Infinite Scroll -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Infinite Scroll</h2>
@@ -465,6 +494,11 @@
 </div>
 
 @code {
+    private bool _selectListOpen;
+    private string? _controlledOpenFruit;
+    private readonly SelectOption<string>[] _controlledOpenFruits =
+        [new("apple", "Apple"), new("banana", "Banana"), new("cherry", "Cherry")];
+
     private string? sheetChoice;
     private readonly SelectOption<string>[] deliveryOptions = [new("standard", "Standard delivery"), new("express", "Express delivery"), new("pickup", "Collect in store")];
 

@@ -543,10 +543,10 @@
             new("GridView", "Grid view", "Aria label for the grid view toggle"),
             new("Sort", "Sort", "Label for the sort button"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.DataView.SearchPlaceholder = ""Suchen..."";
-    opts.DataView.NoResultsFound = ""Keine Ergebnisse gefunden"";
+    localizer.Set(""DataView.SearchPlaceholder"", ""Suchen..."");
+    localizer.Set(""DataView.NoResultsFound"", ""Keine Ergebnisse gefunden"");
 });")" />
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Grouped selection and virtualized lists</h2>

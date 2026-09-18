@@ -1,7 +1,9 @@
 @namespace BlazorBlueprint.Primitives.Dialog
 @using BlazorBlueprint.Primitives.Services
+@using Microsoft.Extensions.Logging
 @inject IPortalService PortalService
 @inject INativeOverlayService NativeOverlayService
+@inject ILogger<BbDialogPortal> Logger
 @implements IDisposable
 
 @*
@@ -31,6 +33,17 @@ else if (Context.IsOpen || ForceMount)
 
     [CascadingParameter(Name = "DialogRenderingStrategy")]
     private OverlayRenderingStrategy? RenderingStrategy { get; set; }
+
+    /// <summary>
+    /// Accepted so that a styled wrapper can splat its own attributes onto this portal, but it has
+    /// no effect: BbDialogPortal renders no element of its own — it only relocates its children.
+    /// Put extra attributes on BbDialogContent or BbDialogOverlay instead.
+    /// Supplying attributes here logs a warning once per component instance.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool rootAttributesWarningLogged;
 
     /// <summary>
     /// The content to render in the portal (typically DialogOverlay and DialogContent).
@@ -91,6 +104,18 @@ else if (Context.IsOpen || ForceMount)
 
     protected override void OnParametersSet()
     {
+        rootAttributesWarningLogged = ContextRootAttributes.WarnOnce(
+            Logger,
+            rootAttributesWarningLogged,
+            "BbDialogPortal",
+            "Put extra attributes on BbDialogContent or BbDialogOverlay instead.",
+            AdditionalAttributes);
+
+        // Re-resolve every time: a browser without <dialog>.showModal() makes the service fall back
+        // to the JavaScript strategy after the first render, and this portal has to start doing its
+        // job when that happens.
+        _useNative = NativeOverlayService.ResolveStrategy(RenderingStrategy) == OverlayRenderingStrategy.Native;
+
         // When Container is set or native strategy is active, content renders inline — skip portal registration
         if (!string.IsNullOrEmpty(Container) || _useNative)
         {

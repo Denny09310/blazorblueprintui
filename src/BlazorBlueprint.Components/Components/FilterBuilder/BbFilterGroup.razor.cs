@@ -113,7 +113,13 @@ public partial class BbFilterGroup : ComponentBase
         StateHasChanged();
     }
 
-    private string GroupAriaLabel => IsRoot ? "Root filter group" : $"Nested filter group at depth {Depth}";
+    /// <summary>
+    /// The group's accessible name. Both halves used to be English literals, so a localized app
+    /// announced its filter groups in English whatever the rest of the page said.
+    /// </summary>
+    private string GroupAriaLabel => IsRoot
+        ? Localizer["FilterBuilder.RootGroup"]
+        : Localizer["FilterBuilder.NestedGroup", Depth];
 
     // Depth-based accent colors for visual nesting
     private static readonly string[] depthBorderColors = new[]

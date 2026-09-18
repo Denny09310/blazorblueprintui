@@ -1653,12 +1653,12 @@
             new("RowsSelected", "{selected} of {total} row(s) selected", "Selection count display"),
             new("CountLabel / SumLabel / ...", "Count, Sum, Avg, Min, Max", "Aggregate function labels"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.DataGrid.Loading = ""Laden..."";
-    opts.DataGrid.NoResultsFound = ""Keine Ergebnisse gefunden"";
-    opts.DataGrid.ClearSelection = ""Auswahl aufheben"";
-    opts.DataGrid.SelectAllOnPage = count => $""Alle auf dieser Seite auswählen ({count})"";
+    localizer.Set(""DataGrid.Loading"", ""Laden..."");
+    localizer.Set(""DataGrid.NoResultsFound"", ""Keine Ergebnisse gefunden"");
+    localizer.Set(""DataGrid.ClearSelection"", ""Auswahl aufheben"");
+    localizer.Set(""DataGrid.SelectAllOnPage"", ""Alle auf dieser Seite auswählen ({0})"");
 });")" />
 </div>
 

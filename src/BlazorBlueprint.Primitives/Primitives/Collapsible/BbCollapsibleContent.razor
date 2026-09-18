@@ -5,7 +5,7 @@
 {
     <div role="region"
          data-state="@(Context?.Open ?? false ? "open" : "closed")"
-         aria-hidden="@(!(Context?.Open ?? false))"
+         aria-hidden="@((Context?.Open ?? false) ? "false" : "true")"
          @attributes="AdditionalAttributes">
         <CascadingValue TValue="CollapsibleContext" Value="@null" IsFixed="true">
             @ChildContent

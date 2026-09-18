@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Diagnostics.CodeAnalysis;
 using BlazorBlueprint.Primitives.Utilities;
 using Microsoft.AspNetCore.Components;
@@ -132,6 +133,40 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
     [Parameter]
     public string KeyboardInstructions { get; set; } = "Press Space or Enter to pick up. Use arrows to reorder, Control plus Left or Right to transfer to a connected list, Space or Enter to drop, or Escape to cancel.";
 
+    /// <summary>
+    /// Announced when <see cref="CanMove"/> rejects a reorder.
+    /// </summary>
+    /// <remarks>
+    /// The announcements were English string literals in the method bodies, so a localized app
+    /// still read them out in English. They are parameters so the styled component can supply
+    /// translated text; the defaults keep a primitives-only app working unchanged.
+    /// </remarks>
+    [Parameter]
+    public string MoveRejectedAnnouncement { get; set; } = "The move was not allowed.";
+
+    /// <summary>Announced when <see cref="CanDrop"/> rejects a cross-list drop.</summary>
+    [Parameter]
+    public string DropRejectedAnnouncement { get; set; } = "The drop was not allowed.";
+
+    /// <summary>
+    /// Announced after a reorder. <c>{0}</c> is the one-based old position, <c>{1}</c> the new one.
+    /// </summary>
+    [Parameter]
+    public string MovedAnnouncement { get; set; } = "Item moved from position {0} to position {1}.";
+
+    /// <summary>
+    /// Announced when an item leaves this list. <c>{0}</c> is the one-based position it left,
+    /// <c>{1}</c> the position it took in the other list.
+    /// </summary>
+    [Parameter]
+    public string RemovedAnnouncement { get; set; } = "Item removed from position {0} and placed at position {1} in another list.";
+
+    /// <summary>
+    /// Announced when an item arrives from another list. <c>{0}</c> is its one-based position.
+    /// </summary>
+    [Parameter]
+    public string ReceivedAnnouncement { get; set; } = "Item received at position {0}.";
+
     /// <summary>Optional predicate evaluated before an in-list reorder invokes OnUpdate. Return false to reject it.</summary>
     [Parameter]
     public Func<SortableMoveContext<TItem>, bool>? CanMove { get; set; }
@@ -241,11 +276,11 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
         }
         if (CanMove?.Invoke(new SortableMoveContext<TItem>(Items[oldIndex], oldIndex, newIndex)) == false)
         {
-            _liveAnnouncement = "The move was not allowed.";
+            _liveAnnouncement = MoveRejectedAnnouncement;
             StateHasChanged();
             return;
         }
-        _liveAnnouncement = $"Item moved from position {oldIndex + 1} to position {newIndex + 1}.";
+        _liveAnnouncement = string.Format(CultureInfo.CurrentCulture, MovedAnnouncement, oldIndex + 1, newIndex + 1);
         await OnUpdate.InvokeAsync((oldIndex, newIndex));
         StateHasChanged();
     }
@@ -258,7 +293,7 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
         var allowed = CanDrop?.Invoke(new SortableDropContext<TItem>(Items[oldIndex], Id, targetId, oldIndex, newIndex, isClone)) != false;
         if (!allowed)
         {
-            _liveAnnouncement = "The drop was not allowed.";
+            _liveAnnouncement = DropRejectedAnnouncement;
             StateHasChanged();
         }
         return allowed;
@@ -270,7 +305,7 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
     [JSInvokable]
     public async Task OnRemoveJS(int oldIndex, int newIndex)
     {
-        _liveAnnouncement = $"Item removed from position {oldIndex + 1} and placed at position {newIndex + 1} in another list.";
+        _liveAnnouncement = string.Format(CultureInfo.CurrentCulture, RemovedAnnouncement, oldIndex + 1, newIndex + 1);
         await OnRemove.InvokeAsync((oldIndex, newIndex));
         StateHasChanged();
     }
@@ -281,7 +316,7 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
     [JSInvokable]
     public async Task OnAddJS(int oldIndex, int newIndex)
     {
-        _liveAnnouncement = $"Item received at position {newIndex + 1}.";
+        _liveAnnouncement = string.Format(CultureInfo.CurrentCulture, ReceivedAnnouncement, newIndex + 1);
         await OnAdd.InvokeAsync((oldIndex, newIndex));
         StateHasChanged();
     }

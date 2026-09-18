@@ -107,14 +107,14 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
     /// Only used when <see cref="ShowApplyButton"/> is true.
     /// </summary>
     [Parameter]
-    public string ApplyButtonText { get; set; } = "Apply Filter";
+    public string? ApplyButtonText { get; set; }
 
     /// <summary>
     /// Gets or sets the text for the Clear button. Default is "Clear".
     /// Only used when <see cref="ShowApplyButton"/> is true.
     /// </summary>
     [Parameter]
-    public string ClearButtonText { get; set; } = "Clear";
+    public string? ClearButtonText { get; set; }
 
     /// <summary>
     /// Gets or sets whether to use compact layout for inline/toolbar placement.

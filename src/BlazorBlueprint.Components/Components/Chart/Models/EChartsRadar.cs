@@ -82,6 +82,10 @@ internal sealed class EChartsAngleAxisOption
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? StartAngle { get; set; }
 
+    [JsonPropertyName("endAngle")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? EndAngle { get; set; }
+
     [JsonPropertyName("show")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? Show { get; set; } = true;

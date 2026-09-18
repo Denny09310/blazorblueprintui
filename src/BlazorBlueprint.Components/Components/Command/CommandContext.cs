@@ -85,7 +85,6 @@ public class CommandContext
     private int _focusedIndex = -1;
     private int _focusedVirtualizedGroupIndex = -1; // Which virtualized group has focus (-1 = regular items)
     private Func<CommandItemMetadata, string, bool>? _filterFunction;
-    private bool _closeOnSelect = true;
     private bool _disabled;
     private bool _hasRegisteredItems;
     private bool _isKeyboardNavigating; // Flag to suppress hover during keyboard nav
@@ -153,17 +152,13 @@ public class CommandContext
     }
 
     /// <summary>
-    /// Gets or sets whether to close the dropdown after selection.
-    /// </summary>
-    public bool CloseOnSelect
-    {
-        get => _closeOnSelect;
-        set => _closeOnSelect = value;
-    }
-
-    /// <summary>
     /// Gets or sets whether the command is disabled.
     /// </summary>
+    /// <remarks>
+    /// While disabled the list neither moves its focus nor selects anything, so the value was
+    /// stored and never read: a disabled command still answered the arrow keys and still raised
+    /// <c>OnValueChange</c> on Enter or on a click.
+    /// </remarks>
     public bool Disabled
     {
         get => _disabled;
@@ -445,6 +440,11 @@ public class CommandContext
     /// <param name="elementId">The <c>id</c> of the hovered <c>role="option"</c> element.</param>
     public void HoverItemById(string elementId)
     {
+        if (_disabled)
+        {
+            return;
+        }
+
         if (string.IsNullOrEmpty(elementId))
         {
             return;
@@ -521,6 +521,11 @@ public class CommandContext
     /// <param name="direction">1 for next, -1 for previous.</param>
     public async Task MoveFocusAsync(int direction)
     {
+        if (_disabled)
+        {
+            return;
+        }
+
         // Suppress mouse hover while keyboard navigating
         if (!_isKeyboardNavigating)
         {
@@ -782,6 +787,11 @@ public class CommandContext
     /// </summary>
     public async Task FocusFirstAsync()
     {
+        if (_disabled)
+        {
+            return;
+        }
+
         // Suppress mouse hover while keyboard navigating
         if (!_isKeyboardNavigating)
         {
@@ -817,6 +827,11 @@ public class CommandContext
     /// </summary>
     public async Task FocusLastAsync()
     {
+        if (_disabled)
+        {
+            return;
+        }
+
         // Suppress mouse hover while keyboard navigating
         if (!_isKeyboardNavigating)
         {
@@ -867,6 +882,11 @@ public class CommandContext
     /// </summary>
     public async Task SelectFocusedItemAsync()
     {
+        if (_disabled)
+        {
+            return;
+        }
+
         // Check if focus is in a virtualized group
         if (_focusedVirtualizedGroupIndex >= 0)
         {
@@ -895,6 +915,11 @@ public class CommandContext
     /// </summary>
     public async Task SelectItemByValueAsync(string value)
     {
+        if (_disabled)
+        {
+            return;
+        }
+
         var item = _items.FirstOrDefault(i => i != null && i.Value == value);
         if (item != null && !item.Disabled)
         {
@@ -907,6 +932,11 @@ public class CommandContext
     /// </summary>
     private async Task SelectItemAsync(CommandItemMetadata item)
     {
+        if (_disabled)
+        {
+            return;
+        }
+
         if (item.OnSelect.HasDelegate)
         {
             await item.OnSelect.InvokeAsync();

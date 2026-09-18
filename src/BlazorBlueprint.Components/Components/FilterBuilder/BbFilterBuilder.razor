@@ -32,12 +32,12 @@
                 <BbButton Variant="ButtonVariant.Default"
                           Size="@(Compact ? ButtonSize.Small : ButtonSize.Default)"
                           OnClick="HandleApply">
-                    @ApplyButtonText
+                    @(ApplyButtonText ?? Localizer["FilterBuilder.Apply"])
                 </BbButton>
                 <BbButton Variant="ButtonVariant.Outline"
                           Size="@(Compact ? ButtonSize.Small : ButtonSize.Default)"
                           OnClick="HandleClear">
-                    @ClearButtonText
+                    @(ClearButtonText ?? Localizer["FilterBuilder.Clear"])
                 </BbButton>
             </div>
         }

@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Breaking Changes
 
+- **Parameters that never did anything are gone.** `BbCalendar.Mode` and the `CalendarMode` enum (the calendar is single-select; use `BbDateRangePicker` for ranges), `BbCommand.CloseOnSelect` (`BbCommandDialog.CloseOnSelect` is the one that closes the dialog), and `Stacked`/`StackGroup` on the series that cannot stack — `BbPie`, `BbFunnel`, `BbGauge`, `BbRadar`, `BbHeatmap` and `BbCandlestick`. Stacking now lives on a `StackableSeriesBase`, so it appears only on `BbBar`, `BbLine`, `BbArea`, `BbScatter` and `BbRadialBar`, where it works.
 - **v4 requires .NET 10 or later.** Components, Primitives, icon packages, demos and tests now target `net10.0`; .NET 8 and .NET 9 are no longer supported. The source SDK is pinned to 10.0.400 with feature-band roll-forward. Retarget consuming applications and use matching v4 Components/Primitives packages. See the [v4 migration guide](V4-MIGRATION-GUIDE.md).
 
 ### Added
@@ -39,6 +40,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Extra HTML attributes no longer crash a render.** `BbDialog`, `BbSheet`, `BbPopover`, `BbHoverCard`, `BbAlertDialog`, `BbAlertDialogPortal` and `BbDataGridColumnVisibility` forwarded captured attributes to a component that could not accept them, so a single `data-testid` threw `InvalidOperationException`. `BbColorPicker`, `BbDateRangePicker`, `BbTimePicker`, `BbThemeSwitcher` and `BbResponsiveNavContent` now render those attributes on their trigger instead of losing them; the context-only roots accept them and log once that they have nowhere to go.
+- **Attributes that were accepted and then dropped.** `BbTextarea`, `BbDatePicker` and `BbInputGroupButton` now render them. `BbFormFieldCheckbox` applies them in every orientation, `BbFormSection` whether or not it collapses, and `BbFormFieldTimePicker` on the picker rather than the surrounding field.
+- **Dangling `aria-describedby`.** `BbFieldDescription` and `BbFieldError` took an `Id` and never rendered it, so every `BbFormField*` control pointed its `aria-describedby` at an element that did not exist.
+- **ARIA state attributes bound to booleans.** `aria-expanded`, `aria-hidden`, `aria-selected`, `aria-checked`, `aria-disabled` and `aria-current` rendered with an empty value when true and vanished when false across Collapsible, Tabs, Menubar, DataGrid, Sidebar, Rating, Calendar and RangeSlider. They now render `"true"` and `"false"`.
+- **Keyboard traps and double activations.** RadioGroup suppressed the default action of every key, so Tab could not leave the group. The Switch toggled twice per Space press, and a DropdownMenu trigger using `AsChild` opened and closed again on one Enter.
+- **ToggleGroup semantics and focus.** Single-select groups are a `radiogroup` of `radio` items reporting `aria-checked`, not buttons reporting `aria-pressed`. Arrow keys move from the item that actually holds focus, and items remove themselves from the group when they are removed from the page.
+- **HoverCard.** Moving the pointer from the trigger onto the card no longer closes it, and `data-side` is written in lower case so the slide-in animation matches.
+- **NavigationMenu triggers** each register their own slot; every one of them previously overwrote the last.
+- **Parameters that did nothing** now work: `BbSelect.Open`/`OpenChanged`, `BbCommand.Disabled`, `BbCommandVirtualizedGroup.LazyLoadBatchSize`, `BbRangeSlider.Orientation`, `BbResizablePanel.Collapsible`, `BbToastProvider.MaxToasts`, `BbDataGridHierarchyColumn.IndentSize`, `BbRadialBarChart.EndAngle`, `Color` on `BbPie` and `BbFunnel`, `BbSidebarMenuAction.ShowOnHover`, the `--sidebar-width-mobile` token, and `BbFill` inside `BbLine` and `BbRadar`. Text and numeric inputs now push configuration changes to the browser after the first render.
+- **`BbNativeSelect` with an enum.** Choosing an option reported the enum's default, because the conversion went through `Convert.ChangeType`. A `Value` set before the user picked anything is also shown as selected.
+- **Charts sharing one colour.** `ChartConfig.GetColor` returned `--chart-1` for any key the config did not name, so a partially configured chart drew every remaining series the same colour. It returns `null` now and the chart palette cycles.
+- **DataGrid grouping with `Virtualize` and an `ItemsProvider`** renders rows when a `GroupedItemsProvider` is supplied, instead of nothing at all.
+- **Inline styles are merged, not replaced.** A consumer `style` attribute on `BbScrollArea`, `BbAspectRatio`, `BbSkeleton` and the Command group/separator overwrote the component's own positioning and sizing.
+- **`BbQuantityStepper` and `BbNumericInput`** no longer wrap past the end of the numeric range: ArrowUp at `int.MaxValue` used to land on `Min`.
+- **Native `<dialog>` without `showModal()`** falls back to the JavaScript strategy rather than rendering a dialog with no modal behaviour.
+- **Overlay options survive either registration order.** `AddBlazorBlueprintPrimitives(configureOverlays)` before `AddBlazorBlueprintComponents()` silently lost the configuration; `AddBlazorBlueprintComponents` also takes `configureOverlays` directly now.
+- **Hard-coded English** in the Sortable announcements, the DataGrid column-visibility menu and filter buttons, and the FilterBuilder Apply/Clear buttons and group labels now goes through `IBbLocalizer`.
+- **Primitives on their own.** `primitives.css` defines the utility classes the primitives render, so a Primitives-only app no longer shows Sortable's screen-reader text as body copy or gets a Menubar overlay with no size.
+- **Escape cancels a DashboardGrid pointer drag**, which it had only ever done for a keyboard drag.
+- **Documentation corrections.** `BbTooltipTrigger.AsChild` is documented as defaulting to `false`; the Tooltip, Dialog, Message, DataView, MultiSelect, CopyText and Carousel snippets compile and do what they claim; every localization example uses `localizer.Set(...)` rather than an options object that does not exist; candlestick click values are documented as `[index, open, close, low, high]`; the Resizable demo describes the accessibility it has rather than the accessibility it does not; `THEMING.md` explains that `:root { --font-sans }` overrides `ThemeFont`; and the WebAssembly demo host loads `themes.css` like the other two.
 - **Modal keyboard containment.** Tab and Shift+Tab enter the trapped controls when initial focus is on a container or non-tabbable listbox, preventing WebKit from moving focus behind a Select bottom sheet. Empty modals retain focus on their container.
 - **Drawer focus restoration.** Closing a drawer with Escape, its close button, the backdrop or a dismiss gesture returns focus to the trigger that opened it, including composed triggers. Navigating away does not restore focus into the departing page.
 - **Menu demo documentation.** Remove empty secondary API headings from Dropdown Menu, Context Menu and Menubar; their references remain in the final API section.
@@ -310,7 +331,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
   **What to change.** Add `AsChild="true"` wherever the child consumes the context itself, such as a `BbButton`. A bare icon, plain text or arbitrary markup needs no change and now works.
 
-  **What changes in the DOM.** With `AsChild="false"` the trigger wraps its content in a `<span>` carrying the handlers. That span uses `display: contents`, so it **generates no layout box** — spacing, flex and inline-block behaviour are unaffected, which is milder than [#428](https://github.com/blazorblueprintui/ui/issues/428) assumed when it was filed. The real impact is on anything walking the DOM: `:first-child` selectors, `querySelector` paths and test hooks that assume the child is a direct descendant.
+  **What changes in the DOM.** With `AsChild="false"` the trigger wraps its content in two nested `<span>` elements: a styled wrapper with `display: contents`, which generates no layout box, and inside it the primitive trigger — an ordinary inline span carrying the id, `tabindex` and the hover/focus handlers. In flow layout the inner span is usually invisible; inside a flex or grid container it becomes the item, so set `Class` on the trigger to give that wrapper the layout you need. Anything walking the DOM is affected either way: `:first-child` selectors, `querySelector` paths and test hooks that assume the child is a direct descendant.
 
   Only the styled wrapper changed; `Primitives.Tooltip.BbTooltipTrigger` already defaulted to `false`, so this removes a divergence between the layers rather than introducing one.
 

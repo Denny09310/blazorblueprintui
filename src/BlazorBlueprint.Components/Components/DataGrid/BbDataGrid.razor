@@ -293,7 +293,7 @@
                                                                       Size="ButtonSize.Icon"
                                                                       Class="@ClassNames.cn("bb:w-7 bb:h-7 bb:transition-colors",
                                                                           hasActiveFilter ? "bb:text-primary" : "bb:text-muted-foreground bb:opacity-0 bb:group-hover/header:opacity-100")"
-                                                                      AriaLabel="@($"Filter {filterColumn.Title}")">
+                                                                      AriaLabel="@Localizer["DataGrid.FilterColumn", filterColumn.Title ?? filterColumn.ColumnId]">
                                                                 <LucideIcon Name="filter" Class="bb:w-3.5 bb:h-3.5" />
                                                             </BbButton>
                                                         </BbPopoverTrigger>
@@ -665,7 +665,7 @@
                         <div class="bb:flex bb:items-center bb:gap-2" style="@(groupIndent > 0 ? $"padding-left: {groupIndent}px;" : null)">
                             <button type="button"
                                     class="bb:inline-flex bb:items-center bb:justify-center bb:rounded-md bb:w-6 bb:h-6 bb:hover:bg-muted bb:transition-colors"
-                                    aria-expanded="@(!isCollapsed)"
+                                    aria-expanded="@(isCollapsed ? "false" : "true")"
                                     aria-label="@(isCollapsed ? Localizer["DataGrid.ExpandGroup"] : Localizer["DataGrid.CollapseGroup"])"
                                     @onclick="groupContext.ToggleCollapse"
                                     @onclick:stopPropagation="true">
@@ -897,12 +897,17 @@
         }
     </text>;
 
-    private int GetHierarchyIndentSize()
-    {
-        // Check if the hierarchy column has a custom indent size
-        // Default to 24px
-        return 24;
-    }
+    /// <summary>
+    /// How far each level of the hierarchy is indented, in pixels.
+    /// </summary>
+    /// <remarks>
+    /// Taken from the hierarchy column's <c>IndentSize</c>. This used to return a hard-coded 24
+    /// regardless, so setting <c>IndentSize</c> on the column changed nothing.
+    /// </remarks>
+    private int GetHierarchyIndentSize() =>
+        _hierarchyColumn is IHierarchyIndentColumn column && column.IndentSize >= 0
+            ? column.IndentSize
+            : 24;
 
     /// <summary>
     /// How far each nested grouping level is indented, in pixels. Matches the hierarchy indent so

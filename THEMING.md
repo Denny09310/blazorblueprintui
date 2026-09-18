@@ -341,6 +341,28 @@ Components use this as a base:
 }
 ```
 
+> **`--font-sans` and `ThemeFont` are the same setting, and `:root` wins.**
+>
+> `ThemeFont` works by putting `data-bb-font="inter"` (and so on) on `<html>`, and the stylesheet
+> turns that into `--font-sans`. Those rules live in a cascade layer; a `:root` block in your own
+> stylesheet is unlayered, and unlayered styles beat layered ones whatever their specificity. So a
+> `:root { --font-sans: … }` silently pins the font and every `ThemeFont` value — including one the
+> user picks in `BbThemeSwitcher` — stops having any effect.
+>
+> Pick one:
+>
+> - **Your font, always.** Set `--font-sans` on `:root` as above, and leave `ThemeFont` alone. Hide
+>   the font selector by leaving `ShowDesignOptions` off on `BbThemeSwitcher`.
+> - **Let `ThemeFont` choose.** Do not set `--font-sans` on `:root`. To add your own face to the
+>   list, write it against the attribute the theme sets, so the switcher still drives it:
+>
+>   ```css
+>   [data-bb-font="system"] { --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+>   ```
+>
+> `--font-serif` and `--font-mono` are not touched by `ThemeFont`, so `:root` is the right place for
+> those either way.
+
 ---
 
 ## Complete Theme Example

@@ -32,7 +32,7 @@ namespace BlazorBlueprint.Components;
 /// &lt;/AreaChart&gt;
 /// </code>
 /// </example>
-public partial class BbArea : SeriesBase
+public partial class BbArea : StackableSeriesBase
 {
     /// <summary>
     /// Gets or sets the property holding each point's X value.

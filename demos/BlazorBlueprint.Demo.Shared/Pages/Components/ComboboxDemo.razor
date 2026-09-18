@@ -717,11 +717,11 @@
             new("Placeholder", "Select an option...", "Placeholder text when nothing is selected"),
             new("SearchPlaceholder", "Search...", "Placeholder in the search input"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.Combobox.Placeholder = ""Option auswählen..."";
-    opts.Combobox.SearchPlaceholder = ""Suchen..."";
-    opts.Combobox.EmptyMessage = ""Keine Ergebnisse."";
+    localizer.Set(""Combobox.Placeholder"", ""Option auswählen..."");
+    localizer.Set(""Combobox.SearchPlaceholder"", ""Suchen..."");
+    localizer.Set(""Combobox.EmptyMessage"", ""Keine Ergebnisse."");
 });")" />
 </div>
 

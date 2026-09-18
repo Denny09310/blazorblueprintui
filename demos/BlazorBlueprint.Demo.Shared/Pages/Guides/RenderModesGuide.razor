@@ -178,8 +178,12 @@
                 For <strong>Dialog</strong> there is a second option that sidesteps the scoped-service handshake entirely:
                 render it as a native <code class="text-xs bg-muted px-1 py-0.5 rounded">&lt;dialog&gt;</code> element. Set
                 <code class="text-xs bg-muted px-1 py-0.5 rounded">RenderingStrategy="OverlayRenderingStrategy.Native"</code>
-                on <code class="text-xs bg-muted px-1 py-0.5 rounded">BbDialog</code> (or set the global default via
-                <code class="text-xs bg-muted px-1 py-0.5 rounded">AddBlazorBlueprintPrimitives(o =&gt; o.DefaultStrategy = OverlayRenderingStrategy.Native)</code>).
+                on <code class="text-xs bg-muted px-1 py-0.5 rounded">BbDialog</code>, or set the global default where you
+                register the library &mdash;
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">AddBlazorBlueprintComponents(configureOverlays: o =&gt; o.DefaultStrategy = OverlayRenderingStrategy.Native)</code>,
+                or the same argument on
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">AddBlazorBlueprintPrimitives</code> if you use the
+                primitives on their own. Either call order works.
                 The browser shows the dialog in the top layer with native focus trapping, Escape handling and a
                 <code class="text-xs bg-muted px-1 py-0.5 rounded">::backdrop</code> &mdash; no portal host, no shared
                 scoped service, so it works across <code class="text-xs bg-muted px-1 py-0.5 rounded">InteractiveWebAssembly</code>

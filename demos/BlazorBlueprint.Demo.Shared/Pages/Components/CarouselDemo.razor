@@ -228,10 +228,10 @@
             new("NextSlide", "Next slide", "Aria label for the next slide button"),
             new("PreviousSlide", "Previous slide", "Aria label for the previous slide button"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.Carousel.NextSlide = ""Nächste Folie"";
-    opts.Carousel.PreviousSlide = ""Vorherige Folie"";
+    localizer.Set(""Carousel.NextSlide"", ""Nächste Folie"");
+    localizer.Set(""Carousel.PreviousSlide"", ""Vorherige Folie"");
 });")" />
 </div>
 

@@ -49,9 +49,13 @@
     public ToastPosition Position { get; set; } = ToastPosition.BottomRight;
 
     /// <summary>
-    /// Maximum number of toasts to display at once.
-    /// Older toasts are removed when limit is reached.
+    /// Maximum number of toasts to display at once, per position. Set to zero for no limit.
     /// </summary>
+    /// <remarks>
+    /// Toasts past the limit are not discarded: they stay queued in the service and appear as the
+    /// ones in front of them dismiss. The value was previously declared and never read, so every
+    /// toast was shown however many there were.
+    /// </remarks>
     [Parameter]
     public int MaxToasts { get; set; } = 5;
 
@@ -218,12 +222,12 @@
 
     private IEnumerable<ToastData> GetToastsForPosition(ToastPosition? position)
     {
-        if (position.HasValue)
-        {
-            return ToastService.Toasts.Where(t => t.Position == position);
-        }
+        var forPosition = position.HasValue
+            ? ToastService.Toasts.Where(t => t.Position == position)
+            : ToastService.Toasts.Where(t => !t.Position.HasValue);
 
-        return ToastService.Toasts.Where(t => !t.Position.HasValue);
+        // The service appends, so the newest are at the end — those are the ones to show.
+        return MaxToasts > 0 ? forPosition.TakeLast(MaxToasts) : forPosition;
     }
 
     private string GetContainerCssClass(ToastPosition position) => ClassNames.cn(

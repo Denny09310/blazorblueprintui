@@ -3,6 +3,7 @@
 @if (Errors != null && Errors.Any())
 {
     <div
+        id="@Id"
         data-slot="field-error"
         class="@CssClass"
         @attributes="AdditionalAttributes">
@@ -18,6 +19,7 @@
 else if (ChildContent != null)
 {
     <div
+        id="@Id"
         data-slot="field-error"
         class="@CssClass"
         @attributes="AdditionalAttributes">

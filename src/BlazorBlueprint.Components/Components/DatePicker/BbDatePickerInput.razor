@@ -3,7 +3,7 @@
 @using BlazorBlueprint.Primitives.Utilities
 @inject IBbLocalizer Localizer
 
-<div @ref="_rootRef" class="@WrapperCssClass">
+<div @ref="_rootRef" class="@WrapperCssClass" @attributes="AdditionalAttributes">
     <input type="text"
            class="bb:flex-1 bb:min-w-0 bb:bg-transparent bb:px-3 bb:py-2 bb:outline-none bb:placeholder:text-muted-foreground bb:disabled:cursor-not-allowed"
            value="@Text"
@@ -68,6 +68,12 @@
     /// </summary>
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the wrapper element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     /// <summary>
     /// Invoked when the user commits the typed text (blur or Enter).

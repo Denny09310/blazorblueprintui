@@ -94,7 +94,7 @@
                                 var isFocused = day.HasValue && _focusedDate.HasValue && day.Value.Date == _focusedDate.Value.Date;
                                 <td class="@GetCellClasses(day, isSelected)"
                                     role="gridcell"
-                                    aria-selected="@isSelected">
+                                    aria-selected="@(isSelected ? "true" : "false")">
                                     @if (day.HasValue)
                                     {
                                         <button type="button"
@@ -184,12 +184,6 @@
     /// </summary>
     [Parameter]
     public EventCallback<DateTime?> SelectedChanged { get; set; }
-
-    /// <summary>
-    /// The selection mode of the calendar.
-    /// </summary>
-    [Parameter]
-    public CalendarMode Mode { get; set; } = CalendarMode.Single;
 
     /// <summary>
     /// The minimum selectable date.

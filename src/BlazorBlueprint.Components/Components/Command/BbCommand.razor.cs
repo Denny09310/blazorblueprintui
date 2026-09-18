@@ -57,18 +57,11 @@ public partial class BbCommand
     public Func<CommandItemMetadata, string, bool>? FilterFunction { get; set; }
 
     /// <summary>
-    /// Whether the command is disabled.
+    /// Whether the command is disabled. A disabled command ignores the keyboard, ignores clicks
+    /// on its items, and disables its input.
     /// </summary>
     [Parameter]
     public bool Disabled { get; set; }
-
-    /// <summary>
-    /// Whether to close the dropdown after an item is selected.
-    /// Default is true (standard command behavior).
-    /// Set to false for multi-select scenarios.
-    /// </summary>
-    [Parameter]
-    public bool CloseOnSelect { get; set; } = true;
 
     /// <summary>
     /// Gets or sets additional attributes to apply to the component.
@@ -81,6 +74,7 @@ public partial class BbCommand
     /// </summary>
     private string CssClass => ClassNames.cn(
         "bb:flex bb:h-full bb:w-full bb:flex-col bb:overflow-hidden bb:rounded-md bb:bg-popover bb:text-popover-foreground",
+        Disabled ? "bb:pointer-events-none bb:opacity-50" : null,
         Class
     );
 
@@ -88,7 +82,6 @@ public partial class BbCommand
     {
         _context.OnValueChange = OnValueChange;
         _context.FilterFunction = FilterFunction;
-        _context.CloseOnSelect = CloseOnSelect;
         _context.Disabled = Disabled;
         _context.OnStateChanged += HandleContextStateChanged;
     }
@@ -97,7 +90,6 @@ public partial class BbCommand
     {
         _context.OnValueChange = OnValueChange;
         _context.FilterFunction = FilterFunction;
-        _context.CloseOnSelect = CloseOnSelect;
         _context.Disabled = Disabled;
 
         // Sync search query from parameter

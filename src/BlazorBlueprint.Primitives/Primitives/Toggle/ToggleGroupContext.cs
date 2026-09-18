@@ -40,4 +40,11 @@ public class ToggleGroupContext<TValue>
     /// Gets or sets the list of registered toggle group items.
     /// </summary>
     public List<BbToggleGroupItem<TValue>> Items { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the callback an item raises when it receives focus, so the group's arrow-key
+    /// navigation starts from the item the user is actually on rather than the one it last moved
+    /// to itself.
+    /// </summary>
+    public Action<BbToggleGroupItem<TValue>>? ItemFocused { get; set; }
 }

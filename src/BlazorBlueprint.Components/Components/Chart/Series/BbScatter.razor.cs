@@ -23,7 +23,7 @@ namespace BlazorBlueprint.Components;
 /// &lt;/BbScatterChart&gt;
 /// </code>
 /// </example>
-public partial class BbScatter : SeriesBase
+public partial class BbScatter : StackableSeriesBase
 {
     /// <summary>
     /// Gets or sets the property holding each point's X value.

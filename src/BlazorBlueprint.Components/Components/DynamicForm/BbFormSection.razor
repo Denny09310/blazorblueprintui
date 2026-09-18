@@ -1,6 +1,6 @@
 @namespace BlazorBlueprint.Components
 
-<div data-slot="form-section" class="@SectionCssClass">
+<div data-slot="form-section" class="@SectionCssClass" @attributes="AdditionalAttributes">
     @if (ShowSeparator)
     {
         <BbSeparator />
@@ -8,7 +8,7 @@
 
     @if (Collapsible)
     {
-        <BbCollapsible Open="@isExpanded" OpenChanged="@(v => isExpanded = v)" @attributes="AdditionalAttributes">
+        <BbCollapsible Open="@isExpanded" OpenChanged="@(v => isExpanded = v)">
             <div class="bb:flex bb:items-center bb:justify-between">
                 @if (Title is not null || Description is not null)
                 {

@@ -20,7 +20,7 @@
            id="@_inputId"
            type="text"
            placeholder="@Placeholder"
-           disabled="@Disabled"
+           disabled="@IsDisabled"
            value="@_displayValue"
            @oninput="HandleInput"
            @onkeydown="HandleKeyDown"
@@ -77,6 +77,11 @@
     /// </summary>
     [Parameter]
     public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Whether this input is disabled, either in its own right or because the whole command is.
+    /// </summary>
+    private bool IsDisabled => Disabled || Context?.Disabled == true;
 
     /// <summary>
     /// Gets or sets whether the input should auto-focus when rendered.

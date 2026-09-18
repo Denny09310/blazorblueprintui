@@ -236,6 +236,7 @@
   - StateChanged : EventCallback<DataGridState<TData>>
 
 ### BbDialog (BlazorBlueprint.Primitives.Dialog)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - DefaultOpen : Boolean
   - Modal : Boolean
@@ -279,6 +280,7 @@
   - RenderingStrategy : OverlayRenderingStrategy? [CascadingParameter]
 
 ### BbDialogPortal (BlazorBlueprint.Primitives.Dialog)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - Container : String
   - ForceMount : Boolean
@@ -382,6 +384,7 @@
   - ZIndex : Int32
 
 ### BbHoverCard (BlazorBlueprint.Primitives.HoverCard)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - CloseDelay : Int32
   - DefaultOpen : Boolean
@@ -524,6 +527,7 @@
   - Menu : NavigationMenuContext [CascadingParameter]
 
 ### BbPopover (BlazorBlueprint.Primitives.Popover)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - DefaultOpen : Boolean
   - Modal : Boolean
@@ -671,6 +675,7 @@
 ### BbPortalHost (BlazorBlueprint.Primitives.Services)
 
 ### BbSheet (BlazorBlueprint.Primitives.Sheet)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - DefaultOpen : Boolean
   - Modal : Boolean
@@ -762,6 +767,7 @@
   - CanDrop : Func<SortableDropContext<TItem>, Boolean>
   - CanMove : Func<SortableMoveContext<TItem>, Boolean>
   - DragOverlayTemplate : RenderFragment<TItem>
+  - DropRejectedAnnouncement : String
   - Filter : String
   - ForceFallback : Boolean
   - Group : String
@@ -771,11 +777,15 @@
   - Items : IList<TItem>
   - KeyboardInstructions : String
   - KeyboardSorting : Boolean
+  - MoveRejectedAnnouncement : String
+  - MovedAnnouncement : String
   - OnAdd : EventCallback<ValueTuple<Int32, Int32>>
   - OnRemove : EventCallback<ValueTuple<Int32, Int32>>
   - OnUpdate : EventCallback<ValueTuple<Int32, Int32>>
   - Pull : String
   - Put : Boolean
+  - ReceivedAnnouncement : String
+  - RemovedAnnouncement : String
   - Sort : Boolean
 
 ### BbSwitch (BlazorBlueprint.Primitives.Switch)
@@ -1274,6 +1284,7 @@
 
 ### INativeOverlayService (BlazorBlueprint.Primitives.Services)
   - CloseDialogAsync(ElementReference element, String returnValue) : Task
+  - FallBackToJavaScript() : Void
   - FocusDialogAsync(ElementReference element) : Task
   - FocusTriggerAsync(ElementReference element) : Task
   - IsDialogSupportedAsync() : Task<Boolean>

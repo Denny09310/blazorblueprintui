@@ -2140,7 +2140,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderRequest request)
     {
         // Grouping is not supported in virtualized provider mode without a GroupedItemsProvider.
-        if (_gridState.Grouping.ActiveGroup != null)
+        // With one, this path is not used at all: the grid renders from _groupedRenderItems.
+        if (_gridState.Grouping.ActiveGroup != null && GroupedItemsProvider == null)
         {
             if (!_virtualGroupingWarned)
             {
@@ -2881,10 +2882,25 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     private async Task LoadFromProviderAsync()
     {
+        var groupings = ResolveGroupings();
+
+        // Grouping served from the server is the one case where a virtualized provider grid does
+        // not let Virtualize drive loading: those rows come from GroupedItemsProvider and render
+        // from _groupedRenderItems, which only the code below fills. Returning early for every
+        // virtualized grid is what left a grouped one completely empty — VirtualItemsProviderAsync
+        // refuses to serve a grouped request, and nothing else ever ran.
+        var serverGrouped = groupings.Count > 0 && GroupedItemsProvider != null;
+
         // In virtualized provider mode, the Virtualize component drives data loading.
         // Refresh it so it re-queries with the current sort/filter state.
-        if (IsVirtualizedProvider)
+        if (IsVirtualizedProvider && !serverGrouped)
         {
+            // Ungrouping has to drop the render list built for the grouped shape, or the grid
+            // keeps showing the old group headers.
+            _groupedRenderItems = null;
+            _groupedRenderItemsList = null;
+            _lastGroupedRenderItems = null;
+
             if (_virtualizeRef != null)
             {
                 await _virtualizeRef.RefreshDataAsync();
@@ -2906,7 +2922,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 .Select(c => c.ColumnId)
                 .ToList();
 
-            var providerGroupings = ResolveGroupings();
+            var providerGroupings = groupings;
 
             // When grouping client-side from a flat provider, fetch all items so
             // ProcessGroupedData can correctly paginate across groups.

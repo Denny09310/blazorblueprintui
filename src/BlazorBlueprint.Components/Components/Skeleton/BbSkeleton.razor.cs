@@ -124,19 +124,7 @@ public partial class BbSkeleton : ComponentBase
         }
     }
 
-    private string? MergedInlineStyle
-    {
-        get
-        {
-            var consumerStyle = AdditionalAttributes?.TryGetValue("style", out var s) == true ? s?.ToString() : null;
-            if (string.IsNullOrEmpty(consumerStyle))
-            {
-                return InlineStyle;
-            }
-
-            return string.IsNullOrEmpty(InlineStyle) ? consumerStyle : $"{InlineStyle};{consumerStyle}";
-        }
-    }
+    private string? MergedInlineStyle => InlineStyleMerge.Merge(InlineStyle, AdditionalAttributes);
 
     /// <summary>
     /// Gets the computed CSS class string for the skeleton element.

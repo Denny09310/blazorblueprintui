@@ -11,8 +11,8 @@
 
 @if (Context != null)
 {
-    <BbSheet Open="@Context.OpenMobile" OpenChanged="@(EventCallback.Factory.Create<bool>(this, OnOpenChanged))" Side="@Side" @attributes="AdditionalAttributes">
-        <BbSheetContent Class="@ContentClass" ShowClose="@ShowClose">
+    <BbSheet Open="@Context.OpenMobile" OpenChanged="@(EventCallback.Factory.Create<bool>(this, OnOpenChanged))" Side="@Side">
+        <BbSheetContent Class="@ContentClass" ShowClose="@ShowClose" @attributes="AdditionalAttributes">
             @if (Header != null)
             {
                 <div class="bb:border-b bb:pb-4 bb:mb-4">

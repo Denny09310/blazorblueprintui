@@ -17,13 +17,15 @@
                                Disabled="@Disabled"
                                Required="@Required"
                                Class="@Class"
-                               OnCommit="HandleInputCommit" />
+                               OnCommit="HandleInputCommit"
+                               @attributes="AdditionalAttributes" />
         }
         else
         {
             <BbButton Variant="ButtonVariant.Outline"
                     Class="@ButtonCssClass"
-                    aria-required="@(Required ? "true" : null)">
+                    aria-required="@(Required ? "true" : null)"
+                    @attributes="AdditionalAttributes">
                 <LucideIcon Name="calendar" Class="bb:mr-2 bb:h-4 bb:w-4" />
                 @if (Value.HasValue)
                 {

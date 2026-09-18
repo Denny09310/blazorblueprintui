@@ -280,10 +280,10 @@
         })"
         CultureAware="true"
         CultureDescription="Month names, day names, and the first day of the week are automatically derived from CultureInfo.CurrentCulture. Override with the MonthNames, DayNames, and FirstDayOfWeek parameters."
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.Calendar.GoToPreviousMonth = ""Vorheriger Monat"";
-    opts.Calendar.GoToNextMonth = ""Nächster Monat"";
+    localizer.Set(""Calendar.GoToPreviousMonth"", ""Vorheriger Monat"");
+    localizer.Set(""Calendar.GoToNextMonth"", ""Nächster Monat"");
 });")" />
 </div>
 

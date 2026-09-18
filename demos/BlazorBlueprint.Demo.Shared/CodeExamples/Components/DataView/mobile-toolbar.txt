@@ -4,7 +4,10 @@
         <BbDataViewColumn TItem="Person" TValue="string" Id="department" Property="@(p => p.Department)" Header="Department" Sortable="true" />
     </Fields>
     <FilterContent>
-        <BbCheckbox @bind-Checked="activeOnly" Label="Active employees only" />
+        <div class="flex items-center gap-2">
+            <BbCheckbox @bind-Checked="activeOnly" Id="active-only" />
+            <label for="active-only" class="text-sm font-medium">Active employees only</label>
+        </div>
     </FilterContent>
     <ListTemplate Context="person">
         <div class="flex min-h-12 items-center justify-between rounded-md border p-3"><span>@person.Name</span><span>@person.Department</span></div>

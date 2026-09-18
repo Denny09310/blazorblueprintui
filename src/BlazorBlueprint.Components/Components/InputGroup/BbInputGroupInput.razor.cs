@@ -219,7 +219,8 @@ public partial class BbInputGroupInput : ComponentBase
             {
                 jsModule = await ComponentModules.GetCoreAsync(JSRuntime);
                 dotNetRef = DotNetObjectReference.Create(this);
-                await jsModule.InvokeVoidAsync("textInput.initialize", inputRef, dotNetRef, instanceId, GetJsConfig());
+                lastJsConfig = GetJsConfig();
+                await jsModule.InvokeVoidAsync("textInput.initialize", inputRef, dotNetRef, instanceId, lastJsConfig);
                 jsInitialized = true;
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
@@ -231,7 +232,39 @@ public partial class BbInputGroupInput : ComponentBase
                 // JS interop not available during prerendering
             }
         }
+        else if (jsInitialized && jsModule != null)
+        {
+            // Keep the browser side in step when a parameter that shapes its behaviour changes
+            // after the first render. The module has always exposed updateConfig and nothing
+            // called it, so UpdateTiming and DebounceInterval were fixed at whatever they were
+            // when the input first rendered.
+            var config = GetJsConfig();
+
+            if (!config.Equals(lastJsConfig))
+            {
+                lastJsConfig = config;
+
+                try
+                {
+                    await jsModule.InvokeVoidAsync("textInput.updateConfig", instanceId, config);
+                }
+                catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+                {
+                    // Expected during circuit disconnect
+                }
+                catch (InvalidOperationException)
+                {
+                    // JS interop not available
+                }
+            }
+        }
     }
+
+    /// <summary>
+    /// The configuration last sent to the browser, so a change can be recognised. Anonymous types
+    /// compare by value, which is all this needs.
+    /// </summary>
+    private object? lastJsConfig;
 
     /// <summary>
     /// Builds the JS configuration object from current parameters.

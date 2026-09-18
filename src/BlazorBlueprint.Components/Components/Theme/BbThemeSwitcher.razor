@@ -4,10 +4,11 @@
 @inject IBbLocalizer Localizer
 @implements IDisposable
 
-<BbPopover @bind-Open="isOpen" @attributes="AdditionalAttributes">
+<BbPopover @bind-Open="isOpen">
     <BbPopoverTrigger AsChild="true">
         <BbButton Variant="@Variant" Size="ButtonSize.Icon" Class="@TriggerClass"
-                  aria-label="@Localizer["Theme.Switcher.Label"]">
+                  aria-label="@Localizer["Theme.Switcher.Label"]"
+                  @attributes="AdditionalAttributes">
             <LucideIcon Name="paintbrush" Class="bb:h-4 bb:w-4" />
         </BbButton>
     </BbPopoverTrigger>

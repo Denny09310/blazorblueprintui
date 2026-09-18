@@ -3,7 +3,7 @@
 @attribute [CascadingTypeParameter(nameof(TValue))]
 
 <CascadingValue Value="context" IsFixed="false">
-    <div role="group"
+    <div role="@(Type == ToggleGroupType.Single ? "radiogroup" : "group")"
          aria-label="@AriaLabel"
          aria-disabled="@Disabled.ToString().ToLower()"
          data-orientation="@Orientation.ToString().ToLower()"
@@ -109,6 +109,7 @@
         context.Disabled = Disabled;
         context.Orientation = Orientation;
         context.ToggleItem = ToggleItemAsync;
+        context.ItemFocused = item => lastFocusedItem = item;
 
         if (Type == ToggleGroupType.Single)
         {
@@ -268,7 +269,8 @@
 
     private int GetFocusedIndex(List<BbToggleGroupItem<TValue>> enabledItems)
     {
-        // First, check which item was last focused via keyboard nav
+        // The item that currently holds focus — reported by the item itself on focus, so a click
+        // or a Tab into the group counts, not only the group's own arrow navigation.
         if (lastFocusedItem != null)
         {
             var idx = enabledItems.IndexOf(lastFocusedItem);

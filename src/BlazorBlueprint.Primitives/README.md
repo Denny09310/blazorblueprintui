@@ -39,6 +39,17 @@ Add a single import to `_Imports.razor`:
 @using BlazorBlueprint.Primitives
 ```
 
+Reference the primitives stylesheet from your host page (`App.razor` or `index.html`):
+
+```html
+<link rel="stylesheet" href="_content/BlazorBlueprint.Primitives/css/primitives.css" />
+```
+
+It is small and carries no design decisions — only the rules the primitives' own markup depends on,
+such as hiding screen-reader-only announcements and sizing the dismiss overlay. Skip it and the
+Sortable list reads its keyboard instructions out as visible body text. Apps that also use
+BlazorBlueprint.Components can load it or not; the two stylesheets agree.
+
 ## Available Primitives
 
 | Primitive | Description |

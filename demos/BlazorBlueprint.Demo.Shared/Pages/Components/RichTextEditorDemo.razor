@@ -386,11 +386,11 @@
             new("EditLink/RemoveLink", "Edit Link, Remove Link", "Link dialog title and remove button"),
             new("Cancel/Update/Insert", "Cancel, Update, Insert", "Link dialog action buttons"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.RichTextEditor.Bold = ""Fett (Strg+B)"";
-    opts.RichTextEditor.InsertLink = ""Link einfügen"";
-    opts.RichTextEditor.Cancel = ""Abbrechen"";
+    localizer.Set(""RichTextEditor.Bold"", ""Fett (Strg+B)"");
+    localizer.Set(""RichTextEditor.InsertLink"", ""Link einfügen"");
+    localizer.Set(""RichTextEditor.Cancel"", ""Abbrechen"");
 });")" />
 
     <!-- Accessibility Notes -->

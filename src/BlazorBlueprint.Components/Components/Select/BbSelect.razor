@@ -9,7 +9,8 @@
 <BlazorBlueprint.Primitives.Select.BbSelect TValue="TValue"
                  Value="@Value"
                  ValueChanged="@HandleValueChanged"
-                 @bind-Open="IsOpen"
+                 Open="@EffectiveOpen"
+                 OpenChanged="@HandleOpenChangedAsync"
                  Disabled="Disabled"
                  Required="Required"
                  DisplayTextSelector="@GetDisplayTextSelector()"
@@ -161,7 +162,26 @@
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
-    private bool IsOpen { get; set; }
+    /// <summary>
+    /// The open state when the consumer does not control it.
+    /// </summary>
+    private bool internalOpen;
+
+    /// <summary>
+    /// The state actually handed to the primitive.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="Open"/> and <see cref="OpenChanged"/> were declared on this wrapper and then
+    /// never passed down: the markup bound the primitive to a private field instead, so
+    /// <c>@bind-Open</c> on a BbSelect neither opened the list nor reported that the user had.
+    /// </remarks>
+    private bool EffectiveOpen => Open ?? internalOpen;
+
+    private async Task HandleOpenChangedAsync(bool open)
+    {
+        internalOpen = open;
+        await OpenChanged.InvokeAsync(open);
+    }
 
     protected override void OnParametersSet()
     {

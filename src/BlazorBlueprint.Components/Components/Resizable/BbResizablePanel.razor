@@ -36,6 +36,12 @@
     /// <summary>
     /// Whether the panel can be collapsed.
     /// </summary>
+    /// <remarks>
+    /// A collapsible panel may be dragged all the way shut: below half of <see cref="MinSize"/> it
+    /// snaps to zero, and it reopens at <see cref="MinSize"/> on the way back. Without this the
+    /// panel stops at <see cref="MinSize"/> as any other does. The flag was declared and read
+    /// nowhere, so it had no effect at all.
+    /// </remarks>
     [Parameter]
     public bool Collapsible { get; set; }
 
@@ -77,7 +83,7 @@
     {
         if (Group != null)
         {
-            _panelIndex = Group.RegisterPanel(DefaultSize, MinSize, MaxSize);
+            _panelIndex = Group.RegisterPanel(DefaultSize, MinSize, MaxSize, Collapsible);
         }
     }
 
@@ -86,7 +92,10 @@
         get
         {
             var size = CurrentSize.ToString("F2", CultureInfo.InvariantCulture);
-            var min = MinSize.ToString(CultureInfo.InvariantCulture);
+
+            // A collapsible panel has to be able to reach zero, so the CSS floor cannot be MinSize
+            // — that is the point it snaps past, not a hard limit.
+            var min = (Collapsible ? 0 : MinSize).ToString(CultureInfo.InvariantCulture);
             var max = MaxSize.ToString(CultureInfo.InvariantCulture);
             return IsHorizontal
                 ? $"flex: 1 0 {size}%; min-width: {min}%; max-width: {max}%; overflow: auto;"

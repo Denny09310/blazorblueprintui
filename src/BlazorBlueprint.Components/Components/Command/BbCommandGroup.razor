@@ -6,7 +6,7 @@
          style="@MergedGroupStyle"
          role="group"
          aria-labelledby="@(string.IsNullOrWhiteSpace(Heading) ? null : $"command-group-{Id}")"
-         @attributes="AdditionalAttributes">
+         @attributes="@InlineStyleMerge.WithoutStyle(AdditionalAttributes)">
         @if (!string.IsNullOrWhiteSpace(Heading))
         {
             <div id="@($"command-group-{Id}")"
@@ -34,20 +34,7 @@
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
-    private string? MergedGroupStyle
-    {
-        get
-        {
-            var computed = _isVisible ? null : "display: none";
-            var consumerStyle = AdditionalAttributes?.TryGetValue("style", out var s) == true ? s?.ToString() : null;
-            if (string.IsNullOrEmpty(consumerStyle))
-            {
-                return computed;
-            }
-
-            return string.IsNullOrEmpty(computed) ? consumerStyle : $"{computed}; {consumerStyle}";
-        }
-    }
+    private string? MergedGroupStyle => InlineStyleMerge.Merge(_isVisible ? null : "display: none", AdditionalAttributes);
 
     /// <summary>
     /// Gets or sets the heading text for this group (optional).

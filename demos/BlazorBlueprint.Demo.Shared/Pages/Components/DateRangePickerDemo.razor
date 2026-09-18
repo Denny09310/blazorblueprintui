@@ -395,12 +395,12 @@
         })"
         CultureAware="true"
         CultureDescription="The internal calendars use CultureInfo.CurrentCulture for month/day names and first day of week."
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.DateRangePicker.Placeholder = ""Zeitraum wählen"";
-    opts.DateRangePicker.Apply = ""Übernehmen"";
-    opts.DateRangePicker.Clear = ""Löschen"";
-    opts.DateRangePicker.Today = ""Heute"";
+    localizer.Set(""DateRangePicker.Placeholder"", ""Zeitraum wählen"");
+    localizer.Set(""DateRangePicker.Apply"", ""Übernehmen"");
+    localizer.Set(""DateRangePicker.Clear"", ""Löschen"");
+    localizer.Set(""DateRangePicker.Today"", ""Heute"");
 });")" />
 </div>
 

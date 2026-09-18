@@ -3,12 +3,13 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Linq.Expressions
 
-<BbPopover @bind-Open="_isOpen" @attributes="AdditionalAttributes">
+<BbPopover @bind-Open="_isOpen">
     <BbPopoverTrigger AsChild="true">
         <BbButton Variant="ButtonVariant.Outline"
                 Class="@ButtonCssClass"
                 Disabled="@Disabled"
-                aria-required="@(Required ? "true" : null)">
+                aria-required="@(Required ? "true" : null)"
+                @attributes="AdditionalAttributes">
             <LucideIcon Name="clock" Class="bb:mr-2 bb:h-4 bb:w-4" />
             @if (Value.HasValue)
             {

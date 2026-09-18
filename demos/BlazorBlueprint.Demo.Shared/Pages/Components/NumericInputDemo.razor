@@ -388,10 +388,10 @@
         })"
         CultureAware="true"
         CultureDescription="Number formatting and parsing respect CultureInfo.CurrentCulture, including decimal separators and grouping."
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.NumericInput.IncreaseValue = ""Wert erhöhen"";
-    opts.NumericInput.DecreaseValue = ""Wert verringern"";
+    localizer.Set(""NumericInput.IncreaseValue"", ""Wert erhöhen"");
+    localizer.Set(""NumericInput.DecreaseValue"", ""Wert verringern"");
 });")" />
 </div>
 

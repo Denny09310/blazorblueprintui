@@ -999,9 +999,9 @@
         {
             new("Close", "Close", "Aria label for the close button"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.Dialog.Close = ""Schließen"";
+    localizer.Set(""Dialog.Close"", ""Schließen"");
 });")" />
 </div>
 

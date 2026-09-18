@@ -1813,9 +1813,9 @@
         {
             new("ToggleSidebar", "Toggle Sidebar", "Aria label for the sidebar trigger/rail button"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.Sidebar.ToggleSidebar = ""Seitenleiste umschalten"";
+    localizer.Set(""Sidebar.ToggleSidebar"", ""Seitenleiste umschalten"");
 });")" />
 </div>
 

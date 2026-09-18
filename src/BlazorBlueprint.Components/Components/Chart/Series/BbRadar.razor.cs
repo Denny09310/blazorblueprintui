@@ -81,7 +81,10 @@ public partial class BbRadar : SeriesBase
             series.AreaStyle = new EChartsAreaStyleOption
             {
                 Opacity = FillOpacity,
-                Color = FillColor
+
+                // Via GetResolvedFillColor: the FillColor field is never assigned, so reading it
+                // directly ignored any BbFill placed inside the series.
+                Color = GetResolvedFillColor()
             };
         }
 

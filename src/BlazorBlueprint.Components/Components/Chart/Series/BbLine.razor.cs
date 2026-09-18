@@ -25,7 +25,7 @@ namespace BlazorBlueprint.Components;
 /// &lt;/LineChart&gt;
 /// </code>
 /// </example>
-public partial class BbLine : SeriesBase
+public partial class BbLine : StackableSeriesBase
 {
     /// <summary>
     /// Gets or sets the property holding each point's X value.
@@ -77,6 +77,11 @@ public partial class BbLine : SeriesBase
     {
         var resolvedColor = GetResolvedColor();
 
+        // Read through GetResolvedFillColor, not the FillColor field. Nothing ever assigns that
+        // field — BbFill registers itself as a FillProvider instead — so reading it directly meant
+        // a BbFill inside a line or radar series had no effect.
+        var fillColor = GetResolvedFillColor();
+
         var series = new EChartsSeriesOption
         {
             Type = "line",
@@ -91,9 +96,9 @@ public partial class BbLine : SeriesBase
                 Type = Dashed ? "dashed" : null
             },
             ItemStyle = resolvedColor != null
-                ? new EChartsItemStyleOption { Color = FillColor ?? resolvedColor }
-                : FillColor != null
-                    ? new EChartsItemStyleOption { Color = FillColor }
+                ? new EChartsItemStyleOption { Color = fillColor ?? resolvedColor }
+                : fillColor != null
+                    ? new EChartsItemStyleOption { Color = fillColor }
                     : null,
             Emphasis = new EChartsEmphasisOption { Disabled = true }
         };

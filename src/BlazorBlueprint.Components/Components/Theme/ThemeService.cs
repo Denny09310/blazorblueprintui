@@ -9,7 +9,7 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Register via <see cref="ServiceCollectionExtensions.AddBlazorBlueprintComponents(Microsoft.Extensions.DependencyInjection.IServiceCollection, Action{DefaultBbLocalizer}?, Action{ThemeOptions}?)"/>
+/// Register via <see cref="ServiceCollectionExtensions.AddBlazorBlueprintComponents(Microsoft.Extensions.DependencyInjection.IServiceCollection, Action{DefaultBbLocalizer}?, Action{ThemeOptions}?, Action{BlazorBlueprint.Primitives.Services.OverlayRenderingOptions}?)"/>
 /// with an optional <see cref="ThemeOptions"/> configuration action.
 /// </para>
 /// <para>

@@ -20,8 +20,13 @@ export function initializeRangeSlider(trackElement, dotNetRef, sliderId) {
   const updates = createDragUpdates((percentage, activeThumb) =>
     dotNetRef.invokeMethodAsync('UpdateValueFromPercentage', percentage, activeThumb));
   const disabled = () => trackElement.getAttribute('data-disabled') === 'true';
+  // A vertical slider runs bottom-to-top, so the pointer is measured up from the bottom edge.
+  const vertical = () => trackElement.getAttribute('data-orientation') === 'vertical';
   const percentageAt = e => {
     const rect = trackElement.getBoundingClientRect();
+    if (vertical()) {
+      return rect.height > 0 ? Math.max(0, Math.min(1, (rect.bottom - e.clientY) / rect.height)) : 0;
+    }
     return rect.width > 0 ? Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) : 0;
   };
   const update = e => {

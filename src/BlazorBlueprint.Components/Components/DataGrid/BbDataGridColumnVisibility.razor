@@ -1,8 +1,9 @@
 @namespace BlazorBlueprint.Components
 @typeparam TData where TData : class
+@inject IBbLocalizer Localizer
 
-<BbDropdownMenu @attributes="AdditionalAttributes">
-    <BbDropdownMenuTrigger AsChild="@AsChild" Class="@TriggerClass">
+<BbDropdownMenu>
+    <BbDropdownMenuTrigger AsChild="@AsChild" Class="@TriggerClass" @attributes="AdditionalAttributes">
         @if (TriggerContent != null)
         {
             @TriggerContent
@@ -19,12 +20,12 @@
                     <line x1="9" x2="9" y1="3" y2="21" />
                     <line x1="15" x2="15" y1="3" y2="21" />
                 </svg>
-                Columns
+                @Localizer["DataGrid.Columns"]
             </BbButton>
         }
     </BbDropdownMenuTrigger>
     <BbDropdownMenuContent Align="PopoverAlign.End">
-        <BbDropdownMenuLabel>Toggle columns</BbDropdownMenuLabel>
+        <BbDropdownMenuLabel>@Localizer["DataGrid.ToggleColumns"]</BbDropdownMenuLabel>
         <BbDropdownMenuSeparator />
         @foreach (var column in GetHideableColumns())
         {
@@ -40,7 +41,7 @@
                 @(column.Title ?? columnId)
                 @if (isPinned)
                 {
-                    <span class="bb:ml-auto bb:text-xs bb:text-muted-foreground">Pinned</span>
+                    <span class="bb:ml-auto bb:text-xs bb:text-muted-foreground">@Localizer["DataGrid.PinnedColumn"]</span>
                 }
             </BbDropdownMenuCheckboxItem>
         }

@@ -38,21 +38,32 @@
     /// </summary>
     public ElementReference ButtonRef => buttonRef;
 
+    /// <summary>
+    /// This trigger's slot in the menu's trigger list, so the real element reference replaces the
+    /// placeholder in the right place.
+    /// </summary>
+    /// <remarks>
+    /// The index used to be recomputed after the first render as <c>TriggerCount - 1</c>. Every
+    /// trigger initialises before any of them renders, so by then that expression named the last
+    /// slot for all of them: each trigger overwrote the same entry, and arrow-key navigation could
+    /// reach only one button.
+    /// </remarks>
+    private int triggerIndex = -1;
+
     protected override void OnInitialized()
     {
         if (Menu != null)
         {
-            Menu.RegisterTrigger(buttonRef);
+            triggerIndex = Menu.RegisterTrigger(buttonRef);
         }
     }
 
     protected override void OnAfterRender(bool firstRender)
     {
-        if (firstRender && Menu != null)
+        if (firstRender && Menu != null && triggerIndex >= 0)
         {
-            // Update the ref now that the element is rendered
-            var index = Menu.TriggerCount - 1;
-            Menu.UpdateTriggerRef(index, buttonRef);
+            // Update the ref now that the element is rendered.
+            Menu.UpdateTriggerRef(triggerIndex, buttonRef);
         }
     }
 

@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @typeparam TItem
+@inject IBbLocalizer Localizer
 
 <BlazorBlueprint.Primitives.Sortable.BbSortable TItem="TItem"
                                                  Items="@Items"
@@ -14,7 +15,12 @@
                                                  Put="@Put"
                                                  Sort="@Sort"
                                                  KeyboardSorting="@KeyboardSorting"
-                                                 KeyboardInstructions="@KeyboardInstructions"
+                                                 KeyboardInstructions="@(KeyboardInstructions ?? Localizer["Sortable.KeyboardInstructions"])"
+                                                 MoveRejectedAnnouncement="@Localizer["Sortable.MoveRejected"]"
+                                                 DropRejectedAnnouncement="@Localizer["Sortable.DropRejected"]"
+                                                 MovedAnnouncement="@Localizer["Sortable.Moved"]"
+                                                 RemovedAnnouncement="@Localizer["Sortable.Removed"]"
+                                                 ReceivedAnnouncement="@Localizer["Sortable.Received"]"
                                                  CanMove="@CanMove"
                                                  CanDrop="@CanDrop"
                                                  Handle="@Handle"

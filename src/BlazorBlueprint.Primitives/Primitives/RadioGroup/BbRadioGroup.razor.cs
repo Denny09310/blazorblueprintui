@@ -146,6 +146,16 @@ public partial class BbRadioGroup<TValue> : ComponentBase
     }
 
     /// <summary>
+    /// Whether the next key-down on the group should have its default action suppressed.
+    /// <para>
+    /// This was previously hard-coded to <c>true</c>, which suppressed every key — including Tab,
+    /// so focus could never leave the radio group by keyboard, and including the Space and Enter
+    /// that select an item.
+    /// </para>
+    /// </summary>
+    private bool shouldPreventDefault;
+
+    /// <summary>
     /// Handles keyboard navigation for the radio group.
     /// </summary>
     /// <param name="args">The keyboard event arguments.</param>
@@ -154,7 +164,7 @@ public partial class BbRadioGroup<TValue> : ComponentBase
     /// - Arrow Down/Right: Navigate to next radio item
     /// - Arrow Up/Left: Navigate to previous radio item
     /// - Automatically selects the navigated item and focuses it
-    /// - Prevents default browser scroll behavior for arrow keys
+    /// - Prevents default browser scroll behavior for arrow keys only
     /// </remarks>
     private async Task HandleKeyDown(KeyboardEventArgs args)
     {
@@ -169,20 +179,37 @@ public partial class BbRadioGroup<TValue> : ComponentBase
             return;
         }
 
-
         switch (args.Key)
         {
             case "ArrowDown":
             case "ArrowRight":
+                shouldPreventDefault = true;
                 await NavigateNext(enabledItems);
                 break;
 
             case "ArrowUp":
             case "ArrowLeft":
+                shouldPreventDefault = true;
                 await NavigatePrevious(enabledItems);
+                break;
+
+            default:
+                shouldPreventDefault = false;
                 break;
         }
     }
+
+    /// <summary>
+    /// Releases the suppression as soon as the arrow key is let go.
+    /// </summary>
+    /// <remarks>
+    /// Blazor evaluates <c>@onkeydown:preventDefault</c> when the element renders, not when the
+    /// event fires, so the flag always describes the previous keystroke. Left set, the Tab that
+    /// follows an arrow key is swallowed and the user cannot leave the group; cleared on key-up,
+    /// the flag is only ever true while an arrow key is actually held, which is exactly when the
+    /// page would otherwise scroll.
+    /// </remarks>
+    private void HandleKeyUp() => shouldPreventDefault = false;
 
     /// <summary>
     /// Gets the list of enabled items, using a cached version when possible

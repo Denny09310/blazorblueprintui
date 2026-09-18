@@ -108,8 +108,11 @@ public partial class BbSidebar : IDisposable
 
     private string GetMobileClasses()
     {
+        // The mobile sheet has its own width token, --sidebar-width-mobile, which the stylesheet
+        // defines and nothing used: the sheet took the desktop --sidebar-width instead, so setting
+        // the mobile token changed nothing.
         return ClassNames.cn(
-            "bb:w-[var(--sidebar-width)] bb:bg-sidebar bb:p-0 bb:flex bb:flex-col",
+            "bb:w-[var(--sidebar-width-mobile,var(--sidebar-width))] bb:bg-sidebar bb:p-0 bb:flex bb:flex-col",
             "bb:[&>button]:hidden", // Hide the default Sheet close button
             Class
         );

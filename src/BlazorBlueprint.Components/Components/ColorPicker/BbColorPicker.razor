@@ -5,12 +5,13 @@
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
-<BbPopover @bind-Open="_isOpen" @attributes="AdditionalAttributes">
+<BbPopover @bind-Open="_isOpen">
     <BbPopoverTrigger AsChild="true">
         <BbButton Variant="ButtonVariant.Outline"
                 Class="@ButtonClass"
                 Disabled="@Disabled"
-                aria-required="@(Required ? "true" : null)">
+                aria-required="@(Required ? "true" : null)"
+                @attributes="AdditionalAttributes">
             <div class="bb:h-5 bb:w-5 bb:rounded bb:border bb:border-input bb:mr-2"
                  style="background-color: @Value;">
             </div>

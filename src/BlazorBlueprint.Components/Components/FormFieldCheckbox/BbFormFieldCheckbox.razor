@@ -46,7 +46,8 @@
                       Required="@Required"
                       AriaLabel="@AriaLabel"
                       AriaDescribedBy="@DescribedById"
-                      Class="@InputClass" />
+                      Class="@InputClass"
+                      @attributes="AdditionalAttributes" />
             @if (Label is not null && Orientation is FieldOrientation.VerticalEnd)
             {
                 <BbFieldLabel For="@ControlId">@Label</BbFieldLabel>

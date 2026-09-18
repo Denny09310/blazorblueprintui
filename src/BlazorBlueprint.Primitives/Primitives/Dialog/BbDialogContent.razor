@@ -177,13 +177,24 @@ else if (Context.IsOpen)
 
             try
             {
-                // Diagnostic only — if native was requested but the browser lacks showModal(),
-                // the element still renders but cannot enter the top layer.
-                if (!await NativeOverlayService.IsDialogSupportedAsync())
+                // Native was requested but the browser has no showModal(). The <dialog> element
+                // would render and never enter the top layer: no backdrop, no focus trap, no
+                // Escape — a dialog in name only. Switch this component, and every overlay
+                // resolved afterwards, to the JavaScript strategy instead of only warning.
+                // A false answer here can also mean interop was briefly unavailable, so trust the
+                // service's own resolution rather than the raw result: it only stops resolving to
+                // Native once the browser has actually answered.
+                if (!await NativeOverlayService.IsDialogSupportedAsync()
+                    && NativeOverlayService.ResolveStrategy(RenderingStrategy) != OverlayRenderingStrategy.Native)
                 {
                     Logger.LogWarning(
                         "Dialog '{DialogId}' uses OverlayRenderingStrategy.Native but the browser does not support " +
-                        "<dialog>.showModal(); the dialog will not render as a modal.", Context.ContentId);
+                        "<dialog>.showModal(); falling back to the JavaScript strategy.", Context.ContentId);
+
+                    _useNative = false;
+                    _nativeInitialized = false;
+                    await InvokeAsync(StateHasChanged);
+                    return;
                 }
 
                 _dotNetRef ??= DotNetObjectReference.Create(this);

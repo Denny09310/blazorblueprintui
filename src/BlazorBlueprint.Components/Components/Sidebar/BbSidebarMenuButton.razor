@@ -154,7 +154,7 @@ else
                data-active="@(ResolvedActive ? "true" : "false")"
                data-state="@(CollapsibleContext?.Open ?? false ? "open" : "closed")"
                aria-current="@(ResolvedActive ? "page" : null)"
-               aria-expanded="@(CollapsibleContext?.Open ?? false)"
+               aria-expanded="@((CollapsibleContext?.Open ?? false) ? "true" : "false")"
                @onclick="HandleClick"
                @attributes="AdditionalAttributes">
                 @ChildContent
@@ -169,7 +169,7 @@ else
                     data-active="@(ResolvedActive ? "true" : "false")"
                     data-state="@(CollapsibleContext?.Open ?? false ? "open" : "closed")"
                     aria-current="@(ResolvedActive ? "page" : null)"
-                    aria-expanded="@(CollapsibleContext?.Open ?? false)"
+                    aria-expanded="@((CollapsibleContext?.Open ?? false) ? "true" : "false")"
                     @onclick="HandleClick"
                     @attributes="AdditionalAttributes">
                 @ChildContent

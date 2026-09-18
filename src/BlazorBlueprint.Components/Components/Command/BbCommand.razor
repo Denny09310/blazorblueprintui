@@ -7,6 +7,8 @@
     <div class="@CssClass"
          role="listbox"
          aria-label="@Localizer["Command.CommandMenu"]"
+         aria-disabled="@(Disabled ? "true" : "false")"
+         data-disabled="@(Disabled ? "true" : null)"
          @attributes="AdditionalAttributes">
         @ChildContent
     </div>

@@ -2,6 +2,7 @@
 @typeparam TValue
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Linq.Expressions
+@using System.Globalization
 
 <select id="@EffectiveId"
         class="@CssClass"
@@ -104,7 +105,6 @@
     public string? Id { get; set; }
 
     private string? _generatedId;
-    private bool _hasSelection;
 
     protected override void OnParametersSet()
     {
@@ -117,9 +117,17 @@
         }
     }
 
-    private bool IsPlaceholderSelected => !_hasSelection && Value == null;
+    private bool IsPlaceholderSelected => Value is null;
 
-    private string CurrentStringValue => _hasSelection ? Value?.ToString() ?? "" : "";
+    /// <summary>
+    /// The value written to the <c>select</c> element, which is what marks an option selected.
+    /// </summary>
+    /// <remarks>
+    /// This used to read a private "has the user picked something yet" flag and render an empty
+    /// string until they had — so a <c>Value</c> supplied by the consumer was simply not shown as
+    /// selected until the user changed it themselves.
+    /// </remarks>
+    private string CurrentStringValue => Format(Value);
 
     private async Task HandleChange(ChangeEventArgs e)
     {
@@ -127,28 +135,79 @@
 
         if (string.IsNullOrEmpty(stringValue))
         {
-            _hasSelection = false;
+            Value = default;
             await ValueChanged.InvokeAsync(default);
+        }
+        else if (TryParse(stringValue, out var parsed))
+        {
+            Value = parsed;
+            await ValueChanged.InvokeAsync(parsed);
         }
         else
         {
-            try
-            {
-                var targetType = Nullable.GetUnderlyingType(typeof(TValue)) ?? typeof(TValue);
-                var convertedValue = (TValue)Convert.ChangeType(stringValue, targetType);
-                _hasSelection = true;
-                await ValueChanged.InvokeAsync(convertedValue);
-            }
-            catch
-            {
-                _hasSelection = false;
-                await ValueChanged.InvokeAsync(default);
-            }
+            Value = default;
+            await ValueChanged.InvokeAsync(default);
         }
 
         if (_editContext != null && ValueExpression != null && _fieldIdentifier.FieldName != null)
         {
             _editContext.NotifyFieldChanged(_fieldIdentifier);
+        }
+    }
+
+    /// <summary>
+    /// Renders a value the way the option elements write theirs, so the two match and the browser
+    /// marks the right option selected.
+    /// </summary>
+    private static string Format(TValue? value) => value switch
+    {
+        null => "",
+        Enum enumValue => enumValue.ToString(),
+        IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
+        _ => value.ToString() ?? ""
+    };
+
+    /// <summary>
+    /// Converts the selected option's value back to <typeparamref name="TValue"/>.
+    /// </summary>
+    /// <remarks>
+    /// This used to go through <see cref="Convert.ChangeType(object, Type)"/>, which does not
+    /// handle enums: it threw <see cref="InvalidCastException"/> for every enum-typed select, the
+    /// exception was swallowed, and the value came back as <c>default</c> — so choosing an option
+    /// appeared to do nothing at all.
+    /// </remarks>
+    private static bool TryParse(string text, out TValue? value)
+    {
+        value = default;
+        var targetType = Nullable.GetUnderlyingType(typeof(TValue)) ?? typeof(TValue);
+
+        try
+        {
+            if (targetType.IsEnum)
+            {
+                value = (TValue)Enum.Parse(targetType, text, ignoreCase: true);
+                return true;
+            }
+
+            if (targetType == typeof(Guid))
+            {
+                value = (TValue)(object)Guid.Parse(text);
+                return true;
+            }
+
+            if (targetType == typeof(string))
+            {
+                value = (TValue)(object)text;
+                return true;
+            }
+
+            value = (TValue)Convert.ChangeType(text, targetType, CultureInfo.InvariantCulture);
+            return true;
+        }
+        catch (Exception ex) when (ex is FormatException or InvalidCastException or OverflowException or ArgumentException)
+        {
+            value = default;
+            return false;
         }
     }
 

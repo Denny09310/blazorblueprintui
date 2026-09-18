@@ -409,9 +409,9 @@
         {
             new("Dismiss", "Dismiss", "Aria label for the dismiss button"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.Alert.Dismiss = ""Schließen"";
+    localizer.Set(""Alert.Dismiss"", ""Schließen"");
 });")" />
 </div>
 

@@ -57,8 +57,9 @@ export function initializeResizable(groupElement, dotNetRef, groupId, isHorizont
  * @param {number[]} [minSizes] - Minimum sizes per panel as percentages
  * @param {number[]} [maxSizes] - Maximum sizes per panel as percentages
  * @param {boolean} [isHorizontal] - Current orientation, in case Direction changed since init
+ * @param {boolean[]} [collapsible] - Which panels may be dragged shut past their minimum
  */
-export function startResize(groupId, handleIndex, clientX, clientY, currentSizes, pointerId, minSizes, maxSizes, isHorizontal) {
+export function startResize(groupId, handleIndex, clientX, clientY, currentSizes, pointerId, minSizes, maxSizes, isHorizontal, collapsible) {
     const state = resizableStates.get(groupId);
     if (!state) return;
 
@@ -77,6 +78,7 @@ export function startResize(groupId, handleIndex, clientX, clientY, currentSizes
     state.pointerId = pointerId;
     state.minSizes = minSizes || currentSizes.map(() => 10);
     state.maxSizes = maxSizes || currentSizes.map(() => 100);
+    state.collapsible = collapsible || currentSizes.map(() => false);
     state.frameHandle = 0;
     state.dirty = false;
 
@@ -160,9 +162,11 @@ function applyDrag(state) {
     const start2 = state.startSizes[index + 1];
     if (start1 === undefined || start2 === undefined) return;
 
-    const min1 = state.minSizes[index];
+    // A collapsible panel may go all the way to zero; its declared minimum is the point it snaps
+    // past on the way, not a floor.
+    const min1 = state.collapsible[index] ? 0 : state.minSizes[index];
     const max1 = state.maxSizes[index];
-    const min2 = state.minSizes[index + 1];
+    const min2 = state.collapsible[index + 1] ? 0 : state.minSizes[index + 1];
     const max2 = state.maxSizes[index + 1];
 
     // Clamp the delta to the range both panels can satisfy, so an overshooting drag pins at the
@@ -177,8 +181,18 @@ function applyDrag(state) {
 
     // Round here rather than at render time so the value C# ends up formatting ("F2") is exactly
     // the one already applied to the DOM — otherwise the panels snap by a sub-pixel on drag end.
-    const size1 = round2(start1 + deltaPercent);
-    const size2 = round2(start1 + start2 - size1);
+    let size1 = round2(start1 + deltaPercent);
+    let size2 = round2(start1 + start2 - size1);
+
+    // Snap shut rather than leaving a sliver: below half the declared minimum the panel collapses,
+    // and it reopens at that minimum on the way back out.
+    size1 = snapCollapse(state, index, size1);
+    size2 = round2(start1 + start2 - size1);
+    const snapped2 = snapCollapse(state, index + 1, size2);
+    if (snapped2 !== size2) {
+        size2 = snapped2;
+        size1 = round2(start1 + start2 - size2);
+    }
 
     if (size1 === state.currentSizes[index] && size2 === state.currentSizes[index + 1]) return;
 
@@ -192,6 +206,19 @@ function applyDrag(state) {
     } else {
         notifyBlazor(state, 'UpdatePanelSizes');
     }
+}
+
+/**
+ * Applies the collapse snap for one panel: a collapsible panel dragged below half its declared
+ * minimum goes to zero, and anything between zero and that minimum opens back out to it.
+ */
+function snapCollapse(state, index, size) {
+    if (!state.collapsible[index]) return size;
+
+    const min = state.minSizes[index];
+    if (!(min > 0) || size >= min) return size;
+
+    return size < min / 2 ? 0 : min;
 }
 
 function clamp(value, min, max) {

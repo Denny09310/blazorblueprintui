@@ -356,12 +356,27 @@ function setupEventListeners(instanceId, state) {
   state.handleKeyDown = (e) => onKeyDown(instanceId, state, e);
   state.handleFocusOut = (e) => onWidgetFocusOut(instanceId, state, e);
 
+  // Escape during a *pointer* drag. The grid's own keydown listener cannot see it: a pointer drag
+  // never moves focus into the grid, so the key event is delivered to whatever was focused before
+  // — usually <body> — and never reaches a listener on a descendant. Documented as "Escape cancels
+  // an active drag or resize", and with a mouse it did nothing at all.
+  //
+  // Deliberately narrow: Escape only, and only while this grid is the one dragging, so a second
+  // grid on the page cannot act on an interaction that is not its own.
+  state.handleDocumentKeyDown = (e) => {
+    if (e.key !== 'Escape') return;
+    if (!state.isDragging && !state.isResizing) return;
+    e.preventDefault();
+    cancelInteraction(state);
+  };
+
   state.gridEl.addEventListener('pointerdown', state.handlePointerDown);
   document.addEventListener('pointermove', state.handlePointerMove);
   document.addEventListener('pointerup', state.handlePointerUp);
   document.addEventListener('pointercancel', state.handlePointerCancel);
   state.gridEl.addEventListener('keydown', state.handleKeyDown);
   state.gridEl.addEventListener('focusout', state.handleFocusOut);
+  document.addEventListener('keydown', state.handleDocumentKeyDown);
 }
 
 function cleanupListeners(state) {
@@ -373,6 +388,7 @@ function cleanupListeners(state) {
   document.removeEventListener('pointermove', state.handlePointerMove);
   document.removeEventListener('pointerup', state.handlePointerUp);
   document.removeEventListener('pointercancel', state.handlePointerCancel);
+  document.removeEventListener('keydown', state.handleDocumentKeyDown);
 }
 
 // --- Pointer Down ---

@@ -9,16 +9,12 @@
             disabled="@Disabled"
             tabindex="@(Disabled ? -1 : 0)"
             @onclick="HandleClick"
-            @onkeydown="HandleKeyDown"
-            @onkeydown:preventDefault="@shouldPreventDefault"
             @attributes="AdditionalAttributes">
         @ChildContent
     </button>
 </CascadingValue>
 
 @code {
-    private bool shouldPreventDefault = false;
-
     /// <summary>
     /// Gets or sets whether the switch is checked (on).
     /// </summary>
@@ -50,29 +46,22 @@
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     /// <summary>
-    /// Handles the switch click event.
+    /// Handles the switch click event — which covers the keyboard too.
     /// </summary>
+    /// <remarks>
+    /// The switch is a real <c>&lt;button&gt;</c>, so the browser already activates it on Space and
+    /// Enter and raises a click for each. A separate key-down handler that also toggled therefore
+    /// ran twice for one Space press: the handler toggled, and the browser's own click toggled
+    /// straight back. <c>@onkeydown:preventDefault</c> could not prevent it, because Blazor
+    /// evaluates that flag when the element renders, so on the first press it was still
+    /// <c>false</c>. Space on a focused button does not scroll the page, so there is nothing left
+    /// for a key handler to do here.
+    /// </remarks>
     private async Task HandleClick(MouseEventArgs args)
     {
         if (!Disabled)
         {
             await ToggleChecked();
-        }
-    }
-
-    /// <summary>
-    /// Handles keyboard events for accessibility.
-    /// </summary>
-    private async Task HandleKeyDown(KeyboardEventArgs args)
-    {
-        if (!Disabled && args.Key == " ")
-        {
-            shouldPreventDefault = true;
-            await ToggleChecked();
-        }
-        else
-        {
-            shouldPreventDefault = false;
         }
     }
 
