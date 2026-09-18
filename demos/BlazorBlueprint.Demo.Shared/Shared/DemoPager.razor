@@ -1,0 +1,32 @@
+@using BlazorBlueprint.Icons.Lucide.Components
+@implements IDisposable
+
+@if (_previous is not null || _next is not null)
+{
+    <div class="flex items-center gap-1">
+        <BbTooltip>
+            <BbTooltipTrigger AsChild="true">
+                <BbButton Variant="ButtonVariant.Ghost"
+                          Size="ButtonSize.Icon"
+                          Disabled="@(_previous is null)"
+                          AriaLabel="@(_previous is null ? "No previous component" : $"Previous component: {_previous.Name}")"
+                          OnClick="@(() => Go(_previous))">
+                    <LucideIcon Name="chevron-left" Size="16" />
+                </BbButton>
+            </BbTooltipTrigger>
+            <BbTooltipContent>@(_previous?.Name ?? "No previous component")</BbTooltipContent>
+        </BbTooltip>
+        <BbTooltip>
+            <BbTooltipTrigger AsChild="true">
+                <BbButton Variant="ButtonVariant.Ghost"
+                          Size="ButtonSize.Icon"
+                          Disabled="@(_next is null)"
+                          AriaLabel="@(_next is null ? "No next component" : $"Next component: {_next.Name}")"
+                          OnClick="@(() => Go(_next))">
+                    <LucideIcon Name="chevron-right" Size="16" />
+                </BbButton>
+            </BbTooltipTrigger>
+            <BbTooltipContent>@(_next?.Name ?? "No next component")</BbTooltipContent>
+        </BbTooltip>
+    </div>
+}

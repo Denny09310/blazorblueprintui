@@ -12,6 +12,7 @@
     <BbPopover Open="@open" OpenChanged="SetOpen" RestoreFocusOnClose="true">
         <BbPopoverTrigger AsChild="false" id="@Id" aria-haspopup="dialog" aria-expanded="@open.ToString().ToLowerInvariant()"
                           aria-controls="@popupId" aria-label="@(AriaLabel ?? Localizer["Cascader.Label"])"
+                          aria-required="@(Required ? "true" : null)" aria-describedby="@AriaDescribedBy"
                           aria-invalid="@(validation.IsInvalid ? "true" : null)" disabled="@Disabled"
                           data-cascader-trigger="true" class="@TriggerClass"
                           @attributes="AdditionalAttributes">
@@ -96,8 +97,12 @@
     [Parameter] public bool ShowSearch { get; set; } = true;
     [Parameter] public bool Clearable { get; set; } = true;
     [Parameter] public bool Disabled { get; set; }
+    /// <summary>Marks the control as required, as <see cref="BbTreeSelect{TItem}.Required"/> does.</summary>
+    [Parameter] public bool Required { get; set; }
     [Parameter] public string? Placeholder { get; set; }
     [Parameter] public string? AriaLabel { get; set; }
+    /// <summary>The id of the element describing this control, for <c>aria-describedby</c>.</summary>
+    [Parameter] public string? AriaDescribedBy { get; set; }
     [Parameter] public string? Id { get; set; }
     [Parameter] public string? Name { get; set; }
     [Parameter] public string? Class { get; set; }

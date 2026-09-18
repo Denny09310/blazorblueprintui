@@ -199,7 +199,7 @@ Blazor Blueprint includes the styled component families below, with composable s
 
 ### New in this v4 checkout
 
-The current expansion adds **37 styled Razor components**: 13 primary controls and 24 composition helpers. The primary controls have **13 focused demo pages**, each with live examples, snippets, accessibility guidance and API references. Composition helpers are documented within their owning component's page. The component homepage, sidebar and command search share the same demo-page catalog; related pages are grouped consistently, and every menu link opens a distinct demo. The combined shopping example is a **[Mobile Shop recipe](demos/BlazorBlueprint.Demo.Shared/Pages/Recipes/MobileShopRecipe.razor)** at `/recipes/mobile-shop`.
+The current expansion adds **42 styled Razor components**: 18 primary controls and 24 composition helpers. The primary controls have **18 focused demo pages**, each with live examples, snippets, accessibility guidance and API references. Composition helpers are documented within their owning component's page. The component homepage, sidebar and command search share the same demo-page catalog; related pages are grouped consistently, and every menu link opens a distinct demo. The combined shopping example is a **[Mobile Shop recipe](demos/BlazorBlueprint.Demo.Shared/Pages/Recipes/MobileShopRecipe.razor)** at `/recipes/mobile-shop`.
 
 Sidebar and homepage `v4` badges identify new components only. Existing components keep their original status; API-reference badges identify individual properties, methods, enum values and supporting components added in v4 (compared with v3.17). These are source additions pending release, not a claim about the stable package.
 
@@ -208,6 +208,7 @@ All names below include the `Bb` prefix in code. Generic type parameters are omi
 | Family | New components | Demo |
 |--------|----------------|------|
 | Segmented inputs (2) | `BbDateInput`, `BbTimeInput` | `/components/date-input`, `/components/time-input` |
+| Form fields (5) | `BbFormFieldDateInput`, `BbFormFieldTimeInput`, `BbFormFieldTreeSelect`, `BbFormFieldCascader`, `BbFormFieldQuantityStepper` | `/components/form-field-date-input`, `/components/form-field-time-input`, `/components/form-field-tree-select`, `/components/form-field-cascader`, `/components/form-field-quantity-stepper` |
 | Mobile (6) | `BbAppBar`, `BbBottomNav`, `BbBottomNavItem`, `BbNotificationBadge`, `BbQuantityStepper`, `BbSectionHeader` | `/components/app-bar`, `/components/bottom-nav`, `/components/notification-badge`, `/components/quantity-stepper`, `/components/section-header` |
 | Motion (6) | `BbMotion`, `BbHeightAnimation`, `BbSelectionIndicator`, `BbPageTransition`, `BbScreenTransition`, `BbRenderStateProvider` | `/components/motion`, `/components/height-animation`, `/components/selection-indicator`, `/components/page-transition`, `/components/screen-transition`, `/components/render-state-provider` |
 | Dropdown menu (5) | `BbDropdownMenuRadioGroup`, `BbDropdownMenuRadioItem`, `BbDropdownMenuSub`, `BbDropdownMenuSubTrigger`, `BbDropdownMenuSubContent` | `/components/dropdown-menu` |
@@ -216,7 +217,7 @@ All names below include the `Bb` prefix in code. Generic type parameters are omi
 | Sidebar (4) | `BbSidebarPillNav`, `BbSidebarPillNavItem`, `BbSidebarPillInset`, `BbSidebarSelectionIndicator` | `/components/sidebar` |
 | Other helpers (3) | `BbBadgeIcon`, `BbSortableHandle`, `BbThemeScope` | `/components/badge`, `/components/sortable`, `/components/theme` |
 
-The Primitives package also gains six shared headless components used by the styled menu families: `BbMenuRadioGroup`, `BbMenuRadioItem`, `BbMenuSub`, `BbMenuSubTrigger`, `BbMenuSubContent`, and `BlazorBlueprint.Primitives.ContextMenu.BbContextMenuCheckboxItem`. They are supporting implementations, counted separately from the 37 styled components.
+The Primitives package also gains six shared headless components used by the styled menu families: `BbMenuRadioGroup`, `BbMenuRadioItem`, `BbMenuSub`, `BbMenuSubTrigger`, `BbMenuSubContent`, and `BlazorBlueprint.Primitives.ContextMenu.BbContextMenuCheckboxItem`. They are supporting implementations, counted separately from the 42 styled components.
 
 Existing components gain DataView selection/grouping/list virtualization and a mobile toolbar; MultiSelect footer/close; FilterBuilder presets/editors; Drawer snapping; Select bottom sheets; theme presets; richer Carousel controls; keyboard Sortable/drop permissions; and Badge, ToggleGroup and Separator variants. All additions remain open source.
 
@@ -278,10 +279,12 @@ Production-ready components for complex data-driven applications:
 | **Field** | Combines label, control, description, and error for structured forms |
 | **Filter Builder** | Visual query builder for data filter expressions with AND/OR logic, condition groups, and two-way binding |
 | **File Upload** | Drag-and-drop file selection with preview and optional upload progress, cancellation and retry |
+| **Form Field Cascader** | Pre-configured cascader field with built-in label, description, and validation |
 | **Form Field Checkbox** | Pre-configured checkbox field with built-in label, description, and validation |
 | **Form Field Checkbox Group** | Pre-configured checkbox group field with built-in label, description, and manual validation |
 | **Form Field Combobox** | Pre-configured combobox field with built-in label, description, and validation |
 | **Form Field Currency Input** | Pre-configured currency input field with built-in label, description, and validation |
+| **Form Field Date Input** | Pre-configured segmented date input field with built-in label, description, and validation |
 | **Form Field Date Picker** | Pre-configured date picker field with built-in label, description, and validation |
 | **Form Field Date Range Picker** | Pre-configured date range picker field with built-in label, description, and manual validation |
 | **Form Field Date Time Picker** | Pre-configured date-time picker field with built-in label, description, and validation |
@@ -292,12 +295,15 @@ Production-ready components for complex data-driven applications:
 | **Form Field MultiSelect** | Pre-configured multi-select field with built-in label, description, and validation |
 | **Form Field Native Select** | Pre-configured native select field with built-in label, description, and validation |
 | **Form Field Numeric Input** | Pre-configured numeric input field with built-in label, description, and validation |
+| **Form Field Quantity Stepper** | Pre-configured quantity stepper field with built-in label, description, and validation |
 | **Form Field RadioGroup** | Pre-configured radio group field with built-in label, description, and validation |
 | **Form Field Select** | Pre-configured select field with built-in label, description, and validation |
 | **Form Field Switch** | Pre-configured switch field with built-in label, description, and validation |
 | **Form Field Tag Input** | Pre-configured tag input field with built-in label, description, and validation |
 | **Form Field Textarea** | Pre-configured textarea field with built-in label, description, and validation |
+| **Form Field Time Input** | Pre-configured segmented time input field with built-in label, description, and validation |
 | **Form Field Time Picker** | Pre-configured time picker field with built-in label, description, and validation |
+| **Form Field Tree Select** | Pre-configured tree select field with built-in label, description, and validation |
 | **Form Wizard** | Multi-step form wizard with step navigation, progress indication, per-step validation, and optional/skippable steps |
 | **Input** | Text input with multiple types and validation |
 | **Input Field** | Typed input with automatic conversion, formatting, and validation for a dozen built-in types (numbers, dates, times, `Guid`, `bool`, `string`) and their nullable forms |

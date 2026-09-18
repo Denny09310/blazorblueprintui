@@ -1,0 +1,17 @@
+<EditForm Model="model" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <BbFormFieldDateInput @bind-Value="model.StartDate"
+                          Label="Start date"
+                          HelperText="Required." />
+    <BbButton Type="ButtonType.Submit">Submit</BbButton>
+</EditForm>
+
+@code {
+    private readonly Model model = new();
+
+    private sealed class Model
+    {
+        [Required(ErrorMessage = "A start date is required.")]
+        public DateTime? StartDate { get; set; }
+    }
+}

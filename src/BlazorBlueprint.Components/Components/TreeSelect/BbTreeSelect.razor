@@ -10,6 +10,7 @@
         <BbPopoverTrigger AsChild="false" id="@Id" role="combobox" aria-haspopup="tree"
                           aria-expanded="@open.ToString().ToLowerInvariant()" aria-controls="@treeId"
                           aria-label="@(AriaLabel ?? Localizer["TreeSelect.Label"])" aria-required="@(Required ? "true" : null)"
+                          aria-describedby="@AriaDescribedBy"
                           aria-invalid="@(validation.IsInvalid ? "true" : null)" disabled="@Disabled"
                           class="@TriggerClass"
                           @attributes="AdditionalAttributes">
@@ -73,6 +74,8 @@
     [Parameter] public bool Required { get; set; }
     [Parameter] public string? Placeholder { get; set; }
     [Parameter] public string? AriaLabel { get; set; }
+    /// <summary>The id of the element describing this control, for <c>aria-describedby</c>.</summary>
+    [Parameter] public string? AriaDescribedBy { get; set; }
     [Parameter] public string? Id { get; set; }
     [Parameter] public string? Name { get; set; }
     [Parameter] public string? Class { get; set; }

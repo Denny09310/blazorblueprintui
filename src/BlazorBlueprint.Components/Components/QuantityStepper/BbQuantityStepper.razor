@@ -4,7 +4,7 @@
 @using BlazorBlueprint.Icons.Lucide.Components
 @inject IBbLocalizer Localizer
 
-<div @attributes="AdditionalAttributes" class="@ClassNames.cn("bb:inline-flex bb:items-center bb:gap-1", Class)" role="group" aria-label="@EffectiveLabel">
+<div @attributes="AdditionalAttributes" class="@ClassNames.cn("bb:inline-flex bb:items-center bb:gap-1", Class)" role="group" aria-label="@EffectiveLabel" aria-describedby="@AriaDescribedBy">
     <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" Class="bb:min-h-[44px] bb:min-w-[44px]"
               Disabled="@(Disabled || ReadOnly || (Value <= Min && !OnRemove.HasDelegate))" OnClick="DecreaseAsync"
               aria-label="@(CanRemove ? Localizer["QuantityStepper.Remove"] : Localizer["QuantityStepper.Decrease"])">
@@ -54,6 +54,8 @@
     [Parameter] public string? Name { get; set; }
     /// <summary>The accessible quantity label.</summary>
     [Parameter] public string? AriaLabel { get; set; }
+    /// <summary>The id of the element describing this control, for <c>aria-describedby</c>.</summary>
+    [Parameter] public string? AriaDescribedBy { get; set; }
     /// <summary>Additional CSS classes.</summary>
     [Parameter] public string? Class { get; set; }
     /// <summary>Additional wrapper HTML attributes.</summary>
