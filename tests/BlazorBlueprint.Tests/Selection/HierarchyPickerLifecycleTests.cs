@@ -25,7 +25,7 @@ public class HierarchyPickerLifecycleTests
         await using var renderer = new ComponentTestRenderer(provider, NullLoggerFactory.Instance);
         await renderer.Dispatcher.InvokeAsync(async () =>
         {
-            await renderer.MountAsync<BlazorBlueprint.Primitives.Services.BbPortalHost>(new());
+            await renderer.MountAsync<BlazorBlueprint.Primitives.BbPortalHost>(new());
             var picker = await renderer.MountAsync<BbTreeSelect<Node>>(new()
             {
                 [nameof(BbTreeSelect<Node>.Items)] = Nodes,
@@ -101,7 +101,7 @@ public class HierarchyPickerLifecycleTests
         await using var renderer = new ComponentTestRenderer(provider, NullLoggerFactory.Instance);
         await renderer.Dispatcher.InvokeAsync(async () =>
         {
-            await renderer.MountAsync<BlazorBlueprint.Primitives.Services.BbPortalHost>(new());
+            await renderer.MountAsync<BlazorBlueprint.Primitives.BbPortalHost>(new());
             var changes = 0;
             var nodes = new Node[]
             {

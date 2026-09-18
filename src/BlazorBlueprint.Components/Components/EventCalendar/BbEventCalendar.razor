@@ -60,7 +60,7 @@
     @if (View == EventCalendarView.Month)
     {
         @* Month view: six-week grid with event chips per day *@
-        <div role="grid" aria-label="@HeaderTitle" class="bb:grid bb:gap-px bb:overflow-hidden bb:rounded-lg bb:border bb:border-border bb:bg-border">
+        <div role="grid" aria-label="@HeaderTitle" class="@GridCssClass">
             <div role="row" class="bb:grid bb:grid-cols-7 bb:gap-px">
                 @foreach (var dayName in DayNames)
                 {
@@ -121,7 +121,7 @@
     else if (View == EventCalendarView.Week)
     {
         @* Week view: seven day columns with stacked events in start order *@
-        <div role="grid" aria-label="@HeaderTitle" class="bb:grid bb:gap-px bb:overflow-hidden bb:rounded-lg bb:border bb:border-border bb:bg-border">
+        <div role="grid" aria-label="@HeaderTitle" class="@GridCssClass">
             <div role="row" class="bb:grid bb:grid-cols-7 bb:gap-px">
                 @foreach (var day in WeekDays)
                 {
@@ -165,7 +165,7 @@
     else
     {
         @* Agenda view: the current month's events grouped chronologically by day *@
-        <div class="bb:divide-y bb:divide-border bb:overflow-hidden bb:rounded-lg bb:border bb:border-border bb:bg-card bb:text-card-foreground">
+        <div class="@AgendaCssClass">
             @if (!AgendaDays.Any())
             {
                 <p class="bb:p-6 bb:text-center bb:text-sm bb:text-muted-foreground">@Localizer["EventCalendar.NoEvents"]</p>

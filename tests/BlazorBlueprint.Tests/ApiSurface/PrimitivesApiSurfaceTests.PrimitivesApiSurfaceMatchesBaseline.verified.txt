@@ -75,6 +75,15 @@
   - AsChild : Boolean
   - ChildContent : RenderFragment
 
+### BbCategoryPortalHost (BlazorBlueprint.Primitives)
+  - Category : PortalCategory
+
+### BbContainerPortalHost (BlazorBlueprint.Primitives)
+
+### BbOverlayPortalHost (BlazorBlueprint.Primitives)
+
+### BbPortalHost (BlazorBlueprint.Primitives)
+
 ### BbCheckbox (BlazorBlueprint.Primitives.Checkbox)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaLabel : String
@@ -664,15 +673,6 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - Decorative : Boolean
   - Orientation : SeparatorOrientation
-
-### BbCategoryPortalHost (BlazorBlueprint.Primitives.Services)
-  - Category : PortalCategory
-
-### BbContainerPortalHost (BlazorBlueprint.Primitives.Services)
-
-### BbOverlayPortalHost (BlazorBlueprint.Primitives.Services)
-
-### BbPortalHost (BlazorBlueprint.Primitives.Services)
 
 ### BbSheet (BlazorBlueprint.Primitives.Sheet)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]

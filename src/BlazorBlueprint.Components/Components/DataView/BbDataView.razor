@@ -14,8 +14,13 @@
                 <div class="bb:flex bb:flex-wrap bb:items-center bb:gap-2 bb:py-4">
 
                     @* Global search *@
+                    @* Debounced, not the OnChange default: left at the default the search only
+                       filtered on blur or Enter, never while typing — the same defect as the grid's
+                       search input (#543). *@
                     <BbInput @bind-Value="@_searchValue"
                              @bind-Value:after="HandleSearchChanged"
+                             UpdateTiming="UpdateTiming.Debounced"
+                             DebounceInterval="@SearchDebounceMs"
                              Placeholder="@Localizer["DataView.SearchPlaceholder"]"
                              Class="bb:h-8 bb:w-[150px] bb:lg:w-[250px]" />
 

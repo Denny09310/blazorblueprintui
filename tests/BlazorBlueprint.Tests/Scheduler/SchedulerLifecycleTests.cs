@@ -435,7 +435,7 @@ public class SchedulerLifecycleTests
         await using var renderer = new ComponentTestRenderer(provider, NullLoggerFactory.Instance);
         await renderer.Dispatcher.InvokeAsync(async () =>
         {
-            await renderer.MountAsync<BlazorBlueprint.Primitives.Services.BbPortalHost>(new());
+            await renderer.MountAsync<BlazorBlueprint.Primitives.BbPortalHost>(new());
             var original = new SchedulerEvent { Id = "event", Title = "Workshop", Start = At(9), End = At(10) };
             var scheduler = await renderer.MountAsync<BbScheduler>(new()
             {

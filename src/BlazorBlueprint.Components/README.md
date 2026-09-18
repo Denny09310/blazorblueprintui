@@ -77,10 +77,16 @@ BlazorBlueprint Components come with pre-built CSS - no Tailwind setup required!
 ### 4. Add the portal host to your root layout (`MainLayout.razor`):
 
 ```razor
+@using BlazorBlueprint.Primitives
+
 <BbPortalHost />
 ```
 
 This is required for overlay components (Dialog, Sheet, Popover, Tooltip, etc.) to render correctly.
+
+If `BlazorBlueprint.Primitives` is not in scope, Razor does not treat the tag as a component — it
+emits a literal `<bbportalhost>` element, with no build error, and every overlay silently fails to
+render. In v3 the host lived in `BlazorBlueprint.Primitives.Services`; that using no longer resolves it.
 
 ### 5. Start using components:
 
