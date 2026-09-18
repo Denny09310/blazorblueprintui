@@ -52,7 +52,7 @@ Blazor developers lack a modern, design-system-first UI library equivalent to wh
 
 ## What's New in v4
 
-The `v4` branch includes unreleased changes. See the [changelog](CHANGELOG.md#unreleased) for the full list and the [migration guide](V4-MIGRATION-GUIDE.md) for breaking changes.
+See the [changelog](CHANGELOG.md#2026-09-18) for the full list and the [migration guide](V4-MIGRATION-GUIDE.md) for breaking changes.
 
 - **.NET 10 minimum** — Components, Primitives and icon packages target `net10.0`. v4 drops .NET 8 and .NET 9 support.
 - **DataGrid cell and batch editing** — Isolated drafts, validation, rejected-save recovery and keyboard save/cancel. Inline editors preserve column widths, support custom Bb input controls, and reapply sorting after accepted edits. Applications supply a deep-copy `EditItemFactory` and persistence callbacks.
