@@ -312,10 +312,10 @@
             new("ClearAllTags", "Clear all tags", "Aria label for the clear all button"),
             new("TagSuggestions", "Tag suggestions", "Aria label for the suggestions list"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.TagInput.Placeholder = ""Tag hinzufügen..."";
-    opts.TagInput.ClearAllTags = ""Alle Tags löschen"";
+    localizer.Set(""TagInput.Placeholder"", ""Tag hinzufügen..."");
+    localizer.Set(""TagInput.ClearAllTags"", ""Alle Tags löschen"");
 });")" />
 </div>
 

@@ -1,3 +1,5 @@
+@inject HttpClient Http
+
 @* ValueFuncAsync is called from inside the clipboard write, not before it,
    so a slow fetch does not spend the user activation. *@
 <BbCopyText ValueFuncAsync="FetchTokenAsync"

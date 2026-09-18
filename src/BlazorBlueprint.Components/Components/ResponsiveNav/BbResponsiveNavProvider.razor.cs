@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -19,8 +20,7 @@ public partial class BbResponsiveNavProvider
             try
             {
                 // Load the responsive nav JavaScript module
-                _module = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/responsive-nav.js");
+                _module = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/responsive-nav.js");
 
                 // Create a reference to this component for JS callbacks
                 _dotNetRef = DotNetObjectReference.Create(this);
@@ -52,9 +52,11 @@ public partial class BbResponsiveNavProvider
         {
             await InvokeAsync(StateHasChanged);
         }
-        catch (ObjectDisposedException)
+        catch (Exception)
         {
-            // Component may be disposed during async operation
+            // async void: nothing awaits this, so an exception that escapes has no caller to reach and
+            // Blazor Server treats it as fatal — the circuit closes and the user sees the reconnect
+            // overlay. Everything this method does is best-effort, and none of it is worth that.
         }
     }
 
@@ -67,17 +69,13 @@ public partial class BbResponsiveNavProvider
 
     public async ValueTask DisposeAsync()
     {
-        if (Context != null)
-        {
-            Context.StateChanged -= OnStateChanged;
-        }
+        Context?.StateChanged -= OnStateChanged;
 
         if (_module != null)
         {
             try
             {
                 await _module.InvokeVoidAsync("cleanup");
-                await _module.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

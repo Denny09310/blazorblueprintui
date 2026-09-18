@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -216,8 +217,7 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
     {
         try
         {
-            jsModule = await JS.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Components/js/echarts-renderer.js");
+            jsModule = await JsModules.GetAsync(JS, "./_content/BlazorBlueprint.Components/js/echarts-renderer.js");
 
             var option = BuildOption();
             var json = JsonSerializer.Serialize(option, SerializerOptions);
@@ -280,9 +280,19 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
         }
     }
 
-    private string ContainerCssClass => ClassNames.cn("w-full", Class);
+    private string ContainerCssClass => ClassNames.cn("bb:w-full", Class);
 
     private string ContainerStyle => $"height: {Height}; width: {Width};";
+
+    /// <summary>
+    /// The chart's own size followed by the consumer's style, so a supplied <c>style</c> adds to it
+    /// rather than replacing it.
+    /// </summary>
+    /// <remarks>
+    /// The splat used to overwrite the height and width the chart needs to size its canvas, leaving
+    /// it with no measurable box.
+    /// </remarks>
+    private string? MergedContainerStyle => InlineStyleMerge.Merge(ContainerStyle, AdditionalAttributes);
 
     /// <summary>Called from JS when a data point is clicked. Not part of the public API.</summary>
     [JSInvokable]
@@ -317,7 +327,6 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
             try
             {
                 await jsModule.InvokeVoidAsync("dispose", chartId);
-                await jsModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

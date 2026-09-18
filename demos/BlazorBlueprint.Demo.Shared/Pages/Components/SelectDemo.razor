@@ -275,6 +275,35 @@
         <CodeBlock Source="Components/Select/form-validation.txt" />
     </section>
 
+    <!-- Controlled Open State -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Controlled Open State</h2>
+        <p class="text-sm text-muted-foreground">
+            <code class="bg-muted px-1 py-0.5 rounded text-sm">@@bind-Open</code> opens and closes the list from
+            your own code, and reports the user's own opens and closes back to you.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <div class="flex items-center gap-3">
+                <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => _selectListOpen = !_selectListOpen)">
+                    @(_selectListOpen ? "Close the list" : "Open the list")
+                </BbButton>
+                <BbSelect TValue="string"
+                        Options="@_controlledOpenFruits"
+                        @bind-Value="_controlledOpenFruit"
+                        @bind-Open="_selectListOpen"
+                        Placeholder="Select a fruit..."
+                        Class="w-[240px]" />
+            </div>
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Open:</span> <span class="font-mono">@_selectListOpen</span></p>
+                <p class="text-sm"><span class="font-medium">Selected:</span> <span class="font-mono">@(_controlledOpenFruit ?? "(none)")</span></p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/Select/controlled-open.txt" />
+    </section>
+
     <!-- Infinite Scroll -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Infinite Scroll</h2>
@@ -330,6 +359,17 @@
         <CodeBlock Source="Components/Select/infinite-scroll-compositional.txt" />
     </section>
 
+    <!-- API Reference -->
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Bottom-sheet presentation</h2>
+        <p class="text-sm text-muted-foreground">Use a modal bottom sheet for touch-oriented selection. It preserves the same value binding, option semantics, arrow navigation and loading callbacks. Tab stays within the modal, and selection or Escape returns focus to the trigger.</p>
+<BbSelect TValue="string" @bind-Value="sheetChoice" Presentation="SelectPresentation.BottomSheet"
+          SheetTitle="Delivery method" Placeholder="Choose delivery" Options="deliveryOptions" Class="w-64" />
+        <CodeBlock Source="Components/Select/bottom-sheet.txt" />
+
+    </section>
+
     <AccessibilityList>
             <AriaAttributes>
                 <AccessibilityItem>
@@ -361,7 +401,6 @@
             </KeyboardNavigation>
         </AccessibilityList>
 
-    <!-- API Reference -->
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">API Reference</h2>
@@ -445,10 +484,24 @@
                 </ApiParameter>
             </ApiReference>
         </div>
+
+<ApiReference ComponentName="Select / SelectContent">
+            <ApiParameter Since="v4" Name="Presentation" Type="SelectPresentation" Default="Popover">Popover or BottomSheet. Set it on Select for both options and compositional modes; SelectContent accepts a nullable override. Applications choose when to switch presentation.</ApiParameter>
+            <ApiParameter Since="v4" Name="SheetTitle" Type="string?">Accessible visible sheet title; SelectContent can override the parent's title.</ApiParameter>
+        </ApiReference>
     </section>
+
 </div>
 
 @code {
+    private bool _selectListOpen;
+    private string? _controlledOpenFruit;
+    private readonly SelectOption<string>[] _controlledOpenFruits =
+        [new("apple", "Apple"), new("banana", "Banana"), new("cherry", "Cherry")];
+
+    private string? sheetChoice;
+    private readonly SelectOption<string>[] deliveryOptions = [new("standard", "Standard delivery"), new("express", "Express delivery"), new("pickup", "Collect in store")];
+
     protected override void OnInitialized()
     {
         InitSelectScroll();

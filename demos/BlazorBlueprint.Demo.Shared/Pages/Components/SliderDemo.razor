@@ -71,6 +71,21 @@
         <CodeBlock Source="Components/Slider/step-size.txt" />
     </div>
 
+    <!-- Vertical -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Vertical</h2>
+            <p class="text-sm text-muted-foreground">
+                Runs bottom to top. Give the slider a height; it fills its container.
+            </p>
+        </div>
+        <div class="h-48">
+            <BbSlider @bind-Value="_verticalValue" Orientation="SliderOrientation.Vertical" />
+        </div>
+        <p class="text-sm text-muted-foreground">Value: @_verticalValue</p>
+        <CodeBlock Source="Components/Slider/vertical.txt" />
+    </div>
+
     <!-- Disabled -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -156,6 +171,9 @@
                 <ApiParameter Name="Step" Type="double" Default="1">
                     Step increment.
                 </ApiParameter>
+                <ApiParameter Name="Orientation" Type="SliderOrientation" Default="Horizontal">
+                    <code>Vertical</code> runs the slider bottom to top; it fills the height of its container.
+                </ApiParameter>
                 <ApiParameter Name="Disabled" Type="bool">
                     Disables the slider
                 </ApiParameter>
@@ -178,6 +196,7 @@
     private double _presetValue = 50;
     private double _rangeValue = 5;
     private double _stepValue = 50;
+    private double _verticalValue = 60;
     private double _customTrackValue = 40;
     private double _customThumbValue = 60;
 }

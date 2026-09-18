@@ -3,6 +3,7 @@ using BlazorBlueprint.Primitives.DataView;
 using BlazorBlueprint.Primitives.Table;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -62,6 +63,8 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     private string _searchValue = string.Empty;
     private int _currentInfinitePage = 1;
     private DataViewLayout currentLayout;
+    private DataViewLayout lastLayoutParameter;
+    private bool lastShowPagination = true;
 
     // Backing fields for slot-component registrations (BbDataViewListTemplate/GridTemplate).
     // The effective value always prefers the named [Parameter] over the registered one,
@@ -71,7 +74,9 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
 
     // Infinite scroll
     private ElementReference _scrollContainerRef;
-    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<BbDataView<TItem>>? _nearBottomRef;
+    private int _nearBottomObserver;
+    private string? observedScrollContainer;
     private bool _isLoadingMore;
     private int _infiniteScrollVersion;
     private int _sortingVersion;
@@ -245,6 +250,23 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     [Parameter]
     public RenderFragment? ToolbarActions { get; set; }
 
+    /// <summary>Moves sorting and FilterContent into a touch-friendly bottom sheet. Set this from the application's responsive layout preference.</summary>
+    [Parameter] public bool MobileToolbar { get; set; }
+
+    /// <summary>Application-owned filter controls, displayed inline or inside the mobile toolbar sheet.</summary>
+    [Parameter] public RenderFragment? FilterContent { get; set; }
+
+    private bool mobileToolbarIsOpen;
+    private bool mobileToolbarOpen
+    {
+        get => mobileToolbarIsOpen;
+        set { if (mobileToolbarIsOpen != value) { mobileToolbarIsOpen = value; _parametersChanged = true; } }
+    }
+    private bool disposed;
+    private bool lastInfiniteScroll;
+    private bool ShouldObserveScroll => !disposed && EnableInfiniteScroll && !ShowLoadMoreButton && !IsLoading && _visibleData.Count > 0;
+
+
     /// <summary>
     /// Gets or sets additional CSS classes for the root container div.
     /// </summary>
@@ -309,13 +331,13 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
 
     // ── Computed properties ──────────────────────────────────────────────────
 
-    private string ContainerCssClass => ClassNames.cn("w-full space-y-4", Class);
+    private string ContainerCssClass => ClassNames.cn("bb:w-full bb:space-y-4", Class);
 
     private string ItemContainerCssClass => _effectiveLayout == DataViewLayout.Grid
         ? ClassNames.cn(GridColumnMinWidth is null
-            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-            : "grid gap-4", GridClass)
-        : ClassNames.cn("flex flex-col gap-2", ListClass);
+            ? "bb:grid bb:grid-cols-1 bb:sm:grid-cols-2 bb:lg:grid-cols-3 bb:gap-4"
+            : "bb:grid bb:gap-4", GridClass)
+        : ClassNames.cn("bb:flex bb:flex-col bb:gap-2", ListClass);
 
     private string? ItemContainerStyle => _effectiveLayout == DataViewLayout.Grid && GridColumnMinWidth is not null
         ? $"grid-template-columns: repeat(auto-fill, minmax({GridColumnMinWidth}, 1fr))"
@@ -383,6 +405,7 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     protected override void OnInitialized()
     {
         currentLayout = Layout;
+        lastLayoutParameter = Layout;
         _paginationState.PageSize = InitialPageSize;
         _paginationState.CurrentPage = 1;
     }
@@ -390,12 +413,20 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     protected override async Task OnParametersSetAsync()
     {
         _parametersChanged = true;
+        SyncSelection();
 
-        // Sync the backing field when the Layout parameter changes externally.
-        currentLayout = Layout;
+        // Parent renders after selection must not undo a user's layout toggle.
+        if (lastLayoutParameter != Layout)
+        {
+            currentLayout = Layout;
+            lastLayoutParameter = Layout;
+        }
+        var pagingChanged = lastShowPagination != ShowPagination || lastInfiniteScroll != EnableInfiniteScroll;
+        lastInfiniteScroll = EnableInfiniteScroll;
+        lastShowPagination = ShowPagination;
 
         // Skip reprocessing when neither data source has changed.
-        if (ReferenceEquals(_lastData, Data)
+        if (!pagingChanged && ReferenceEquals(_lastData, Data)
             && ReferenceEquals(_lastItemsProvider, ItemsProvider)
             && (_lastData != null || _lastItemsProvider != null))
         {
@@ -407,12 +438,64 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Load the JS module once, only when scroll-based infinite scroll is active.
-        if (firstRender && EnableInfiniteScroll && !ShowLoadMoreButton && _jsModule == null)
+        if (!ShouldObserveScroll)
         {
-            _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
+            observedScrollContainer = null;
+            if (_nearBottomObserver != 0 && PrimitiveModules.TryGetLoaded(JSRuntime, out var loaded))
+            {
+                var id = _nearBottomObserver;
+                _nearBottomObserver = 0;
+                try { await loaded.InvokeVoidAsync("elementUtils.unobserveNearBottom", id); }
+                catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException) { }
+            }
+            return;
         }
+        // Provider loading can replace the scroll container after the first render.
+        if (!string.IsNullOrEmpty(_scrollContainerRef.Id)
+            && observedScrollContainer != _scrollContainerRef.Id)
+        {
+            observedScrollContainer = _scrollContainerRef.Id;
+            await ObserveNearBottomAsync();
+        }
+    }
+
+    private async Task ObserveNearBottomAsync()
+    {
+        try
+        {
+            var module = await PrimitiveModules.GetAsync(JSRuntime);
+            if (!ShouldObserveScroll) { return; }
+            if (_nearBottomObserver != 0)
+            {
+                await module.InvokeVoidAsync("elementUtils.unobserveNearBottom", _nearBottomObserver);
+            }
+            _nearBottomRef ??= DotNetObjectReference.Create(this);
+            _nearBottomObserver = await module.InvokeAsync<int>(
+                "elementUtils.observeNearBottom", _scrollContainerRef, _nearBottomRef, nameof(JsOnNearBottom), 80.0);
+            if (!ShouldObserveScroll)
+            {
+                await module.InvokeVoidAsync("elementUtils.unobserveNearBottom", _nearBottomObserver);
+                _nearBottomObserver = 0;
+            }
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
+        {
+            // Circuit gone, prerendering, or the view already torn down. Load-more is a courtesy.
+        }
+    }
+
+    /// <summary>
+    /// Called from JavaScript when the scroll container nears its bottom.
+    /// </summary>
+    [JSInvokable]
+    public async Task JsOnNearBottom()
+    {
+        if (disposed || _isLoadingMore || !CanLoadMore)
+        {
+            return;
+        }
+
+        await LoadMore();
     }
 
     // ── Slot registration ────────────────────────────────────────────────────
@@ -498,6 +581,10 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
                 _visibleData = _filteredSortedData
                     .Take(_currentInfinitePage * _paginationState.PageSize)
                     .ToList();
+            }
+            else if (!ShowPagination)
+            {
+                _visibleData = _filteredSortedData;
             }
             else
             {
@@ -714,31 +801,6 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     /// bottom edge — this works correctly regardless of whether the inner content
     /// uses a flex list or a multi-column CSS grid.
     /// </summary>
-    private async Task HandleScroll(EventArgs e)
-    {
-        if (_isLoadingMore || !CanLoadMore || _jsModule == null)
-        {
-            return;
-        }
-
-        try
-        {
-            var nearBottom = await _jsModule.InvokeAsync<bool>("isNearBottom", _scrollContainerRef, 80.0);
-            if (nearBottom)
-            {
-                await LoadMore();
-            }
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-        {
-            // JS interop unavailable (prerendering, circuit disconnected).
-            _isLoadingMore = false;
-        }
-    }
-
-    /// <summary>
-    /// Loads the next batch of items in infinite scroll mode.
-    /// </summary>
     private async Task LoadMore()
     {
         if (!CanLoadMore)
@@ -841,23 +903,28 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
 
     public async ValueTask DisposeAsync()
     {
+        disposed = true;
         _loadCts?.Cancel();
         _loadCts?.Dispose();
         _loadCts = null;
 
-        if (_jsModule != null)
+        if (_nearBottomObserver != 0 && PrimitiveModules.TryGetLoaded(JSRuntime, out var module))
         {
+            var id = _nearBottomObserver;
+            _nearBottomObserver = 0;
+
             try
             {
-                await _jsModule.DisposeAsync();
+                await module.InvokeVoidAsync("elementUtils.unobserveNearBottom", id);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
-                // Circuit disconnected during navigation — safe to ignore
+                // Circuit gone — the listener went with the document.
             }
-
-            _jsModule = null;
         }
+
+        _nearBottomRef?.Dispose();
+        _nearBottomRef = null;
 
         GC.SuppressFinalize(this);
     }

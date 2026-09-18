@@ -6,6 +6,228 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+
+## Unreleased
+
+### Added — Component expansion
+
+- **DateInput and TimeInput** with culture-aware segments, keyboard navigation/increments, nullable drafts, inclusive bounds, read-only/disabled behavior, optional pickers and EditContext validation.
+- **Sortable keyboard interaction and menu composition.** Sortable supports pickup/reorder/drop/cancel, connected-list transfer with Control+Left/Right, typed move/drop predicates, a reusable handle and custom inert drag previews. DropdownMenu, ContextMenu and Menubar gain shared submenu and radio-item families; ContextMenu also gains checkbox items.
+- **Theme presets and scoped appearance.** Density, font family, surface and menu options persist with existing colors and radius. ThemeScope carries local settings into floating overlays; ThemeSwitcher can expose design settings. Applications supply font assets.
+- **DataView selection, grouping and list virtualization.** Stable keys preserve selections after item reloads; group headings remain mounted. Virtualization covers loaded list rows, while provider fetching stays page/batch based. MobileToolbar places sorting and FilterContent in a bottom sheet. Local data is no longer truncated when pagination is hidden.
+- **Practical form controls.** MultiSelect adds FooterContent and CloseAsync. FilterBuilder adds saved presets, searchable fields and per-field value editor templates. Select gains a bottom-sheet presentation with shared option behavior and near-bottom loading.
+- **Mobile components.** AppBar, BottomNav/BottomNavItem, NotificationBadge, QuantityStepper and SectionHeader, plus Drawer viewport snap points with pointer/keyboard resizing and optional drag dismissal.
+- **Reusable motion.** Motion presets/custom keyframes and viewport/hover/press/manual triggers; HeightAnimation for expansion and resizing; SelectionIndicator; PageTransition, ScreenTransition and RenderStateProvider. Animations honor reduced motion, cancel stale work, and retain usable prerendered content. Screen/page transitions animate incoming content; they do not retain outgoing routes.
+- **Carousel and navigation.** Carousel adds autoplay with pause/resume, drag navigation, measured responsive slide bounds, visible slide counts, gaps, indicators and index/change callbacks. Sidebar gains a Pill collapsed mode, compact navigation, inset spacing and a shared selection indicator.
+- **Small controls.** Semantic/soft Badge variants and BadgeIcon, ToggleGroup Required/Scrollable options, and solid/dashed/dotted Separator patterns. Required toggle groups retain the last selection; applications supply the initial value.
+- **Discoverable component inventory.** Document all 42 new styled components and six supporting headless menu components in README. The component homepage, sidebar and command search share the same grouped demo-page catalog, with one destination per actual demo. Standalone mobile and motion components have focused pages; composition helpers stay in their owning component's examples and API references. Sidebar and homepage badges identify new components only; API-reference badges mark specific v4 additions against the v3.17 release.
+- Permanent live examples, copyable snippets and API reference entries accompany each addition.
+- **Browser regression coverage.** Add a Playwright suite for Server, WebAssembly and Interactive Auto in Chromium and WebKit, covering keyboard navigation, mobile overlays, scoped themes, scheduler editing and Auto's transition to WebAssembly.
+
+### Breaking Changes
+
+- **`NavigationMenuContext` trigger registration is keyed by the trigger.** `RegisterTrigger(ElementReference)` and `UpdateTriggerRef(int, ElementReference)` are replaced by `RegisterTrigger(object owner, ElementReference)`, `UnregisterTrigger(object owner)` and `TriggerIndexOf(object owner)`. An index-based list could not express removal, so triggers were never removed. Read a trigger's index when you need it rather than remembering one.
+- **Parameters that never did anything are gone.** `BbCalendar.Mode` and the `CalendarMode` enum (the calendar is single-select; use `BbDateRangePicker` for ranges), `BbCommand.CloseOnSelect` (`BbCommandDialog.CloseOnSelect` is the one that closes the dialog), and `Stacked`/`StackGroup` on the series that cannot stack — `BbPie`, `BbFunnel`, `BbGauge`, `BbRadar`, `BbHeatmap` and `BbCandlestick`. Stacking now lives on a `StackableSeriesBase`, so it appears only on `BbBar`, `BbLine`, `BbArea`, `BbScatter` and `BbRadialBar`, where it works.
+- **v4 requires .NET 10 or later.** Components, Primitives, icon packages, demos and tests now target `net10.0`; .NET 8 and .NET 9 are no longer supported. The source SDK is pinned to 10.0.400 with feature-band roll-forward. Retarget consuming applications and use matching v4 Components/Primitives packages. See the [v4 migration guide](V4-MIGRATION-GUIDE.md).
+
+### Added
+
+- **DataGrid cell and batch editing.** `DataGridEditMode.Cell` saves each accepted cell independently; `DataGridEditMode.Batch` stages changes until the batch is committed. Drafts are isolated through `EditItemFactory`, validated before saving, and retained when persistence rejects a change. Applications provide deep-copy factories and atomic batch persistence. Editors support keyboard save/cancel and custom text, numeric, date, select and checkbox controls; accepted changes reapply the active sorting.
+- **`BbScheduler` for time-slot scheduling.** Day, Week and WorkWeek views include resource lanes, overlapping appointments, a Bb component event editor, and delete confirmation. Week view offers a bindable Monday/Sunday start through `FirstDayOfWeek`/`FirstDayOfWeekChanged`. WorkWeek always shows Monday–Friday, navigates in seven-day steps, and preserves the full-week start preference.
+- **Scheduler drag, resize and slot sizes.** Drag events to move them between times and resource lanes, or extend the top/bottom borders to change start/end times. Gestures snap to `SlotMinutes`, including 15, 30 and 60 minutes, and use the same persistence/rejection callbacks as editor saves. `AllowDrag`, `AllowResize` and `ReadOnly` control interaction.
+- **Scheduler recurrence and time zones.** Daily, weekly, monthly and yearly rules support editing one occurrence or an entire series, with independent event/display IANA time zones and validation of skipped or repeated daylight-saving times. `EnableTimeZones="false"` hides zone controls and uses `TimeZoneId` for display and editing while preserving stored instants and recurrence zones.
+- **Form field wrappers for the five new bindable controls.** `BbFormFieldDateInput`, `BbFormFieldTimeInput`, `BbFormFieldTreeSelect`, `BbFormFieldCascader` and `BbFormFieldQuantityStepper` complete the set: every control in the library that exposes a `ValueExpression` now has a wrapper that supplies the label, helper text and validation message. Each was already built for `EditContext`; only the surrounding field was missing. `BbFormFieldTreeSelect` reads `ValuesExpression` in `Multiple` mode and `ValueExpression` otherwise, so the validation message follows whichever one you bind. `BbCascader` gains the `Required` parameter `BbTreeSelect` already had, and `BbCascader`, `BbTreeSelect` and `BbQuantityStepper` gain `AriaDescribedBy` — without it a wrapper had no way to point the control at its own error text.
+
+- **`BbTreeSelect` and `BbCascader`.** Searchable hierarchy pickers with stable keys, form bindings, clear/disabled states and leaf-only selection. TreeSelect supports single/multiple selection with cascading parent checkboxes and indeterminate states. Cascader provides column navigation, full-path search, optional branch selection and keyboard/RTL navigation; opening a selected path or expanding a branch reveals the newest column.
+- **FileUpload transport lifecycle.** Optional `UploadHandler` callbacks receive a size-limited browser stream and cancellation token, report progress, and support cancellation and retry. Browser file references survive subsequent selections; retry starts a fresh attempt from zero. Applications supply the upload destination.
+
+### Fixed
+
+- **Extra HTML attributes no longer crash a render.** `BbDialog`, `BbSheet`, `BbPopover`, `BbHoverCard`, `BbAlertDialog`, `BbAlertDialogPortal` and `BbDataGridColumnVisibility` forwarded captured attributes to a component that could not accept them, so a single `data-testid` threw `InvalidOperationException`. `BbColorPicker`, `BbDateRangePicker`, `BbTimePicker`, `BbThemeSwitcher` and `BbResponsiveNavContent` now render those attributes on their trigger instead of losing them; the context-only roots accept them and log once that they have nowhere to go.
+- **Attributes that were accepted and then dropped.** `BbTextarea`, `BbDatePicker` and `BbInputGroupButton` now render them. `BbFormFieldCheckbox` applies them in every orientation, `BbFormSection` whether or not it collapses, and `BbFormFieldTimePicker` on the picker rather than the surrounding field.
+- **Dangling `aria-describedby`.** `BbFieldDescription` and `BbFieldError` took an `Id` and never rendered it, so every `BbFormField*` control pointed its `aria-describedby` at an element that did not exist.
+- **ARIA state attributes bound to booleans.** `aria-expanded`, `aria-hidden`, `aria-selected`, `aria-checked`, `aria-disabled` and `aria-current` rendered with an empty value when true and vanished when false across Collapsible, Tabs, Menubar, DataGrid, Sidebar, Rating, Calendar and RangeSlider. They now render `"true"` and `"false"`.
+- **Keyboard traps and double activations.** RadioGroup suppressed the default action of every key, so Tab could not leave the group. The Switch toggled twice per Space press, and a DropdownMenu trigger using `AsChild` opened and closed again on one Enter.
+- **ToggleGroup semantics and focus.** Single-select groups are a `radiogroup` of `radio` items reporting `aria-checked`, not buttons reporting `aria-pressed`. Arrow keys move from the item that actually holds focus, and items remove themselves from the group when they are removed from the page.
+- **HoverCard.** Moving the pointer from the trigger onto the card no longer closes it, and `data-side` is written in lower case so the slide-in animation matches.
+- **NavigationMenu triggers** each register their own slot; every one of them previously overwrote the last.
+- **Parameters that did nothing** now work: `BbSelect.Open`/`OpenChanged`, `BbCommand.Disabled`, `BbCommandVirtualizedGroup.LazyLoadBatchSize`, `BbSlider.Orientation` and `BbRangeSlider.Orientation`, `BbResizablePanel.Collapsible`, `BbToastProvider.MaxToasts`, `BbDataGridHierarchyColumn.IndentSize`, `BbRadialBarChart.EndAngle`, `Color` on `BbPie` and `BbFunnel`, `BbSidebarMenuAction.ShowOnHover`, the `--sidebar-width-mobile` token, and `BbFill` inside `BbLine` and `BbRadar`. Text and numeric inputs now push configuration changes to the browser after the first render.
+- **`BbNativeSelect` with an enum.** Choosing an option reported the enum's default, because the conversion went through `Convert.ChangeType`. A `Value` set before the user picked anything is also shown as selected.
+- **Charts sharing one colour.** `ChartConfig.GetColor` returned `--chart-1` for any key the config did not name, so a partially configured chart drew every remaining series the same colour. It returns `null` now and the chart palette cycles.
+- **DataGrid grouping with `Virtualize` and an `ItemsProvider`** renders rows when a `GroupedItemsProvider` is supplied, instead of nothing at all.
+- **Inline styles are merged, not replaced.** A consumer `style` attribute on `BbScrollArea`, `BbAspectRatio`, `BbSkeleton` and the Command group/separator overwrote the component's own positioning and sizing.
+- **`BbQuantityStepper` and `BbNumericInput`** no longer wrap past the end of the numeric range: ArrowUp at `int.MaxValue` used to land on `Min`.
+- **Native `<dialog>` without `showModal()`** falls back to the JavaScript strategy rather than rendering a dialog with no modal behaviour.
+- **Overlay options survive either registration order.** `AddBlazorBlueprintPrimitives(configureOverlays)` before `AddBlazorBlueprintComponents()` silently lost the configuration; `AddBlazorBlueprintComponents` also takes `configureOverlays` directly now.
+- **Hard-coded English** in the Sortable announcements, the DataGrid column-visibility menu and filter buttons, and the FilterBuilder Apply/Clear buttons and group labels now goes through `IBbLocalizer`.
+- **Primitives on their own.** `primitives.css` defines the utility classes the primitives render, so a Primitives-only app no longer shows Sortable's screen-reader text as body copy or gets a Menubar overlay with no size.
+- **Escape cancels a DashboardGrid pointer drag**, which it had only ever done for a keyboard drag.
+- **Resizable panels can be resized from the keyboard.** Each handle is a `role="separator"` with `aria-orientation`, `aria-controls` and `aria-value*` reporting the panel in front of it, a localized `aria-label` (`Resizable.ResizeHandle`, overridable per handle with `AriaLabel`) and a tab stop. Arrows move 5%, Page Up/Down 20%, Home/End go to the minimum and maximum. It was a plain `div` with a pointer handler, while the documentation described all of the above.
+- **`InputConverter<T>` parses enums.** It went through `Convert.ChangeType`, which cannot produce one, so an enum-typed input fell through to "no converter registered".
+- **The Dialog and Sheet primitive roots unsubscribe from their context.** Both had a `Dispose()` the component never declared `IDisposable` for, so Blazor never called it.
+- **NavigationMenu triggers unregister.** The trigger list is keyed by the trigger rather than by a position, so a trigger removed from the page leaves with its entry and arrow-key navigation stops stepping onto a button that is no longer there.
+- **More inline styles merged rather than replaced.** `BbResizablePanelGroup`, `BbResizablePanel`, `BbChartBase`, `BbDashboardGrid`, `BbDropdownMenuContent`, and the Menubar content and DashboardWidget primitives let a consumer `style` overwrite their flex sizing, grid template or `display: none`.
+- **Documentation corrections.** `BbTooltipTrigger.AsChild` is documented as defaulting to `false`; the Tooltip, Dialog, Message, DataView, MultiSelect, CopyText and Carousel snippets compile and do what they claim; every localization example uses `localizer.Set(...)` rather than an options object that does not exist; candlestick click values are documented as `[index, open, close, low, high]`; the Resizable demo describes the accessibility it has rather than the accessibility it does not; `THEMING.md` explains that `:root { --font-sans }` overrides `ThemeFont`; and the WebAssembly demo host loads `themes.css` like the other two.
+- **Modal keyboard containment.** Tab and Shift+Tab enter the trapped controls when initial focus is on a container or non-tabbable listbox, preventing WebKit from moving focus behind a Select bottom sheet. Empty modals retain focus on their container.
+- **Drawer focus restoration.** Closing a drawer with Escape, its close button, the backdrop or a dismiss gesture returns focus to the trigger that opened it, including composed triggers. Navigating away does not restore focus into the departing page.
+- **Menu demo documentation.** Remove empty secondary API headings from Dropdown Menu, Context Menu and Menubar; their references remain in the final API section.
+- **Scheduler vertical scrolling.** Demo schedules now include all 24 hours and initially scroll to 8 AM, instead of omitting hours outside short example ranges. The scroll region fits the viewport, retains sticky day headings and can receive keyboard focus. `InitialScrollHour` sets the initial display-zone hour without changing the rendered range or resetting scrolling on later renders.
+- **Cached core scripts.** Revise both the core JavaScript entry URL and its relative dependency URLs so stale sidebar exports cannot disable an upgraded demo circuit.
+- **Demo sidebar sizing.** Restore the standard sidebar width and align v4 badges at the trailing edge of each component row. Every badge sits on one vertical line, in the sidebar's own right gutter: a sub-menu insets both edges and a nested one insets again, so the right inset is dropped at each level. Long labels stay on one line and end in an ellipsis, with the full name on the row's `title`.
+- **Mobile Shop recipe and focused component demos.** Move the combined shopping experience into Recipes with separate product browsing, cart editing and account screens. App Bar, Bottom Navigation, Notification Badge, Quantity Stepper and Section Header each have their own demo. Motion, Height Animation, Selection Indicator, Page Transition, Screen Transition and Render State Provider also have separate pages. The previous mobile-controls URL remains a recipe alias.
+- **Scheduler repeat editor.** Daily, monthly and yearly choices no longer ask for an interval. Weekly events offer labelled weekday checkboxes, restore saved selections and require at least one day. Monthly/yearly repeats use the start date. Replace the raw custom-rule input with plain-language preservation of existing advanced schedules, which are kept until explicitly replaced. Optional occurrence limits remain available.
+- **Demo documentation review.** Restore the original main-menu order while keeping Components and related pages alphabetized. Standardize accessibility and keyboard guidance across component demos, fill missing API references, consolidate stray API cards beneath one heading, and correct stale Tooltip placement and FieldError collection types. New APIs carry `v4` badges; established components such as Sortable do not gain a new-component sidebar badge.
+- **TimeInput selectors.** Use `BbSelect` for AM/PM both inline and in the clock popup, and for the popup’s numeric choices. Preselected values display correctly, and period changes preserve minutes and obey read-only/disabled state.
+- **Scheduler navigation and editor.** Center the date heading and group Previous, Today and Next together. Today navigates to the current date in the schedule's time zone while preserving the view and week-start choice. Clicking the editor backdrop keeps the draft open.
+- **Sidebar demo organization.** Place floating pill navigation and animated selection examples alongside the collapse/navigation examples, each with its code snippet. Keep accessibility guidance after the examples and the new component APIs in the final API reference.
+- **TreeSelect keyboard actions.** Space expands/collapses the focused branch without selecting it. Enter selects and closes in single mode, including the current selection; in checkbox mode, it checks/unchecks the item while keeping the popup open. LeafOnly selection rules and standalone TreeView keyboard behavior are preserved. Revised the primitive bundle and tree-keyboard asset URLs so cached scripts do not retain the previous key mapping.
+- Generate Tailwind CSS before static asset discovery, fingerprinting and compression, including CSS missing on a clean checkout. This prevents stale asset metadata and empty compressed stylesheet responses in the demo hosts. Added a check for all hosts and optional live HTTP delivery.
+- **DataGrid editors preserve column widths.** Inline `BbInputGroup` save/cancel actions fit inside the existing cell without widening the column or moving neighbouring columns.
+- **Hierarchy pickers match the standard Bb controls.** TreeSelect and Cascader use consistent chevrons, search rows and focus styling. Parent selection reaches collapsed/filtered descendants, and closing a TreeSelect preserves its search through the exit animation to avoid flicker.
+- **Scheduler event layout and scrolling.** Appointment content is top aligned with spacing between overlapping events. Native component scrollbars follow the light/dark theme.
+- **Picker focus and overlay dismissal.** Date pickers restore focus after selection, Enter opens a Select without a second native click closing it, and overlay exit waits ignore unrelated child animations.
+- **A vertical slider now lays out vertically.** Both `BbSlider` and `BbRangeSlider` put the track in a row container, and the track carries `grow`, which follows the flex main axis — so a slider asked for vertically stretched its 8px track across the full width of its container instead. Vertical sliders stack on the cross axis, and the fill is pinned to the bottom edge it grows from. `BbSlider.Orientation` was read nowhere at all: the value reached the primitive, which already handled vertical, but the styled layer drew the result horizontally either way. `BbRangeSlider` shows its value tooltips to the right of a vertical track and its tick marks to the left, so the two cannot overlap. Give the container a height; the slider fills it.
+- **Consumer `group-*` and `peer-*` variants reach the library again.** Tailwind resolves those variants against a literal marker class, and a consumer's own build emits `:where(.group)` — never `:where(.bb\:group)`, because it never sees the `bb` prefix. Every marker the library shipped carried the prefix alone, across 30 components, so anything a consumer hooked onto one silently matched nothing: a collapsed `BbSidebar` kept the labels and chevrons `group-data-[collapsible=icon]:hidden` was meant to hide, a label next to a disabled `BbCheckbox` or `BbSwitch` never dimmed, and a `BbCollapsibleTrigger` chevron never rotated — all visible in the demo's own pages. `ClassNames.cn` now carries the bare twin of any marker it keeps, named ones (`peer/menu-button`) included; a `group-*` *variant* is an ordinary utility and still ships prefixed only, which is what [#496](https://github.com/blazorblueprintui/ui/issues/496) was about. A marker handed straight to a component's `Class` parameter is the one path the merge cannot see, because a primitive concatenates `Class` verbatim — `BbDataGrid`'s header row did exactly that, and a convention test now fails on it.
+
+### Documentation and Packaging
+
+- **Getting Started dialog snippets name components that exist.** The page showed `<Dialog>`, `<DialogTrigger>` and the rest under `@using BlazorBlueprint.Components.BbDialog`, which is not a namespace — every tag was `Bb`-prefixed and the using is `BlazorBlueprint.Components`. The primitive snippet mixed a fully qualified root with unqualified children; it now shows one `@using` and notes that primitives and components share type names, so a file imports one namespace or fully qualifies the tags. Two Next Steps links pointed at routes that no longer exist.
+- **Previous/next component navigation in the demo header.** Two buttons beside the sidebar trigger step through `ComponentCatalog.DemoPages`, the same flattened list the sidebar, the component homepage and the command search already walk, so "next" always means the next row the reader can see. They disable at the ends and render nothing off that list — on the homepage, a guide or a primitive page there is no meaningful neighbour to offer.
+- Slider gains a vertical example with a live demo, a copyable snippet and an `Orientation` API reference entry. The Controlled Sidebar demo wraps its menu labels in a `span`, which is what icon mode hides.
+- **More snippets naming components that do not exist.** The Lucide, Heroicons, Feather and Font Awesome pages showed `<Button>` where the live example beside them used `<BbButton>`, and a CopyText note asked for `<PortalHost />` rather than `<BbPortalHost />`.
+- **Dead demo links and a broken image.** The Primitives index advertised a Combobox primitive; there is no such primitive, only the styled `BbCombobox`. The Sidebar demo's avatar `Source` was relative to the page rather than the base path, so it 404'd and always fell back to the initial. The ResponsiveNav demo's `/docs` and `/login` links now use the `#` placeholder the rest of that file already uses.
+- Add permanent DataGrid editing, Scheduler, TreeSelect, Cascader and upload lifecycle demos with code examples, accessibility notes and API references. New pages appear in the sidebar, command search and component catalog; editing demos cover several input types, validation recovery and ordering after saves. See [PR #536](https://github.com/blazorblueprintui/ui/pull/536).
+- Complete README acknowledgments and include library licenses and upstream notices in all six NuGet packages. Bundle browser-library notices as static assets, restore Floating UI and tw-animate-css license headers, and retain ECharts subcomponent notices.
+- Correct Lucide and Font Awesome package license expressions to account for their embedded artwork, while retaining MIT for their C# wrappers.
+
+### Performance
+
+- **Paged DataGrid queries fetch the requested page.** For `IQueryable` sources without client-side search, grouping, hierarchy or row virtualization, counting and `Skip`/`Take` stay on the query provider. Full-data CSV exports run the filtered, sorted query on demand; keep its provider alive until export. `ItemsProvider` remains the asynchronous option for remote data, and formatted search and grouping retain their full-data behavior.
+- **Command search shares filtered results and an item-index lookup.** Visible items no longer each rebuild and scan the whole filtered list. Search, filter and item changes invalidate the cache; callback-only changes do not.
+- **Slider, RangeSlider and ColorPicker drag feedback is immediate in the browser.** Live .NET updates are coalesced to the latest distinct value, normally no more than every 50 ms, with one callback in flight. Release and cancellation flush the final value. RangeSlider captures pointers locally; Rating hover updates on entering an icon instead of every mouse move. Public component parameters are unchanged.
+- **TreeView search indexes parents and visible nodes.** Matching siblings share ancestor lookups, rendering no longer repeats descendant searches, and cached lazy children remain searchable after parent renders.
+
+---
+
+## 2026-09-16
+
+### Added
+
+- **Tables in `BbRichTextEditor`** — The `Full` toolbar gains a table button. Outside a table it opens a size picker (up to 6 × 6); with the caret inside a table the same button offers insert row above/below, insert column left/right, delete row, delete column and delete table. The same actions are on the component reference: `InsertTableAsync(rows, columns)`, `InsertRowAboveAsync`, `InsertRowBelowAsync`, `InsertColumnLeftAsync`, `InsertColumnRightAsync`, `DeleteRowAsync`, `DeleteColumnAsync` and `DeleteTableAsync`. This is Quill 2's own built-in table module, so there is no new script to load; the HTML output is a plain `<table>`, cell borders follow `--border`, and the module's Tab, Enter and Backspace behaviour inside cells applies. Cell merging and column resizing are not part of Quill's module and are not offered. New `RichTextEditor.Table*`, `InsertRow*`, `InsertColumn*` and `Delete*` localizer keys carry the labels.
+
+- **Undo/redo, checklist, inline code, alignment, text colour, highlight and images in `BbRichTextEditor`.** `Standard` gains undo/redo buttons (Quill's history module, `userOnly` so a programmatic `Value` update is never undoable; the buttons grey out when there is nothing to do, and `TextChangeEventArgs` reports `CanUndo`/`CanRedo`) and a checklist toggle. `Full` also gains inline code, an alignment menu, text colour and highlight palettes, and an image button. Alignment uses Quill's style attributor so the output carries `text-align` inline rather than `ql-align-*` classes that mean nothing outside Quill's stylesheet; colour and highlight are inline styles too. Checklist state round-trips: Quill writes `<li data-list="checked">` but only reads `data-checked` on the list back in, so the interop adds a clipboard matcher for the item and the sanitizer keeps `data-list`. Images go through the new `ImageUploader` parameter — every picked, dropped or pasted file is streamed to it and it returns the URL to embed, or `null` to reject; `MaxImageSize` (10 MB) caps what is sent. Without a handler, images embed as data URLs, as Quill does on its own, and the sanitizer now lets `data:image/*` through on `<img src>` only. `UndoAsync`, `RedoAsync` and `InsertImageAsync(url)` join the public methods; `EditorImageUpload` is the new public type.
+
+### Changed
+
+- **`table`, `code`, `align`, `color`, `background` and `image` are now registered formats in `BbRichTextEditor`.** Pasted or bound HTML that carries them keeps them, where it used to flatten to plain paragraphs and text. `HtmlSanitizer`'s defaults already allow the table elements and the inline styles involved.
+
+- **Quill is pinned to 2.0.3 in the demo and setup notes** (`quill@2.0.3` instead of the floating `quill@2` tag), and the interop no longer carries Quill 1 fallbacks for `getSemanticHTML`. The editor has required Quill 2 since it was rewritten for it; the fallbacks only hid a wrong script version behind subtly different HTML.
+
+- **BREAKING — every Tailwind utility in `blazorblueprint.css` is now prefixed `bb:`** — [#501](https://github.com/blazorblueprintui/ui/issues/501), fixing [#496](https://github.com/blazorblueprintui/ui/issues/496). The prebuilt stylesheet wrote its utilities into Tailwind's `utilities` cascade layer, the same layer a consumer's own build writes into. Layer names are global to the document, so two builds emitting the same class name were ordered by which `<link>` came second, not by Tailwind's sort order. A consumer's `sm:grid-cols-2 md:grid-cols-4` collapsed when the library loaded after their stylesheet; the library's own `hidden sm:flex` collapsed when it loaded before. No load order fixed both, and the demo had been shipping in the broken arrangement.
+
+  The library's utilities now emit as `.bb\:flex`, `.bb\:sm\:hidden` and so on, into a `bb-utilities` layer of their own, so the two builds can never produce the same selector. `ClassNames.cn` strips the prefix for the merge and puts it back on the survivors, so a consumer `Class="p-6"` still replaces the component's `bb:p-4` exactly as before; the merge no longer depends on load order either. Around 2,000 class strings across Components and Primitives were rewritten mechanically against the set of tokens the previous build emitted, and the rewrite was verified by diffing the emitted CSS: every utility gained the prefix and nothing else changed.
+
+  **What consumers do.** With your own Tailwind build: nothing in markup; drop any `@source` pointing at the library, which now finds only prefixed tokens and emits nothing. Without one: `class="flex gap-4"` in your own pages no longer matches anything in the library's file — it never officially did — so add a Tailwind build or write `class="bb:flex bb:gap-4"`. The safelisted `shimmer` and `scroll-fade-x` utilities are now `bb:shimmer` and `bb:scroll-fade-x`. Full detail in `V4-MIGRATION-GUIDE.md`.
+
+  **Guarded.** New convention tests read the built stylesheet and fail if any utility in `bb-utilities` is unprefixed or anything is written into the shared `utilities` layer, and read the sources and fail on an unprefixed token in a `class` attribute or a `cn(…)` literal — under a prefixed build that token would not collide, it would silently emit nothing. The demo no longer `@source`s the library and is a real consumer, which is how #496 gets caught next time.
+
+### Fixed
+
+- **Navigating away from an open overlay no longer logs `overlay: close callback failed`.** Clicking a link while a select, popover or menu was open closed the overlay and unloaded the page in the same gesture. The close asked the browser for a `JsOnClosed` callback once the exit animation finished; the navigation disposed the component before the animation ended, and because the portal already counted itself closed, disposal skipped its own close call and released the .NET reference the callback was about to use. Nothing broke — the callback only unregisters content that disposal had already unregistered — but every such navigation put a `System.ArgumentException: There is no tracked object` in the console. The portal now remembers that a callback is outstanding and sends one more close on disposal, which cancels the pending one on the browser side before the reference goes away. Introduced with the one-round-trip close in 4.0.0-beta.1.
+
+---
+
+## 2026-09-15
+
+### Added
+
+- **`JsModules.TryGetLoaded`** and **`PrimitiveModules.TryGetLoaded`** — get an already-imported module without awaiting. For callers that must issue interop from a synchronous pass, where awaiting the import would put the call a round trip behind the render it needs to travel with. Returning `false` is "not yet", not an error: the caller falls back to the awaited path, which pays one round trip and warms the cache for every call after it.
+
+- **`BbFloatingPortal.SideElementId`** — names the element that carries the resolved `data-side`, written by JS as soon as the overlay is positioned and kept current when a scroll flips it.
+
+- **`BbFloatingPortal.Keyboard`** (`FloatingKeyboardOptions`, `FloatingKeyboardKind`) — declares listbox or menu key handling to be wired inside the open call and released inside the close.
+
+- **`BbFloatingPortal.ScrollToCurrentIn`** and **`ScrollToCurrentSelector`**, surfaced on both layers of `BbPopoverContent` as **`ScrollToSelected`** and **`ScrollToSelectedSelector`** — scroll the chosen item into view each time the overlay opens, before it is revealed.
+
+### Changed
+
+- **Moving the pointer over a command or combobox list no longer talks to the server per pixel.** Every `BbCommandItem` bound `@onmouseenter` and `@onmousemove`, so on Blazor Server every pixel of pointer travel was a circuit message and every item crossed re-rendered the whole list. The `mousemove` existed only to tell a real hover from the list scrolling under a stationary pointer during keyboard navigation. The browser now answers that itself: one delegated listener per list (`elementUtils.observeHover`) and one call to .NET per item the pointer genuinely moves onto. Measured across five combobox items at one pixel a step: **157 pointer steps → 11 messages**, where it was one per step. `BbCommandItem` also gains a `ShouldRender`, so a focus move re-renders the two items it touches rather than all of them.
+
+- **Scrolling an infinite-scroll list no longer costs a round trip per scroll event.** `BbCommandList`, `BbSelectContent`, `BbMultiSelect` and `BbDataView` bound `@onscroll` and then awaited `isNearBottom` in JS — around sixty circuit messages a second while the wheel turned, each waiting a further round trip for the answer. `elementUtils.observeNearBottom` watches the element in the browser and calls .NET exactly once when the scroll position enters the near-bottom zone, re-arming when it leaves or when the content grows.
+
+- **Focus happens inside the open and close calls, not a round trip after.** `BbCombobox` and `BbMultiSelect` focused their search box from the popover's ready callback — a round trip after the content rendered, then a 50ms sleep, then another round trip for `FocusAsync`. The new `BbPopoverContent.AutoFocusId` (and `BbFloatingPortal.AutoFocusId`) focuses the element one frame after the reveal, inside the call that positions the overlay. `BbCommandInput` gains an `Id` so an owner can name it. On the way out, Select, Popover and DropdownMenu awaited `FocusManager.RestoreFocus` after their close render on every Escape and every selection; `RestoreFocusToId` and `RestoreFocusOnClose` ride along with `overlay.close` and the browser puts focus back on the trigger itself. `BbNavigationMenuTrigger`'s ArrowDown no longer sleeps 50ms before focusing the first item.
+
+- **`BbPopoverContent` only asks for the portal's ready callback when a consumer set `OnContentReady`.** Nothing in the library listens to `Context.OnContentReady`, so the callback — ack-gated, and a re-render of its receiver — was a round trip spent notifying no one.
+
+- **An overlay opens in one circuit round trip, and closes in one.** Measured on a real deployment at a ~90ms round trip, opening a `BbSelect` on 3.14.1 cost **11** sequential round trips — 1.6 seconds, and 5.5 seconds on a 500ms circuit. 4.0.0-beta.1 cut that to **5**. It is now **1**, and the arrow keys and hover cost **none at all**.
+
+  Server time per event was 4–48ms throughout. None of this was ever the server being slow; it was round-trip count multiplied by latency, and the count was the only variable worth attacking.
+
+  **What was actually costing the round trips.** On Blazor Server, `OnAfterRenderAsync` runs only once the browser has acknowledged the render batch — so anything done there starts a round trip behind the render, and anything awaited there starts another behind that. Opening an overlay was five of those, chained: render the trigger's open state, wait for the ack, register the portal content and wait for *its* ack, await `overlay.open`, re-render for the resolved placement, await `select.openListbox`.
+
+  **What replaced it.** `BbFloatingPortal` now does both halves of an open from `OnParametersSet` — synchronously, inside the render cycle the click started. Registering the portal marks the host dirty in time to join the same render batch, and the interop call is dispatched with `InvokeVoidAsync` and never awaited, so it rides out in the same flush as that batch. The server sends both and waits for neither.
+
+  The price is that the interop message reaches the browser *before* the render batch carrying the content, because the server sent it first — so C# can no longer hand over an `ElementReference` for an element that does not exist yet. The content is named instead, by a `data-bb-portal` attribute, and `overlay.js` waits for it with a `MutationObserver`. That wait is client-side, costs nothing, and is over within a frame.
+
+  Client-to-server round trips at a 20ms emulated round trip, `/components/select`:
+
+  | interaction | 3.14.1 | 4.0.0-beta.1 | now |
+  |---|---|---|---|
+  | open | 11 | 5 | **1** |
+  | arrow key | 1 | 1 | **0** |
+  | hover an option | 1 | 1 | **0** |
+  | close | 16 | 3 | **1** |
+
+- **JavaScript owns the overlay's position, its side, and a listbox's highlight.** These were all C#-rendered, and each one was a render batch — a round trip — to record a measurement the browser had already made.
+
+  `BbFloatingPortal` renders a single parked style that never changes, so Blazor emits no diff for it and never fights the values JS writes. `data-side` is written by JS through the new `SideElementId` parameter. `data-focused` and `aria-activedescendant` are written by `select.js`, which now also owns hover: a `@onmouseenter` on each option used to call back into C# to set the focused index, re-rendering every item, so the pointer crossing a ten-item list cost ten round trips.
+
+  Having two writers was not merely redundant, it was wrong. Blazor diffs an attribute against what it last *rendered*, not against the DOM, so C# rendering "no `data-focused`" over an item JS had highlighted produced no diff and left the highlight in place — moving the highlight with the keyboard and then the mouse lit up two items at once.
+
+- **Keyboard wiring happens inside the call that opens the overlay.** The new `FloatingKeyboardOptions` covers both a listbox and a menu; `BbFloatingPortal` attaches the handlers on the way open and releases them on the way closed, in the same calls that position and hide the element. `BbSelectContent` and `BbDropdownMenuContent` declare what they need rather than wiring it from a ready callback, which used to leave the overlay on screen and deaf to the arrow keys for a further round trip.
+
+  A listbox is focused strictly *after* the reveal. `focus()` on a `visibility: hidden` element is a no-op that throws nothing, so focusing any earlier leaves the listbox unfocused, every arrow key going to the server as a trigger keydown, and the highlight never moving.
+
+- **The command search box shows focus as a band, not a box inside a box.** `BbCommandInput` drew a focus ring around the `<input>`, which sat inside a bordered row, which sat inside a bordered popover — three nested outlines with gaps between them. It was not an occasional look either: a combobox focuses its search field every time it opens, so the ring was on screen the whole time the dropdown was, marking the only element that could possibly have focus.
+
+  The ring moves to the row, on `focus-within`, and inset so it stays inside the popover's border rather than bleeding over it. The row is rounded at the top to match: an inset ring is an inset box-shadow, and an inset shadow follows its own element's radius rather than an ancestor's, so a square-cornered row drew square corners straight across the popover's rounded ones. The bottom border goes transparent while it shows, so the divider between the search box and the list is the ring itself rather than a 2px ring stacked on a 1px line. The focus indicator is no weaker — it is larger — so the accessibility fix it came from still holds. `BbCommand` used on its own gets the same treatment.
+
+- **`BbDropdownMenuContent` no longer calls `matchTriggerWidth`.** `MatchAnchorWidth` already asks Floating UI's size middleware for the same width on every position pass, and `autoUpdate` re-runs that on resize. The separate call was a second writer of one style, bought with an awaited interop call that also allocated a JS object reference to dispose later.
+
+- **`BbTooltipContent` and `BbHoverCardContent` no longer ask for the portal's ready callback.** Both handlers were empty, and on Server the callback is ack-gated, so asking for it cost a round trip to do nothing.
+
+### Fixed
+
+- **No `async void` handler can take the circuit down.** Eight fire-and-forget handlers — close timers, debounce, state-change and location-change subscribers — caught one or two exceptions and let the rest escape. Nothing awaits an `async void` method, so an escaping exception has no caller to reach and Blazor Server treats it as fatal. The sidebar's scroll-to-top was one of these. Every one now catches everything; each does best-effort work and none of it is worth a dead circuit.
+
+- **A stale cached JavaScript module fails loudly, and a new release is a new URL.** A consumer behind a CDN with a long browser-cache TTL deployed a new build and got a four-hour-old `sidebar.js` under the new bundle; `sidebar.initialize` was not a function and every circuit died with nothing to say why. The C# import of each bundle now carries the library version as a query (`PrimitiveModules.ModuleUrl`, the new `ComponentModules.CoreUrl`, built by `JsModules.Versioned`), so a cached entry file is never a valid answer for a new release. And each bundle asserts one export it depends on from every module it imports, at load, throwing an error that names the stale file and says what to do — the import rejects, consumers catch it and degrade, and the console says which file is old.
+
+- **Navigating between pages no longer kills the circuit.** `BbSidebarInset` scrolls the main area to the top on every navigation, and it called `scrollToTop` — the name the function had before the five common modules were bundled into `bb-components-core.js`. The bundle re-exports each module under its file name in camelCase, so the bare identifier resolved to nothing and every client-side navigation threw `Could not find 'scrollToTop'`. The handler is `async void`, so the exception had nowhere to go and took the connection down with it; a reload fixed it until the next link click.
+
+  The call is now `sidebarInset.scrollToTop`. `JSException` joins the exceptions the handler swallows, because scrolling a new page to the top is a courtesy and no failure of it is worth a dead circuit. Present in 4.0.0-beta.1.
+
+- **A closing overlay no longer blinks back into view before it disappears.** The dropdown faded out, snapped back to full opacity for a fifth of a second, and only then vanished.
+
+  The close waits for the exit animation before writing the hidden style, and it was waiting on the wrong animation. `getAnimations({ subtree: true })` returns everything running inside the overlay, including a loading spinner — `animate-spin`, `animate-pulse` and `animate-bounce` are all infinite, and an infinite animation never finishes. So the wait fell through to its one-second backstop while the exit animation completed in 150ms, and a CSS animation reverts to its un-animated style the moment it ends: the fade handed the element back at full opacity and left it there. An infinite-scroll combobox showing its spinner reproduced it every time.
+
+  Infinite animations are now excluded from the wait. The hidden style lands on the same frame the fade ends.
+
+- **`BbCombobox` reopens scrolled to the chosen item.** Pick a country a long way down the list, close the combobox, open it again, and it came back at the top of the list with the selection out of sight. `BbSelect` has always scrolled to its selection; the combobox never had the behaviour at all.
+
+  It could not simply copy the select, because the two read `aria-selected` differently: on a command item it means "keyboard-focused", not "this is the chosen value". The chosen item is therefore marked with `data-bb-current` — in both modes, by `BbCombobox` for `Options` and by `BbComboboxItem` for compositional children — and that marker is named through the new `BbPopoverContent.ScrollToSelected` and `ScrollToSelectedSelector`.
+
+  The scroll runs inside the interop call that positions the popover, before it is revealed — so it costs no round trip, and the list is already in the right place the first frame it is on screen rather than jumping once the user can see it.
+
+- **`BbCombobox` no longer discards a paged list when it closes.** Closing it told the consumer the search had been cleared even when nothing had been typed, which a paged list correctly reads as "reload your first page". Scroll in seven pages, pick an item from the last of them, and closing threw all seven away: reopening showed page one, and the chosen item was no longer in the list at all. The notification now fires only when there is a search to clear.
+
+- **A closing overlay's exit animation is no longer cut short by its own unmount.** Content that is unmounted on close (`ForceMount="false"`) has to survive long enough to animate, so the unmount can no longer share the close's render. JS reports back once the animation has finished and the element is hidden, and the unmount happens then — one round trip later, behind an overlay the user already cannot see. Content that stays mounted needs no callback at all.
+
+### Known
+
+- **Popover and dropdown menu still open in two round trips**, not one. The second is a portal-host flush: the content's registration and its root's unconditional re-render both reach the host in the same render batch, and the host — unable to tell a same-batch refresh from a genuine mid-cycle update (#418) — defers a flush that lands one round trip after the overlay is already on screen. Removing the content's own open-side `StateHasChanged` did not clear it. The fix needs the host to know where a render batch ends, which Blazor does not expose; parked with that analysis.
+
+---
+
 ## 2026-09-14
 
 ### Added
@@ -24,11 +246,115 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Theme and sidebar start up in one call each.** `ThemeService.InitializeAsync` made two to four separate calls — read localStorage, maybe clear a stale entry, maybe ask the OS for its dark-mode preference, apply the result — and `BbSidebarProvider` made two. Every one was a circuit round trip, on every page load, before the page could settle into the right state. None of the decisions between them need the server: they are reads of a cookie, localStorage and a media query.
+
+  `theme.initialize` and `sidebar.initialize` do the lot and return what they applied. The valid colour names travel with the theme config, so a corrupted or outdated entry in localStorage falls back to the configured default in the browser exactly as `ParseEnum` would in C#, rather than being applied and corrected a round trip later.
+
+  The `PersistToLocalStorage` guard from [#481](https://github.com/blazorblueprintui/ui/issues/481) moved with it. Its unit tests now assert the configuration C# hands over — which is what C# still owns — and the storage behaviour itself is verified by driving the demo.
+
+- **The five modules that load on nearly every page ship as one file.** `bb-components-core.js` re-exports `theme`, `sidebar`, `sidebar-inset`, `text-input` and `composition-guard`, addressed as `textInput.initialize` in the same style as the primitives bundle.
+
+  Only those five. Measured cold across eight demo pages, `theme.js`, `sidebar.js` and `sidebar-inset.js` load on **every** one, and `text-input.js` with `composition-guard.js` on every page carrying a form control — three to five round trips before anyone clicks. The other twenty-five stay lazy on purpose: bundling all of them would be 56 KB gzipped, so an app showing one `BbInput` would download the dashboard grid, the dock, the markdown editor and the ECharts adapter to get it. These five are 8 KB and a page has already paid for them.
+
+  Distinct Components-layer imports per page load drop from three-to-six to one-to-three. Combined with the per-circuit cache, client-to-server messages during load on `/components/input` go **92 → 54**.
+
+- **A data grid attaches its row key and click handlers once, not once per row.** Every `BbDataGridRow` registered its own listeners in its `OnAfterRenderAsync`, and disposed them one by one on teardown — one interop call, and so one circuit round trip, per row in each direction. The cost scaled with row count, which is why a large grid felt slow and a demo page never did.
+
+  The listeners now live on the grid container and find the row from the event target. Rows opt in by rendering `data-bb-row-keys` and `data-bb-row-click`, which reproduces the previous per-row gating exactly — a grouping row, which wanted neither, still gets neither — without anyone calling into JavaScript. `BbDataGridRow` no longer implements `IAsyncDisposable`; it has nothing left to release.
+
+  Client-to-server messages during page load at a 20ms round trip:
+
+  | page | rows | before | after |
+  |---|---|---|---|
+  | `/components/datagrid` | 465 | 240 | **111** |
+  | `/recipes/filterable-datagrid` | 21 | 54 | **42** |
+  | `/components/button` | 0 | 36 | 36 |
+
+  `BbTableRow` gets the same treatment: `BbTable` now holds a reference to its `<table>` and delegates for every row in it, and `BbTableRow` no longer implements `IAsyncDisposable`.
+
+- **A component's JavaScript module is imported once per circuit, not once per component.** Every component cached its module reference in an *instance* field, so thirteen `BbInput`s on a page issued thirteen `import` calls for the same already-loaded file — and on Blazor Server each one is a network round trip. The cost scaled with how many controls a page had, which is why it showed up on dense admin forms and not in a demo.
+
+  `JsModules.GetAsync(jsRuntime, path)` caches per `IJSRuntime` — per circuit on Server, per application on WebAssembly — and hands the same reference to every caller. All 38 import sites across the two libraries now go through it. The reference is non-owning, so a component tearing itself down cannot take the module away from the ones still using it.
+
+  Measured in Chromium against the demo Server host at a 20ms round trip, client-to-server messages during page load:
+
+  | page | text inputs | before | after all of this |
+  |---|---|---|---|
+  | `/components/input` | 13 | 92 | **48** |
+  | `/components/form-field-input` | 9 | 65 | **37** |
+  | `/components/button` | 0 | 40 | **31** |
+  | `/components/separator` | 0 | 39 | **32** |
+
+  Roughly four extra messages per input becomes two. What is left is each control's own `initialize` call, which is genuinely per-instance — it registers listeners on that element.
+
+- **A select prepares its listbox in one call.** Scrolling the selected option into view and attaching the keyboard handler were two separately awaited calls, so two more circuit round trips on every open, while the user waited for the list to become usable. `select.openListbox` does both.
+
+  The scroll still happens first, and now strictly first — it is the first thing in that JavaScript task, so it lands ahead of the `requestAnimationFrame` that reveals the portal. A listbox has to appear already scrolled to the selection rather than scroll afterwards, which is what the ordering was always protecting.
+
+  Client-to-server messages for a select open, at a 20ms round trip: **21 before any of this work, 11 now** on a reopen.
+
+- **Opening an overlay costs one interop call, not five.** Every `InvokeAsync` from C# on Blazor Server is a message the server posts to the browser and then awaits, so it costs a network round trip — paid on every open, forever, not just the first.
+
+  Opening a `BbSelect` spent them like this: import `positioning.js`, import Floating UI from inside the first `computePosition`, compute the position, re-render for the resolved placement, apply the position and reveal the element, start the scroll/resize watcher, then import `click-outside.js`. Two of those landed *before* the element was visible, and the placement re-render sat between computing the position and showing it.
+
+  Four changes. The 17 primitive modules now ship as one bundle, `js/primitives/bb-primitives.js`, re-exported under a namespace each, so C# addresses them as `clickOutside.onClickOutsideByIds`. Floating UI became a **static** top-level import in `positioning.js` — it was an `await import(...)` buried inside the first `computePosition`, a second wait nothing on the C# side could see. `PrimitiveModules` caches one module reference per circuit and the portal host acquires it while the page renders, so the first open costs the same as a reopen. And `BbFloatingPortal` now positions, reveals and starts auto-update in a single `overlay.open` call, with the placement re-render moved to *after* the element is on screen; closing is a single `overlay.close` in place of disposing the watcher and then hiding.
+
+  Measured in Chromium against the demo Server host, warm cache, fresh document per sample, 20ms emulated round trip, opening the first `BbSelect` on `/components/select`. Median of 6, in ms from pointerdown:
+
+  | | before | after |
+  |---|---|---|
+  | **first open** — portal inserted | 53 | 53 |
+  | **first open** — visible | **147** | **82** |
+  | **reopen** — portal inserted | 55 | 53 |
+  | **reopen** — visible | **115** | **82** |
+  | inserted → visible, reopen | 61 | **33** |
+  | module fetches, first open | 3 | **0** |
+
+  First open and reopen are now the same cost, and inserted → visible is one round trip plus the frame the reveal is deferred to. At the 150–300ms round trip a user on mobile or behind a corporate proxy sees, the removed hops were the difference between an overlay that opens and one that hangs.
+
+  The dismissal listeners moved into that same call. `BbFloatingPortal` gains a `Dismiss` parameter and an `OnDismiss` callback; Popover and Select declare which gestures they want instead of registering their own listeners after the overlay appears. That was not only two more round trips — it was a window, two round trips wide, in which the overlay was on screen and ignored a click outside it. On a 300ms link that window was over half a second.
+
+  `BbDropdownMenuContent` moved over too, and that fixes two latent bugs rather than only saving a round trip. It used the element-based `onClickOutside`, which captured the content node once at registration — a Blazor re-render that replaced the node left `contains` testing a detached element, so every click read as outside. It also had no exemption for nested portals: a portal-based component placed inside a menu renders at body level, outside the menu's DOM subtree, so clicking a `BbSelect` inside a dropdown closed the dropdown underneath it. The id-based listener re-resolves both elements per event and tracks which portal an interaction started in. `onClickOutside` now has no callers in the library.
+
+  Verified in a browser for all three: a click outside closes, a click *inside* does not, choosing an item closes, the trigger toggles without instantly reopening, Escape closes, and arrow-key navigation still works.
+
+- **Breaking — `JsOnClickOutside` and `JsOnEscapeKey` are gone from `BbPopoverContent`, `BbSelectContent` and `BbDropdownMenuContent`.** Both were `[JSInvokable]` and `[EditorBrowsable(Never)]` — callable only from the library's own JavaScript. Dismissal now arrives through `BbFloatingPortal.OnDismiss`.
+
+- **Escape dismisses the topmost overlay, not every open one.** A popover opened inside a dialog used to close the dialog on the first press — sometimes both at once — because each overlay registered its own document-level `keydown` listener and none of them knew about the others.
+
+  `escape-keydown.js` already kept a stack behind a single listener so that dialogs, sheets and drawers took turns. Everything that watches Escape at the document now joins that stack: a floating overlay registers through `overlay.open`, and the topmost entry is the only one that hears the key. Overlays whose content holds focus — Select, Dropdown Menu, Context Menu, Menubar — keep handling Escape on their own container and now stop it propagating, so they take precedence over whatever is underneath without needing a place on the stack.
+
+  Escape now peels one layer per press: popover, then dialog. A convention test fails the build if another module starts watching Escape at the document.
+
+- **Removed — `onClickOutside` and `onEscapeKey` in `click-outside.js`.** Both are superseded and both caused a bug fixed in this release: the first went stale when Blazor replaced the element and had no exemption for nested portals, the second was the second document listener that broke Escape ordering. Neither has a caller left. Use `onClickOutsideByIds` and `escapeKeydown.initialize`.
+
+- **`BbFloatingPortal` no longer gives up on the portal host after 500ms.** `MountPortalAsync` raced the host's render signal against a `Task.Delay(500)`. The signal is never lost — it arrives exactly one network round trip after the portal registers, because the host only reaches `OnAfterRenderAsync` once the browser has acknowledged the render batch. Measured, the wait tracks round-trip time 1:1: 104ms at a 100ms round trip, 305ms at 300ms, 488ms at 480ms, and at 600ms every single open times out. That is what produced the stray `PortalRenderTimeout` warnings — not a lost signal, a fixed budget for a variable cost.
+
+  The one case the deadline genuinely guarded is a missing host, and `PortalService.HasHost` answers that synchronously, before the wait. The wait is now unbounded and cancelled when the portal closes or the component is disposed, and `PortalRenderTimeout` is gone.
+
 - **The `execCommand` clipboard fallback no longer runs for every failure** — it ran whenever `navigator.clipboard.writeText` threw, which meant an expired user activation quietly fell through to a path that cannot rescue one either, and success was reported regardless. It now runs only for the insecure-context case it was written for, where the Clipboard API is absent altogether.
 
   Verified in **Chrome** and **Safari**: a `ValueFuncAsync` taking a deliberate 1.5 seconds copies successfully and `OnCopied` reports the value. The demo is slow on purpose — an immediately-resolved task passes everywhere and proves nothing. The plain literal-value copy was re-checked in both as well, since the click path changed for every usage, not just the async one.
 
 ## 2026-09-13
+
+### Changed
+
+- **BREAKING — `BbTooltipTrigger.AsChild` now defaults to `false`** — [#428](https://github.com/blazorblueprintui/ui/issues/428), the deferred half of [#425](https://github.com/blazorblueprintui/ui/issues/425). It defaulted to `true`, where the trigger renders no element and no handlers and only cascades a `TriggerContext` for the child to consume. `BbButton` consumes it; `LucideIcon` and plain markup do not. So the most natural thing a consumer writes — a bare icon in a trigger — silently did nothing, and the usage that worked required knowing about an opt-out. That is the wrong way round for a component library, and it was reported from the field.
+
+  v3 moved trigger `AsChild` defaults to `true` across the family. For tooltip specifically that was the wrong call and this reverses it. The other triggers are deliberately **unchanged**: popover, dialog, sheet, dropdown menu, hover card and collapsible all render a `<button>` in their non-`AsChild` branch and open on **click**, which any focusable child already delivers by bubbling. Tooltip opens on **hover and focus**, which do not bubble usefully, so a trigger rendering nothing genuinely has nothing listening. The asymmetry is in the interaction, not the API.
+
+  **What to change.** Add `AsChild="true"` wherever the child consumes the context itself, such as a `BbButton`. A bare icon, plain text or arbitrary markup needs no change and now works.
+
+  **What changes in the DOM.** With `AsChild="false"` the trigger wraps its content in two nested `<span>` elements: a styled wrapper with `display: contents`, which generates no layout box, and inside it the primitive trigger — an ordinary inline span carrying the id, `tabindex` and the hover/focus handlers. In flow layout the inner span is usually invisible; inside a flex or grid container it becomes the item, so set `Class` on the trigger to give that wrapper the layout you need. Anything walking the DOM is affected either way: `:first-child` selectors, `querySelector` paths and test hooks that assume the child is a direct descendant.
+
+  Only the styled wrapper changed; `Primitives.Tooltip.BbTooltipTrigger` already defaulted to `false`, so this removes a divergence between the layers rather than introducing one.
+
+  Worth knowing: **the API surface snapshot cannot catch this.** It records `AsChild : Boolean`, not its default, so the test suite stays green across a change that alters every consumer's rendering. Verified in the running demo instead — a bare icon and plain text both open a tooltip with no opt-in, and a `BbButton` under `AsChild="true"` still does.
+
+  Migration guide: `V4-MIGRATION-GUIDE.md`.
+
+- **BREAKING — `BbDrawerTrigger` and `BbDrawerClose` now render a real `<button>`** — [#507](https://github.com/blazorblueprintui/ui/issues/507), found while working [#459](https://github.com/blazorblueprintui/ui/issues/459). Both were a bare `<div @onclick>` with no `tabindex`, no `role` and no keyboard handler. They worked when the child happened to be focusable — which is what the demos did, wrapping a `BbButton`, so the common path was fine and this went unreported. Pass anything that is not itself focusable, which the API placed no constraint on, and the trigger was unreachable by keyboard and not exposed as a control at all: a WCAG 2.1.1 failure in a shape the component invited, failing silently and passing any mouse test.
 
 ### Added
 
@@ -46,8 +372,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
   Verified in the running demo: clicking a bar reports `Desktop · 2024-04-05 · 373 (index 4)`, and a click on empty space above the bars clears it.
 
-### Fixed
-
 - **`BbFileUpload` accepts pasted files** — [#485](https://github.com/blazorblueprintui/ui/issues/485), requested by [@HugoVG](https://github.com/HugoVG), whose point was that not everyone wants to drag onto a dropzone. Copy a file in your file manager, or take a screenshot to the clipboard, focus the upload and press Ctrl+V.
 
   `AllowPaste` is on by default and can be turned off where the page handles paste itself.
@@ -57,6 +381,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Files are handed over exactly the way a drop already hands them over: assigned to the hidden `<input type="file">` and followed by a `change` event. So validation, the size and count limits, `OnValidationError` and the rest all run through the single existing path rather than a second copy that could drift from it. A paste into a single-file upload takes the first file only, matching what the input would accept.
 
   Verified in the running demo both ways: with focus inside the upload a pasted file reaches the input **and** appears in the rendered file list, which is what proves the whole pipeline ran; with focus elsewhere on the page the same paste is ignored.
+
+- **A way to apply the saved theme before the first paint** — [#477](https://github.com/blazorblueprintui/ui/issues/477), reported by [@andrewbabbittdev](https://github.com/andrewbabbittdev). The theme lives in `localStorage`, so a prerendered or statically rendered page cannot know it: the server renders the default and the saved theme is applied once Blazor has started. A user who chose dark mode got a flash of light first, on every load. There was no built-in answer, and there is no C#-only one — the preference is not available to the server at render time.
+
+  `js/theme-init.js` reads the saved theme and writes it to `<html>` before anything paints. Add it to `<head>`, after your stylesheets:
+
+  ```html
+  <script src="_content/BlazorBlueprint.Components/js/theme-init.js"></script>
+  ```
+
+  **It has to be a classic, blocking script.** `type="module"` is deferred until after the document is parsed — which is after the paint it exists to prevent — so shipping this as part of the existing theme module was never an option. It is a separate file rather than inline so that a strict Content-Security-Policy needs no `'unsafe-inline'`.
+
+  `data-default-dark="true"` or `"false"` sets what to use when nothing is saved; the fallback otherwise is `prefers-color-scheme`, matching the theme service. `data-storage="false"` skips `localStorage` entirely, and should be paired with `PersistToLocalStorage = false` — without it a theme saved before persistence was turned off would still be applied on load, which is the same trap [#481](https://github.com/blazorblueprintui/ui/issues/481) fixed on the C# side.
+
+  It deliberately duplicates the handful of DOM writes in `theme.js` rather than importing them, because importing reintroduces the defer. The cost is that the attribute names now live in two files; a comment in each says so.
+
+  Added to all three demo hosts, `README.md` and `THEMING.md`. Verified in the running app: with a dark theme saved, `<html>` carries `dark`, `data-base-color`, `data-primary-color` and `--radius` on arrival, and the script sits in `<head>` ahead of both `<body>` and `blazor.web.js` in the served document.
+
+---
 
 ### Fixed
 
@@ -83,27 +425,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `BbTablePagination` exists **only** in `BlazorBlueprint.Primitives` and describes itself as a headless structure. Primitives set no classes by design, so a ring there would contradict the layer split rather than fix anything. It needs either a styled Components wrapper or a decision that consumers style it themselves.
   - `BbInputGroupAddon` is a `<div @onclick>` with no `tabindex`, so there is nothing to draw a ring on — the same shape as [#507](https://github.com/blazorblueprintui/ui/issues/507). Whether it should be focusable at all is a separate question from this issue; the controls placed inside it carry their own indicators today.
 
-### Added
-
-- **A way to apply the saved theme before the first paint** — [#477](https://github.com/blazorblueprintui/ui/issues/477), reported by [@andrewbabbittdev](https://github.com/andrewbabbittdev). The theme lives in `localStorage`, so a prerendered or statically rendered page cannot know it: the server renders the default and the saved theme is applied once Blazor has started. A user who chose dark mode got a flash of light first, on every load. There was no built-in answer, and there is no C#-only one — the preference is not available to the server at render time.
-
-  `js/theme-init.js` reads the saved theme and writes it to `<html>` before anything paints. Add it to `<head>`, after your stylesheets:
-
-  ```html
-  <script src="_content/BlazorBlueprint.Components/js/theme-init.js"></script>
-  ```
-
-  **It has to be a classic, blocking script.** `type="module"` is deferred until after the document is parsed — which is after the paint it exists to prevent — so shipping this as part of the existing theme module was never an option. It is a separate file rather than inline so that a strict Content-Security-Policy needs no `'unsafe-inline'`.
-
-  `data-default-dark="true"` or `"false"` sets what to use when nothing is saved; the fallback otherwise is `prefers-color-scheme`, matching the theme service. `data-storage="false"` skips `localStorage` entirely, and should be paired with `PersistToLocalStorage = false` — without it a theme saved before persistence was turned off would still be applied on load, which is the same trap [#481](https://github.com/blazorblueprintui/ui/issues/481) fixed on the C# side.
-
-  It deliberately duplicates the handful of DOM writes in `theme.js` rather than importing them, because importing reintroduces the defer. The cost is that the attribute names now live in two files; a comment in each says so.
-
-  Added to all three demo hosts, `README.md` and `THEMING.md`. Verified in the running app: with a dark theme saved, `<html>` carries `dark`, `data-base-color`, `data-primary-color` and `--radius` on arrival, and the script sits in `<head>` ahead of both `<body>` and `blazor.web.js` in the served document.
-
 ---
 
 ## 2026-09-12
+
+### Changed
+
+- **BREAKING — `BbDrawerTrigger` and `BbDrawerClose` now render a real `<button>`** — [#507](https://github.com/blazorblueprintui/ui/issues/507), found while working [#459](https://github.com/blazorblueprintui/ui/issues/459). Both were a bare `<div @onclick>` with no `tabindex`, no `role` and no keyboard handler. They worked when the child happened to be focusable — which is what the demos did, wrapping a `BbButton`, so the common path was fine and this went unreported. Pass anything that is not itself focusable, which the API placed no constraint on, and the trigger was unreachable by keyboard and not exposed as a control at all: a WCAG 2.1.1 failure in a shape the component invited, failing silently and passing any mouse test.
+
+  Drawer was the only one like this. `BbDialogTrigger`, `BbSheetTrigger`, `BbPopoverTrigger` and `BbDialogClose` all render a `<button>` in their default branch and cascade a `TriggerContext` under `AsChild`; `BbDialogClose` even carries its own `@onkeydown`. Drawer simply never followed the pattern it was surrounded by.
+
+  **What breaks.** If you wrap a control — `<BbDrawerTrigger><BbButton>…</BbButton></BbDrawerTrigger>` — you now get a `<button>` inside a `<button>`, which is invalid HTML and which no browser renders reliably. Add `AsChild="true"` to those, exactly as you already would for a dialog or sheet trigger:
+
+  ```razor
+  <BbDrawerTrigger AsChild="true">
+      <BbButton Variant="ButtonVariant.Outline">Open</BbButton>
+  </BbDrawerTrigger>
+  ```
+
+  Plain content needs no change and now works by keyboard for the first time. The demos are updated, and there is a new section on the Drawer page showing both forms side by side.
+
+  The alternative — keeping the `<div>` and adding `tabindex`, `role="button"` and a key handler — was considered and rejected. It breaks nobody, but around an already-focusable child it produces two tab stops and a button nested inside a `role="button"`, which trades one accessibility fault for a quieter one rather than fixing it.
+
+  Both also gain the themed focus ring, which unblocks the last two components on [#459](https://github.com/blazorblueprintui/ui/issues/459) — there was previously nothing focusable to draw a ring on.
 
 ### Fixed
 

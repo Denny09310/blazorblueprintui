@@ -9,7 +9,7 @@ namespace BlazorBlueprint.Primitives.NavigationMenu;
 public class NavigationMenuContext : IDisposable
 {
     private readonly Action stateChanged;
-    private readonly List<ElementReference> triggerRefs = new();
+    private readonly List<(object Owner, ElementReference Element)> triggerRefs = new();
     private CancellationTokenSource? closeTimerCts;
 
     /// <summary>
@@ -46,37 +46,70 @@ public class NavigationMenuContext : IDisposable
     }
 
     /// <summary>
-    /// Registers a trigger element and returns its index.
+    /// Registers a trigger, or replaces the element reference already held for it.
     /// </summary>
-    public int RegisterTrigger(ElementReference triggerRef)
+    /// <param name="owner">The trigger component, used as its identity in the list.</param>
+    /// <param name="triggerRef">The trigger's element, which is only real after its first render.</param>
+    /// <remarks>
+    /// Keyed by the component rather than by a position the caller has to remember. The previous
+    /// index-based pair of methods could not express removal — taking an entry out would have
+    /// shifted every index handed out after it — so triggers were never unregistered and arrow-key
+    /// navigation kept stepping onto buttons that had left the page.
+    /// </remarks>
+    public void RegisterTrigger(object owner, ElementReference triggerRef)
     {
-        triggerRefs.Add(triggerRef);
-        return triggerRefs.Count - 1;
+        ArgumentNullException.ThrowIfNull(owner);
+
+        var index = IndexOf(owner);
+
+        if (index >= 0)
+        {
+            triggerRefs[index] = (owner, triggerRef);
+            return;
+        }
+
+        triggerRefs.Add((owner, triggerRef));
     }
 
     /// <summary>
-    /// Updates the element reference at the given index (needed after first render).
+    /// Removes a trigger. Call it when the trigger is disposed.
     /// </summary>
-    public void UpdateTriggerRef(int index, ElementReference triggerRef)
+    /// <param name="owner">The trigger component passed to <see cref="RegisterTrigger"/>.</param>
+    public void UnregisterTrigger(object owner)
     {
-        if (index >= 0 && index < triggerRefs.Count)
+        var index = IndexOf(owner);
+
+        if (index >= 0)
         {
-            triggerRefs[index] = triggerRef;
+            triggerRefs.RemoveAt(index);
         }
     }
 
     /// <summary>
-    /// Gets the trigger element at the specified index.
+    /// Gets the trigger element at the specified index, in registration order.
     /// </summary>
     public ElementReference? GetTriggerAt(int index)
     {
         if (index >= 0 && index < triggerRefs.Count)
         {
-            return triggerRefs[index];
+            return triggerRefs[index].Element;
         }
 
         return null;
     }
+
+    /// <summary>
+    /// The trigger's current position in the list, or -1 when it is not registered.
+    /// </summary>
+    /// <param name="owner">The trigger component passed to <see cref="RegisterTrigger"/>.</param>
+    /// <remarks>
+    /// Read this when you need a trigger's index — do not remember one. A trigger removed from the
+    /// page takes its entry with it, and every index after it shifts.
+    /// </remarks>
+    public int TriggerIndexOf(object owner) => IndexOf(owner);
+
+    private int IndexOf(object owner) =>
+        triggerRefs.FindIndex(entry => ReferenceEquals(entry.Owner, owner));
 
     /// <summary>
     /// Starts a shared close timer. After the delay, closes all menus.
@@ -95,6 +128,12 @@ public class NavigationMenuContext : IDisposable
         catch (TaskCanceledException)
         {
             // Timer was cancelled
+        }
+        catch (Exception)
+        {
+            // async void: nothing awaits this, so an exception that escapes has no caller to reach and
+            // Blazor Server treats it as fatal — the circuit closes and the user sees the reconnect
+            // overlay. Everything this method does is best-effort, and none of it is worth that.
         }
     }
 

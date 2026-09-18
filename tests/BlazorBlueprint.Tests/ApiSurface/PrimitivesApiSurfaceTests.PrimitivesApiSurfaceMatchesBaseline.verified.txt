@@ -118,6 +118,15 @@
   - Open : Boolean?
   - OpenChanged : EventCallback<Boolean>
 
+### BbContextMenuCheckboxItem (BlazorBlueprint.Primitives.ContextMenu)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - Checked : Boolean
+  - CheckedChanged : EventCallback<Boolean>
+  - ChildContent : RenderFragment
+  - CloseOnSelect : Boolean
+  - Disabled : Boolean
+  - Scope : MenuScope [CascadingParameter]
+
 ### BbContextMenuContent (BlazorBlueprint.Primitives.ContextMenu)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
@@ -227,6 +236,7 @@
   - StateChanged : EventCallback<DataGridState<TData>>
 
 ### BbDialog (BlazorBlueprint.Primitives.Dialog)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - DefaultOpen : Boolean
   - Modal : Boolean
@@ -270,6 +280,7 @@
   - RenderingStrategy : OverlayRenderingStrategy? [CascadingParameter]
 
 ### BbDialogPortal (BlazorBlueprint.Primitives.Dialog)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - Container : String
   - ForceMount : Boolean
@@ -351,19 +362,29 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - Align : PopoverAlign
   - AnchorElement : ElementReference?
+  - AutoFocusId : String
   - ChildContent : RenderFragment
+  - Dismiss : FloatingDismissOptions
   - ForceMount : Boolean
   - IsOpen : Boolean
+  - Keyboard : FloatingKeyboardOptions
   - MatchAnchorWidth : Boolean
   - Offset : Int32
+  - OnDismiss : EventCallback<FloatingDismissReason>
   - OnPlacementChanged : EventCallback<String>
   - OnReady : EventCallback
   - PortalId : String
+  - RestoreFocusOnClose : Boolean
+  - RestoreFocusToId : String
+  - ScrollToCurrentIn : String
+  - ScrollToCurrentSelector : String
   - Side : PopoverSide
+  - SideElementId : String
   - Strategy : PositioningStrategy
   - ZIndex : Int32
 
 ### BbHoverCard (BlazorBlueprint.Primitives.HoverCard)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - CloseDelay : Int32
   - DefaultOpen : Boolean
@@ -391,6 +412,45 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - For : String
+
+### BbMenuRadioGroup`1 (BlazorBlueprint.Primitives.Menu)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Disabled : Boolean
+  - Value : TValue
+  - ValueChanged : EventCallback<TValue>
+
+### BbMenuRadioItem`1 (BlazorBlueprint.Primitives.Menu)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - CloseOnSelect : Boolean
+  - Disabled : Boolean
+  - Value : TValue [EditorRequired]
+  - Group : BbMenuRadioGroup<TValue> [CascadingParameter]
+  - Scope : MenuScope [CascadingParameter]
+
+### BbMenuSub (BlazorBlueprint.Primitives.Menu)
+  - ChildContent : RenderFragment
+  - Disabled : Boolean
+  - Scope : MenuScope [CascadingParameter]
+
+### BbMenuSubContent (BlazorBlueprint.Primitives.Menu)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Loop : Boolean
+  - Offset : Int32
+  - Side : PopoverSide
+  - ZIndex : Int32
+  - ContextMenu : BbContextMenu [CascadingParameter]
+  - Dropdown : DropdownMenuContext [CascadingParameter]
+  - Menubar : MenubarMenuContext [CascadingParameter]
+  - Sub : BbMenuSub [CascadingParameter]
+
+### BbMenuSubTrigger (BlazorBlueprint.Primitives.Menu)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - OpenOnHover : Boolean
+  - Sub : BbMenuSub [CascadingParameter]
 
 ### BbMenubar (BlazorBlueprint.Primitives.Menubar)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -467,6 +527,7 @@
   - Menu : NavigationMenuContext [CascadingParameter]
 
 ### BbPopover (BlazorBlueprint.Primitives.Popover)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - DefaultOpen : Boolean
   - Modal : Boolean
@@ -478,6 +539,7 @@
 ### BbPopoverContent (BlazorBlueprint.Primitives.Popover)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - Align : PopoverAlign
+  - AutoFocusId : String
   - ChildContent : RenderFragment
   - CloseOnClickOutside : Boolean
   - CloseOnEscape : Boolean
@@ -488,6 +550,8 @@
   - OnContentReady : EventCallback
   - OnEscapeKeyDown : EventCallback<KeyboardEventArgs>
   - Role : String
+  - ScrollToSelected : Boolean
+  - ScrollToSelectedSelector : String
   - Side : PopoverSide
   - Strategy : PositioningStrategy
   - ZIndex : Int32
@@ -611,6 +675,7 @@
 ### BbPortalHost (BlazorBlueprint.Primitives.Services)
 
 ### BbSheet (BlazorBlueprint.Primitives.Sheet)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - DefaultOpen : Boolean
   - Modal : Boolean
@@ -699,6 +764,10 @@
 ### BbSortable`1 (BlazorBlueprint.Primitives.Sortable)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaLabel : String
+  - CanDrop : Func<SortableDropContext<TItem>, Boolean>
+  - CanMove : Func<SortableMoveContext<TItem>, Boolean>
+  - DragOverlayTemplate : RenderFragment<TItem>
+  - DropRejectedAnnouncement : String
   - Filter : String
   - ForceFallback : Boolean
   - Group : String
@@ -706,11 +775,17 @@
   - Id : String
   - ItemTemplate : RenderFragment<TItem>
   - Items : IList<TItem>
+  - KeyboardInstructions : String
+  - KeyboardSorting : Boolean
+  - MoveRejectedAnnouncement : String
+  - MovedAnnouncement : String
   - OnAdd : EventCallback<ValueTuple<Int32, Int32>>
   - OnRemove : EventCallback<ValueTuple<Int32, Int32>>
   - OnUpdate : EventCallback<ValueTuple<Int32, Int32>>
   - Pull : String
   - Put : Boolean
+  - ReceivedAnnouncement : String
+  - RemovedAnnouncement : String
   - Sort : Boolean
 
 ### BbSwitch (BlazorBlueprint.Primitives.Switch)
@@ -848,6 +923,7 @@
   - Disabled : Boolean
   - Loop : Boolean
   - Orientation : String
+  - Required : Boolean
   - Type : ToggleGroupType
   - Value : TValue
   - ValueChanged : EventCallback<TValue>
@@ -944,6 +1020,8 @@
 ### DataGridEditMode (BlazorBlueprint.Primitives)
   - None = 0
   - Row = 1
+  - Cell = 2
+  - Batch = 3
 
 ### DataGridSelectionBehavior (BlazorBlueprint.Primitives)
   - Toggle = 0
@@ -1006,6 +1084,14 @@
 ### LogicalOperator (BlazorBlueprint.Primitives.Filtering)
   - And = 0
   - Or = 1
+
+### FloatingDismissReason (BlazorBlueprint.Primitives.Floating)
+  - OutsideInteraction = 0
+  - EscapeKey = 1
+
+### FloatingKeyboardKind (BlazorBlueprint.Primitives.Floating)
+  - Listbox = 0
+  - Menu = 1
 
 ### FocusTrapInitialFocus (BlazorBlueprint.Primitives)
   - FirstFocusable = 0
@@ -1198,6 +1284,7 @@
 
 ### INativeOverlayService (BlazorBlueprint.Primitives.Services)
   - CloseDialogAsync(ElementReference element, String returnValue) : Task
+  - FallBackToJavaScript() : Void
   - FocusDialogAsync(ElementReference element) : Task
   - FocusTriggerAsync(ElementReference element) : Task
   - IsDialogSupportedAsync() : Task<Boolean>

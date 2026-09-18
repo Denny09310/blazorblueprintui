@@ -17,8 +17,7 @@
                 Align="@Align"
                 Offset="@Offset"
                 Strategy="PositioningStrategy.Absolute"
-                ZIndex="50"
-                OnReady="@HandleFloatingReady">
+                ZIndex="50">
     @RenderHoverCardContent()
 </BbFloatingPortal>
 
@@ -70,6 +69,9 @@
         }
 
         _portalId = $"hovercard-portal-{Context.ContentId}";
+
+        // The trigger cancels through the same signal when the pointer comes back to it.
+        Context.PendingCloseCancelled += CancelCloseTimer;
     }
 
     private RenderFragment RenderHoverCardContent() => __builder =>
@@ -82,23 +84,18 @@
              @onmouseenter="HandleMouseEnter"
              @onmouseleave="HandleMouseLeave"
              data-state="@(Context.IsOpen ? "open" : "closed")"
-             data-side="@Side"
+             data-side="@Side.ToValue()"
              @attributes="GetNonStyleAttributes()">
             @ChildContent
         </div>
     };
 
-    private Task HandleFloatingReady()
-    {
-        // HoverCard doesn't need any special setup after positioning
-        // Mouse handlers are already set up in the render fragment
-        return Task.CompletedTask;
-    }
-
     private void HandleMouseEnter()
     {
-        // Cancel any pending close timer when hovering over content
-        CancelCloseTimer();
+        // The trigger runs its own close timer, started the moment the pointer left it. Cancelling
+        // only this component's timer left that one running, so the card closed a few hundred
+        // milliseconds after the pointer arrived on it — the one place it must stay open.
+        Context.CancelPendingClose();
     }
 
     private void HandleMouseLeave()
@@ -140,6 +137,11 @@
 
     public ValueTask DisposeAsync()
     {
+        if (Context is not null)
+        {
+            Context.PendingCloseCancelled -= CancelCloseTimer;
+        }
+
         CancelCloseTimer();
         return ValueTask.CompletedTask;
     }

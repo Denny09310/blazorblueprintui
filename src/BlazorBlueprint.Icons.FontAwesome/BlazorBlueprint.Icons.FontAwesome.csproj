@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
@@ -12,7 +12,7 @@
     <Description>Font Awesome Free icon library for BlazorBlueprint - 2066 icons across 3 variants (solid, regular, and brands) for Blazor applications.</Description>
     <PackageTags>blazor;icons;fontawesome;shadcn;svg;ui;components;blazor-components;tailwind</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageLicenseExpression>MIT AND CC-BY-4.0</PackageLicenseExpression>
     <PackageProjectUrl>https://blazorblueprintui.com</PackageProjectUrl>
     <RepositoryUrl>https://github.com/blazorblueprintui/ui</RepositoryUrl>
     <Authors>David Ball</Authors>
@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.12" />
     <PackageReference Include="MinVer" Version="5.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -37,6 +37,8 @@
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="LICENSE" Pack="true" PackagePath="/" />
+    <None Include="THIRD-PARTY-NOTICES.txt" Pack="true" PackagePath="/" />
   </ItemGroup>
 
 </Project>

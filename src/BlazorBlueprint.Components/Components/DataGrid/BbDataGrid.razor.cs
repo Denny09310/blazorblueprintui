@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -36,6 +37,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// page it fetched.
     /// </summary>
     private IReadOnlyList<TData>? _exportRows;
+
+    // A paged query need not fetch every row until the user actually exports it.
+    private IQueryable<TData>? exportQuery;
 
     private IJSObjectReference? downloadModule;
 
@@ -328,7 +332,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// Defaults to <c>"even:bg-muted/30 even:hover:bg-muted/70"</c>.
     /// </summary>
     [Parameter]
-    public string StripeClass { get; set; } = "even:bg-muted/30 even:hover:bg-muted/70";
+    public string StripeClass { get; set; } = "bb:even:bg-muted/30 bb:even:hover:bg-muted/70";
 
     /// <summary>
     /// Number of extra items rendered outside the visible area when <see cref="Virtualize"/>
@@ -912,17 +916,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             return;
         }
 
-        if (_observedItems != null)
-        {
-            _observedItems.CollectionChanged -= HandleItemsCollectionChanged;
-        }
+        _observedItems?.CollectionChanged -= HandleItemsCollectionChanged;
 
         _observedItems = incoming;
 
-        if (_observedItems != null)
-        {
-            _observedItems.CollectionChanged += HandleItemsCollectionChanged;
-        }
+        _observedItems?.CollectionChanged += HandleItemsCollectionChanged;
     }
 
     private void HandleItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
@@ -948,6 +946,33 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
     }
 
+    /// <summary>
+    /// Attaches the row key and click handlers once, for the whole grid.
+    /// </summary>
+    /// <remarks>
+    /// Each row used to register its own, which cost one interop call — and so one circuit round
+    /// trip on Blazor Server — per row, plus another per row to dispose them. A 465-row grid sent
+    /// 240 client-to-server messages on load against 23 for a page with no grid, and the count
+    /// tracked the row count. Rows now opt in with a data attribute, which costs nothing, and the
+    /// listeners find the row from the event target.
+    /// </remarks>
+    private async Task DelegateRowBehaviourAsync()
+    {
+        try
+        {
+            var navModule = await PrimitiveModules.GetAsync(Js);
+            await navModule.InvokeVoidAsync("tableRowNav.delegateRowBehaviour", containerRef);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException
+                                      or TaskCanceledException or ObjectDisposedException
+                                      or InvalidOperationException)
+        {
+            // Circuit gone, or prerendering. Rows stay keyboard-accessible through Blazor's own
+            // handlers; what is lost is only the scroll suppression and the interactive-child
+            // guard, and the next render re-attaches.
+        }
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (_needsDataRefresh)
@@ -956,6 +981,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             await ProcessDataAsync();
             StateHasChanged();
         }
+
+        if (firstRender)
+        {
+            await DelegateRowBehaviourAsync();
+        }
+
+        await FocusCellEditorAsync();
 
         if (!Resizable && !Reorderable)
         {
@@ -966,8 +998,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         {
             if (!jsInitialized)
             {
-                columnsModule = await Js.InvokeAsync<IJSObjectReference>("import",
-                    "./_content/BlazorBlueprint.Components/js/datagrid-columns.js");
+                columnsModule = await JsModules.GetAsync(Js, "./_content/BlazorBlueprint.Components/js/datagrid-columns.js");
                 selfRef = DotNetObjectReference.Create(this);
                 jsInitialized = true;
 
@@ -1013,42 +1044,27 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// Registers a column definition from a child column component.
     /// Called during the child's OnInitialized.
     /// </summary>
-    internal void RegisterColumn<TProp>(BbDataGridPropertyColumn<TData, TProp> column)
-    {
-        AddColumn(column);
-    }
+    internal void RegisterColumn<TProp>(BbDataGridPropertyColumn<TData, TProp> column) => AddColumn(column);
 
     /// <summary>
     /// Registers a template column.
     /// </summary>
-    internal void RegisterColumn(BbDataGridTemplateColumn<TData> column)
-    {
-        AddColumn(column);
-    }
+    internal void RegisterColumn(BbDataGridTemplateColumn<TData> column) => AddColumn(column);
 
     /// <summary>
     /// Registers an edit column.
     /// </summary>
-    internal void RegisterColumn(BbDataGridEditColumn<TData> column)
-    {
-        AddColumn(column);
-    }
+    internal void RegisterColumn(BbDataGridEditColumn<TData> column) => AddColumn(column);
 
     /// <summary>
     /// Registers a select column. Always laid out first, ahead of every data column.
     /// </summary>
-    internal void RegisterColumn(BbDataGridSelectColumn<TData> column)
-    {
-        AddColumn(column);
-    }
+    internal void RegisterColumn(BbDataGridSelectColumn<TData> column) => AddColumn(column);
 
     /// <summary>
     /// Registers a hierarchy column (which also acts as a property column with expand/collapse).
     /// </summary>
-    internal void RegisterHierarchyColumnDef(IDataGridColumn<TData> column)
-    {
-        AddColumn(column);
-    }
+    internal void RegisterHierarchyColumnDef(IDataGridColumn<TData> column) => AddColumn(column);
 
     /// <summary>
     /// Registers an expand column. Laid out after the select column (if present),
@@ -1153,6 +1169,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private void OnColumnRegistered()
     {
         _columnsVersion++;
+
+        // Initial sorting is applied before child columns register their value accessors.
+        // Reprocess once they exist so the first rows agree with the sort indicators.
+        if (_gridState.Sorting.HasSorting)
+        {
+            _needsDataRefresh = true;
+        }
 
         // Columns register during render, after data was processed. When grouping is active
         // that leaves two things stale: a group definition targeting a column that had not
@@ -1638,6 +1661,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private async Task ProcessDataAsync()
     {
         InitializeColumnState();
+        exportQuery = null;
 
         if (ItemsProvider != null)
         {
@@ -1677,9 +1701,28 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             var sorted = filtered.ApplyMultiSort(
                 _gridState.Sorting.Definitions, columns);
 
-            var sortedList = ApplyGlobalSearch(sorted.ToList()).ToList();
+            var queryableGroupings = ResolveGroupings();
 
-            if (ResolveGroupings() is { Count: > 0 } queryableGroupings)
+            // Search matches formatted display values and grouping needs the complete set.
+            // Otherwise keep Count/Skip/Take on the provider (e.g. SQL), not on a List.
+            if (!Virtualize && string.IsNullOrWhiteSpace(SearchText) && queryableGroupings.Count == 0)
+            {
+                _groupedRenderItems = null;
+                _gridState.Pagination.TotalItems = filtered.Count();
+                _processedData = sorted
+                    .Skip(_gridState.Pagination.StartIndex)
+                    .Take(_gridState.Pagination.PageSize)
+                    .ToList();
+                _allSortedData = Array.Empty<TData>();
+                _exportRows = null;
+                exportQuery = sorted;
+                UpdateVirtualizationList();
+                return;
+            }
+
+            var sortedList = ApplyGlobalSearch(sorted).ToList();
+
+            if (queryableGroupings.Count > 0)
             {
                 ProcessGroupedData(sortedList, queryableGroupings);
                 return;
@@ -2097,7 +2140,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderRequest request)
     {
         // Grouping is not supported in virtualized provider mode without a GroupedItemsProvider.
-        if (_gridState.Grouping.ActiveGroup != null)
+        // With one, this path is not used at all: the grid renders from _groupedRenderItems.
+        if (_gridState.Grouping.ActiveGroup != null && GroupedItemsProvider == null)
         {
             if (!_virtualGroupingWarned)
             {
@@ -2838,10 +2882,25 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     private async Task LoadFromProviderAsync()
     {
+        var groupings = ResolveGroupings();
+
+        // Grouping served from the server is the one case where a virtualized provider grid does
+        // not let Virtualize drive loading: those rows come from GroupedItemsProvider and render
+        // from _groupedRenderItems, which only the code below fills. Returning early for every
+        // virtualized grid is what left a grouped one completely empty — VirtualItemsProviderAsync
+        // refuses to serve a grouped request, and nothing else ever ran.
+        var serverGrouped = groupings.Count > 0 && GroupedItemsProvider != null;
+
         // In virtualized provider mode, the Virtualize component drives data loading.
         // Refresh it so it re-queries with the current sort/filter state.
-        if (IsVirtualizedProvider)
+        if (IsVirtualizedProvider && !serverGrouped)
         {
+            // Ungrouping has to drop the render list built for the grouped shape, or the grid
+            // keeps showing the old group headers.
+            _groupedRenderItems = null;
+            _groupedRenderItemsList = null;
+            _lastGroupedRenderItems = null;
+
             if (_virtualizeRef != null)
             {
                 await _virtualizeRef.RefreshDataAsync();
@@ -2863,7 +2922,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 .Select(c => c.ColumnId)
                 .ToList();
 
-            var providerGroupings = ResolveGroupings();
+            var providerGroupings = groupings;
 
             // When grouping client-side from a flat provider, fetch all items so
             // ProcessGroupedData can correctly paginate across groups.
@@ -3805,6 +3864,16 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         ArgumentNullException.ThrowIfNull(item);
 
+        if (UsesEditBuffer)
+        {
+            var column = _columns.Find(c => c.Visible && c.EditTemplate != null);
+            if (column != null)
+            {
+                await StartCellEditAsync(item, column.ColumnId);
+            }
+            return;
+        }
+
         if (EditMode == DataGridEditMode.None)
         {
             return;
@@ -3839,6 +3908,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// <returns>True when the row closed.</returns>
     public async Task<bool> CommitEditAsync()
     {
+        if (UsesEditBuffer)
+        {
+            return await CommitBufferedCellAsync();
+        }
+
         if (_editingItem == null)
         {
             return true;
@@ -3879,13 +3953,32 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     public async Task CancelEditAsync()
     {
+        if (savingEdits)
+        {
+            return;
+        }
+
         if (_editingItem == null)
         {
             return;
         }
 
         var item = _editingItem;
-        _editSnapshot?.Restore();
+        if (UsesEditBuffer)
+        {
+            if (EditMode == DataGridEditMode.Cell || !cellHadDraft)
+            {
+                editBuffer?.Discard(item);
+            }
+            else if (cellCheckpoint != null && editModel != null)
+            {
+                DataGridRowSnapshot<TData>.Capture(cellCheckpoint).ApplyTo(editModel);
+            }
+        }
+        else
+        {
+            _editSnapshot?.Restore();
+        }
         ClearEditState();
 
         if (OnRowCancel.HasDelegate)
@@ -3899,6 +3992,14 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     private void ClearEditState()
     {
+        pendingFocusId = returnFocusId;
+        returnFocusId = null;
+        editValidation?.Dispose();
+        editValidation = null;
+        editModel = null;
+        cellCheckpoint = null;
+        editingColumnId = null;
+        editError = null;
         _editingItem = null;
         _editSnapshot = null;
         _editContext = null;
@@ -3909,7 +4010,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// Gets whether a cell should render its edit template rather than its value.
     /// </summary>
     private bool ShouldRenderEditor(IDataGridColumn<TData> column, TData item) =>
-        EditMode != DataGridEditMode.None && column.EditTemplate != null && IsEditing(item);
+        EditMode != DataGridEditMode.None && column.EditTemplate != null && IsEditing(item)
+        && (!UsesEditBuffer || editingColumnId == column.ColumnId);
 
     /// <summary>
     /// Builds the CSV for the current rows and downloads it in the browser.
@@ -3921,8 +4023,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// exports <c>Active</c> and not the key behind it.
     /// <para>
     /// <see cref="ExportScope"/> chooses between every filtered row and just the page on screen.
-    /// A grid backed by an <see cref="ItemsProvider"/> only holds the page it fetched, so it
-    /// exports that page and logs a warning the first time.
+    /// A paged <see cref="IQueryable{T}"/> source is queried for all matching rows when the
+    /// export is requested; keep its query provider alive until then. An <see cref="ItemsProvider"/>
+    /// only holds the page it fetched, so it exports that page and logs a warning the first time.
     /// </para>
     /// </remarks>
     /// <returns>The CSV text that was downloaded.</returns>
@@ -3971,6 +4074,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             return _exportRows;
         }
 
+        if (exportQuery != null)
+        {
+            return exportQuery.ToList();
+        }
+
         // An ItemsProvider only returned the page that was asked for, so that is all there is to
         // export. Say so once rather than silently handing back a short file.
         if (ItemsProvider != null && !warnedAboutProviderExportScope)
@@ -3999,8 +4107,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         try
         {
-            downloadModule ??= await Js.InvokeAsync<IJSObjectReference>("import",
-                "./_content/BlazorBlueprint.Components/js/file-download.js");
+            downloadModule ??= await JsModules.GetAsync(Js, "./_content/BlazorBlueprint.Components/js/file-download.js");
 
             // The byte-order mark is what makes Excel read the file as UTF-8 rather than as the
             // local codepage, which is why accented names arrive mangled without it.
@@ -4017,8 +4124,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         try
         {
-            clipboardModule ??= await Js.InvokeAsync<IJSObjectReference>("import",
-                "./_content/BlazorBlueprint.Components/js/clipboard.js");
+            clipboardModule ??= await JsModules.GetAsync(Js, "./_content/BlazorBlueprint.Components/js/clipboard.js");
             return await clipboardModule.InvokeAsync<bool>("copyToClipboard", text);
         }
         catch
@@ -4093,38 +4199,38 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private string GetHeaderCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
         bool isExpandColumn, bool isLastLeft, bool isFirstRight)
     {
-        var baseClass = "h-12 px-4 text-left align-middle font-medium text-muted-foreground";
+        var baseClass = "bb:h-12 bb:px-4 bb:text-left bb:align-middle bb:font-medium bb:text-muted-foreground";
 
         var pinnedClass = "";
         if (column.Pinned != ColumnPinning.None)
         {
-            var zClass = StickyHeader ? "z-30" : "z-10";
+            var zClass = StickyHeader ? "bb:z-30" : "bb:z-10";
             pinnedClass = zClass;
         }
 
         var separatorClass = "";
         if (isLastLeft)
         {
-            separatorClass = "border-r border-border";
+            separatorClass = "bb:border-r bb:border-border";
         }
         else if (isFirstRight)
         {
-            separatorClass = "border-l border-border";
+            separatorClass = "bb:border-l bb:border-border";
         }
 
         if (isSelectColumn || isExpandColumn)
         {
             // column.HeaderClass last so callers can override the baked-in width/padding
             // (e.g. compact select column). cn() is tailwind-merge, so later classes win.
-            return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass, column.HeaderClass);
+            return ClassNames.cn(baseClass, "bb:w-12", pinnedClass, separatorClass, column.HeaderClass);
         }
 
         var needsGroup = column.Sortable || column.Filterable || (Reorderable && column.Reorderable);
-        var sortClass = column.Sortable ? "cursor-pointer select-none" : "";
-        var groupClass = needsGroup ? "group/header" : "";
+        var sortClass = column.Sortable ? "bb:cursor-pointer bb:select-none" : "";
+        var groupClass = needsGroup ? "bb:group/header" : "";
         var needsRelative = (Resizable && column.Resizable) || (Reorderable && column.Reorderable);
-        var positionClass = needsRelative ? "relative" : "";
-        var overflowClass = HasTableFixed() ? "overflow-hidden" : "";
+        var positionClass = needsRelative ? "bb:relative" : "";
+        var overflowClass = HasTableFixed() ? "bb:overflow-hidden" : "";
 
         return ClassNames.cn(baseClass, sortClass, groupClass, positionClass, overflowClass,
             pinnedClass, separatorClass, column.HeaderClass);
@@ -4162,36 +4268,36 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private string GetCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
         bool isExpandColumn, bool isLastLeft, bool isFirstRight, TData? item = null)
     {
-        var baseClass = "p-4 align-middle transition-colors";
+        var baseClass = "bb:p-4 bb:align-middle bb:transition-colors";
 
         var pinnedClass = "";
         if (column.Pinned != ColumnPinning.None)
         {
-            pinnedClass = "z-10";
+            pinnedClass = "bb:z-10";
         }
 
         var separatorClass = "";
         if (isLastLeft)
         {
-            separatorClass = "border-r border-border";
+            separatorClass = "bb:border-r bb:border-border";
         }
         else if (isFirstRight)
         {
-            separatorClass = "border-l border-border";
+            separatorClass = "bb:border-l bb:border-border";
         }
 
         if (isSelectColumn || isExpandColumn)
         {
             // column.CellClass last so callers can override the baked-in width/padding
             // (e.g. CellClass="p-1" for a compact select column). cn() is tailwind-merge.
-            return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass, column.CellClass);
+            return ClassNames.cn(baseClass, "bb:w-12", pinnedClass, separatorClass, column.CellClass);
         }
 
         var cellClass = column.CellClass;
         var perItemClass = item != null ? column.CellClassFunc?.Invoke(item) : null;
 
-        var overflowClass = HasTableFixed() ? "overflow-hidden" : "";
-        var noWrapClass = column.NoWrap ? "whitespace-nowrap overflow-hidden text-ellipsis" : "";
+        var overflowClass = HasTableFixed() ? "bb:overflow-hidden" : "";
+        var noWrapClass = column.NoWrap ? "bb:whitespace-nowrap bb:overflow-hidden bb:text-ellipsis" : "";
 
         return ClassNames.cn(baseClass, cellClass, perItemClass, overflowClass, noWrapClass, pinnedClass, separatorClass);
     }
@@ -4327,12 +4433,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     public async ValueTask DisposeAsync()
     {
         GC.SuppressFinalize(this);
+        editValidation?.Dispose();
+        editBuffer?.Clear();
 
-        if (_observedItems != null)
-        {
-            _observedItems.CollectionChanged -= HandleItemsCollectionChanged;
-            _observedItems = null;
-        }
+        _observedItems?.CollectionChanged -= HandleItemsCollectionChanged;
+        _observedItems = null;
 
         _loadCts?.Cancel();
         _loadCts?.Dispose();
@@ -4350,7 +4455,6 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
             try
             {
-                await columnsModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
@@ -4360,28 +4464,6 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         selfRef?.Dispose();
 
-        if (clipboardModule != null)
-        {
-            try
-            {
-                await clipboardModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
 
-        if (downloadModule != null)
-        {
-            try
-            {
-                await downloadModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
     }
 }

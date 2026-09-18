@@ -1,0 +1,161 @@
+@page "/components/form-field-quantity-stepper"
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>FormFieldQuantityStepper Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">FormFieldQuantityStepper</h1>
+        <p class="text-xl text-muted-foreground">
+            A form field wrapper for QuantityStepper with built-in label, helper text, and error messages.
+        </p>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                A quantity control with a label and helper text.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldQuantityStepper @bind-Value="_quantity"
+                                        Label="Quantity"
+                                        HelperText="How many to add to the basket." />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Value:</p>
+            <p class="text-sm font-mono">@_quantity</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldQuantityStepper/basic.txt" />
+    </div>
+
+    <!-- Bounds -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Bounds and Remove</h2>
+            <p class="text-sm text-muted-foreground">
+                At <code class="text-xs bg-muted px-1 py-0.5 rounded">Min</code> the decrease button becomes a remove
+                action and raises <code class="text-xs bg-muted px-1 py-0.5 rounded">OnRemove</code>.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldQuantityStepper @bind-Value="_cases"
+                                        Label="Cases"
+                                        HelperText="Between 1 and 24, in steps of 6."
+                                        Min="1"
+                                        Max="24"
+                                        Step="6"
+                                        OnRemove="@(() => _removed = true)" />
+        </div>
+        @if (_removed)
+        {
+            <div class="rounded-lg border p-4 bg-muted/50">
+                <p class="text-sm">OnRemove fired — the basket line would be dropped.</p>
+            </div>
+        }
+        <CodeBlock Source="Components/FormFieldQuantityStepper/bounds.txt" />
+    </div>
+
+    <!-- Validation -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Validation</h2>
+            <p class="text-sm text-muted-foreground">
+                Validation errors display automatically inside an EditForm. Step down to zero and submit to see one.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <EditForm Model="_formModel" OnValidSubmit="HandleFormSubmit">
+                <DataAnnotationsValidator />
+                <div class="space-y-4">
+                    <BbFormFieldQuantityStepper @bind-Value="_formModel.Quantity"
+                                                Label="Quantity"
+                                                HelperText="At least one." />
+                    <BbButton Type="ButtonType.Submit">Submit</BbButton>
+                </div>
+            </EditForm>
+            @if (_formSubmitted)
+            {
+                <div class="mt-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 p-4">
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200">
+                        Submitted: Quantity = @_formModel.Quantity
+                    </p>
+                </div>
+            }
+        </div>
+        <CodeBlock Source="Components/FormFieldQuantityStepper/editform.txt" />
+    </div>
+
+    <!-- Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">A disabled quantity stepper form field.</p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldQuantityStepper Value="3"
+                                        Label="Quantity"
+                                        HelperText="This line is locked while the order is being paid for."
+                                        Disabled="true" />
+        </div>
+        <CodeBlock Source="Components/FormFieldQuantityStepper/disabled.txt" />
+    </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Label associated with the value through <code class="text-xs bg-muted px-1 py-0.5 rounded">for</code></AccessibilityItem>
+            <AccessibilityItem>Helper and error text linked with <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-describedby</code></AccessibilityItem>
+            <AccessibilityItem>The control is a labelled <code class="text-xs bg-muted px-1 py-0.5 rounded">group</code>; the decrease button relabels itself when it becomes a remove action</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between enabled form controls"><BbKbd>Tab</BbKbd> / <BbKbd>Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Press the focused button"><BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="FormFieldQuantityStepper">
+                <ApiParameter Name="Label" Type="string?" Default="null">The label text.</ApiParameter>
+                <ApiParameter Name="HelperText" Type="string?" Default="null">Helper text below the control.</ApiParameter>
+                <ApiParameter Name="ErrorText" Type="string?" Default="null">Manual error text override.</ApiParameter>
+                <ApiParameter Name="Value" Type="int" Default="0">The current quantity. Use @@bind-Value.</ApiParameter>
+                <ApiParameter Name="ValueChanged" Type="EventCallback&lt;int&gt;">Callback when the quantity changes.</ApiParameter>
+                <ApiParameter Name="Min" Type="int" Default="0">The smallest allowed quantity.</ApiParameter>
+                <ApiParameter Name="Max" Type="int?" Default="null">The largest allowed quantity, or null for no upper bound.</ApiParameter>
+                <ApiParameter Name="Step" Type="int" Default="1">The increment each press applies.</ApiParameter>
+                <ApiParameter Name="OnRemove" Type="EventCallback">Raised when the decrease button is pressed at <code>Min</code>.</ApiParameter>
+                <ApiParameter Name="ReadOnly" Type="bool" Default="false">Whether the quantity may only be read.</ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">Whether the control is disabled.</ApiParameter>
+                <ApiParameter Name="Orientation" Type="FieldOrientation" Default="Vertical">Label placement relative to the control.</ApiParameter>
+                <ApiParameter Name="InputClass" Type="string?" Default="null">CSS classes for the inner quantity stepper.</ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes applied to the component's root element (e.g. <code>data-testid</code>, <code>aria-label</code>).
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    private int _quantity = 1;
+    private int _cases = 6;
+    private bool _removed;
+    private readonly FormModel _formModel = new() { Quantity = 1 };
+    private bool _formSubmitted;
+
+    private void HandleFormSubmit() => _formSubmitted = true;
+
+    private sealed class FormModel
+    {
+        [Range(1, 99, ErrorMessage = "Order at least one.")]
+        public int Quantity { get; set; }
+    }
+}

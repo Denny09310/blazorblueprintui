@@ -25,7 +25,7 @@ namespace BlazorBlueprint.Components;
 /// &lt;/RadialBarChart&gt;
 /// </code>
 /// </example>
-public partial class BbRadialBar : SeriesBase
+public partial class BbRadialBar : StackableSeriesBase
 {
     /// <summary>
     /// Gets or sets the property name used to extract category names from the chart data.

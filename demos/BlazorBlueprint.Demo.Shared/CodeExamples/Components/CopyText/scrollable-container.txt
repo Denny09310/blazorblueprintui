@@ -2,7 +2,7 @@
      overflow. Nothing extra is needed on your side — this is just a CopyText inside a
      scroll box.
 
-     Note that, like every other overlay in the library, this relies on <PortalHost />
+     Note that, like every other overlay in the library, this relies on <BbPortalHost />
      being present in your root layout. -->
 
 <div class="border rounded-lg h-32 overflow-auto p-4 text-sm space-y-3">

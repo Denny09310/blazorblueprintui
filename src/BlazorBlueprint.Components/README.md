@@ -13,9 +13,11 @@ Pre-styled Blazor components with shadcn/ui design. Beautiful defaults with zero
 - **Built with Accessibility in Mind**: Includes ARIA attributes and keyboard support via BlazorBlueprint.Primitives
 - **Composable**: Flexible component composition patterns
 - **Type-Safe**: Full C# type safety with IntelliSense support
-- **.NET 8**: Built for the latest .NET platform
+- **.NET 10 minimum**: v4 targets `net10.0`; .NET 8 and .NET 9 are no longer supported
 
 ## Installation
+
+Retarget your application to .NET 10 or later before upgrading to v4, and keep Components and Primitives on matching v4 versions. This branch includes unreleased v4 changes; see the repository's [migration guide](https://github.com/blazorblueprintui/ui/blob/v4/V4-MIGRATION-GUIDE.md) and [changelog](https://github.com/blazorblueprintui/ui/blob/v4/CHANGELOG.md).
 
 ```bash
 dotnet add package BlazorBlueprint.Components
@@ -169,7 +171,11 @@ That's it! No Tailwind installation, no build configuration needed.
 | Component | Description |
 |-----------|-------------|
 | **Dashboard Grid** | Drag-and-drop, resizable widget layout for dashboards with responsive breakpoints and state persistence |
-| **DataGrid** | Enterprise data grid with sorting, filtering, row grouping, selection, expandable rows, virtualization, and column management |
+| **Scheduler** | Day/week/work-week scheduling with Monday/Sunday week starts, configurable slots, resource lanes, drag/resize, event editing, confirmed deletion, recurrence and optional per-event IANA time zones |
+| **TreeSelect** | Searchable single/multiple hierarchy selection with cascading checkboxes, indeterminate states, leaf-only selection and form binding |
+| **Cascader** | Hierarchy columns, path search, leaf/branch selection, keyboard/RTL navigation and automatic scrolling to the active level |
+| **FileUpload** | Optional transport callback with progress, cancellation, retries and preserved browser files |
+| **DataGrid** | Enterprise data grid with sorting, filtering, row grouping, row/cell/batch editing, isolated drafts, validation, rejected-save recovery, selection, expandable rows, virtualization, and column management |
 | **DataTable** | Tables with sorting, filtering, pagination, and row selection |
 | **DataView** | List and grid layouts with sorting, filtering, pagination, and infinite scroll |
 | **Dynamic Form** | Schema-driven form rendering from JSON or code definitions |
@@ -188,7 +194,7 @@ That's it! No Tailwind installation, no build configuration needed.
 | **Date Picker** | Date selection input with calendar popup |
 | **Date Range Picker** | Date range selection input |
 | **Field** | Form field wrapper with label, description, and error states |
-| **File Upload** | File upload with drag-and-drop support |
+| **File Upload** | Drag-and-drop file selection with preview and optional upload progress, cancellation and retry |
 | **Input** | Text input fields with multiple types and sizes |
 | **Input Field** | Integrated input with field label and description |
 | **Input Group** | Grouped input controls with addons and buttons |
@@ -540,6 +546,8 @@ Use the `Class` parameter to add custom CSS classes or Tailwind classes (if you 
 
 **Note:** BlazorBlueprint Components include pre-built CSS and don't require Tailwind. However, you can still use Tailwind classes for customization if you've set up Tailwind in your project.
 
+Classes you pass through `Class` come from **your** Tailwind build, not from `blazorblueprint.css`. Every utility the library ships is prefixed `bb:` (`.bb\:flex`, `.bb\:sm\:hidden`) and kept in its own cascade layer, so your build and the library's can never emit the same class name and their load order does not matter. The library strips its prefix when merging, so `Class="p-6"` still replaces the component's own `bb:p-4`. Do not `@source` this package from your Tailwind input — it finds only prefixed tokens and emits nothing. If you have no Tailwind build, the prefixed classes work anywhere on the page (`class="bb:flex bb:gap-4"`), but the set is whatever the components use and is not a stable API.
+
 ### Component Composition
 
 Build complex UIs by composing components:
@@ -603,15 +611,18 @@ For full documentation, examples, and API reference, visit:
 
 - [BlazorBlueprint.Primitives](https://www.nuget.org/packages/BlazorBlueprint.Primitives) - Headless component primitives (auto-installed)
 - [BlazorBlueprint.Icons.Lucide](https://www.nuget.org/packages/BlazorBlueprint.Icons.Lucide) - Lucide icon set (auto-installed)
-- Pre-built CSS (included in package)
-- No external dependencies required!
+- [TailwindMerge.NET](https://github.com/desmondinho/tailwind-merge-dotnet), [Markdig](https://github.com/xoofx/markdig), and [HtmlSanitizer](https://github.com/mganss/HtmlSanitizer) (auto-installed)
+- Pre-built CSS, tw-animate-css animation utilities, and Apache ECharts (bundled)
 
 **Optional:**
 - Tailwind CSS (if you want to use Tailwind classes for customization)
+- Quill 2 (load its JavaScript and CSS in the host application when using RichTextEditor)
 
 ## License
 
 Apache License 2.0 - see [LICENSE](https://github.com/blazorblueprintui/ui/blob/main/LICENSE) for details.
+
+The package includes `LICENSE`, `NOTICE`, and `staticwebassets/THIRD-PARTY-NOTICES.txt`. The bundled Tailwind CSS, tw-animate-css, and ECharts assets retain their upstream licenses, including the D3, ZRender, and Microsoft helper notices within ECharts. These notices are also available at `_content/BlazorBlueprint.Components/THIRD-PARTY-NOTICES.txt`.
 
 ## Contributing
 

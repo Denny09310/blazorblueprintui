@@ -77,41 +77,45 @@
                         Import and use styled components directly with beautiful defaults:
                     </p>
                     <div class="rounded-lg border bg-muted/50 p-4">
-                        <pre class="text-sm overflow-x-auto"><code>@@using BlazorBlueprint.Components.BbDialog
+                        <pre class="text-sm overflow-x-auto"><code>@@using BlazorBlueprint.Components
 
-&lt;Dialog&gt;
-    &lt;DialogTrigger&gt;Open Dialog&lt;/DialogTrigger&gt;
-    &lt;DialogContent&gt;
-        &lt;DialogHeader&gt;
-            &lt;DialogTitle&gt;Dialog Title&lt;/DialogTitle&gt;
-            &lt;DialogDescription&gt;Description text&lt;/DialogDescription&gt;
-        &lt;/DialogHeader&gt;
+&lt;BbDialog&gt;
+    &lt;BbDialogTrigger&gt;Open Dialog&lt;/BbDialogTrigger&gt;
+    &lt;BbDialogContent&gt;
+        &lt;BbDialogHeader&gt;
+            &lt;BbDialogTitle&gt;Dialog Title&lt;/BbDialogTitle&gt;
+            &lt;BbDialogDescription&gt;Description text&lt;/BbDialogDescription&gt;
+        &lt;/BbDialogHeader&gt;
         &lt;p&gt;Dialog content goes here&lt;/p&gt;
-    &lt;/DialogContent&gt;
-&lt;/Dialog&gt;</code></pre>
+    &lt;/BbDialogContent&gt;
+&lt;/BbDialog&gt;</code></pre>
                     </div>
                 </div>
 
                 <div class="space-y-3">
                     <h3 class="text-lg font-semibold">Using a Primitive (Custom Styling)</h3>
                     <p class="text-sm text-muted-foreground">
-                        Use primitives when you want full control over styling:
+                        Use primitives when you want full control over styling. Primitives and components
+                        share the same type names, so import one namespace per file &mdash; or fully qualify
+                        the tags, as <code class="text-xs bg-muted px-1 py-0.5 rounded">BlazorBlueprint.Primitives.Dialog.BbDialog</code>.
                     </p>
                     <div class="rounded-lg border bg-muted/50 p-4">
-                        <pre class="text-sm overflow-x-auto"><code>&lt;BlazorBlueprint.Primitives.Dialog.BbDialog&gt;
-    &lt;DialogTrigger class="my-custom-button-class"&gt;
+                        <pre class="text-sm overflow-x-auto"><code>@@using BlazorBlueprint.Primitives.Dialog
+
+&lt;BbDialog&gt;
+    &lt;BbDialogTrigger class="my-custom-button-class"&gt;
         Open Dialog
-    &lt;/DialogTrigger&gt;
-    &lt;DialogPortal&gt;
-        &lt;DialogOverlay class="my-overlay-styles" /&gt;
-        &lt;DialogContent class="my-custom-dialog-styles"&gt;
-            &lt;DialogTitle class="my-title-styles"&gt;
+    &lt;/BbDialogTrigger&gt;
+    &lt;BbDialogPortal&gt;
+        &lt;BbDialogOverlay class="my-overlay-styles" /&gt;
+        &lt;BbDialogContent class="my-custom-dialog-styles"&gt;
+            &lt;BbDialogTitle class="my-title-styles"&gt;
                 Custom Styled Dialog
-            &lt;/DialogTitle&gt;
+            &lt;/BbDialogTitle&gt;
             &lt;p class="my-content-styles"&gt;Fully custom!&lt;/p&gt;
-        &lt;/DialogContent&gt;
-    &lt;/DialogPortal&gt;
-&lt;/BlazorBlueprint.Primitives.Dialog.BbDialog&gt;</code></pre>
+        &lt;/BbDialogContent&gt;
+    &lt;/BbDialogPortal&gt;
+&lt;/BbDialog&gt;</code></pre>
                     </div>
                 </div>
             </div>
@@ -131,19 +135,19 @@
                     </p>
                     <div class="rounded-lg border bg-muted/50 p-4">
                         <pre class="text-sm overflow-x-auto"><code>&lt;!-- Root component manages state --&gt;
-&lt;DialogPrimitive&gt;
+&lt;BbDialog&gt;
     &lt;!-- Trigger opens the dialog --&gt;
-    &lt;DialogTrigger&gt;...&lt;/DialogTrigger&gt;
+    &lt;BbDialogTrigger&gt;...&lt;/BbDialogTrigger&gt;
 
     &lt;!-- Portal renders outside DOM hierarchy --&gt;
-    &lt;DialogPortal&gt;
+    &lt;BbDialogPortal&gt;
         &lt;!-- Overlay for click-outside behavior --&gt;
-        &lt;DialogOverlay /&gt;
+        &lt;BbDialogOverlay /&gt;
 
         &lt;!-- Content with focus management --&gt;
-        &lt;DialogContent&gt;...&lt;/DialogContent&gt;
-    &lt;/DialogPortal&gt;
-&lt;/DialogPrimitive&gt;</code></pre>
+        &lt;BbDialogContent&gt;...&lt;/BbDialogContent&gt;
+    &lt;/BbDialogPortal&gt;
+&lt;/BbDialog&gt;</code></pre>
                     </div>
                 </div>
 
@@ -153,15 +157,15 @@
                         Control component state from parent using @@bind-:
                     </p>
                     <div class="rounded-lg border bg-muted/50 p-4">
-                        <pre class="text-sm overflow-x-auto"><code>&lt;DialogPrimitive @@bind-Open="isDialogOpen"&gt;
-    &lt;DialogTrigger&gt;Open&lt;/DialogTrigger&gt;
-    &lt;DialogContent&gt;
+                        <pre class="text-sm overflow-x-auto"><code>&lt;BbDialog @@bind-Open="isDialogOpen"&gt;
+    &lt;BbDialogTrigger&gt;Open&lt;/BbDialogTrigger&gt;
+    &lt;BbDialogContent&gt;
         &lt;p&gt;Controlled by parent component&lt;/p&gt;
         &lt;button @@onclick="() => isDialogOpen = false"&gt;
             Close
         &lt;/button&gt;
-    &lt;/DialogContent&gt;
-&lt;/DialogPrimitive&gt;
+    &lt;/BbDialogContent&gt;
+&lt;/BbDialog&gt;
 
 @@code {
     private bool isDialogOpen = false;
@@ -175,13 +179,13 @@
                         Let the component manage its own state:
                     </p>
                     <div class="rounded-lg border bg-muted/50 p-4">
-                        <pre class="text-sm overflow-x-auto"><code>&lt;DialogPrimitive&gt;
-    &lt;DialogTrigger&gt;Open&lt;/DialogTrigger&gt;
-    &lt;DialogContent&gt;
+                        <pre class="text-sm overflow-x-auto"><code>&lt;BbDialog&gt;
+    &lt;BbDialogTrigger&gt;Open&lt;/BbDialogTrigger&gt;
+    &lt;BbDialogContent&gt;
         &lt;p&gt;Component manages its own open/close state&lt;/p&gt;
-        &lt;DialogClose&gt;Close&lt;/DialogClose&gt;
-    &lt;/DialogContent&gt;
-&lt;/DialogPrimitive&gt;</code></pre>
+        &lt;BbDialogClose&gt;Close&lt;/BbDialogClose&gt;
+    &lt;/BbDialogContent&gt;
+&lt;/BbDialog&gt;</code></pre>
                     </div>
                 </div>
             </div>
@@ -226,13 +230,13 @@
                         Understand the two-tier architecture in depth
                     </p>
                 </a>
-                <a href="/primitives/dialog-primitive" class="p-5 border rounded-lg hover:bg-accent transition-colors space-y-2 no-underline">
+                <a href="/primitives/dialog" class="p-5 border rounded-lg hover:bg-accent transition-colors space-y-2 no-underline">
                     <h3 class="font-semibold text-primary">Explore Primitives</h3>
                     <p class="text-sm text-muted-foreground">
                         See primitive demos with code examples
                     </p>
                 </a>
-                <a href="/components/dialog-demo" class="p-5 border rounded-lg hover:bg-accent transition-colors space-y-2 no-underline">
+                <a href="/components/dialog" class="p-5 border rounded-lg hover:bg-accent transition-colors space-y-2 no-underline">
                     <h3 class="font-semibold text-primary">Browse Components</h3>
                     <p class="text-sm text-muted-foreground">
                         View styled components ready to use

@@ -1,0 +1,4 @@
+<BbFormFieldQuantityStepper Value="3"
+                            Label="Quantity"
+                            HelperText="This line is locked while the order is being paid for."
+                            Disabled="true" />

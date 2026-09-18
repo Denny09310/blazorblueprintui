@@ -19,12 +19,13 @@ Beautiful UI components for Blazor, built with accessibility in mind. Inspired b
 </p>
 
 <p align="center">
-  <strong>100+ Components</strong> · <strong>11 Chart Types</strong> · <strong>3,200+ Icons</strong>
+  <strong>Styled Components</strong> · <strong>Headless Primitives</strong> · <strong>11 Chart Types</strong> · <strong>5,300+ Icons</strong>
 </p>
 
 ## Table of Contents
 
 - [Why Blazor Blueprint?](#why-blazor-blueprint)
+- [What's New in v4](#whats-new-in-v4)
 - [AI Integration](#ai-integration)
 - [Getting Started](#getting-started)
 - [Components](#components)
@@ -40,29 +41,50 @@ Beautiful UI components for Blazor, built with accessibility in mind. Inspired b
 
 ## Why Blazor Blueprint?
 
-Blazor developers lack a modern, design-system-first UI library equivalent to what React developers have with shadcn/ui. Blazor Blueprint fills that gap — pre-built components and headless primitives that integrate directly with Tailwind and shadcn themes, targeting .NET 8 across Server, WebAssembly, and Auto render modes.
+Blazor developers lack a modern, design-system-first UI library equivalent to what React developers have with shadcn/ui. Blazor Blueprint fills that gap — pre-built components and headless primitives that integrate directly with Tailwind and shadcn themes, targeting .NET 10 across Server, WebAssembly, and Auto render modes.
 
 - **Zero Configuration** — Pre-built CSS included. No Tailwind setup, no Node.js, no build tools required.
+- **Coexists with Your Tailwind** — Every utility in the prebuilt CSS is prefixed `bb:` and kept in its own cascade layer, so it never collides with your own Tailwind build.
 - **Full shadcn/ui Theme Compatibility** — Use themes from [shadcn/ui](https://ui.shadcn.com/themes) or [tweakcn](https://tweakcn.com) directly.
 - **Built with Accessibility in Mind** — Includes ARIA attributes, keyboard support, and semantic HTML structure.
 - **Dark Mode Built-in** — Light and dark themes with CSS variables, ready out of the box.
 - **Two-Layer Architecture** — Use pre-styled components for speed, or headless primitives for full control.
 
+## What's New in v4
+
+The `v4` branch includes unreleased changes. See the [changelog](CHANGELOG.md#unreleased) for the full list and the [migration guide](V4-MIGRATION-GUIDE.md) for breaking changes.
+
+- **.NET 10 minimum** — Components, Primitives and icon packages target `net10.0`. v4 drops .NET 8 and .NET 9 support.
+- **DataGrid cell and batch editing** — Isolated drafts, validation, rejected-save recovery and keyboard save/cancel. Inline editors preserve column widths, support custom Bb input controls, and reapply sorting after accepted edits. Applications supply a deep-copy `EditItemFactory` and persistence callbacks.
+- **Scheduler** — Day, Week and Monday–Friday WorkWeek views, a Monday/Sunday week-start selector, resource lanes and overlapping appointments. Create/edit events with Bb controls, confirm deletions, drag to move and resize either time boundary. Recurring series support individual exceptions; IANA time zones include daylight-saving validation. Configure 15/30/60-minute slots with `SlotMinutes`, or hide time-zone controls with `EnableTimeZones="false"` to use the configured `TimeZoneId` for display and editing. `@bind-FirstDayOfWeek` retains the Week preference; WorkWeek always starts Monday and navigates by seven days.
+- **TreeSelect and Cascader** — Searchable hierarchy selection with form bindings and keyboard navigation. TreeSelect supports cascading parent checkboxes and indeterminate states; Cascader reveals the selected path and scrolls to newly opened levels.
+- **FileUpload lifecycle** — Supply an `UploadHandler` for progress, cancellation and retry, with browser file references retained across selections.
+
+Try these features in the [source demos](#demo-applications).
+
 ## AI Integration
 
 Blazor Blueprint ships with a built-in MCP server and llms.txt — so Claude, Cursor, Copilot, and Windsurf generate correct component code on the first try.
 
-- **MCP Server** — 11 tools give your AI structured access to every component, pattern, and API.
-- **llms.txt** — 100+ machine-optimized docs so any LLM can understand the library without hallucinating.
+- **MCP Server** — 15 tools give your AI structured access to every component, primitive, blueprint, icon library, and the changelog.
+- **llms.txt** — 180+ machine-optimized docs so any LLM can understand the library without hallucinating.
 - **Works Everywhere** — Claude Code, Cursor, GitHub Copilot, Windsurf — any MCP-compatible AI tool.
 
 ```bash
-npx blazorblueprint add mcp-server
+# Claude Code
+claude mcp add blazorblueprint --transport stdio -- npx -y @blazorblueprint/mcp
+
+# Any other MCP client: run the server with
+npx -y @blazorblueprint/mcp
 ```
 
 Learn more at [blazorblueprintui.com](https://blazorblueprintui.com).
 
 ## Getting Started
+
+### Requirements
+
+v4 requires **.NET 10 or later** and an interactive Blazor render mode. Retarget .NET 8/9 applications before upgrading, and keep Components and Primitives on matching v4 versions. To build this branch, use the SDK specified in [global.json](global.json) (10.0.400 or a later .NET 10 feature band).
 
 ### Installation
 
@@ -77,11 +99,13 @@ dotnet add package BlazorBlueprint.Primitives
 Optionally add an icon library:
 
 ```bash
-dotnet add package BlazorBlueprint.Icons.Lucide       # 1,640+ icons
+dotnet add package BlazorBlueprint.Icons.Lucide       # 1,750+ icons
 dotnet add package BlazorBlueprint.Icons.Heroicons    # 1,288 icons (4 variants)
 dotnet add package BlazorBlueprint.Icons.Feather      # 286 icons
 dotnet add package BlazorBlueprint.Icons.FontAwesome  # 2,066 icons (3 variants, includes brand logos)
 ```
+
+Upgrading from v3? Breaking changes and what to do about them are in [V4-MIGRATION-GUIDE.md](V4-MIGRATION-GUIDE.md).
 
 ### Project Template
 
@@ -119,6 +143,8 @@ builder.Services.AddBlazorBlueprintComponents();
      a flash of light. Must be a classic blocking script in <head>. See THEMING.md. -->
 <script src="_content/BlazorBlueprint.Components/js/theme-init.js"></script>
 ```
+
+If you also run your own Tailwind build, load its output before or after `blazorblueprint.css` — the library's utilities are prefixed `bb:`, so the two never define the same class. Do not `@source` the library from your Tailwind input; it is not needed. See [THEMING.md](THEMING.md).
 
 **4. Add BbPortalHost** to your root layout (required for overlays like Dialog, Sheet, Popover):
 
@@ -169,7 +195,48 @@ builder.Services.AddBlazorBlueprintComponents();
 
 ## Components
 
-Blazor Blueprint includes **112 styled components** organized into the following categories.
+Blazor Blueprint includes the styled component families below, with composable subcomponents and headless primitives. See the [changelog](CHANGELOG.md) for the v4 additions and changes.
+
+### New in this v4 checkout
+
+The current expansion adds **42 styled Razor components**: 18 primary controls and 24 composition helpers. The primary controls have **18 focused demo pages**, each with live examples, snippets, accessibility guidance and API references. Composition helpers are documented within their owning component's page. The component homepage, sidebar and command search share the same demo-page catalog; related pages are grouped consistently, and every menu link opens a distinct demo. The combined shopping example is a **[Mobile Shop recipe](demos/BlazorBlueprint.Demo.Shared/Pages/Recipes/MobileShopRecipe.razor)** at `/recipes/mobile-shop`.
+
+Sidebar and homepage `v4` badges identify new components only. Existing components keep their original status; API-reference badges identify individual properties, methods, enum values and supporting components added in v4 (compared with v3.17). These are source additions pending release, not a claim about the stable package.
+
+All names below include the `Bb` prefix in code. Generic type parameters are omitted from the inventory.
+
+| Family | New components | Demo |
+|--------|----------------|------|
+| Segmented inputs (2) | `BbDateInput`, `BbTimeInput` | `/components/date-input`, `/components/time-input` |
+| Form fields (5) | `BbFormFieldDateInput`, `BbFormFieldTimeInput`, `BbFormFieldTreeSelect`, `BbFormFieldCascader`, `BbFormFieldQuantityStepper` | `/components/form-field-date-input`, `/components/form-field-time-input`, `/components/form-field-tree-select`, `/components/form-field-cascader`, `/components/form-field-quantity-stepper` |
+| Mobile (6) | `BbAppBar`, `BbBottomNav`, `BbBottomNavItem`, `BbNotificationBadge`, `BbQuantityStepper`, `BbSectionHeader` | `/components/app-bar`, `/components/bottom-nav`, `/components/notification-badge`, `/components/quantity-stepper`, `/components/section-header` |
+| Motion (6) | `BbMotion`, `BbHeightAnimation`, `BbSelectionIndicator`, `BbPageTransition`, `BbScreenTransition`, `BbRenderStateProvider` | `/components/motion`, `/components/height-animation`, `/components/selection-indicator`, `/components/page-transition`, `/components/screen-transition`, `/components/render-state-provider` |
+| Dropdown menu (5) | `BbDropdownMenuRadioGroup`, `BbDropdownMenuRadioItem`, `BbDropdownMenuSub`, `BbDropdownMenuSubTrigger`, `BbDropdownMenuSubContent` | `/components/dropdown-menu` |
+| Context menu (6) | `BbContextMenuCheckboxItem`, `BbContextMenuRadioGroup`, `BbContextMenuRadioItem`, `BbContextMenuSub`, `BbContextMenuSubTrigger`, `BbContextMenuSubContent` | `/components/context-menu` |
+| Menubar (5) | `BbMenubarRadioGroup`, `BbMenubarRadioItem`, `BbMenubarSub`, `BbMenubarSubTrigger`, `BbMenubarSubContent` | `/components/menubar` |
+| Sidebar (4) | `BbSidebarPillNav`, `BbSidebarPillNavItem`, `BbSidebarPillInset`, `BbSidebarSelectionIndicator` | `/components/sidebar` |
+| Other helpers (3) | `BbBadgeIcon`, `BbSortableHandle`, `BbThemeScope` | `/components/badge`, `/components/sortable`, `/components/theme` |
+
+The Primitives package also gains six shared headless components used by the styled menu families: `BbMenuRadioGroup`, `BbMenuRadioItem`, `BbMenuSub`, `BbMenuSubTrigger`, `BbMenuSubContent`, and `BlazorBlueprint.Primitives.ContextMenu.BbContextMenuCheckboxItem`. They are supporting implementations, counted separately from the 42 styled components.
+
+Existing components gain DataView selection/grouping/list virtualization and a mobile toolbar; MultiSelect footer/close; FilterBuilder presets/editors; Drawer snapping; Select bottom sheets; theme presets; richer Carousel controls; keyboard Sortable/drop permissions; and Badge, ToggleGroup and Separator variants. All additions remain open source.
+
+**TreeSelect keyboard behavior:** with a tree node focused, **Space** expands or collapses its branch. **Enter** selects and closes in single-selection mode; in checkbox mode, Enter checks/unchecks the item and keeps the dropdown open. Space on a leaf does not change the selection. `LeafOnly` continues to limit selectable values.
+
+### Mobile, Motion and Themes
+
+| Component | Description |
+|-----------|-------------|
+| **App Bar / Bottom Navigation** | Safe-area navigation, title/back actions, active links and touch-sized controls |
+| **Notification Badge / Section Header** | Accessible count/dot overlays and section headings with actions |
+| **Motion** | Entrance/exit presets, custom keyframes, viewport/hover/press/manual triggers and reduced-motion handling |
+| **Height Animation** | Expansion, collapse and automatic content resizing while retaining child state |
+| **Selection Indicator** | Animated active, hover and keyboard-focus feedback |
+| **Page / Screen Transition** | Incoming navigation and keyed screen animations with stable first renders |
+| **Render State Provider** | Cascading prerender/interactive state |
+| **Theme Scope** | Scoped density, typography, surfaces and menu appearance; floating overlays inherit the scope |
+
+Theme presets, mobile DataView sorting/filtering, drawer snap points, carousel autoplay/drag controls and sidebar pill navigation extend their existing component families. Named fonts require application-provided font assets.
 
 ### Enterprise Components
 
@@ -178,14 +245,18 @@ Production-ready components for complex data-driven applications:
 | Component | Description |
 |-----------|-------------|
 | **Dashboard Grid** | Drag-and-drop, resizable widget layout for composing dashboards. Built on CSS Grid with responsive breakpoints, state persistence, keyboard accessibility, and loading/empty states. |
-| **DataGrid** | Full-featured data grid with multi-column sorting, per-column filtering, row grouping with aggregates, hierarchical tree data, row selection, expandable rows, virtualization, context menus, pinned columns, column reordering/resizing/visibility, and state persistence. Supports `IQueryable`, `IEnumerable`, and `ItemsProvider` data sources. |
+| **Scheduler** | Day/week/work-week scheduling with Monday/Sunday week starts, configurable slots, resource lanes, drag/resize, event editing, confirmed deletion, recurrence and optional per-event IANA time zones |
+| **TreeSelect** | Searchable single/multiple hierarchy selection with cascading checkboxes, indeterminate states, leaf-only selection and form binding |
+| **Cascader** | Hierarchy columns, path search, leaf/branch selection, keyboard/RTL navigation and automatic scrolling to the active level |
+| **FileUpload** | Optional transport callback with progress, cancellation, retries and preserved browser files |
+| **DataGrid** | Full-featured data grid with row/cell/batch editing, validation, multi-column sorting, per-column filtering, row grouping with aggregates, hierarchical tree data, row selection, expandable rows, virtualization, context menus, pinned columns, column reordering/resizing/visibility, and state persistence. Supports `IQueryable`, `IEnumerable`, and `ItemsProvider` data sources. |
 | **Dynamic Form** | Schema-driven form rendering — define fields, validation rules, and layout in a schema object, and the component generates the complete form with appropriate inputs, conditional visibility, and error display. |
 | **Filter Builder** | Visual query builder for constructing complex filter expressions with AND/OR logic, nested condition groups, and type-aware operators. Pairs with DataGrid for interactive data exploration. |
 | **Form Wizard** | Multi-step form wizard with progress indicators, per-step validation, optional/skippable steps, and navigation controls. |
 | **Chart** | 11 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Scatter) built on Apache ECharts with a declarative composition API and automatic theme integration. |
 | **Dock** | IDE-style docking layout — drag-and-drop panels between regions, pinning, maximize, close/reopen, pop-out floating panels, and tab-strip overflow. |
 | **Event Calendar** | Agenda/event calendar with Month, Week, and Agenda views, generic over your own event model, with per-event templates and styling. |
-| **Rich Text Editor** | WYSIWYG editor with formatting toolbar and HTML output. |
+| **Rich Text Editor** | WYSIWYG editor on Quill 2 — headings, lists and checklists, links, images with an upload hook, tables, text colour and highlight, alignment, inline and block code, undo/redo — with sanitised HTML and Delta output. |
 | **Markdown Editor** | Toolbar formatting with split-pane live preview. |
 
 ### Form & Input
@@ -200,17 +271,20 @@ Production-ready components for complex data-driven applications:
 | **Color Picker** | Color selection with swatches and custom input |
 | **Combobox** | Searchable autocomplete dropdown |
 | **Currency Input** | Currency-formatted numeric input with locale support |
+| **Date Input** | Culture-ordered date segments with keyboard editing, calendar access and EditForm draft validation |
 | **Date Picker** | Date picker with popover calendar, optional manual text entry with configurable input formats, and formatting options |
 | **Date Range Picker** | Dual-calendar range selection with quick-select presets and optional auto-apply |
 | **Date Time Picker** | Combined date and time selection in one popover — calendar plus 12/24h time panel with optional seconds |
 | **Dynamic Form** | Schema-driven form rendering — generates complete forms from a definition with automatic input selection, validation, conditional visibility, and layout customization |
 | **Field** | Combines label, control, description, and error for structured forms |
 | **Filter Builder** | Visual query builder for data filter expressions with AND/OR logic, condition groups, and two-way binding |
-| **File Upload** | Drag-and-drop file upload with preview |
+| **File Upload** | Drag-and-drop file selection with preview and optional upload progress, cancellation and retry |
+| **Form Field Cascader** | Pre-configured cascader field with built-in label, description, and validation |
 | **Form Field Checkbox** | Pre-configured checkbox field with built-in label, description, and validation |
 | **Form Field Checkbox Group** | Pre-configured checkbox group field with built-in label, description, and manual validation |
 | **Form Field Combobox** | Pre-configured combobox field with built-in label, description, and validation |
 | **Form Field Currency Input** | Pre-configured currency input field with built-in label, description, and validation |
+| **Form Field Date Input** | Pre-configured segmented date input field with built-in label, description, and validation |
 | **Form Field Date Picker** | Pre-configured date picker field with built-in label, description, and validation |
 | **Form Field Date Range Picker** | Pre-configured date range picker field with built-in label, description, and manual validation |
 | **Form Field Date Time Picker** | Pre-configured date-time picker field with built-in label, description, and validation |
@@ -221,35 +295,40 @@ Production-ready components for complex data-driven applications:
 | **Form Field MultiSelect** | Pre-configured multi-select field with built-in label, description, and validation |
 | **Form Field Native Select** | Pre-configured native select field with built-in label, description, and validation |
 | **Form Field Numeric Input** | Pre-configured numeric input field with built-in label, description, and validation |
+| **Form Field Quantity Stepper** | Pre-configured quantity stepper field with built-in label, description, and validation |
 | **Form Field RadioGroup** | Pre-configured radio group field with built-in label, description, and validation |
 | **Form Field Select** | Pre-configured select field with built-in label, description, and validation |
 | **Form Field Switch** | Pre-configured switch field with built-in label, description, and validation |
 | **Form Field Tag Input** | Pre-configured tag input field with built-in label, description, and validation |
 | **Form Field Textarea** | Pre-configured textarea field with built-in label, description, and validation |
+| **Form Field Time Input** | Pre-configured segmented time input field with built-in label, description, and validation |
 | **Form Field Time Picker** | Pre-configured time picker field with built-in label, description, and validation |
+| **Form Field Tree Select** | Pre-configured tree select field with built-in label, description, and validation |
 | **Form Wizard** | Multi-step form wizard with step navigation, progress indication, per-step validation, and optional/skippable steps |
 | **Input** | Text input with multiple types and validation |
-| **Input Field** | Typed input with automatic conversion, formatting, and validation for 15+ types |
+| **Input Field** | Typed input with automatic conversion, formatting, and validation for a dozen built-in types (numbers, dates, times, `Guid`, `bool`, `string`) and their nullable forms |
 | **Input Group** | Enhanced inputs with icons, buttons, and addons |
 | **Input OTP** | One-time password input with individual digit fields |
 | **Label** | Form labels with control association |
 | **Masked Input** | Input with format masks (phone, SSN, etc.) |
-| **MultiSelect** | Searchable multi-selection with tags and checkboxes |
+| **MultiSelect** | Searchable multi-selection with tags, checkboxes, custom footer and programmatic close |
 | **Native Select** | Browser-native select with consistent styling |
 | **Numeric Input** | Numeric input with increment/decrement controls |
 | **Radio Group** | Radio buttons with keyboard navigation |
-| **Range Slider** | Dual-handle slider for selecting value ranges |
+| **Range Slider** | Dual-handle slider for selecting value ranges, horizontal or vertical |
 | **Rating** | Star/icon rating input |
-| **Select** | Dropdown select with search and keyboard navigation |
-| **Slider** | Range input with drag support |
-| **Sortable** | Drag-and-drop sortable lists and grids powered by SortableJS, with connected multi-list support and Kanban-style boards |
+| **Select** | Keyboard-accessible selection with popover or bottom-sheet presentation |
+| **Slider** | Range input with drag support, horizontal or vertical |
+| **Sortable** | Pointer and keyboard sortable lists/grids, connected-list transfer, move/drop permissions, reusable handles and custom drag previews |
 | **Split Button** | Primary action with dropdown for secondary actions |
 | **Switch** | Toggle switch with customizable thumb |
 | **Tag Input** | Inline tag/chip input for managing string lists with suggestions, validation, and customizable triggers |
 | **Textarea** | Multi-line text input with auto-sizing and character count |
+| **Time Input** | Segmented 12/24-hour entry with optional seconds, bounds, picker and EditForm validation |
+| **Quantity Stepper** | Touch-sized quantity editing with bounds and remove-at-minimum action |
 | **Time Picker** | Time selection with hour/minute controls |
 | **Toggle** | Two-state toggle button |
-| **Toggle Group** | Single or multi-select toggle group |
+| **Toggle Group** | Single/multiple selection with required-selection and horizontal-scrolling options |
 
 ### Layout & Navigation
 
@@ -259,7 +338,7 @@ Production-ready components for complex data-driven applications:
 | **Aspect Ratio** | Maintain width/height ratio for responsive content |
 | **Breadcrumb** | Navigation trail with hierarchical location |
 | **Card** | Container with header, content, footer, and action areas |
-| **Carousel** | Slideshow for cycling through content |
+| **Carousel** | Responsive slide counts, gaps, autoplay/pause, dragging, indicators and slide-change callbacks |
 | **Collapsible** | Expandable/collapsible panels |
 | **Dock** | IDE-style docking layout with drag-and-drop panels, pinning, maximize, pop-out floating windows, and tab overflow |
 | **Item** | Flexible list items with media, content, and actions |
@@ -268,8 +347,8 @@ Production-ready components for complex data-driven applications:
 | **Resizable** | Resizable panels with drag handles |
 | **Responsive Nav** | Adaptive navigation that switches between desktop and mobile layouts |
 | **Scroll Area** | Custom scrollable area with styled scrollbars |
-| **Separator** | Visual dividers (horizontal and vertical) |
-| **Sidebar** | Responsive sidebar with collapsible icon mode, variants (default, floating, inset), and mobile sheet integration |
+| **Separator** | Horizontal/vertical dividers with solid, dashed and dotted line styles |
+| **Sidebar** | Responsive icon/pill collapse modes, animated navigation indicators, inset/floating variants and mobile sheets |
 | **Tabs** | Tabbed interfaces with controlled/uncontrolled modes |
 | **Timeline** | Vertical timeline with alignment, connector styles, loading states, and collapsible items |
 
@@ -279,12 +358,12 @@ Production-ready components for complex data-driven applications:
 |-----------|-------------|
 | **Alert Dialog** | Modal requiring user acknowledgement |
 | **Command** | Command palette with keyboard navigation, filtering, and dialog mode |
-| **Context Menu** | Right-click menu with customizable items |
-| **Dialog** | Modal dialogs with programmatic `DialogService` supporting alert, prompt, and custom component dialogs |
-| **Drawer** | Mobile-friendly panel sliding from screen edge |
-| **Dropdown Menu** | Menus with checkbox items and keyboard navigation |
+| **Context Menu** | Right-click menus with checkbox/radio items and nested submenus |
+| **Dialog** | Modal dialogs with programmatic `DialogService` (alert, prompt, custom component dialogs) and an optional native `<dialog>` rendering strategy |
+| **Drawer** | Sliding panels with pointer/keyboard snap points and optional drag dismissal |
+| **Dropdown Menu** | Checkbox/radio choices and nested submenus with keyboard navigation |
 | **Hover Card** | Rich hover previews |
-| **Menubar** | Desktop application-style menu bar |
+| **Menubar** | Application menus with checkbox/radio choices and nested submenus |
 | **Popover** | Floating content containers |
 | **Sheet** | Slide-out panels (top, right, bottom, left) |
 | **Toast** | Notification messages with multiple positions via `ToastService` |
@@ -296,12 +375,13 @@ Production-ready components for complex data-driven applications:
 |----------------------|--------------------------------------------------------------------------------------------------------------------|
 | **Chart**            | 11 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Scatter) with theme integration |
 | **Dashboard Grid**   | Drag-and-drop, resizable widget layout for dashboards with responsive breakpoints, state persistence, and keyboard accessibility |
-| **DataGrid**         | Enterprise data grid with sorting, per-column filtering, row grouping with aggregates, hierarchical tree data, selection, expandable rows, row virtualization, context menu, pinned columns, column reordering/resizing/visibility, and state persistence |
+| **DataGrid**         | Enterprise data grid with row/cell/batch editing, validation, sorting, per-column filtering, row grouping with aggregates, hierarchical tree data, selection, expandable rows, row virtualization, context menu, pinned columns, column reordering/resizing/visibility, and state persistence |
 | **DataTable**        | Tables with sorting, filtering, pagination, and row selection                                                      |
-| **DataView**         | Displays data using templates in a grid or list layout with sorting, filtering, pagination, and infinite scrolling |
+| **DataView**         | Templated grid/list layouts, selection, grouping, list virtualization, mobile sorting/filtering, pagination and infinite scrolling |
 | **Event Calendar**   | Month, Week, and Agenda views over your own event model with per-event templates, styling, and click callbacks    |
 | **Markdown Editor**  | Toolbar formatting with live preview                                                                               |
-| **Rich Text Editor** | WYSIWYG editor with formatting toolbar and HTML output                                                             |
+| **Rich Text Editor** | WYSIWYG editor on Quill 2 with headings, lists and checklists, links, images with an upload hook, tables, colour, alignment, code, and undo/redo |
+| **Scheduler**        | Day/week/work-week appointments with resource lanes, configurable week starts and slots, drag/resize, recurring events and time-zone handling |
 | **Tree View**        | Hierarchical data display with selection, checkboxes, lazy loading, drag-and-drop, search filtering, and data-driven or declarative modes |
 
 ### Display
@@ -310,7 +390,7 @@ Production-ready components for complex data-driven applications:
 |-----------|-------------|
 | **Alert** | Callout messages with dismissible variants |
 | **Avatar** | User avatars with fallback and group support |
-| **Badge** | Status badges and labels |
+| **Badge** | Semantic/soft status variants and composable decorative icons |
 | **Copy Text** | Click-to-copy text with tooltip feedback and copied-state indicator |
 | **Dark Mode Toggle** | Button that toggles light/dark mode with customizable icons and optional label |
 | **Empty** | Empty state placeholder with icon, title, and description |
@@ -382,14 +462,14 @@ Primitives are completely unstyled — bring your own CSS, Tailwind classes, or 
 
 ## Icons
 
-Four icon library packages with **5,200+ total icons**:
+Four icon library packages with **5,300+ total icons**:
 
 | Package | Icons | Style | License |
 |---------|-------|-------|---------|
-| `BlazorBlueprint.Icons.Lucide` | 1,640+ | Stroke-based, consistent 24x24 | ISC |
-| `BlazorBlueprint.Icons.Heroicons` | 1,288 | 4 variants (Outline, Solid, Mini, Micro) | MIT |
+| `BlazorBlueprint.Icons.Lucide` | 1,750+ | Stroke-based, consistent 24x24 | ISC; MIT for Feather-derived icons |
+| `BlazorBlueprint.Icons.Heroicons` | 1,288 | 4 variants (Outline, Solid, Mini, Micro) of ~320 icons | MIT |
 | `BlazorBlueprint.Icons.Feather` | 286 | Minimalist, stroke-based 24x24 | MIT |
-| `BlazorBlueprint.Icons.FontAwesome` | 2,066 | 3 variants (Solid, Regular, Brands — includes brand logos) | CC BY 4.0 / SIL OFL 1.1 / MIT (Free tier) |
+| `BlazorBlueprint.Icons.FontAwesome` | 2,066 | 3 variants (1,407 Solid, 164 Regular, 495 Brands — includes brand logos) | CC BY 4.0 (SVG artwork); MIT (C# wrapper) |
 
 ## Theming
 
@@ -431,7 +511,7 @@ Apply the `.dark` class to your `<html>` element. All components automatically s
 
 ## Localization
 
-All component chrome strings (button labels, placeholders, ARIA labels, status messages) are localizable via the `IBbLocalizer` interface. The built-in `DefaultBbLocalizer` provides English defaults for all 260+ strings.
+All component chrome strings (button labels, placeholders, ARIA labels, status messages) are localizable via the `IBbLocalizer` interface. The built-in `DefaultBbLocalizer` provides English defaults for all 290+ strings.
 
 ### Quick Start
 
@@ -468,6 +548,8 @@ BlazorBlueprint.Primitives     ← Headless, includes ARIA attributes and keyboa
 
 **Components** ship pre-built CSS matching the shadcn/ui design system. No Tailwind setup required — just reference the stylesheet and optionally provide theme variables.
 
+Every utility in that stylesheet is prefixed `bb:` and kept in its own cascade layer, so it coexists with your own Tailwind build: your classes and the library's can never share a name, and a `Class="p-6"` you pass to a component still replaces the library's padding. Do not `@source` the library from your Tailwind input; it is not needed.
+
 **Primitives** are completely unstyled. They include ARIA attributes, focus management, and keyboard support for complex interaction patterns, giving you full control over appearance.
 
 ### Services
@@ -484,12 +566,24 @@ Key services include `IPortalService` (overlay rendering), `IFocusManager` (focu
 Demo applications are included for all three Blazor hosting models:
 
 ```bash
-dotnet run --project demos/BlazorBlueprint.Demo.Server
-dotnet run --project demos/BlazorBlueprint.Demo.Wasm
-dotnet run --project demos/BlazorBlueprint.Demo.Auto
+dotnet run --project demos/BlazorBlueprint.Demo.Server  # http://localhost:7172
+dotnet run --project demos/BlazorBlueprint.Demo.Wasm    # http://localhost:7173
+dotnet run --project demos/BlazorBlueprint.Demo.Auto    # http://localhost:7174
 ```
 
 The demos share a common Razor Class Library (`BlazorBlueprint.Demo.Shared`) with thin hosting projects per render mode, demonstrating that components work identically across Server, WebAssembly, and Auto.
+
+Browse `/components` for the full catalog. The v4 examples include:
+
+| Demo | Route | Examples |
+|------|-------|----------|
+| [DataGrid editing](demos/BlazorBlueprint.Demo.Shared/Pages/Components/DataGridEditingDemo.razor) | `/components/datagrid-editing` | Cell/batch editing, text/number/date/select/checkbox editors, validation and sorting after saves |
+| [Scheduler](demos/BlazorBlueprint.Demo.Shared/Pages/Components/SchedulerDemo.razor) | `/components/scheduler` | Full-day scrolling with an initial visible hour, week starts, work weeks, dragging/resizing, slot sizes, recurrence, resources and time zones |
+| [TreeSelect](demos/BlazorBlueprint.Demo.Shared/Pages/Components/TreeSelectDemo.razor) | `/components/tree-select` | Single/multiple selection, cascading checkboxes, leaf-only values, Space expansion and Enter selection |
+| [Cascader](demos/BlazorBlueprint.Demo.Shared/Pages/Components/CascaderDemo.razor) | `/components/cascader` | Path search, branch selection, keyboard navigation and scrolling between levels |
+| [FileUpload](demos/BlazorBlueprint.Demo.Shared/Pages/Components/FileUploadDemo.razor) | `/components/file-upload` | Upload progress, cancellation, retry and failure recovery |
+
+The demos include code examples and API references. Rebuild after changing source files; these hosts do not support hot reload.
 
 ## Contributing
 
@@ -497,20 +591,44 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
 ## License
 
-Blazor Blueprint is open source software licensed under the [Apache License 2.0](LICENSE).
+The Components and Primitives libraries are licensed under the [Apache License 2.0](LICENSE). The icon packages' C# wrappers are MIT licensed; their icon artwork retains its upstream licenses, listed below.
 
-If you create derivative works, you must include the contents of the [NOTICE](NOTICE) file in your distribution.
+Distributions of the Apache-licensed libraries must retain the applicable contents of the [NOTICE](NOTICE) file.
+
+NuGet packages include the applicable library license and third-party notices. Notices for bundled browser assets are also served at `_content/BlazorBlueprint.Components/THIRD-PARTY-NOTICES.txt` and `_content/BlazorBlueprint.Primitives/THIRD-PARTY-NOTICES.txt`.
+
+Package-specific notices: [Components](src/BlazorBlueprint.Components/wwwroot/THIRD-PARTY-NOTICES.txt), [Primitives](src/BlazorBlueprint.Primitives/wwwroot/THIRD-PARTY-NOTICES.txt), [Lucide](src/BlazorBlueprint.Icons.Lucide/THIRD-PARTY-NOTICES.txt), [Heroicons](src/BlazorBlueprint.Icons.Heroicons/THIRD-PARTY-NOTICES.txt), [Feather](src/BlazorBlueprint.Icons.Feather/THIRD-PARTY-NOTICES.txt), and [Font Awesome](src/BlazorBlueprint.Icons.FontAwesome/THIRD-PARTY-NOTICES.txt).
 
 ## Acknowledgments
 
-Blazor Blueprint is inspired by [shadcn/ui](https://ui.shadcn.com/) and the design principles of [Radix UI](https://www.radix-ui.com/). Blazor Blueprint is a complete reimplementation for Blazor/C# and contains no code from these projects.
+Blazor Blueprint implements components in Blazor and C#, drawing on the design of [shadcn/ui](https://ui.shadcn.com/) and the interaction principles of [Radix UI](https://www.radix-ui.com/). We thank the following projects and contributors for their designs, libraries, and assets.
 
-- [shadcn/ui](https://ui.shadcn.com/) — MIT License, Copyright (c) 2023 shadcn
-- [Radix UI](https://www.radix-ui.com/) — MIT License, Copyright (c) 2022-present WorkOS
-- [Tailwind CSS](https://tailwindcss.com/) — Utility-first CSS framework
-- [Lucide Icons](https://lucide.dev/) — ISC License
-- [Heroicons](https://heroicons.com/) — MIT License, Tailwind Labs
-- [Feather Icons](https://feathericons.com/) — MIT License
-- [Font Awesome Free](https://fontawesome.com/) — CC BY 4.0 / SIL OFL 1.1 / MIT, Fonticons Inc.
-- [Apache ECharts](https://echarts.apache.org/) — Apache License 2.0
-- [SortableJS](https://sortablejs.github.io/Sortable/) — MIT License
+**Design and platform**
+
+- [shadcn/ui](https://ui.shadcn.com/) — Component design inspiration; [MIT License](https://github.com/shadcn-ui/ui/blob/main/LICENSE.md), Copyright (c) 2023 shadcn.
+- [Radix UI](https://www.radix-ui.com/) — Headless component and interaction design inspiration; [MIT License](https://github.com/radix-ui/primitives/blob/main/LICENSE), Copyright (c) 2022 WorkOS.
+- [ASP.NET Core / Blazor](https://github.com/dotnet/aspnetcore) — Component framework; MIT License, .NET Foundation and contributors.
+
+**Libraries**
+
+- [Tailwind CSS](https://tailwindcss.com/) — Utility CSS framework used to build the stylesheets; MIT License, Tailwind Labs.
+- [tw-animate-css](https://github.com/Wombosvideo/tw-animate-css) — Bundled CSS animation utilities; MIT License.
+- [TailwindMerge.NET](https://github.com/desmondinho/tailwind-merge-dotnet) — CSS class conflict resolution; MIT License. A C# adaptation of [tailwind-merge](https://github.com/dcastil/tailwind-merge).
+- [Floating UI](https://floating-ui.com/) — Bundled positioning engine for floating elements; MIT License.
+- [Apache ECharts](https://echarts.apache.org/) — Bundled charting engine; Apache License 2.0.
+- [SortableJS](https://sortablejs.github.io/Sortable/) — Bundled drag-and-drop sorting library; MIT License.
+- [Quill](https://quilljs.com/) — Rich text editing engine, loaded by the host application; BSD 3-Clause License.
+- [Markdig](https://github.com/xoofx/markdig) — Markdown parsing and HTML rendering; BSD 2-Clause License.
+- [HtmlSanitizer](https://github.com/mganss/HtmlSanitizer) — HTML sanitization for the rich text and Markdown editors; MIT License.
+
+**Icons**
+
+- [Lucide Icons](https://lucide.dev/) — [ISC License, with MIT terms for Feather-derived icons](https://github.com/lucide-icons/lucide/blob/main/LICENSE); Lucide contributors and Cole Bemis.
+- [Heroicons](https://heroicons.com/) — MIT License, Tailwind Labs.
+- [Feather Icons](https://feathericons.com/) — MIT License, Cole Bemis.
+- [Font Awesome Free](https://fontawesome.com/) — SVG icon artwork under [CC BY 4.0](https://fontawesome.com/license/free), Fonticons, Inc. The Blazor C# wrapper is MIT licensed; this package does not include Font Awesome font files.
+- [Iconify](https://iconify.design/) — JSON icon datasets used to generate the C# icon collections; each collection retains its upstream icon license.
+
+**Demo photography**
+
+- [Unsplash](https://unsplash.com/) and its contributing photographers — Photos used in the demo applications, under the [Unsplash License](https://unsplash.com/license).

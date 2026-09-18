@@ -11,9 +11,8 @@ public class NativeOverlayService : INativeOverlayService, IAsyncDisposable
 {
     private readonly IJSRuntime jsRuntime;
     private readonly OverlayRenderingOptions options;
-    private readonly SemaphoreSlim moduleLock = new(1, 1);
-    private IJSObjectReference? module;
     private bool? dialogSupported;
+    private bool nativeUnavailable;
     private bool disposed;
 
     public NativeOverlayService(IJSRuntime jsRuntime, OverlayRenderingOptions options)
@@ -22,24 +21,12 @@ public class NativeOverlayService : INativeOverlayService, IAsyncDisposable
         this.options = options;
     }
 
-    private async Task<IJSObjectReference> GetModuleAsync()
+    // The bundle is shared across the whole circuit, so the cache and the lock that used to live
+    // here now live in PrimitiveModules. This service must not dispose what it gets back.
+    private Task<IJSObjectReference> GetModuleAsync()
     {
         ObjectDisposedException.ThrowIf(disposed, nameof(NativeOverlayService));
-
-        await moduleLock.WaitAsync();
-        try
-        {
-            if (module == null)
-            {
-                module = await jsRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/native-dialog.js");
-            }
-            return module;
-        }
-        finally
-        {
-            moduleLock.Release();
-        }
+        return PrimitiveModules.GetAsync(jsRuntime);
     }
 
     /// <inheritdoc />
@@ -56,11 +43,19 @@ public class NativeOverlayService : INativeOverlayService, IAsyncDisposable
         try
         {
             var objectReference = await GetModuleAsync();
-            var supported = await objectReference.InvokeAsync<bool>("supportsNativeDialog");
+            var supported = await objectReference.InvokeAsync<bool>("nativeDialog.supportsNativeDialog");
+
             if (supported)
             {
                 dialogSupported = true;
             }
+            else
+            {
+                // The probe ran and the browser answered no, so this is settled rather than a
+                // transient interop failure: stop resolving anything to the native strategy.
+                nativeUnavailable = true;
+            }
+
             return supported;
         }
         catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
@@ -71,8 +66,17 @@ public class NativeOverlayService : INativeOverlayService, IAsyncDisposable
     }
 
     /// <inheritdoc />
+    public void FallBackToJavaScript() => nativeUnavailable = true;
+
+    /// <inheritdoc />
     public OverlayRenderingStrategy ResolveStrategy(OverlayRenderingStrategy? requested)
-        => requested ?? options.DefaultStrategy;
+    {
+        var strategy = requested ?? options.DefaultStrategy;
+
+        return nativeUnavailable && strategy == OverlayRenderingStrategy.Native
+            ? OverlayRenderingStrategy.JavaScript
+            : strategy;
+    }
 
     /// <inheritdoc />
     public async Task ShowDialogAsync(ElementReference element)
@@ -80,7 +84,7 @@ public class NativeOverlayService : INativeOverlayService, IAsyncDisposable
         try
         {
             var objectReference = await GetModuleAsync();
-            await objectReference.InvokeVoidAsync("showModal", element);
+            await objectReference.InvokeVoidAsync("nativeDialog.showModal", element);
         }
         catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
         {
@@ -94,7 +98,7 @@ public class NativeOverlayService : INativeOverlayService, IAsyncDisposable
         try
         {
             var objectReference = await GetModuleAsync();
-            await objectReference.InvokeVoidAsync("closeDialog", element, returnValue);
+            await objectReference.InvokeVoidAsync("nativeDialog.closeDialog", element, returnValue);
         }
         catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
         {
@@ -108,7 +112,7 @@ public class NativeOverlayService : INativeOverlayService, IAsyncDisposable
         try
         {
             var objectReference = await GetModuleAsync();
-            await objectReference.InvokeVoidAsync("focusDialog", element);
+            await objectReference.InvokeVoidAsync("nativeDialog.focusDialog", element);
         }
         catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
         {
@@ -122,7 +126,7 @@ public class NativeOverlayService : INativeOverlayService, IAsyncDisposable
         try
         {
             var objectReference = await GetModuleAsync();
-            await objectReference.InvokeVoidAsync("focusElement", element);
+            await objectReference.InvokeVoidAsync("nativeDialog.focusElement", element);
         }
         catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
         {
@@ -134,7 +138,7 @@ public class NativeOverlayService : INativeOverlayService, IAsyncDisposable
     public async Task<IAsyncDisposable> SetupDialogAsync(ElementReference element, object dotNetRef)
     {
         var objectReference = await GetModuleAsync();
-        var cleanup = await objectReference.InvokeAsync<IJSObjectReference>("setupDialog", element, dotNetRef);
+        var cleanup = await objectReference.InvokeAsync<IJSObjectReference>("nativeDialog.setupDialog", element, dotNetRef);
         return new NativeDialogHandle(cleanup);
     }
 
@@ -171,18 +175,8 @@ public class NativeOverlayService : INativeOverlayService, IAsyncDisposable
         GC.SuppressFinalize(this);
         disposed = true;
 
-        if (module != null)
-        {
-            try
-            {
-                await module.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect.
-            }
-        }
-
-        moduleLock.Dispose();
+        // Nothing to release. The module reference belongs to PrimitiveModules and is shared with
+        // every other component on the circuit; Blazor frees it when the circuit ends.
+        await Task.CompletedTask;
     }
 }

@@ -189,11 +189,11 @@
             new("BulletList", "Bullet list", "Aria label for the bullet list button"),
             new("NumberedList", "Numbered list", "Aria label for the numbered list button"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.MarkdownEditor.Bold = ""Fett (Strg+B)"";
-    opts.MarkdownEditor.Italic = ""Kursiv (Strg+I)"";
-    opts.MarkdownEditor.BulletList = ""Aufzählung"";
+    localizer.Set(""MarkdownEditor.Bold"", ""Fett (Strg+B)"");
+    localizer.Set(""MarkdownEditor.Italic"", ""Kursiv (Strg+I)"");
+    localizer.Set(""MarkdownEditor.BulletList"", ""Aufzählung"");
 });")" />
 
     <AccessibilityList>

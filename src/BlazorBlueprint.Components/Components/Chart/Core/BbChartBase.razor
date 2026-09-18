@@ -6,9 +6,9 @@
 <CascadingValue Value="(BbChartBase)this" IsFixed="true">
     <div id="@chartId"
          class="@ContainerCssClass"
-         style="@ContainerStyle"
+         style="@MergedContainerStyle"
          data-slot="@DataSlot"
-         @attributes="AdditionalAttributes">
+         @attributes="@InlineStyleMerge.WithoutStyle(AdditionalAttributes)">
         <div style="display:none">@ChildContent</div>
     </div>
 </CascadingValue>

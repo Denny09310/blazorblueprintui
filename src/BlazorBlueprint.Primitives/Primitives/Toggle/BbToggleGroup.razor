@@ -3,7 +3,7 @@
 @attribute [CascadingTypeParameter(nameof(TValue))]
 
 <CascadingValue Value="context" IsFixed="false">
-    <div role="group"
+    <div role="@(Type == ToggleGroupType.Single ? "radiogroup" : "group")"
          aria-label="@AriaLabel"
          aria-disabled="@Disabled.ToString().ToLower()"
          data-orientation="@Orientation.ToString().ToLower()"
@@ -91,6 +91,9 @@
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
+    /// <summary>Prevents the user from removing the last selected value. Supply an initial selection if one is mandatory.</summary>
+    [Parameter] public bool Required { get; set; }
+
     private TValue? internalValue;
     private List<TValue> internalValues = new();
     private bool IsControlled => ValueChanged.HasDelegate || ValuesChanged.HasDelegate;
@@ -106,6 +109,7 @@
         context.Disabled = Disabled;
         context.Orientation = Orientation;
         context.ToggleItem = ToggleItemAsync;
+        context.ItemFocused = item => lastFocusedItem = item;
 
         if (Type == ToggleGroupType.Single)
         {
@@ -146,6 +150,7 @@
         if (Type == ToggleGroupType.Single)
         {
             var currentValue = IsControlled ? Value : internalValue;
+            if (Required && EqualityComparer<TValue>.Default.Equals(currentValue, itemValue)) { return; }
             var newValue = EqualityComparer<TValue>.Default.Equals(currentValue, itemValue) ? default : itemValue;
 
             if (IsControlled)
@@ -155,6 +160,7 @@
             else
             {
                 internalValue = newValue;
+                context.Value = newValue;
                 StateHasChanged();
             }
         }
@@ -165,6 +171,7 @@
 
             if (newValues.Contains(itemValue))
             {
+                if (Required && newValues.Count == 1) { return; }
                 newValues.Remove(itemValue);
             }
             else
@@ -179,6 +186,7 @@
             else
             {
                 internalValues = newValues;
+                context.Values = newValues;
                 StateHasChanged();
             }
         }
@@ -261,7 +269,8 @@
 
     private int GetFocusedIndex(List<BbToggleGroupItem<TValue>> enabledItems)
     {
-        // First, check which item was last focused via keyboard nav
+        // The item that currently holds focus — reported by the item itself on focus, so a click
+        // or a Tab into the group counts, not only the group's own arrow navigation.
         if (lastFocusedItem != null)
         {
             var idx = enabledItems.IndexOf(lastFocusedItem);

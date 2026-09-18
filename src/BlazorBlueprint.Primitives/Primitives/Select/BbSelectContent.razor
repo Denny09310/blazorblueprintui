@@ -26,23 +26,22 @@
                     Strategy="PositioningStrategy.Fixed"
                     ZIndex="9999"
                     ForceMount="false"
-                    OnReady="@HandleFloatingReady"
-                    OnPlacementChanged="@HandlePlacementChanged">
+                    SideElementId="@_context.ContentId"
+                    RestoreFocusToId="@_context.TriggerId"
+                    RestoreFocusOnClose="@_context.State.RestoreFocusOnClose"
+                    Dismiss="@BuildDismissOptions()"
+                    Keyboard="@BuildKeyboardOptions()"
+                    OnDismiss="@HandleDismiss">
         @RenderSelectListbox()
     </BbFloatingPortal>
 }
 
 @code {
-    private string _actualPlacement = "bottom";
-
     [CascadingParameter]
     private SelectContext<TValue>? _context { get; set; }
 
     private IJSObjectReference? _jsModule;
-    private IJSObjectReference? _clickOutsideModule;
-    private IJSObjectReference? _clickOutsideCleanup;
     private DotNetObjectReference<BbSelectContent<TValue>>? _dotNetRef;
-    private bool _isKeyboardSetup = false;
     private bool _disposed = false;
     private string _portalId = "";
 
@@ -97,6 +96,7 @@
         }
 
         _portalId = $"select-portal-{_context.ContentId}";
+        _dotNetRef = DotNetObjectReference.Create(this);
 
         // Subscribe to context state changes for cleanup
         _context.OnStateChanged += HandleContextStateChanged;
@@ -108,8 +108,7 @@
         {
             if (_jsModule == null)
             {
-                _jsModule = await JS.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/select.js");
+                _jsModule = await PrimitiveModules.GetAsync(JS);
             }
         }
     }
@@ -126,11 +125,14 @@
             contentBuilder.AddAttribute(1, "id", _context!.ContentId);
             contentBuilder.AddAttribute(2, "role", "listbox");
             contentBuilder.AddAttribute(3, "aria-labelledby", _context.TriggerId);
-            contentBuilder.AddAttribute(4, "aria-activedescendant", GetActiveDescendantId());
             contentBuilder.AddAttribute(5, "data-select-content", "true");
             contentBuilder.AddAttribute(6, "tabindex", "-1");
             contentBuilder.AddAttribute(7, "data-state", _context.IsOpen ? "open" : "closed");
-            contentBuilder.AddAttribute(8, "data-side", _actualPlacement);
+            // The side it is declared with, not the side it lands on. JS overwrites this the
+            // moment it has measured, and keeps it current when a scroll flips the listbox. C#
+            // renders a value that never changes so that Blazor emits no diff for it and never
+            // takes the attribute back off JS.
+            contentBuilder.AddAttribute(8, "data-side", Side.ToValue());
             contentBuilder.AddMultipleAttributes(9, AdditionalAttributes);
             contentBuilder.AddContent(10, ChildContent);
             contentBuilder.CloseElement();
@@ -138,67 +140,63 @@
         builder.CloseComponent();
     };
 
-    private void HandlePlacementChanged(string placement)
+    // Declared rather than wired, and no longer raised at all from C#.
+    //
+    // Scrolling the listbox to its selected option and attaching the keyboard handler used to run
+    // from the portal's ready callback, which on Blazor Server only fires once the browser has
+    // acknowledged the render batch carrying the content. That put both a full round trip behind
+    // the list appearing: it showed up unscrolled and deaf to the arrow keys, then caught up.
+    //
+    // BbFloatingPortal now does them inside the one call that positions and reveals the listbox,
+    // before the reveal — so the list is already scrolled and already keyboard-ready the first
+    // frame it is on screen.
+    private FloatingKeyboardOptions? BuildKeyboardOptions()
     {
-        _actualPlacement = string.IsNullOrEmpty(placement) ? "bottom" : placement.Split('-')[0];
-        StateHasChanged();
+        if (_context == null)
+        {
+            return null;
+        }
+
+        // No "have I already attached?" flag, and no side effect here. This runs on every render,
+        // not only on the way open, so a flag set on the first render would read as "already
+        // attached" by the time the user actually opened the listbox — and the handlers would
+        // never be attached at all. select.setupKeyboardNavigation disposes any handler it finds
+        // for this content id before attaching, so asking for it on every open is idempotent.
+        return new FloatingKeyboardOptions
+        {
+            Kind = FloatingKeyboardKind.Listbox,
+            ContentId = _context.ContentId,
+            SelectedValue = _context.State.Value?.ToString(),
+            CallbackRef = _dotNetRef
+        };
     }
 
-    private async Task HandleFloatingReady()
+    // Declared rather than wired. BbFloatingPortal registers the listener inside the same interop
+    // call that positions and reveals the listbox; wiring it here afterwards cost a network round
+    // trip, and until it landed the listbox was on screen and ignored a click outside it.
+    //
+    // Escape is not listed: the select watches it through select.setupKeyboardNavigation, which
+    // also handles Tab and the arrow keys, so a second document listener here would dismiss twice.
+    private FloatingDismissOptions? BuildDismissOptions()
     {
-        if (_context == null || _jsModule == null) return;
-
-        // CRITICAL: Scroll to selected item FIRST, before any awaits.
-        // This ensures the scroll position is set before the rAF visibility callback
-        // from FloatingPortal's ApplyPositionAsync can paint the visible content.
-        var selectedValue = _context.State.Value?.ToString();
-        await _jsModule.InvokeVoidAsync("focusInitialOption", _context.ContentId, selectedValue);
-
-        // Focus the selected item or first item (updates Blazor state)
-        _context.FocusSelectedOrFirst();
-
-        // Set up click-outside detection
-        await SetupClickOutsideAsync();
-
-        // Set up JavaScript-based keyboard navigation
-        if (!_isKeyboardSetup)
+        if (_context == null)
         {
-            _dotNetRef ??= DotNetObjectReference.Create(this);
-            await _jsModule.InvokeVoidAsync("setupKeyboardNavigation", _context.ContentId, _dotNetRef);
-            _isKeyboardSetup = true;
+            return null;
         }
+
+        return new FloatingDismissOptions
+        {
+            ContentId = _context.ContentId,
+            TriggerId = _context.TriggerId,
+            OnOutsideInteraction = true
+        };
     }
 
-    private async Task SetupClickOutsideAsync()
+    private void HandleDismiss(FloatingDismissReason reason)
     {
-        if (_context == null) return;
+        if (_disposed || reason != FloatingDismissReason.OutsideInteraction) { return; }
 
-        try
-        {
-            _clickOutsideModule = await JS.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/click-outside.js");
-
-            if (_dotNetRef == null)
-            {
-                _dotNetRef = DotNetObjectReference.Create(this);
-            }
-
-            // Use ID-based lookup instead of ElementReference
-            _clickOutsideCleanup = await _clickOutsideModule.InvokeAsync<IJSObjectReference>(
-                "onClickOutsideByIds",
-                _context.ContentId,      // Element ID (not ElementReference)
-                _dotNetRef,
-                "JsOnClickOutside",
-                _context.TriggerId);     // Trigger ID (not ElementReference)
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-        {
-            // Expected during circuit disconnect or module loading failure
-        }
-        catch (InvalidOperationException)
-        {
-            // JS interop not available during prerendering
-        }
+        _context?.Close();
     }
 
     private void HandleContextStateChanged()
@@ -206,49 +204,29 @@
         _ = InvokeAsync(HandleContextStateChangedAsync);
     }
 
-    private async Task HandleContextStateChangedAsync()
+    private Task HandleContextStateChangedAsync()
     {
         try
         {
             // When context closes, clean up
-            if (_context?.IsOpen == false && _isKeyboardSetup)
+            if (_context?.IsOpen == false)
             {
                 // Capture both the trigger ref and the restore flag before teardown.
                 // State.TriggerElement is still populated at this point (Close() doesn't
                 // clear it), but we read it eagerly in case anything else mutates state.
-                var trigger = _context.State.TriggerElement;
-                var shouldRestoreFocus = _context.State.RestoreFocusOnClose;
-
-                await CleanupAsync();
+                // Focus goes back to the trigger inside overlay.close, through the portal's
+                // RestoreFocusToId and RestoreFocusOnClose above — for an intentional close
+                // only. Awaiting FocusAsync from here was a round trip on every Escape and
+                // every selection.
                 StateHasChanged();
-
-                // Restore focus to the trigger AFTER cleanup so the now-unmounted listbox
-                // isn't the active element when the user next presses Tab. Only restore
-                // for intentional closes (Escape, selection) — click-outside and Tab
-                // leave focus where the user intentionally moved it.
-                if (shouldRestoreFocus && trigger.HasValue)
-                {
-                    await FocusManager.RestoreFocus(trigger);
-                }
             }
         }
         catch (Exception ex) when (ex is ObjectDisposedException or TaskCanceledException)
         {
             // Component may be disposed during async operation
         }
-    }
 
-    private string? GetActiveDescendantId()
-    {
-        if (_context != null)
-        {
-            var focusedId = _context.GetFocusedItemId();
-            if (focusedId != null)
-            {
-                return $"{_context.ContentId}-item-{focusedId}";
-            }
-        }
-        return null;
+        return Task.CompletedTask;
     }
 
     // Cleanup has two callers — the context state-change handler when the listbox closes, and
@@ -260,50 +238,23 @@
     // escaped DisposeAsync into the renderer's disposal queue and took the circuit down (#441).
     private async Task CleanupAsync()
     {
-        // Clean up keyboard navigation
-        var keyboardModule = _isKeyboardSetup ? _jsModule : null;
+        // Only disposal reaches here now. A close releases the listbox handlers inside
+        // overlay.close, in the same call that hides the element — it used to be a separately
+        // awaited interop call, and so a circuit round trip, spent removing two event listeners
+        // from an overlay the user had already dismissed.
+        var module = _jsModule;
         var contentId = _context?.ContentId;
-        if (keyboardModule != null && contentId != null)
+        if (module != null && contentId != null)
         {
-            _isKeyboardSetup = false;
-
             try
             {
-                await keyboardModule.InvokeVoidAsync("cleanupKeyboardNavigation", contentId);
+                await module.InvokeVoidAsync("select.cleanupKeyboardNavigation", contentId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // JS module may be disposed or circuit disconnected
             }
         }
-
-        // Clean up click-outside listener
-        var clickOutsideCleanup = _clickOutsideCleanup;
-        if (clickOutsideCleanup != null)
-        {
-            _clickOutsideCleanup = null;
-
-            try
-            {
-                await clickOutsideCleanup.InvokeVoidAsync("dispose");
-                await clickOutsideCleanup.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Cleanup may already be disposed or circuit disconnected
-            }
-        }
-    }
-
-    /// <summary>
-    /// Called from JavaScript when clicking outside the select.
-    /// </summary>
-    [JSInvokable]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public void JsOnClickOutside()
-    {
-        if (_disposed) { return; }
-        _context?.Close();
     }
 
     /// <summary>
@@ -350,29 +301,7 @@
             // not worth that, so it stops here — the races it can hit are handled above.
         }
 
-        if (_clickOutsideModule != null)
-        {
-            try
-            {
-                await _clickOutsideModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
 
-        if (_jsModule != null)
-        {
-            try
-            {
-                await _jsModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
 
         _dotNetRef?.Dispose();
     }

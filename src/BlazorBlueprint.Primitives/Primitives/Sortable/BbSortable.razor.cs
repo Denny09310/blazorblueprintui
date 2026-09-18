@@ -1,7 +1,9 @@
+using System.Globalization;
 using System.Diagnostics.CodeAnalysis;
 using BlazorBlueprint.Primitives.Utilities;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Primitives.Sortable;
 
@@ -47,6 +49,9 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
     /// </summary>
     [Parameter]
     public RenderFragment<TItem>? ItemTemplate { get; set; }
+
+    /// <summary>Optional decorative pointer-drag preview. Rendered inert per item and cloned during drag; enables the fallback renderer.</summary>
+    [Parameter] public RenderFragment<TItem>? DragOverlayTemplate { get; set; }
 
     /// <summary>
     /// Gets or sets the list of items to render and sort.
@@ -120,6 +125,56 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
     [Parameter]
     public bool Sort { get; set; } = true;
 
+    /// <summary>Enables keyboard pickup, arrow-key movement, drop and cancellation within this list.</summary>
+    [Parameter]
+    public bool KeyboardSorting { get; set; } = true;
+
+    /// <summary>Accessible instructions associated with each keyboard sorting handle.</summary>
+    [Parameter]
+    public string KeyboardInstructions { get; set; } = "Press Space or Enter to pick up. Use arrows to reorder, Control plus Left or Right to transfer to a connected list, Space or Enter to drop, or Escape to cancel.";
+
+    /// <summary>
+    /// Announced when <see cref="CanMove"/> rejects a reorder.
+    /// </summary>
+    /// <remarks>
+    /// The announcements were English string literals in the method bodies, so a localized app
+    /// still read them out in English. They are parameters so the styled component can supply
+    /// translated text; the defaults keep a primitives-only app working unchanged.
+    /// </remarks>
+    [Parameter]
+    public string MoveRejectedAnnouncement { get; set; } = "The move was not allowed.";
+
+    /// <summary>Announced when <see cref="CanDrop"/> rejects a cross-list drop.</summary>
+    [Parameter]
+    public string DropRejectedAnnouncement { get; set; } = "The drop was not allowed.";
+
+    /// <summary>
+    /// Announced after a reorder. <c>{0}</c> is the one-based old position, <c>{1}</c> the new one.
+    /// </summary>
+    [Parameter]
+    public string MovedAnnouncement { get; set; } = "Item moved from position {0} to position {1}.";
+
+    /// <summary>
+    /// Announced when an item leaves this list. <c>{0}</c> is the one-based position it left,
+    /// <c>{1}</c> the position it took in the other list.
+    /// </summary>
+    [Parameter]
+    public string RemovedAnnouncement { get; set; } = "Item removed from position {0} and placed at position {1} in another list.";
+
+    /// <summary>
+    /// Announced when an item arrives from another list. <c>{0}</c> is its one-based position.
+    /// </summary>
+    [Parameter]
+    public string ReceivedAnnouncement { get; set; } = "Item received at position {0}.";
+
+    /// <summary>Optional predicate evaluated before an in-list reorder invokes OnUpdate. Return false to reject it.</summary>
+    [Parameter]
+    public Func<SortableMoveContext<TItem>, bool>? CanMove { get; set; }
+
+    /// <summary>Source-side permission for a cross-list drop, before either list callback runs.</summary>
+    [Parameter]
+    public Func<SortableDropContext<TItem>, bool>? CanDrop { get; set; }
+
     /// <summary>
     /// Gets or sets a CSS selector used as the drag-handle element inside each item.
     /// When set, only the matched child element initiates a drag.
@@ -155,6 +210,8 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     /// <inheritdoc />
+    private bool hadDragOverlay;
+
     protected override void OnParametersSet()
     {
         if (!_jsInitialized)
@@ -168,7 +225,7 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
             Sort != _prevSort ||
             Handle != _prevHandle ||
             Filter != _prevFilter ||
-            ForceFallback != _prevForceFallback)
+            ForceFallback != _prevForceFallback || hadDragOverlay != (DragOverlayTemplate is not null))
         {
             _needsReinit = true;
         }
@@ -180,10 +237,9 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
         if (firstRender)
         {
             _ref = DotNetObjectReference.Create(this);
-            _module = await JsRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/sortable.js");
+            _module = await PrimitiveModules.GetAsync(JsRuntime);
             await _module.InvokeVoidAsync(
-                "init", Id, Group, Pull, Put, Sort, Handle, Filter, _ref, ForceFallback);
+"sortable.init", Id, Group, Pull, Put, Sort, Handle, Filter, _ref, ForceFallback || DragOverlayTemplate is not null);
             _jsInitialized = true;
             SnapshotParameters();
         }
@@ -191,13 +247,14 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
         {
             _needsReinit = false;
             await _module.InvokeVoidAsync(
-                "init", Id, Group, Pull, Put, Sort, Handle, Filter, _ref, ForceFallback);
+"sortable.init", Id, Group, Pull, Put, Sort, Handle, Filter, _ref, ForceFallback || DragOverlayTemplate is not null);
             SnapshotParameters();
         }
     }
 
     private void SnapshotParameters()
     {
+        hadDragOverlay = DragOverlayTemplate is not null;
         _prevGroup = Group;
         _prevPull = Pull;
         _prevPut = Put;
@@ -213,9 +270,33 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
     [JSInvokable]
     public async Task OnUpdateJS(int oldIndex, int newIndex)
     {
-        _liveAnnouncement = $"Item moved from position {oldIndex + 1} to position {newIndex + 1}.";
+        if (!Sort || Items == null || oldIndex < 0 || oldIndex >= Items.Count || newIndex < 0 || newIndex >= Items.Count || oldIndex == newIndex)
+        {
+            return;
+        }
+        if (CanMove?.Invoke(new SortableMoveContext<TItem>(Items[oldIndex], oldIndex, newIndex)) == false)
+        {
+            _liveAnnouncement = MoveRejectedAnnouncement;
+            StateHasChanged();
+            return;
+        }
+        _liveAnnouncement = string.Format(CultureInfo.CurrentCulture, MovedAnnouncement, oldIndex + 1, newIndex + 1);
         await OnUpdate.InvokeAsync((oldIndex, newIndex));
         StateHasChanged();
+    }
+
+    /// <summary>Validates a proposed cross-list drop without mutating either list.</summary>
+    [JSInvokable]
+    public bool CanDropJS(int oldIndex, int newIndex, string targetId, bool isClone)
+    {
+        if (Items is null || oldIndex < 0 || oldIndex >= Items.Count || newIndex < 0) { return false; }
+        var allowed = CanDrop?.Invoke(new SortableDropContext<TItem>(Items[oldIndex], Id, targetId, oldIndex, newIndex, isClone)) != false;
+        if (!allowed)
+        {
+            _liveAnnouncement = DropRejectedAnnouncement;
+            StateHasChanged();
+        }
+        return allowed;
     }
 
     /// <summary>
@@ -224,7 +305,7 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
     [JSInvokable]
     public async Task OnRemoveJS(int oldIndex, int newIndex)
     {
-        _liveAnnouncement = $"Item removed from position {oldIndex + 1} and placed at position {newIndex + 1} in another list.";
+        _liveAnnouncement = string.Format(CultureInfo.CurrentCulture, RemovedAnnouncement, oldIndex + 1, newIndex + 1);
         await OnRemove.InvokeAsync((oldIndex, newIndex));
         StateHasChanged();
     }
@@ -235,7 +316,7 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
     [JSInvokable]
     public async Task OnAddJS(int oldIndex, int newIndex)
     {
-        _liveAnnouncement = $"Item received at position {newIndex + 1}.";
+        _liveAnnouncement = string.Format(CultureInfo.CurrentCulture, ReceivedAnnouncement, newIndex + 1);
         await OnAdd.InvokeAsync((oldIndex, newIndex));
         StateHasChanged();
     }
@@ -249,8 +330,7 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
         {
             try
             {
-                await _module.InvokeVoidAsync("destroy", Id);
-                await _module.DisposeAsync();
+                await _module.InvokeVoidAsync("sortable.destroy", Id);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

@@ -49,7 +49,7 @@
                         Button receives hover/focus behavior via TriggerContext.
                     </p>
                     <BbTooltip>
-                        <BbTooltipTrigger>
+                        <BbTooltipTrigger AsChild="true">
                             <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon">
                                 <LucideIcon Name="info" Size="16" />
                             </BbButton>
@@ -70,12 +70,13 @@
                 <h2 class="text-2xl font-semibold">Plain Content and Icons</h2>
                 <p class="text-sm text-muted-foreground">
                     <code class="text-xs bg-muted px-1 py-0.5 rounded">AsChild</code> defaults to
-                    <code class="text-xs bg-muted px-1 py-0.5 rounded">true</code>, which renders no element of its own —
-                    the child is handed a <code class="text-xs bg-muted px-1 py-0.5 rounded">TriggerContext</code> and is
-                    expected to attach the hover and focus behaviour itself. Anything that does not consume that context —
-                    text, plain markup, or a bare <code class="text-xs bg-muted px-1 py-0.5 rounded">LucideIcon</code> — needs
-                    <code class="text-xs bg-muted px-1 py-0.5 rounded">AsChild="false"</code> so the trigger renders its own
-                    <code class="text-xs bg-muted px-1 py-0.5 rounded">span</code> with the handlers attached.
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">false</code>, which wraps the child in a
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">span</code> carrying the hover and focus handlers.
+                    That is what text, plain markup and a bare
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">LucideIcon</code> need. Set
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">AsChild="true"</code> only when the child consumes
+                    the cascaded <code class="text-xs bg-muted px-1 py-0.5 rounded">TriggerContext</code> and attaches
+                    that behaviour itself.
                 </p>
             </div>
 
@@ -108,12 +109,11 @@
             <CodeBlock Source="Components/Tooltip/plain-content.txt" />
 
             <div class="rounded-md border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
-                <strong>Which mode do I want?</strong> Reach for the default
-                <code>AsChild="true"</code> when the child is a component built to act as a trigger —
-                <code>BbButton</code> is the common one — because it keeps the DOM flat and lets the child own its own
-                focus ring, aria attributes and styling. Use <code>AsChild="false"</code> for everything else. Getting it
-                wrong used to do nothing at all; a trigger whose child never consumes the context now logs a warning while
-                the app runs in the Development environment.
+                <strong>Which mode do I want?</strong> Reach for <code>AsChild="true"</code> when the child is a
+                component built to act as a trigger — <code>BbButton</code> is the common one — because it keeps the DOM
+                flat and lets the child own its own focus ring, aria attributes and styling. Leave it at the default for
+                everything else. Getting it wrong used to do nothing at all; a trigger whose child never consumes the
+                context now logs a warning while the app runs in the Development environment.
             </div>
         </div>
 
@@ -387,6 +387,47 @@
         </div>
 
         <!-- Accessibility -->
+        <!-- AsChild default -->
+        <div class="space-y-4">
+            <h2 class="text-2xl font-semibold"><code class="text-lg">AsChild</code> default <span class="text-xs font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded">Changed in v4</span></h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="bg-muted px-1 py-0.5 rounded">AsChild</code> now defaults to
+                <code class="bg-muted px-1 py-0.5 rounded">false</code>. The trigger wraps its content in a
+                <code class="bg-muted px-1 py-0.5 rounded">span</code> carrying the hover and focus handlers, so a bare
+                icon or plain text works without any opt-in. In v3 the default was
+                <code class="bg-muted px-1 py-0.5 rounded">true</code>, which rendered no element and no handlers — so
+                that same markup silently did nothing unless the child consumed the trigger context itself.
+            </p>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">AsChild="true"</code> when the child <em>is</em> such a
+                component, such as a <code class="bg-muted px-1 py-0.5 rounded">BbButton</code>. The wrapper span uses
+                <code class="bg-muted px-1 py-0.5 rounded">display: contents</code>, so it generates no layout box either way.
+            </p>
+
+            <div class="flex flex-wrap gap-6 items-center">
+                <BbTooltip>
+                    <BbTooltipTrigger>
+                        <LucideIcon Name="house" Size="18" />
+                    </BbTooltipTrigger>
+                    <BbTooltipContent>Bare icon, default AsChild</BbTooltipContent>
+                </BbTooltip>
+
+                <BbTooltip>
+                    <BbTooltipTrigger>Plain text trigger</BbTooltipTrigger>
+                    <BbTooltipContent>Plain text, default AsChild</BbTooltipContent>
+                </BbTooltip>
+
+                <BbTooltip>
+                    <BbTooltipTrigger AsChild="true">
+                        <BbButton Variant="ButtonVariant.Outline">Hover me</BbButton>
+                    </BbTooltipTrigger>
+                    <BbTooltipContent>BbButton, AsChild="true"</BbTooltipContent>
+                </BbTooltip>
+            </div>
+
+            <CodeBlock Source="Components/Tooltip/as-child-default.txt" />
+        </div>
+
         <AccessibilityList>
             <AriaAttributes>
                 <AccessibilityItem>
@@ -430,8 +471,8 @@
                 </ApiReference>
 
                 <ApiReference ComponentName="Tooltip">
-                    <ApiParameter Name="Placement" Type="string" Default="&quot;top&quot;">
-                        Position of tooltip: "top", "bottom", "left", "right", or variants like "top-start", "bottom-end".
+                    <ApiParameter Name="Placement" Type="PopoverPlacement" Default="PopoverPlacement.Top">
+                        Tooltip placement, such as Top, Bottom, Left, Right, TopStart or BottomEnd.
                     </ApiParameter>
                     <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
                         Additional HTML attributes applied to the component's root element (e.g. <code>data-testid</code>, <code>aria-label</code>).
@@ -439,11 +480,11 @@
                 </ApiReference>
 
                 <ApiReference ComponentName="TooltipTrigger">
-                    <ApiParameter Name="AsChild" Type="bool" Default="true">
+                    <ApiParameter Name="AsChild" Type="bool" Default="false">
                         When true, the trigger renders no element of its own and the child must consume the cascaded
-                        <code>TriggerContext</code> to wire up hover and focus — <code>BbButton</code> does. Set false for
-                        plain markup, text or a bare icon, so the trigger renders its own <code>span</code> with the
-                        handlers attached.
+                        <code>TriggerContext</code> to wire up hover and focus — <code>BbButton</code> does. Leave it at
+                        the default for plain markup, text or a bare icon, so the trigger renders its own
+                        <code>span</code> with the handlers attached.
                     </ApiParameter>
                     <ApiParameter Name="Focusable" Type="bool" Default="true">
                         Whether to add tabindex="0" for keyboard focus. Set false if child is already focusable.

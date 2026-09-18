@@ -523,9 +523,9 @@
         {
             new("Close", "Close", "Aria label for the close button"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.Sheet.Close = ""Schließen"";
+    localizer.Set(""Sheet.Close"", ""Schließen"");
 });")" />
 </div>
 

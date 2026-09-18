@@ -80,19 +80,27 @@ public class ChartConfig : IEnumerable<KeyValuePair<string, ChartSeriesConfig>>
     }
 
     /// <summary>
-    /// Gets the color for a series key, returning a default chart color if not configured.
+    /// Gets the color configured for a series key.
     /// </summary>
     /// <param name="key">The series key.</param>
-    /// <param name="index">The index to use for default color selection.</param>
-    /// <returns>The configured color or a default chart color.</returns>
-    public string GetColor(string key, int index = 0)
+    /// <param name="index">
+    /// A palette index to fall back to when the key is not configured. Negative (the default)
+    /// means no fallback: the caller gets <c>null</c> and can leave the choice to the chart.
+    /// </param>
+    /// <returns>The configured color, the indexed palette color, or <c>null</c>.</returns>
+    /// <remarks>
+    /// The fallback index used to default to <c>0</c>, so every unconfigured key came back as
+    /// <c>--chart-1</c>. A chart whose Config named only some of its series therefore drew all the
+    /// rest in the same colour, instead of letting the chart's own palette cycle through them.
+    /// </remarks>
+    public string? GetColor(string key, int index = -1)
     {
         if (_configs.TryGetValue(key, out var config) && !string.IsNullOrEmpty(config.Color))
         {
             return config.Color;
         }
 
-        return ChartColor.GetDefault(index);
+        return index >= 0 ? ChartColor.GetDefault(index) : null;
     }
 
     /// <summary>

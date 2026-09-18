@@ -136,17 +136,23 @@ else
         }
     }
 
+    /// <summary>
+    /// Key handling offered to an <c>AsChild</c> child through the trigger context.
+    /// </summary>
+    /// <remarks>
+    /// Space and Enter are deliberately absent, for the same reason they are absent from the
+    /// trigger's own button: the child is itself an activatable element — <c>BbButton</c> renders a
+    /// native <c>&lt;button&gt;</c> — so the browser activates it on those keys and raises a click,
+    /// which already toggles the menu. Toggling here too ran both, and one Enter press opened the
+    /// menu and closed it again before the user saw it. Arrow keys stay, because they do something
+    /// a click does not: open the menu and move focus into it.
+    /// </remarks>
     private Task HandleKeyDownAsync(KeyboardEventArgs args)
     {
         if (Disabled) return Task.CompletedTask;
 
-        // Enter or Space to toggle
-        if (args.Key == "Enter" || args.Key == " ")
-        {
-            Context.Toggle(_asChildTriggerRef);
-        }
         // Arrow Down to open and focus first item
-        else if (args.Key == "ArrowDown" && !Context.IsOpen)
+        if (args.Key == "ArrowDown" && !Context.IsOpen)
         {
             Context.Open(_asChildTriggerRef);
             Context.SetFocusedIndex(0);

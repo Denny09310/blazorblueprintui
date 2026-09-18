@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
+@inject IBbLocalizer Localizer
 
 <div class="@ContainerClass">
     @* Dropzone *@
@@ -14,14 +15,16 @@
          @ondragover="HandleDragOver"
          @ondragover:preventDefault="true">
 
-        <InputFile @ref="_inputFile"
-                   OnChange="HandleFileSelected"
-                   accept="@Accept"
-                   multiple="@Multiple"
-                   disabled="@Disabled"
-                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                   @attributes="AdditionalAttributes"
-                   id="@EffectiveId" />
+        @foreach (var selection in inputSelections)
+        {
+            var active = selection == inputSelections[^1];
+            <InputFile @key="selection.Id" @ref="selection.Input"
+                       OnChange="@(e => HandleFileSelected(e, selection))" accept="@Accept" multiple="@Multiple"
+                       disabled="@(!active || Disabled)" hidden="@(!active)" tabindex="@(active ? 0 : -1)"
+                       class="bb:absolute bb:inset-0 bb:w-full bb:h-full bb:opacity-0 bb:cursor-pointer"
+                       @attributes="AdditionalAttributes" id="@(active ? EffectiveId : selection.Id)" />
+        }
+
 
         @if (DropzoneContent != null)
         {
@@ -29,12 +32,12 @@
         }
         else
         {
-            <div class="flex flex-col items-center gap-2 pointer-events-none">
-                <div class="p-3 rounded-full bg-muted">
-                    <LucideIcon Name="upload" Class="h-6 w-6 text-muted-foreground" />
+            <div class="bb:flex bb:flex-col bb:items-center bb:gap-2 bb:pointer-events-none">
+                <div class="bb:p-3 bb:rounded-full bb:bg-muted">
+                    <LucideIcon Name="upload" Class="bb:h-6 bb:w-6 bb:text-muted-foreground" />
                 </div>
-                <div class="text-center">
-                    <p class="text-sm font-medium">
+                <div class="bb:text-center">
+                    <p class="bb:text-sm bb:font-medium">
                         @if (_isDragging)
                         {
                             <span>Drop files here</span>
@@ -44,17 +47,17 @@
                             <span>Drag and drop files here</span>
                         }
                     </p>
-                    <p class="text-xs text-muted-foreground mt-1">
-                        or <span class="text-primary underline">browse</span> to upload
+                    <p class="bb:text-xs bb:text-muted-foreground bb:mt-1">
+                        or <span class="bb:text-primary bb:underline">browse</span> to upload
                     </p>
                 </div>
                 @if (!string.IsNullOrEmpty(Accept))
                 {
-                    <p class="text-xs text-muted-foreground">
+                    <p class="bb:text-xs bb:text-muted-foreground">
                         Accepted: @Accept
                     </p>
                 }
-                <p class="text-xs text-muted-foreground">
+                <p class="bb:text-xs bb:text-muted-foreground">
                     Max size: @FormatSize(MaxFileSize)
                     @if (Multiple)
                     {
@@ -68,40 +71,55 @@
     @* File List *@
     @if (_files.Count > 0)
     {
-        <div class="mt-4 space-y-2">
+        <div class="bb:mt-4 bb:space-y-2">
             @foreach (var file in _files)
             {
                 <div class="@FileItemClass">
                     @* Preview or Icon *@
-                    <div class="flex-shrink-0">
+                    <div class="bb:flex-shrink-0">
                         @if (ShowPreview && file.IsImage && !string.IsNullOrEmpty(file.PreviewUrl))
                         {
                             <img src="@file.PreviewUrl"
                                  alt="@file.Name"
-                                 class="h-12 w-12 rounded object-cover" />
+                                 class="bb:h-12 bb:w-12 bb:rounded bb:object-cover" />
                         }
                         else
                         {
-                            <div class="h-12 w-12 rounded bg-muted flex items-center justify-center">
-                                <LucideIcon Name="@GetFileIcon(file)" Class="h-6 w-6 text-muted-foreground" />
+                            <div class="bb:h-12 bb:w-12 bb:rounded bb:bg-muted bb:flex bb:items-center bb:justify-center">
+                                <LucideIcon Name="@GetFileIcon(file)" Class="bb:h-6 bb:w-6 bb:text-muted-foreground" />
                             </div>
                         }
                     </div>
 
                     @* File Info *@
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium truncate">@file.Name</p>
-                        <p class="text-xs text-muted-foreground">@file.FormattedSize</p>
+                    <div class="bb:flex-1 bb:min-w-0">
+                        <p class="bb:text-sm bb:font-medium bb:truncate">@file.Name</p>
+                        <p class="bb:text-xs bb:text-muted-foreground">@file.FormattedSize</p>
+                        @if (UploadHandler != null)
+                        {
+                            <div class="bb:space-y-1 bb:mt-1">
+                                <progress class="bb:w-full" max="100" value="@file.Progress" aria-label="@Localizer["FileUpload.Progress", file.Name]"></progress>
+                                <span class="bb:text-xs" role="status">@Localizer[$"FileUpload.{file.Status}"]</span>
+                                @if (file.Status is FileUploadStatus.Uploading or FileUploadStatus.Queued)
+                                {
+                                    <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Ghost" Disabled="@Disabled" OnClick="@(() => CancelUpload(file))">@Localizer["FileUpload.Cancel"]</BbButton>
+                                }
+                                else if (file.Status != FileUploadStatus.Succeeded)
+                                {
+                                    <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline" Disabled="@Disabled" OnClick="@(() => UploadFileAsync(file))">@Localizer[file.Status == FileUploadStatus.Selected ? "FileUpload.Upload" : "FileUpload.Retry"]</BbButton>
+                                }
+                            </div>
+                        }
                     </div>
 
                     @* Remove Button *@
                     <BbButton Variant="ButtonVariant.Ghost"
                             Size="ButtonSize.Icon"
-                            Class="h-8 w-8 flex-shrink-0"
+                            Class="bb:h-8 bb:w-8 bb:flex-shrink-0"
                             OnClick="@(() => RemoveFile(file))"
                             Disabled="@Disabled"
                             AriaLabel="@($"Remove {file.Name}")">
-                        <LucideIcon Name="x" Class="h-4 w-4" />
+                        <LucideIcon Name="x" Class="bb:h-4 bb:w-4" />
                     </BbButton>
                 </div>
             }
@@ -111,11 +129,11 @@
     @* Validation Errors *@
     @if (_errors.Count > 0)
     {
-        <div class="mt-2 space-y-1">
+        <div class="bb:mt-2 bb:space-y-1">
             @foreach (var error in _errors)
             {
-                <p class="text-sm text-destructive flex items-center gap-1">
-                    <LucideIcon Name="alert-circle" Class="h-4 w-4" />
+                <p class="bb:text-sm bb:text-destructive bb:flex bb:items-center bb:gap-1">
+                    <LucideIcon Name="alert-circle" Class="bb:h-4 bb:w-4" />
                     @error.Message
                 </p>
             }
@@ -124,7 +142,7 @@
 </div>
 
 @code {
-    private InputFile? _inputFile;
+    private InputFile? _inputFile => inputSelections[^1].Input;
     private IJSObjectReference? _pasteCleanup;
     private ElementReference _dropzoneRef;
     private string? _generatedId;
@@ -245,20 +263,25 @@
 
     protected override void OnParametersSet()
     {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxFileSize);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxFileCount);
         if (Files != null && !ReferenceEquals(Files, _files))
         {
+            foreach (var removed in _files.Where(f => !Files.Contains(f)))
+            {
+                ReleaseFile(removed);
+            }
             _files = Files.ToList();
         }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && !_jsInitialized && _inputFile != null)
+        if (!_jsInitialized && _inputFile != null)
         {
             try
             {
-                _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/file-upload.js");
+                _jsModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/file-upload.js");
 
                 // Get the underlying input element from InputFile
                 _jsCleanup = await _jsModule.InvokeAsync<IJSObjectReference>(
@@ -285,6 +308,13 @@
 
     public async ValueTask DisposeAsync()
     {
+        GC.SuppressFinalize(this);
+        disposed = true;
+        foreach (var operation in operations.Values)
+        {
+            operation.Dispose();
+        }
+
         if (_pasteCleanup != null)
         {
             try
@@ -305,22 +335,34 @@
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException) { }
         }
 
-        if (_jsModule != null)
-        {
-            try
-            {
-                await _jsModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException) { }
-        }
     }
 
-    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    private async Task HandleFileSelected(InputFileChangeEventArgs e, InputSelection selection)
     {
+        if (Disabled || selection != inputSelections[^1])
+        {
+            return;
+        }
+        // Rotate before awaiting previews or callbacks so another selection cannot invalidate these files.
+        inputSelections.Add(new InputSelection());
+        _jsInitialized = false;
+        if (_jsCleanup != null)
+        {
+            await _jsCleanup.InvokeVoidAsync("dispose");
+            await _jsCleanup.DisposeAsync();
+            _jsCleanup = null;
+        }
+        if (_pasteCleanup != null)
+        {
+            await _pasteCleanup.InvokeVoidAsync("dispose");
+            await _pasteCleanup.DisposeAsync();
+            _pasteCleanup = null;
+        }
+        StateHasChanged();
         _errors.Clear();
         var filesToAdd = new List<FileUploadItem>();
 
-        foreach (var file in e.GetMultipleFiles(MaxFileCount + _files.Count))
+        foreach (var file in e.GetMultipleFiles(e.FileCount).Take(Multiple ? e.FileCount : 1))
         {
             var validationError = ValidateFile(file);
             if (validationError != null)
@@ -330,7 +372,7 @@
                 continue;
             }
 
-            if (_files.Count + filesToAdd.Count >= MaxFileCount)
+            if (Multiple && _files.Count + filesToAdd.Count >= MaxFileCount)
             {
                 var error = new FileValidationError
                 {
@@ -344,6 +386,7 @@
             }
 
             var item = new FileUploadItem { File = file };
+            selection.FileIds.Add(item.Id);
 
             // Generate preview for images
             if (ShowPreview && item.IsImage && file.Size < 5 * 1024 * 1024) // Only preview images < 5MB
@@ -371,11 +414,20 @@
         {
             if (!Multiple)
             {
+                foreach (var existing in _files)
+                {
+                    ReleaseFile(existing);
+                }
                 _files.Clear();
             }
             _files.AddRange(filesToAdd);
             await FilesChanged.InvokeAsync(_files);
+            if (AutoUpload && UploadHandler != null)
+            {
+                await Task.WhenAll(filesToAdd.Select(UploadFileAsync));
+            }
         }
+        inputSelections.RemoveAll(s => s != inputSelections[^1] && s.FileIds.Count == 0);
     }
 
     private FileValidationError? ValidateFile(IBrowserFile file)
@@ -423,6 +475,10 @@
     /// </summary>
     public async Task ClearFiles()
     {
+        foreach (var file in _files)
+        {
+            ReleaseFile(file);
+        }
         _files.Clear();
         _errors.Clear();
         await FilesChanged.InvokeAsync(_files);
@@ -444,6 +500,7 @@
 
     private async Task RemoveFile(FileUploadItem file)
     {
+        ReleaseFile(file);
         _files.Remove(file);
         await FilesChanged.InvokeAsync(_files);
     }
@@ -512,25 +569,25 @@
     private string EffectiveId => Id ?? (_generatedId ??= $"file-upload-{Guid.NewGuid():N}");
 
     private string ContainerClass => ClassNames.cn(
-        "w-full",
+        "bb:w-full",
         Class
     );
 
     private string DropzoneClass => ClassNames.cn(
-        "relative flex flex-col items-center justify-center",
-        "w-full min-h-[150px] p-6",
-        "border-2 border-dashed rounded-lg",
-        "transition-colors cursor-pointer",
+        "bb:relative bb:flex bb:flex-col bb:items-center bb:justify-center",
+        "bb:w-full bb:min-h-[150px] bb:p-6",
+        "bb:border-2 bb:border-dashed bb:rounded-lg",
+        "bb:transition-colors bb:cursor-pointer",
         // #459: the real focus target is the <input type="file"> laid over this at opacity-0, so
         // focusing it changed nothing visible. focus-within puts the ring on the box the user can
         // actually see. No offset — the dashed border is already the edge.
-        "focus-within:ring-2 focus-within:ring-ring",
-        _isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-muted-foreground/50",
-        Disabled ? "opacity-50 cursor-not-allowed" : null
+        "bb:focus-within:ring-2 bb:focus-within:ring-ring",
+        _isDragging ? "bb:border-primary bb:bg-primary/5" : "bb:border-muted-foreground/25 bb:hover:border-muted-foreground/50",
+        Disabled ? "bb:opacity-50 bb:cursor-not-allowed" : null
     );
 
     private string FileItemClass => ClassNames.cn(
-        "flex items-center gap-3 p-3",
-        "border rounded-lg bg-muted/30"
+        "bb:flex bb:items-center bb:gap-3 bb:p-3",
+        "bb:border bb:rounded-lg bb:bg-muted/30"
     );
 }

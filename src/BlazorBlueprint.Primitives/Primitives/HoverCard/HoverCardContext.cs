@@ -69,6 +69,23 @@ public class HoverCardContext : PrimitiveContextWithEvents<HoverCardState>
     public int CloseDelay => State.CloseDelay;
 
     /// <summary>
+    /// Raised when the pointer arrives somewhere that must keep the card open — the trigger or the
+    /// content.
+    /// <para>
+    /// Both parts schedule their own close, so each has to be able to cancel the other's. Moving
+    /// the pointer from the trigger onto the card only cancelled the card's timer; the trigger's
+    /// timer, started by the mouseleave that the same movement caused, kept running and closed the
+    /// card under the pointer after <see cref="CloseDelay"/>.
+    /// </para>
+    /// </summary>
+    public event Action? PendingCloseCancelled;
+
+    /// <summary>
+    /// Cancels every close scheduled by any part of this hover card.
+    /// </summary>
+    public void CancelPendingClose() => PendingCloseCancelled?.Invoke();
+
+    /// <summary>
     /// Opens the hover card.
     /// </summary>
     /// <param name="triggerElement">Optional element that triggered the hover card.</param>

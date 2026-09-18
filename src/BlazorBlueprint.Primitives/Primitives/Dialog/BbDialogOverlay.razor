@@ -65,6 +65,12 @@
         _useNative = NativeOverlayService.ResolveStrategy(RenderingStrategy) == OverlayRenderingStrategy.Native;
     }
 
+    protected override void OnParametersSet() =>
+        // Re-resolved every time: a browser without <dialog>.showModal() makes the service fall back
+        // to the JavaScript strategy after the first render, and the backdrop has to appear when
+        // that happens — the native ::backdrop it was standing aside for never arrives.
+        _useNative = NativeOverlayService.ResolveStrategy(RenderingStrategy) == OverlayRenderingStrategy.Native;
+
     private async Task HandleClick(MouseEventArgs args)
     {
         // Invoke custom click handler if provided

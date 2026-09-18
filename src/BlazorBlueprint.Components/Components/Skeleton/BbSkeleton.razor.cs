@@ -124,19 +124,7 @@ public partial class BbSkeleton : ComponentBase
         }
     }
 
-    private string? MergedInlineStyle
-    {
-        get
-        {
-            var consumerStyle = AdditionalAttributes?.TryGetValue("style", out var s) == true ? s?.ToString() : null;
-            if (string.IsNullOrEmpty(consumerStyle))
-            {
-                return InlineStyle;
-            }
-
-            return string.IsNullOrEmpty(InlineStyle) ? consumerStyle : $"{InlineStyle};{consumerStyle}";
-        }
-    }
+    private string? MergedInlineStyle => InlineStyleMerge.Merge(InlineStyle, AdditionalAttributes);
 
     /// <summary>
     /// Gets the computed CSS class string for the skeleton element.
@@ -154,12 +142,12 @@ public partial class BbSkeleton : ComponentBase
     /// </list>
     /// </remarks>
     private string CssClass => ClassNames.cn(
-        "animate-pulse bg-muted",
+        "bb:animate-pulse bb:bg-muted",
         Shape switch
         {
-            SkeletonShape.Circular => "rounded-full",
-            SkeletonShape.Rectangular => "rounded-md",
-            _ => "rounded-md"
+            SkeletonShape.Circular => "bb:rounded-full",
+            SkeletonShape.Rectangular => "bb:rounded-md",
+            _ => "bb:rounded-md"
         },
         Class
     );

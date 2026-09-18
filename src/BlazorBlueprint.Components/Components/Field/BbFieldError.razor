@@ -3,13 +3,14 @@
 @if (Errors != null && Errors.Any())
 {
     <div
+        id="@Id"
         data-slot="field-error"
         class="@CssClass"
         @attributes="AdditionalAttributes">
         @foreach (var error in Errors)
         {
-            <div class="flex items-start gap-1.5">
-                <span class="mt-0.5">•</span>
+            <div class="bb:flex bb:items-start bb:gap-1.5">
+                <span class="bb:mt-0.5">•</span>
                 <span>@error</span>
             </div>
         }
@@ -18,6 +19,7 @@
 else if (ChildContent != null)
 {
     <div
+        id="@Id"
         data-slot="field-error"
         class="@CssClass"
         @attributes="AdditionalAttributes">

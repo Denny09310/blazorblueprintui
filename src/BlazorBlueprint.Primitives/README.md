@@ -11,7 +11,7 @@ Headless, unstyled Blazor primitive components with ARIA attributes and keyboard
 - **State Management**: Built-in controlled and uncontrolled state patterns
 - **Keyboard Support**: Keyboard interaction support for interactive components
 - **Two-Layer Portal Architecture**: Category-scoped portals (Container and Overlay) for efficient rendering
-- **.NET 8**: Built for the latest .NET platform
+- **.NET 10**: Built for the latest .NET platform
 
 ## Installation
 
@@ -38,6 +38,17 @@ Add a single import to `_Imports.razor`:
 ```razor
 @using BlazorBlueprint.Primitives
 ```
+
+Reference the primitives stylesheet from your host page (`App.razor` or `index.html`):
+
+```html
+<link rel="stylesheet" href="_content/BlazorBlueprint.Primitives/css/primitives.css" />
+```
+
+It is small and carries no design decisions — only the rules the primitives' own markup depends on,
+such as hiding screen-reader-only announcements and sizing the dismiss overlay. Skip it and the
+Sortable list reads its keyboard instructions out as visible body text. Apps that also use
+BlazorBlueprint.Components can load it or not; the two stylesheets agree.
 
 ## Available Primitives
 
@@ -320,6 +331,47 @@ Each category has its own host (`BbContainerPortalHost`, `BbOverlayPortalHost`),
 
 `BbFloatingPortal` keeps content mounted in the DOM when closed (`ForceMount` defaults to `true`), hidden via CSS. A `data-state` attribute (`"open"` / `"closed"`) on the portal content enables CSS animations.
 
+## JavaScript Modules
+
+Every primitive that needs JavaScript gets it from one bundle,
+`js/primitives/bb-primitives.js`, loaded through `PrimitiveModules`:
+
+```csharp
+var module = await PrimitiveModules.GetAsync(JSRuntime);
+await module.InvokeVoidAsync("elementUtils.scrollIntoView", elementId, "nearest");
+```
+
+The identifier is `namespace.function`, where the namespace is the module's file name in
+camelCase — `clickOutside`, `elementUtils`, `positioning`, `focusTrap`, and so on. The individual
+files are still importable on their own if you need just one.
+
+`overlay.open` is the one to reach for when adding a floating component: it positions, reveals,
+keeps the element positioned and wires the dismissal listeners in a single call. Splitting that back
+into separate awaits puts a network round trip between each step, on every open.
+
+From a component, declare what you want rather than wiring it — `BbFloatingPortal` forwards it:
+
+```razor
+<BbFloatingPortal Dismiss="@(new FloatingDismissOptions {
+                      ContentId = Context.ContentId,
+                      TriggerId = Context.TriggerId,
+                      OnOutsideInteraction = true,
+                      OnEscapeKey = true })"
+                  OnDismiss="@HandleDismiss">
+```
+
+The portal reports the gesture and does nothing else with it; what a dismissal means stays with the
+owner.
+
+Two rules matter if you add a primitive that needs JavaScript:
+
+- **Re-export the new module from `bb-primitives.js`.** A module reached by its own
+  `import(...)` from C# costs an extra circuit round trip on Blazor Server, every page load,
+  cached or not.
+- **Do not dispose what `GetAsync` returns.** It is shared by every component on the circuit. The
+  returned reference ignores disposal so that a mistake here cannot break anything, but the call
+  is still dead code.
+
 ## Controlled vs Uncontrolled
 
 All stateful primitives support both controlled and uncontrolled modes:
@@ -385,6 +437,8 @@ For full documentation, examples, and API reference, visit:
 ## License
 
 Apache License 2.0 - see [LICENSE](https://github.com/blazorblueprintui/ui/blob/main/LICENSE) for details.
+
+The package includes `LICENSE`, `NOTICE`, and `staticwebassets/THIRD-PARTY-NOTICES.txt`. The bundled Floating UI and SortableJS assets retain their MIT licenses. These notices are also available at `_content/BlazorBlueprint.Primitives/THIRD-PARTY-NOTICES.txt`.
 
 ## Contributing
 

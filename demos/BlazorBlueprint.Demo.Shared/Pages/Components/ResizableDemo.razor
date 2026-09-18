@@ -38,6 +38,60 @@
         <CodeBlock Source="Components/Resizable/horizontal.txt" />
     </div>
 
+    <!-- Keyboard Resizing -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Keyboard Resizing</h2>
+            <p class="text-sm text-muted-foreground">
+                Tab to a handle and resize without a pointer: arrows move 5%, <code>Page Up</code> and
+                <code>Page Down</code> move 20%, and <code>Home</code> / <code>End</code> go to the minimum and maximum.
+            </p>
+        </div>
+        <div class="h-[200px] border rounded-lg overflow-hidden">
+            <BbResizablePanelGroup Direction="ResizableDirection.Horizontal">
+                <BbResizablePanel DefaultSize="40" MinSize="20">
+                    <div class="flex h-full items-center justify-center p-6">
+                        <span class="font-semibold">Navigation</span>
+                    </div>
+                </BbResizablePanel>
+                <BbResizableHandle AriaLabel="Resize the navigation panel" />
+                <BbResizablePanel DefaultSize="60">
+                    <div class="flex h-full items-center justify-center p-6">
+                        <span class="font-semibold">Content</span>
+                    </div>
+                </BbResizablePanel>
+            </BbResizablePanelGroup>
+        </div>
+        <CodeBlock Source="Components/Resizable/keyboard.txt" />
+    </div>
+
+    <!-- Collapsible Panel -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Collapsible Panel</h2>
+            <p class="text-sm text-muted-foreground">
+                Drag the handle left, past half of <code>MinSize</code>, and the sidebar snaps shut. Drag back
+                and it reopens at <code>MinSize</code>.
+            </p>
+        </div>
+        <div class="h-[200px] border rounded-lg overflow-hidden">
+            <BbResizablePanelGroup Direction="ResizableDirection.Horizontal">
+                <BbResizablePanel DefaultSize="25" MinSize="15" Collapsible="true">
+                    <div class="flex h-full items-center justify-center p-6">
+                        <span class="font-semibold">Sidebar</span>
+                    </div>
+                </BbResizablePanel>
+                <BbResizableHandle />
+                <BbResizablePanel DefaultSize="75">
+                    <div class="flex h-full items-center justify-center p-6">
+                        <span class="font-semibold">Content</span>
+                    </div>
+                </BbResizablePanel>
+            </BbResizablePanelGroup>
+        </div>
+        <CodeBlock Source="Components/Resizable/collapsible.txt" />
+    </div>
+
     <!-- Vertical Layout -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -201,21 +255,34 @@
 
     <AccessibilityList>
         <AriaAttributes>
-            <AccessibilityItem>Resize handles use <code>role="separator"</code> with <code>aria-orientation</code></AccessibilityItem>
-            <AccessibilityItem><code>aria-valuenow</code>, <code>aria-valuemin</code>, and <code>aria-valuemax</code> reflect panel sizes</AccessibilityItem>
-            <AccessibilityItem>Panels are properly labeled for assistive technologies</AccessibilityItem>
+            <AccessibilityItem>
+                Each handle is a <code>role="separator"</code> with <code>aria-orientation</code> — <code>vertical</code>
+                for side-by-side panels, <code>horizontal</code> for stacked ones.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code>aria-valuenow</code>, <code>aria-valuemin</code> and <code>aria-valuemax</code> report the size of
+                the panel in front of the handle, as a percentage. <code>aria-controls</code> names that panel.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Handles carry a localized <code>aria-label</code> (<code>Resizable.ResizeHandle</code>). Override it per
+                handle with <code>AriaLabel</code> when one group holds several.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Panels render their size as <code>flex-basis</code>; put your own landmark role or
+                <code>aria-label</code> on a panel when its content needs one.
+            </AccessibilityItem>
         </AriaAttributes>
         <KeyboardNavigation>
-            <KeyboardShortcutItem Description="Focus resize handles">
+            <KeyboardShortcutItem Description="Focus a resize handle">
                 <BbKbd>Tab</BbKbd>
             </KeyboardShortcutItem>
-            <KeyboardShortcutItem Description="Resize panels">
+            <KeyboardShortcutItem Description="Resize by 5%">
                 <BbKbd>Arrow Keys</BbKbd>
             </KeyboardShortcutItem>
-            <KeyboardShortcutItem Description="Resize panels by larger increment">
+            <KeyboardShortcutItem Description="Resize by 20%">
                 <BbKbd>Page Up</BbKbd> / <BbKbd>Page Down</BbKbd>
             </KeyboardShortcutItem>
-            <KeyboardShortcutItem Description="Collapse / expand panel">
+            <KeyboardShortcutItem Description="Shrink to the minimum / grow to the maximum">
                 <BbKbd>Home</BbKbd> / <BbKbd>End</BbKbd>
             </KeyboardShortcutItem>
         </KeyboardNavigation>
@@ -256,7 +323,8 @@
                     The maximum size as a percentage (0-100).
                 </ApiParameter>
                 <ApiParameter Name="Collapsible" Type="bool" Default="false">
-                    Whether the panel can be collapsed.
+                    Lets the panel be dragged shut. Below half of <code>MinSize</code> it snaps to zero, and it
+                    reopens at <code>MinSize</code> on the way back.
                 </ApiParameter>
                 <ApiParameter Name="Class" Type="string?" Default="null">
                     Additional CSS classes for the panel.
@@ -269,6 +337,10 @@
             <ApiReference ComponentName="ResizableHandle">
                 <ApiParameter Name="WithHandle" Type="bool" Default="true">
                     Whether to show the grip handle icon.
+                </ApiParameter>
+                <ApiParameter Since="v4" Name="AriaLabel" Type="string?" Default="null">
+                    Accessible name for the separator. Defaults to the localized <code>Resizable.ResizeHandle</code>
+                    string; set it per handle when a group holds more than one.
                 </ApiParameter>
                 <ApiParameter Name="Class" Type="string?" Default="null">
                     Additional CSS classes for the handle.
