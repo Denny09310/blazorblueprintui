@@ -22,7 +22,8 @@
                 <code class="bg-muted px-1 py-0.5 rounded">EventStart</code>, <code class="bg-muted px-1 py-0.5 rounded">EventEnd</code>,
                 and <code class="bg-muted px-1 py-0.5 rounded">EventTitle</code>. Days show up to
                 <code class="bg-muted px-1 py-0.5 rounded">MaxEventsPerDay</code> chips; the localized "+x more" button
-                jumps to that day in the agenda view. Multi-day events render a chip on each spanned day.
+                jumps to that day in the agenda view. A multi-day event is drawn as one bar across the days it covers,
+                and as one bar per week row when it crosses a week boundary.
             </p>
         </div>
         <div class="border rounded-lg p-6">
@@ -32,6 +33,28 @@
                              EventTitle="e => e.Title" />
         </div>
         <CodeBlock Source="Components/EventCalendar/basic.txt" />
+    </div>
+
+    <!-- Multi-Day Events -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Multi-Day Events</h2>
+            <p class="text-sm text-muted-foreground">
+                Give an event an <code class="bg-muted px-1 py-0.5 rounded">EventEnd</code> on a later day and it is drawn
+                as one bar across the days it covers, not a separate chip in each of them. Overlapping runs stack — longest
+                at the top — and runs that never touch share a line. A run crossing a week boundary becomes one bar per row,
+                squared off at the join so the two halves read as one event. Nothing to switch on.
+            </p>
+        </div>
+        <div class="border rounded-lg p-6">
+            <BbEventCalendar Items="trips"
+                             EventStart="e => e.Start"
+                             EventEnd="e => e.End"
+                             EventTitle="e => e.Title"
+                             EventClass="e => e.Class"
+                             MaxEventsPerDay="4" />
+        </div>
+        <CodeBlock Source="Components/EventCalendar/multi-day.txt" />
     </div>
 
     <!-- Per-Event Colors -->
@@ -182,7 +205,8 @@
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">Notes &amp; Limitations</h2>
             <ul class="list-disc pl-6 text-sm text-muted-foreground space-y-1">
-                <li>Multi-day events render a chip on each spanned day — true spanning bars across cells are not supported yet.</li>
+                <li>Multi-day bars are drawn in the month and week views. The agenda view lists each day separately, which is what a chronological list is for.</li>
+                <li>A bar spends the day's <code class="bg-muted px-1 py-0.5 rounded">MaxEventsPerDay</code> budget in every day it covers; bars past the budget fall into "+x more" like chips do.</li>
                 <li>The week view is a stacked per-day list ordered by start time; there is no hour grid or drag-to-create.</li>
                 <li>An event is treated as all-day when its start (and end, if any) fall exactly on midnight.</li>
                 <li>Events are reached in tab order; arrow-key grid navigation is not implemented yet.</li>
@@ -223,7 +247,7 @@
                 Returns the start date/time of an event.
             </ApiParameter>
             <ApiParameter Name="EventEnd" Type="Func&lt;TEvent, DateTime?&gt;?" Default="null">
-                Returns the end date/time of an event, or null for a point-in-time event. When the delegate itself is null, all events are point-in-time. Events ending on a later day render a chip on each spanned day.
+                Returns the end date/time of an event, or null for a point-in-time event. When the delegate itself is null, all events are point-in-time. An event whose end date falls on a later day than its start is drawn as one bar across the days it covers, and as one bar per week row when it crosses a week boundary.
             </ApiParameter>
             <ApiParameter Name="EventTitle" Type="Func&lt;TEvent, string&gt;" Default="required">
                 Returns the display title of an event.
@@ -270,7 +294,7 @@
             <ApiParameter Name="EventStart" Type="Func&lt;TEvent, DateTime&gt;">Required function returning each event's start date and time.</ApiParameter>
             <ApiParameter Name="EventTitle" Type="Func&lt;TEvent, string&gt;">Required function returning each event's display title.</ApiParameter>
             <ApiParameter Name="Items" Type="IEnumerable&lt;TEvent&gt;?">The events to display.</ApiParameter>
-            <ApiParameter Name="EventEnd" Type="Func&lt;TEvent, DateTime?&gt;?">Returns the end date/time of an event, or null for a point-in-time event. When the delegate itself is null, all events are treated as point-in-time. Events whose end date falls on a later day than their start render a chip on each spanned day.</ApiParameter>
+            <ApiParameter Name="EventEnd" Type="Func&lt;TEvent, DateTime?&gt;?">Returns the end date/time of an event, or null for a point-in-time event. When the delegate itself is null, all events are treated as point-in-time. An event whose end date falls on a later day than its start is drawn as one bar across the days it covers, and as one bar per week row when it crosses a week boundary.</ApiParameter>
             <ApiParameter Name="EventClass" Type="Func&lt;TEvent, string?&gt;?">Returns additional CSS classes for a specific event&#x27;s chip, merged with the built-in chip classes. Use this for per-event coloring (e.g. by category).</ApiParameter>
             <ApiParameter Name="EventTemplate" Type="RenderFragment&lt;TEvent&gt;?">Optional template that fully replaces the built-in event chip content. When set, only minimal layout/focus classes are applied to the chip button; combine with EventClass for chip-level styling.</ApiParameter>
             <ApiParameter Name="View" Type="EventCalendarView" Default="EventCalendarView.Month">The active view. Use @@bind-View for two-way binding.</ApiParameter>
@@ -321,6 +345,18 @@
     private sealed record DemoEvent(string Title, DateTime Start, DateTime? End, string Category);
 
     private static readonly DateTime today = DateTime.Today;
+
+    private sealed record Trip(string Title, DateTime Start, DateTime? End, string Class);
+
+    private static readonly DateTime monthStart = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+
+    private readonly List<Trip> trips = new()
+    {
+        new("Onsite week", monthStart.AddDays(7), monthStart.AddDays(11), "bg-blue-500/15 text-blue-700 hover:bg-blue-500/25"),
+        new("Design sprint", monthStart.AddDays(9), monthStart.AddDays(14), "bg-purple-500/15 text-purple-700 hover:bg-purple-500/25"),
+        new("Conference", monthStart.AddDays(2), monthStart.AddDays(4), "bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25"),
+        new("Retro", monthStart.AddDays(3), null, "bg-orange-500/15 text-orange-700 hover:bg-orange-500/25"),
+    };
 
     private readonly List<DemoEvent> events = new()
     {

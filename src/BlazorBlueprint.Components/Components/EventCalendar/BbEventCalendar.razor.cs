@@ -30,7 +30,9 @@ public partial class BbEventCalendar<TEvent> : ComponentBase
     /// <summary>
     /// Returns the end date/time of an event, or null for a point-in-time event.
     /// When the delegate itself is null, all events are treated as point-in-time.
-    /// Events whose end date falls on a later day than their start render a chip on each spanned day.
+    /// An event whose end date falls on a later day than its start is drawn as one bar across the
+    /// days it covers, not a separate chip in each of them. An event crossing a week boundary is
+    /// one bar per week row, squared off at the join.
     /// </summary>
     [Parameter]
     public Func<TEvent, DateTime?>? EventEnd { get; set; }
@@ -283,6 +285,201 @@ public partial class BbEventCalendar<TEvent> : ComponentBase
     private IReadOnlyList<TEvent> GetEventsForDay(DateTime day) =>
         eventsByDay.TryGetValue(day.Date, out var list) ? list : Array.Empty<TEvent>();
 
+    /// <summary>Whether the event covers more than one calendar day.</summary>
+    private bool IsMultiDay(TEvent item)
+    {
+        var start = EventStart(item).Date;
+        var end = (EventEnd?.Invoke(item) ?? EventStart(item)).Date;
+        return end > start;
+    }
+
+    /// <summary>
+    /// The single-day events for a month cell. Multi-day events are drawn as bars across the week
+    /// row instead, so they must not also appear here or they would be shown twice.
+    /// </summary>
+    private List<TEvent> GetSingleDayEvents(DateTime day)
+    {
+        var chips = new List<TEvent>();
+        foreach (var item in GetEventsForDay(day))
+        {
+            if (!IsMultiDay(item))
+            {
+                chips.Add(item);
+            }
+        }
+
+        return chips;
+    }
+
+    #endregion
+
+    #region Week-row event bars
+
+    /// <summary>
+    /// One horizontal run of a multi-day event within a single week row.
+    /// </summary>
+    /// <param name="Event">The consumer's event.</param>
+    /// <param name="StartColumn">Zero-based column the run starts in.</param>
+    /// <param name="Span">How many columns the run covers.</param>
+    /// <param name="Lane">Zero-based stacking row within the week, assigned so runs never overlap.</param>
+    /// <param name="ContinuesBefore">The event began in an earlier week row.</param>
+    /// <param name="ContinuesAfter">The event carries on into a later week row.</param>
+    private sealed record EventBar(
+        TEvent Event,
+        int StartColumn,
+        int Span,
+        int Lane,
+        bool ContinuesBefore,
+        bool ContinuesAfter);
+
+    /// <summary>The bars for one week row, and what they cost the day cells underneath them.</summary>
+    private sealed class WeekRowLayout
+    {
+        /// <summary>Runs to draw, already packed into lanes.</summary>
+        public List<EventBar> Bars { get; } = new();
+
+        /// <summary>Lanes actually drawn, so every cell in the row reserves the same height.</summary>
+        public int VisibleLaneCount { get; set; }
+
+        /// <summary>Drawn bars covering each column — they spend that day's event budget.</summary>
+        public int[] BarsPerColumn { get; } = new int[7];
+
+        /// <summary>Bars dropped for exceeding the budget, counted into that day's "+x more".</summary>
+        public int[] HiddenPerColumn { get; } = new int[7];
+    }
+
+    /// <summary>
+    /// Packs the multi-day events overlapping a week row into non-overlapping lanes.
+    /// </summary>
+    /// <remarks>
+    /// An event that crosses a week boundary produces one run per row; the run carries
+    /// <see cref="EventBar.ContinuesBefore"/> / <see cref="EventBar.ContinuesAfter"/> so the joint
+    /// can be drawn square rather than rounded. Longest events are placed first, which keeps the
+    /// long bars at the top of the stack where they read as a continuous line across the month.
+    /// </remarks>
+    /// <param name="week">The seven days of the row, in display order.</param>
+    /// <param name="maxLanes">
+    /// How many lanes a day will give up to bars. The month view spends the day's
+    /// <see cref="MaxEventsPerDay"/> budget; the week view has no such limit and passes
+    /// <see cref="int.MaxValue"/>.
+    /// </param>
+    private WeekRowLayout BuildWeekLayout(DateTime[] week, int maxLanes)
+    {
+        var layout = new WeekRowLayout();
+        if (Items is null || EventStart is null || maxLanes <= 0)
+        {
+            return layout;
+        }
+
+        var weekStart = week[0];
+        var weekEnd = week[6];
+
+        var spanning = new List<(TEvent Item, DateTime Start, DateTime End)>();
+        foreach (var item in Items)
+        {
+            var start = EventStart(item).Date;
+            var end = (EventEnd?.Invoke(item) ?? EventStart(item)).Date;
+            if (end < start)
+            {
+                end = start;
+            }
+
+            // Single-day events stay as chips inside their cell.
+            if (end == start || end < weekStart || start > weekEnd)
+            {
+                continue;
+            }
+
+            spanning.Add((item, start, end));
+        }
+
+        spanning.Sort(CompareSpanning);
+
+        // occupied[lane][column]: which cells of the row each lane has already taken.
+        var occupied = new List<bool[]>();
+
+        foreach (var (item, start, end) in spanning)
+        {
+            var from = start < weekStart ? weekStart : start;
+            var to = end > weekEnd ? weekEnd : end;
+            var startColumn = (from - weekStart).Days;
+            var span = (to - from).Days + 1;
+            var lane = ClaimLane(occupied, startColumn, span);
+
+            if (lane >= maxLanes)
+            {
+                // Past the day's budget: drop the bar rather than let the row grow without limit,
+                // and report it through the same "+x more" the chips use.
+                for (var column = startColumn; column < startColumn + span; column++)
+                {
+                    layout.HiddenPerColumn[column]++;
+                }
+
+                continue;
+            }
+
+            layout.Bars.Add(new EventBar(item, startColumn, span, lane, start < from, end > to));
+            for (var column = startColumn; column < startColumn + span; column++)
+            {
+                layout.BarsPerColumn[column]++;
+            }
+
+            layout.VisibleLaneCount = Math.Max(layout.VisibleLaneCount, lane + 1);
+        }
+
+        return layout;
+    }
+
+    /// <summary>Longest first, then earliest, then the view's normal event order.</summary>
+    private int CompareSpanning(
+        (TEvent Item, DateTime Start, DateTime End) a,
+        (TEvent Item, DateTime Start, DateTime End) b)
+    {
+        var lengthCompare = (b.End - b.Start).CompareTo(a.End - a.Start);
+        if (lengthCompare != 0)
+        {
+            return lengthCompare;
+        }
+
+        var startCompare = a.Start.CompareTo(b.Start);
+        return startCompare != 0 ? startCompare : CompareEvents(a.Item, b.Item);
+    }
+
+    /// <summary>Takes the topmost lane whose columns are all free, adding one if none is.</summary>
+    private static int ClaimLane(List<bool[]> occupied, int startColumn, int span)
+    {
+        for (var lane = 0; ; lane++)
+        {
+            if (lane == occupied.Count)
+            {
+                occupied.Add(new bool[7]);
+            }
+
+            var columns = occupied[lane];
+            var free = true;
+            for (var column = startColumn; column < startColumn + span; column++)
+            {
+                if (columns[column])
+                {
+                    free = false;
+                    break;
+                }
+            }
+
+            if (!free)
+            {
+                continue;
+            }
+
+            for (var column = startColumn; column < startColumn + span; column++)
+            {
+                columns[column] = true;
+            }
+
+            return lane;
+        }
+    }
+
     #endregion
 
     #region View data
@@ -449,6 +646,99 @@ public partial class BbEventCalendar<TEvent> : ComponentBase
         var baseClasses = EventTemplate is not null ? ChipTemplateClasses : ChipBaseClasses;
         var customClass = EventClass?.Invoke(item);
         return string.IsNullOrEmpty(customClass) ? baseClasses : ClassNames.cn(baseClasses, customClass);
+    }
+
+    // Month bar geometry. A bar is positioned against the week row rather than its cell, so these
+    // have to reproduce the cell's own box: `p-1.5` top padding, the `h-6` day-number button, and
+    // the `mt-1` above the event stack. A lane is one chip (text-xs, py-0.5) plus the `space-y-0.5`
+    // that separates them, so bars and chips sit on the same rhythm.
+    private const int MonthCellPaddingPx = 6;
+    private const int MonthDayNumberHeightPx = 24;
+    private const int MonthDayNumberGapPx = 4;
+    private const int LaneHeightPx = 22;
+    private const int EventBarHeightPx = 20;
+    private const int EventBarInsetPx = 3;
+    private const int MonthBarsTopPx = MonthCellPaddingPx + MonthDayNumberHeightPx + MonthDayNumberGapPx;
+
+    // The week view puts its day numbers in a separate header row, so its bars start at the top of
+    // the cell's padding box rather than below a day-number button.
+    private const int WeekBarsTopPx = MonthCellPaddingPx;
+
+    private const string EventBarBaseClasses = "bb:absolute bb:z-10 bb:flex bb:items-center bb:overflow-hidden bb:rounded bb:px-1.5 bb:text-left bb:text-xs bb:font-medium bb:bg-primary/10 bb:text-primary bb:hover:bg-primary/20 bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
+    private const string EventBarTemplateClasses = "bb:absolute bb:z-10 bb:flex bb:items-center bb:overflow-hidden bb:rounded bb:text-left bb:text-xs bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
+
+    private string GetEventBarClasses(EventBar bar)
+    {
+        var baseClasses = EventTemplate is not null ? EventBarTemplateClasses : EventBarBaseClasses;
+
+        // Square off whichever end runs on into another week row, so the two halves read as one bar.
+        var rounding = (bar.ContinuesBefore, bar.ContinuesAfter) switch
+        {
+            (true, true) => "bb:rounded-none",
+            (true, false) => "bb:rounded-l-none",
+            (false, true) => "bb:rounded-r-none",
+            _ => null,
+        };
+
+        return ClassNames.cn(baseClasses, rounding, EventClass?.Invoke(bar.Event));
+    }
+
+    /// <summary>
+    /// Places a bar across the week row it belongs to.
+    /// </summary>
+    /// <remarks>
+    /// The row is a seven-column grid with a 1px gap, so a column is <c>(100% - 6px) / 7</c> wide
+    /// and column <c>s</c> starts <c>s</c> gaps in. Expressing that as a <c>calc()</c> keeps the
+    /// bar exactly on the column boundaries at any width, with no measurement and no JavaScript.
+    /// The bar sits in its starting day's cell, which keeps it inside a <c>gridcell</c> for
+    /// assistive technology and puts it at the right point in the tab order; the cell is static
+    /// and the row is relative, so the offsets resolve against the row.
+    /// </remarks>
+    private static string GetEventBarStyle(EventBar bar, int topBasePx)
+    {
+        var startInset = bar.ContinuesBefore ? 0 : EventBarInsetPx;
+        var endInset = bar.ContinuesAfter ? 0 : EventBarInsetPx;
+        var top = topBasePx + (bar.Lane * LaneHeightPx);
+
+        // The gaps: a bar starting in column s clears s of them, and one spanning n columns swallows
+        // n - 1. The insets then trim whichever end is a real start or finish rather than a join.
+        var left = SignedPixels(bar.StartColumn + startInset);
+        var width = SignedPixels(bar.Span - 1 - startInset - endInset);
+
+        return string.Create(
+            CultureInfo.InvariantCulture,
+            $"left:calc((100% - 6px) * {bar.StartColumn} / 7 {left});width:calc((100% - 6px) * {bar.Span} / 7 {width});top:{top}px;height:{EventBarHeightPx}px;");
+    }
+
+    /// <summary>
+    /// A signed pixel term for a <c>calc()</c>. Written as <c>- 4px</c> rather than <c>+ -4px</c>,
+    /// which is legal but reads like a mistake in devtools.
+    /// </summary>
+    private static string SignedPixels(int value) =>
+        string.Create(CultureInfo.InvariantCulture, $"{(value < 0 ? '-' : '+')} {Math.Abs(value)}px");
+
+    /// <summary>
+    /// Reserves the height the bars float above, so the chips below them are never overlapped.
+    /// Every cell in the row reserves the same height, which keeps the chips on one baseline.
+    /// </summary>
+    private static string GetLaneSpacerStyle(int laneCount) =>
+        string.Create(CultureInfo.InvariantCulture, $"height:{laneCount * LaneHeightPx}px;");
+
+    /// <summary>
+    /// Names the whole event and the days it covers, not just the part in this row — the visual
+    /// split across a week boundary is a layout detail and should not leak into the label.
+    /// </summary>
+    private string GetEventBarAriaLabel(EventBar bar)
+    {
+        var start = EventStart(bar.Event).Date;
+        var end = (EventEnd?.Invoke(bar.Event) ?? EventStart(bar.Event)).Date;
+
+        return string.Format(
+            culture,
+            "{0}, {1} – {2}",
+            EventTitle(bar.Event),
+            start.ToString("D", culture),
+            end.ToString("D", culture));
     }
 
     private string GetMonthCellClasses(DateTime day)
