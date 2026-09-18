@@ -1,11 +1,12 @@
-## What's New in v4.0.0-beta.8
+## What's New in v4.0.0-beta.9
 
 **This is a prerelease.** The API may still change before the stable v4.0.0 release.
 
 ### Breaking Changes
 
 - **.NET 10**: the package now targets `net10.0` only and depends on `Microsoft.AspNetCore.Components.Web` 10.0.12. .NET 8 and .NET 9 are no longer supported.
-- **BlazorBlueprint.Primitives**: the dependency is now 4.0.0-beta.8, which has its own breaking changes. Keep Components and Primitives on matching v4 versions. See the Primitives release notes and `V4-MIGRATION-GUIDE.md`.
+- **BlazorBlueprint.Primitives**: the dependency is now 4.0.0-beta.9, which has its own breaking changes. Keep Components and Primitives on matching v4 versions. See the Primitives release notes and `V4-MIGRATION-GUIDE.md`.
+- **BbPortalHost**: the portal hosts move from `BlazorBlueprint.Primitives.Services` to `BlazorBlueprint.Primitives`. Add `@using BlazorBlueprint.Primitives` to the layout that holds the host. Without it Razor emits a literal `<bbportalhost>` element, with no build error, and every overlay silently fails to render.
 - **Stylesheet**: every Tailwind utility in `blazorblueprint.css` is now prefixed `bb:` (`.bb\:flex`) and lives in its own `bb-utilities` cascade layer, so your Tailwind build and the library's can no longer emit the same class. The layer order is `properties, theme, base, components, bb-utilities, utilities, bb`.
 - **Class parameter**: no markup change is needed. `ClassNames.cn` merges across the prefix, so `Class="p-6"` still replaces the library's `bb:p-4`.
 - **Tailwind `@source`**: remove any `@source` that points at the Blazor Blueprint package or sources. Under a prefixed build it emits nothing.
@@ -14,12 +15,17 @@
 - **Theme variables**: Tailwind's generated variables are prefixed too (`--bb-spacing`, `--bb-default-transition-duration`). Semantic tokens such as `--background` and `--border` are unchanged.
 - **CursorExtensions.ToClass**: returns the prefixed class (`bb:cursor-pointer`).
 - **Internal class names**: CSS, JavaScript or tests that select internal elements by utility class (`.flex-col`, `.hidden`) need the prefix. Prefer the `data-slot` and other data attributes, which are stable.
+- **BbCalendar**: `Mode` and the `CalendarMode` enum are removed. The parameter never selected anything; use **BbDateRangePicker** for a range.
+- **BbCommand**: `CloseOnSelect` is removed. Nothing read it; close the surrounding overlay from `OnValueChange`.
+- **BbCandlestick**, **BbFunnel**, **BbGauge**, **BbHeatmap**, **BbPie**, **BbRadar**: `Stacked` and `StackGroup` are removed. These series cannot stack, and the values were never read. Both stay on **BbBar**, **BbLine**, **BbArea**, **BbScatter** and **BbRadialBar**.
 - **Menus**: **BbDropdownMenu**, **BbContextMenu** and **BbMenubar** content and items now take their colours from `--bb-menu-*` tokens. The default hover and focus highlight is a tint of the menu foreground, not `--accent`. Set `--bb-menu-accent: var(--accent)` and `--bb-menu-accent-foreground: var(--accent-foreground)` to restore the old highlight.
 - **BbCarousel**: drag and swipe navigation is now on by default (`Draggable="true"`), and the root element is keyboard-focusable. JavaScript now positions the slides, so **BbCarouselContent** no longer renders an inline `transform`. `SlidesPerView` below 1, a negative `Gap` or an `AutoplayInterval` below 1000 now throws.
 - **BbDataGrid**: a paged `IQueryable` source without search, grouping or virtualization now runs the full query only when a CSV export is requested. Keep its query provider (for example a `DbContext`) alive until then.
 - **ThemeService**: `SetRadiusAsync` throws for values outside 0–4 rem, and invalid `ThemeOptions` defaults throw when the service is created. A stored radius outside that range is ignored.
 - **BbTooltipTrigger**: `AsChild` now defaults to `false`. Add `AsChild="true"` where the child consumes the trigger context itself, such as a `BbButton`.
 - **BbDrawerTrigger**, **BbDrawerClose**: now render a real `<button type="button">` and gain `AsChild`. Set `AsChild="true"` when the child is already a control, or you get a button inside a button.
+- **BbResizableHandle**: each handle is now a keyboard-operable `role="separator"` and a tab stop, so the tab order of a resizable layout changes.
+- **BbEventCalendar**: a multi-day event draws as one bar instead of one chip per day, so it is one tab stop per week row rather than one per day. A bar also spends the `MaxEventsPerDay` budget on every day it covers, so those days show fewer chips and count the difference into "+x more".
 - **JavaScript modules**: components import their module once per circuit through `JsModules.GetAsync` / `PrimitiveModules.GetAsync` and no longer dispose it. Primitive modules are reached through `bb-primitives.js` under a namespace (`elementUtils.isNearBottom`). Custom code that imported individual primitive files must be updated.
 - **Core bundle**: `theme.js`, `sidebar.js`, `sidebar-inset.js`, `text-input.js` and `composition-guard.js` ship as `bb-components-core.js` under a namespace (`theme.initialize`). Import it through `ComponentModules.GetCoreAsync`.
 - **BbPopoverContent**, **BbSelectContent**, **BbDropdownMenuContent**: `BbFloatingPortal` wires dismissal and listbox keys in the call that opens the overlay. JavaScript owns `data-side`, `data-focused` and `aria-activedescendant`, so stop rendering them from C#.
@@ -35,6 +41,7 @@
 - **BbTreeSelect**: searchable hierarchy picker with single or multiple selection, cascading checkboxes with indeterminate states, `LeafOnly`, clearing and `EditContext` binding.
 - **BbCascader**: column-based hierarchy picker with full-path search, optional branch selection (`ChangeOnSelect`), keyboard and RTL navigation, and `EditContext` binding.
 - **BbDateInput**, **BbTimeInput**: culture-aware segmented date and time entry with keyboard increments, min/max bounds, an optional calendar or time picker, and `EditContext` validation.
+- **BbFormFieldDateInput**, **BbFormFieldTimeInput**, **BbFormFieldTreeSelect**, **BbFormFieldCascader**, **BbFormFieldQuantityStepper**: form field wrappers with label, helper text and validation message for the five new bindable controls. **BbFormFieldTreeSelect** reads `ValuesExpression` in `Multiple` mode and `ValueExpression` otherwise.
 - **BbAppBar**: top app bar with title, description, back button, actions, sticky positioning and safe-area padding.
 - **BbBottomNav**, **BbBottomNavItem**: bottom tab navigation with a bindable `Value`, links, icons, fixed positioning and safe-area padding.
 - **BbNotificationBadge**: count or dot badge over any content, with `Maximum`, `ShowZero`, `Position` and `Variant`.
@@ -61,6 +68,13 @@
 - **FileUploadItem**: new `Status`, `BytesTransferred`, `Progress` and `UploadError`. **FileUploadContext** reports progress through `ReportProgressAsync`.
 - **BbDataView**: selection (`SelectionMode`, `SelectedItems`, `ItemKey`, `IsItemDisabled`), grouping (`GroupBy`, `GroupHeaderTemplate`) and list virtualization (`EnableVirtualization`).
 - **BbDataView**: `MobileToolbar` moves sorting and the new `FilterContent` into a bottom sheet.
+- **BbDataView**: new `SearchDebounceMs`, matching **BbDataGrid**.
+- **BbEventCalendar**: a multi-day event draws as one bar across the days it covers, in the month view and the week view. Bars are packed into lanes so they never overlap, an event crossing a week boundary becomes one bar per row, and both halves carry the whole event's dates in their `aria-label`. `EventClass` and `EventTemplate` apply to bars as they did to chips, and the agenda view is unchanged.
+- **BbEventCalendar**: new `ContainerClass`, which targets the view container in all three views, so the calendar can be sized without also sizing the toolbar.
+- **BbResizableHandle**: keyboard resizing. Arrows move the handle 5%, Page Up/Down 20%, and Home/End take the panel to its limits. Adds `AriaLabel`.
+- **BbCascader**: new `Required`, matching **BbTreeSelect**.
+- **BbCascader**, **BbTreeSelect**, **BbQuantityStepper**: new `AriaDescribedBy`, so a wrapper can point the control at its own error text.
+- **BbDatePickerInput**: captures unmatched attributes.
 - **BbSelect**: `Presentation="SelectPresentation.BottomSheet"` shows the options in a modal bottom sheet, titled by `SheetTitle`.
 - **BbMultiSelect**: `FooterContent` replaces the default footer, and `CloseAsync` closes the list from code.
 - **BbFilterBuilder**: saved `Presets` shown as buttons or a dropdown (`PresetDisplay`, `ApplyPresetAsync`), `SearchableFields`, and per-field `ValueEditors` templates.
@@ -88,6 +102,25 @@
 
 ### Bug Fixes
 
+- **Borders**: borders no longer render near-black under a consumer Tailwind build. The consumer's own preflight reset the shared `*` rule to `currentColor`, and which stylesheet won depended on link order. The default now matches on the class attribute instead.
+- **group and peer markers**: the library shipped only the prefixed `bb:group` and `bb:peer` markers, which a consumer's Tailwind build never matches, so every `group-*` and `peer-*` variant written against library markup did nothing. `ClassNames.cn` now carries the bare twin of any marker it keeps, which covers 30 components.
+- **Overlay roots**: an extra HTML attribute on **BbDialog**, **BbSheet**, **BbPopover**, **BbHoverCard** and the other overlay roots crashed the render with `InvalidOperationException`. The context-only roots now accept extra attributes, and the roots that render an element put them on it.
+- **ARIA state**: attributes bound to a `bool` rendered an empty value when true and vanished when false.
+- **Parameters that did nothing**: `BbSelect.Open`, `BbCommand.Disabled`, `BbRangeSlider.Orientation`, `BbResizablePanel.Collapsible`, `BbToastProvider.MaxToasts`, `BbRadialBarChart.EndAngle`, `BbSidebarMenuAction.ShowOnHover` and others now work.
+- **BbSlider**, **BbRangeSlider**: a vertical slider now lays out vertically. **BbSlider** read `Orientation` nowhere, and the track's `grow` followed the flex main axis. The range slider's value tooltips and tick marks move to opposite sides so they cannot overlap.
+- **BbDataGrid**: the global search ignored `SearchDebounceMs`, because the input still reported on blur or Enter.
+- **BbPortalHost**: a live host reported itself missing. Two hosts overlap more often than a boolean allowed, so registration is a clamped count now.
+- **BbRadioGroup**: Tab can leave the group again. It suppressed the default action of every key.
+- **BbSwitch**: Space toggles once, not twice.
+- **BbToggleGroup**: single mode no longer announces as a radio with no state, and it unregisters its items.
+- **BbNativeSelect**: enum values bind. **InputConverter** parses enums, which `Convert.ChangeType` cannot produce.
+- **Inline styles**: **BbAspectRatio**, **BbScrollArea**, **BbDashboardGrid**, **BbResizablePanel**, **BbResizablePanelGroup**, **BbSkeleton**, **BbChartBase**, **BbDropdownMenuContent** and the **BbCommand** groups merge a consumer `style` with their own. Any style at all used to replace flex sizing, grid templates or the `display:none` that hides a closed menu.
+- **BbInput**, **BbInputField**, **BbTextarea**, **BbInputGroupInput**, **BbInputGroupTextarea**: `UpdateTiming` and `DebounceInterval` changes after the first render now reach the browser. They were fixed at their first-render values.
+- **BbNumericInput**, **BbCurrencyInput**: a step at `int.MaxValue` no longer overflows to a large negative number. The value pins to the configured limit.
+- **Charts**: per-series colours apply, and **BbCandlestick** click arguments report the right values.
+- **BbDataGrid**: grouped virtualized rows render correctly.
+- **BbNavigationMenu**: trigger registration is keyed by the trigger, so a trigger that leaves the page takes its entry with it.
+- **BbDialog**, **BbSheet**: the primitive roots declare `IDisposable`, so the `Dispose` they already had is called. The native `<dialog>` fallback and the overlay registration order are fixed too.
 - **BbDataGrid**: initial sorting now applies to the first rows, so they match the sort indicators.
 - **BbDataView**: with `ShowPagination="false"`, local data is no longer cut to the first page.
 - **BbDataView**: a parent re-render no longer undoes a layout the user toggled, and infinite scroll keeps working after a provider load replaces the scroll container.
@@ -115,7 +148,7 @@
 
 - **Scrollbars**: native scrollbars inside library components follow the theme in light and dark mode, and the stylesheet sets `color-scheme` for each mode.
 - **BbSidebar**: a closed non-collapsible sidebar is now `inert` and `aria-hidden`, and its width transition respects reduced motion.
-- **Localization**: `DefaultBbLocalizer` adds strings for the new components and features.
+- **Localization**: `DefaultBbLocalizer` adds strings for the new components and features, including the resizable handle, and the last of the hard-coded English is gone.
 - **Package**: adds a dependency on `Ical.Net` 5.2.3 for scheduler recurrence. The package now includes `LICENSE`, `NOTICE` and `THIRD-PARTY-NOTICES.txt`, also served at `_content/BlazorBlueprint.Components/THIRD-PARTY-NOTICES.txt`.
 - **BbRichTextEditor**: `table`, `code`, `align`, `color`, `background` and `image` are registered formats, so bound or pasted HTML keeps them. The sanitizer allows `data:image/*` on `<img src>` only.
 - **BbDarkModeToggle**: icons are now `h-4 w-4`, matching **BbThemeSwitcher**.
@@ -124,14 +157,17 @@
 - **ThemeService**: invalid colour names in `localStorage` fall back to the default in the browser, without an extra round trip.
 - **BbNavigationMenuTrigger**: ArrowDown no longer waits 50 ms before focusing the first item.
 - **BbSortable**: items render with `role="listitem"`, and the live status region and keyboard instructions have stable ids.
+- **Documentation**: `V4-MIGRATION-GUIDE.md` is now the single list of v4 breaking changes, and the CHANGELOG links into it.
 
 ### Performance
 
+- **BbDataGrid**, **BbDataView**: the search box debounces in the browser, which costs one provider call per typing pause rather than one per key. This matters most on Blazor Server.
 - **BbDataGrid**: paged `IQueryable` sources without search, grouping or virtualization count and page on the query provider instead of loading every row.
 - **BbCommand**: filtered results and item positions are cached and shared, so items no longer rescan the filtered list.
 - **BbSlider**, **BbRangeSlider**, **BbColorPicker**: drag feedback updates in the browser. Value updates during a drag are sent at most about every 50 ms, and the final value is sent on release.
 - **BbRating**: hover updates when the pointer enters an icon, not on every mouse move.
 - **BbTreeView**: search indexes parents and visible nodes, so rendering no longer repeats descendant searches.
+- **BbEventCalendar**: a multi-day bar is positioned with a `calc()` over the seven-column grid, so it needs no measuring and no JavaScript at any width.
 - **Overlays**: **BbSelect**, **BbPopover**, **BbDropdownMenu**, **BbCombobox** and other floating overlays open and close in one interop call each instead of five, through the Primitives update.
 - **BbCombobox**, **BbMultiSelect**: the search box is focused inside the call that opens the popover, not after a render, a 50 ms wait and another round trip.
 - **BbSelect**, **BbPopover**, **BbDropdownMenu**: focus returns to the trigger inside the close call.
