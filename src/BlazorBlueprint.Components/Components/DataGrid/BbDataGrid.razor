@@ -159,7 +159,10 @@
                         </colgroup>
                     }
                     <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader Class="@ClassNames.cn("bb:bg-background", StickyHeader ? "bb:sticky bb:top-0 bb:z-20" : "")">
-                        <BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Class="bb:group/row bb:bg-background">
+                        @* Through cn() so the bare `group/row` marker ships too: the primitive
+                           concatenates Class verbatim, and a consumer's `group-hover/row:*` resolves
+                           against the unprefixed marker their own Tailwind build emits. *@
+                        <BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Class="@ClassNames.cn("bb:group/row bb:bg-background")">
                             @foreach (var column in _cachedVisibleColumns)
                             {
                                 var sortDirection = _gridState.Sorting.GetDirection(column.ColumnId);

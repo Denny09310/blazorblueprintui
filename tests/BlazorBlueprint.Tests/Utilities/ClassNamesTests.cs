@@ -135,7 +135,32 @@ public class ClassNamesTests
 
     [Fact]
     public void PrefixedGroupMarkerSurvivesConsumerOverride() =>
-        Assert.Equal("bb:group/row bg-muted", ClassNames.cn("bb:group/row bb:bg-background", "bg-muted"));
+        Assert.Equal(
+            "group/row bb:group/row bg-muted",
+            ClassNames.cn("bb:group/row bb:bg-background", "bg-muted"));
+
+    /// <summary>
+    /// A consumer's Tailwind build never sees the <c>bb</c> prefix, so its <c>group-*</c>/<c>peer-*</c>
+    /// variants compile to <c>:where(.group)</c> and match only a bare marker. Both forms ship.
+    /// </summary>
+    [Theory]
+    [InlineData("bb:group", "group bb:group")]
+    [InlineData("bb:peer", "peer bb:peer")]
+    [InlineData("bb:peer/menu-button", "peer/menu-button bb:peer/menu-button")]
+    public void MarkersShipBareAsWellAsPrefixed(string input, string expected) =>
+        Assert.Equal(expected, ClassNames.cn(input));
+
+    /// <summary>
+    /// Only the marker itself gains a bare twin. A <c>group-*</c> variant is an ordinary utility:
+    /// unprefixed it would land in the consumer's cascade layer, which is what #496 was about.
+    /// </summary>
+    [Theory]
+    [InlineData("bb:group-hover:opacity-100")]
+    [InlineData("bb:group-data-[state=open]:rotate-180")]
+    [InlineData("bb:group-hover/row:underline")]
+    [InlineData("bb:peer-disabled:opacity-70")]
+    public void GroupAndPeerVariantsAreNotTreatedAsMarkers(string input) =>
+        Assert.Equal(input, ClassNames.cn(input));
 
     [Fact]
     public void PrefixedArbitraryVariantIsKept() =>

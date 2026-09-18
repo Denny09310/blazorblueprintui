@@ -171,6 +171,39 @@ public class TailwindPrefixTests
         string.Join("\n  ", offenders.Take(60)) +
         (offenders.Count > 60 ? $"\n  … and {offenders.Count - 60} more" : string.Empty);
 
+    /// <summary>
+    /// A <c>group</c>/<c>peer</c> marker must reach the DOM in its bare form as well as its
+    /// prefixed one, because a consumer's Tailwind build compiles <c>group-*</c>/<c>peer-*</c> to
+    /// <c>:where(.group)</c> and never sees the <c>bb</c> prefix. <c>ClassNames.cn</c> adds the bare
+    /// twin, so the only way to lose it is to hand a marker literal straight to a component's
+    /// <c>Class</c> parameter — a primitive concatenates <c>Class</c> verbatim, with no merge.
+    /// </summary>
+    [Fact]
+    public void MarkerLiteralsGoThroughCn()
+    {
+        var markerInLiteralClass = new Regex(
+            @"[Cc]lass=""(?<value>(?:[^""@]|@(?!\())*?bb:(?:group|peer)(?:/[\w-]+)?(?![\w/-])[^""]*)""",
+            RegexOptions.Compiled);
+
+        var offenders = new List<string>();
+
+        foreach (var file in SourceTree.ComponentSources)
+        {
+            var text = File.ReadAllText(file.FullName);
+            foreach (Match m in markerInLiteralClass.Matches(text))
+            {
+                var line = 1 + text.AsSpan(0, m.Index).Count('\n');
+                offenders.Add($"{SourceTree.RelativePath(file)}:{line} `{m.Groups["value"].Value}`");
+            }
+        }
+
+        Assert.True(
+            offenders.Count == 0,
+            "A bb:group/bb:peer marker in a literal Class attribute never gains its bare twin, so a " +
+            "consumer's own group-*/peer-* variants silently match nothing. Wrap it in ClassNames.cn(...). " +
+            "Offenders:\n  " + string.Join("\n  ", offenders));
+    }
+
     // ---------------------------------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------------------------------

@@ -124,7 +124,51 @@ public static class ClassNames
             return string.Empty;
         }
 
-        return MergeWithPrefix(classes);
+        return WithBareMarkers(MergeWithPrefix(classes));
+    }
+
+    /// <summary>
+    /// Carries a bare <c>group</c>/<c>peer</c> marker alongside every prefixed one the merge kept.
+    /// </summary>
+    /// <remarks>
+    /// Tailwind resolves <c>group-*</c> and <c>peer-*</c> against a literal marker class, so a
+    /// consumer's own build emits <c>:where(.group)</c> and <c>:where(.peer\/menu-button)</c> — it
+    /// never sees the <c>bb</c> prefix, and never emits <c>:where(.bb\:group)</c>. Shipping only the
+    /// prefixed marker means a consumer's <c>group-data-[state=open]:rotate-180</c> on library
+    /// markup silently matches nothing, which is how the demo's own chevrons stopped rotating.
+    /// <para>
+    /// This sits here rather than in each component's class string because a bare token in a
+    /// <c>cn(…)</c> literal is exactly what the <c>TailwindPrefixTests</c> convention forbids, and
+    /// because the merge would rewrite it back to the prefixed form. Markers are not utilities —
+    /// they carry no declarations and never conflict — so emitting both forms is free.
+    /// </para>
+    /// </remarks>
+    private static string WithBareMarkers(string merged)
+    {
+        if (merged.Length == 0 || !merged.Contains(UtilityPrefix, StringComparison.Ordinal))
+        {
+            return merged;
+        }
+
+        List<string>? extra = null;
+        foreach (var token in merged.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (!token.StartsWith(UtilityPrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var bare = token[UtilityPrefix.Length..];
+            var name = bare.Split('/')[0];
+            if (name is not ("group" or "peer"))
+            {
+                continue;
+            }
+
+            (extra ??= []).Add(bare);
+        }
+
+        return extra is null ? merged : string.Join(' ', extra) + " " + merged;
     }
 
     /// <summary>
