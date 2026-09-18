@@ -120,6 +120,28 @@ public partial class BbEventCalendar<TEvent> : ComponentBase
     public string? Class { get; set; }
 
     /// <summary>
+    /// Additional CSS classes to apply to the view container — the month grid, the week grid or
+    /// the agenda list — rather than to the root element.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The root element wraps the toolbar as well as the view, so sizing it does not size the view
+    /// (#544). This targets the view itself, which is what a calendar that has to fill the page
+    /// needs. The same classes apply whichever <see cref="View"/> is showing, so a height set here
+    /// survives a switch between Month, Week and Agenda.
+    /// </para>
+    /// <para>
+    /// To make the calendar fill the space left by the toolbar, give the root a column flex box and
+    /// let the view grow into it:
+    /// <code>
+    /// &lt;BbEventCalendar Class="bb:flex bb:h-full bb:flex-col" ContainerClass="grow overflow-auto" ... /&gt;
+    /// </code>
+    /// </para>
+    /// </remarks>
+    [Parameter]
+    public string? ContainerClass { get; set; }
+
+    /// <summary>
     /// Additional attributes to apply to the root element.
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
@@ -128,6 +150,16 @@ public partial class BbEventCalendar<TEvent> : ComponentBase
     private DayOfWeek EffectiveFirstDayOfWeek => FirstDayOfWeek ?? culture.DateTimeFormat.FirstDayOfWeek;
 
     private string CssClass => ClassNames.cn("bb:w-full", Class);
+
+    /// <summary>The month and week grids: same shell, so the container classes merge once.</summary>
+    private string GridCssClass => ClassNames.cn(
+        "bb:grid bb:gap-px bb:overflow-hidden bb:rounded-lg bb:border bb:border-border bb:bg-border",
+        ContainerClass);
+
+    /// <summary>The agenda list, which is a divided card rather than a grid.</summary>
+    private string AgendaCssClass => ClassNames.cn(
+        "bb:divide-y bb:divide-border bb:overflow-hidden bb:rounded-lg bb:border bb:border-border bb:bg-card bb:text-card-foreground",
+        ContainerClass);
 
     protected override async Task OnParametersSetAsync()
     {

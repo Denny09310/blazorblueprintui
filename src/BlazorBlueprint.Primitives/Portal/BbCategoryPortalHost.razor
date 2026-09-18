@@ -1,4 +1,4 @@
-@namespace BlazorBlueprint.Primitives.Services
+@namespace BlazorBlueprint.Primitives
 @using Microsoft.JSInterop
 @implements IAsyncDisposable
 @inject IPortalService PortalService
@@ -38,19 +38,16 @@
     private bool _pendingRerender;
     private bool _isFlushing;
     private bool _flushScheduled;
-    private bool _isFirstCategoryHost;
     private bool _disposed;
 
     protected override void OnInitialized()
     {
-        // Only register as host if no other host exists yet.
-        // This handles the case where both BbContainerPortalHost and BbOverlayPortalHost
-        // are used together — only the first one registers as host.
-        if (!PortalService.HasHost)
-        {
-            PortalService.RegisterHost();
-            _isFirstCategoryHost = true;
-        }
+        // Every category host registers, and the service counts them. The old "only the first one
+        // registers" rule paired a registration with a dispose that could belong to a different
+        // host: BbPortalHost is two category hosts, and a layout swap overlaps an outgoing host
+        // with an incoming one. Whichever host disposed first cleared the flag for the host still
+        // rendering, which then reported itself missing (#545).
+        PortalService.RegisterHost();
 
         PortalService.OnPortalsCategoryChanged += HandleCategoryChanged;
     }
@@ -196,10 +193,7 @@
     {
         _disposed = true;
 
-        if (_isFirstCategoryHost)
-        {
-            PortalService.UnregisterHost();
-        }
+        PortalService.UnregisterHost();
 
         PortalService.OnPortalsCategoryChanged -= HandleCategoryChanged;
         return ValueTask.CompletedTask;

@@ -670,6 +670,11 @@
                 <ApiParameter Name="ShowToolbar" Type="bool" Default="true">
                     Whether to show the toolbar with search, sort, and (when applicable) layout-toggle controls.
                 </ApiParameter>
+                <ApiParameter Name="SearchDebounceMs" Type="int" Default="300">
+                    How long the toolbar's search input waits after the last keystroke before it filters,
+                    in milliseconds. The wait happens in the browser, so a run of keystrokes costs one
+                    filter pass rather than one per key. Matches <code>BbDataGrid.SearchDebounceMs</code>.
+                </ApiParameter>
                 <ApiParameter Name="ShowPagination" Type="bool" Default="true">
                     Whether to show pagination controls (hidden when EnableInfiniteScroll is true).
                 </ApiParameter>

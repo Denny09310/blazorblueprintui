@@ -1305,6 +1305,7 @@
   - PageSizes : Int32[]
   - PreprocessData : Func<IEnumerable<TItem>, Task<IEnumerable<TItem>>>
   - ScrollHeight : String
+  - SearchDebounceMs : Int32
   - SelectedItems : IReadOnlyCollection<TItem>
   - SelectedItemsChanged : EventCallback<IReadOnlyCollection<TItem>>
   - SelectionMode : DataTableSelectionMode
@@ -1713,6 +1714,7 @@
 ### BbEventCalendar`1 (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - Class : String
+  - ContainerClass : String
   - CurrentDate : DateTime
   - CurrentDateChanged : EventCallback<DateTime>
   - EventClass : Func<TEvent, String>

@@ -73,6 +73,43 @@ public class TailwindPrefixTests
         }
     }
 
+    /// <summary>
+    /// The default border colour must be carried by a selector that outranks Tailwind's preflight
+    /// on specificity, not merely on document order.
+    /// <para>
+    /// The library and a consumer's own Tailwind build both write preflight into the shared
+    /// <c>base</c> layer, and preflight's <c>border: 0 solid</c> resets <c>border-color</c> to
+    /// <c>currentColor</c>. A bare <c>*</c> rule ties with it on specificity, so whichever
+    /// stylesheet is linked second wins — and when it is the consumer's, every library border
+    /// renders near-black (#527). Matching on the class attribute settles it at 0,1,0, which link
+    /// order cannot change. It has to stay in <c>base</c>: from a later layer it would outrank the
+    /// consumer's own <c>border-*</c> utilities, which is #398 again in the other direction.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void DefaultBorderColourOutranksPreflightOnSpecificity()
+    {
+        var css = ReadBuiltStylesheet();
+
+        var baseBlock = TopLevelBlocks(css)
+            .Where(b => Regex.IsMatch(b.Prelude, @"^@layer\s+base\s*$"))
+            .Select(b => b.Body)
+            .FirstOrDefault();
+
+        Assert.False(baseBlock is null, "blazorblueprint.css has no top-level `@layer base` block.");
+
+        // The minifier may drop the quotes and escape the colon, so accept either spelling.
+        var guarded = RuleSelectors(baseBlock!).Any(selector =>
+            Regex.IsMatch(selector, @"\[class\*=""?bb\\?:border""?\]"));
+
+        Assert.True(guarded,
+            "No `[class*=\"bb:border\"]` rule in @layer base. The library's default border colour "
+            + "would then rest on a bare `*` selector, which ties with a consumer's own Tailwind "
+            + "preflight and loses whenever their stylesheet is linked second — every border turns "
+            + "near-black (#527). Keep the rule in `base`, and keep it matching on the class "
+            + "attribute so specificity, not link order, decides.");
+    }
+
     [Fact]
     public void EveryUtilityInTheBuiltStylesheetIsPrefixed()
     {

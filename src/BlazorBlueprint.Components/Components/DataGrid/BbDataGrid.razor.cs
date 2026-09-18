@@ -125,9 +125,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private readonly string gridId = Guid.NewGuid().ToString("N");
     private bool jsInitialized;
 
-    // Search state
+    // Search state. The debounce itself lives in the browser (see HandleSearchInput), so there is
+    // no cancellation token to hold here.
     private string? _searchInputValue;
-    private CancellationTokenSource? _searchDebounceCts;
 
     // Virtualized provider state
     private Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize<TData>? _virtualizeRef;
@@ -3202,29 +3202,26 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         return queryable;
     }
 
+    /// <summary>
+    /// Applies a search term the input has already debounced.
+    /// </summary>
+    /// <remarks>
+    /// The delay lives in the browser, not here: the search <see cref="BbInput"/> runs in
+    /// <see cref="UpdateTiming.Debounced"/> mode with <see cref="SearchDebounceMs"/> as its
+    /// interval, so this is called once per typing pause with the settled text. It used to hold
+    /// its own <c>Task.Delay</c>, which never ran on time because the input was left in the
+    /// default OnChange mode and so only reported on blur or Enter (#543).
+    /// </remarks>
     private async Task HandleSearchInput(string? value)
     {
         _searchInputValue = value;
 
-        _searchDebounceCts?.Cancel();
-        _searchDebounceCts?.Dispose();
-        _searchDebounceCts = new CancellationTokenSource();
+        SearchText = string.IsNullOrWhiteSpace(value) ? null : value;
+        await SearchTextChanged.InvokeAsync(SearchText);
 
-        try
-        {
-            await Task.Delay(SearchDebounceMs, _searchDebounceCts.Token);
-
-            SearchText = string.IsNullOrWhiteSpace(value) ? null : value;
-            await SearchTextChanged.InvokeAsync(SearchText);
-
-            _gridState.Pagination.CurrentPage = 1;
-            await ProcessDataAsync();
-            StateHasChanged();
-        }
-        catch (TaskCanceledException)
-        {
-            // Debounce superseded
-        }
+        _gridState.Pagination.CurrentPage = 1;
+        await ProcessDataAsync();
+        StateHasChanged();
     }
 
     private IEnumerable<TData> ApplyGlobalSearch(IEnumerable<TData> data)

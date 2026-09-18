@@ -247,6 +247,25 @@
     border-color: var(--border);
   }
 
+  /* The `*` rule above is the shadcn default, and it is not enough on its own. A
+     consumer running their own Tailwind build emits their own preflight into this
+     same `base` layer, and preflight's `border: 0 solid` resets border-color to
+     `currentColor`. Two `*` selectors, same layer, same specificity — so whichever
+     stylesheet is linked second wins, and when it is theirs every BB border turns
+     near-black (#527).
+
+     Matching on the class attribute instead settles it on specificity (0,1,0 against
+     preflight's 0,0,0), which link order cannot change. It has to stay in `base`:
+     from any later layer it would outrank the consumer's own `border-*` utilities,
+     which is the #398 regression again in the other direction. And it is scoped to
+     BB's own prefixed classes, so it never touches a consumer's markup.
+
+     Every real border colour still wins — BB's `bb:border-accent` and the consumer's
+     `border-red-500` both live in utility layers above `base`. */
+  [class*="bb:border"] {
+    border-color: var(--border);
+  }
+
   body {
     background-color: var(--background);
     color: var(--foreground);

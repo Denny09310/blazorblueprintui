@@ -15,10 +15,13 @@ This guide is written as v4 is built, so it grows as changes land.
 
 | # | Breaking Change | Severity | Action Required |
 |---|---|---|---|
-| 0 | .NET 10 minimum for all Bb packages | **High** | Retarget applications to `net10.0` or later; .NET 8/9 cannot consume v4 |
-| 1 | `BbDrawerTrigger` / `BbDrawerClose` render a real `<button>` | **Medium** | Add `AsChild="true"` where the child is already a control |
-| 2 | `BbTooltipTrigger.AsChild` default → `false` | **Medium** | Add `AsChild="true"` where the child consumes the trigger context, such as a `BbButton` |
-| 3 | Every utility in `blazorblueprint.css` is prefixed `bb:` | **Low** for most; **Medium** if you relied on the shipped utilities without your own Tailwind build | Nothing if you run Tailwind. Otherwise, see below |
+| [0](#net-10-minimum) | .NET 10 minimum for all Bb packages | **High** | Retarget applications to `net10.0` or later; .NET 8/9 cannot consume v4 |
+| [1](#1-bbdrawertrigger-and-bbdrawerclose-render-a-real-button) | `BbDrawerTrigger` / `BbDrawerClose` render a real `<button>` | **Medium** | Add `AsChild="true"` where the child is already a control |
+| [2](#2-bbtooltiptriggeraschild-now-defaults-to-false) | `BbTooltipTrigger.AsChild` default → `false` | **Medium** | Add `AsChild="true"` where the child consumes the trigger context, such as a `BbButton` |
+| [3](#3-every-utility-in-blazorblueprintcss-is-prefixed-bb) | Every utility in `blazorblueprint.css` is prefixed `bb:` | **Low** for most; **Medium** if you relied on the shipped utilities without your own Tailwind build | Nothing if you run Tailwind. Otherwise, see below |
+| [4](#4-portal-host-components-moved-to-blazorblueprintprimitives) | The portal host components moved to the `BlazorBlueprint.Primitives` namespace | **Low** | Nothing if your `_Imports.razor` already has `@using BlazorBlueprint.Primitives`. Otherwise add it |
+| [5](#5-navigationmenucontext-trigger-registration-is-keyed-by-the-trigger) | `NavigationMenuContext` trigger registration is keyed by the trigger | **Low** | Only affects code that drives the primitive directly. Pass the component instead of an index |
+| [6](#6-parameters-that-never-did-anything-are-gone) | Parameters that never did anything are gone | **Low** | Delete them. None of them changed any behaviour |
 
 ---
 
@@ -218,6 +221,109 @@ These two utilities were safelisted so consumers could apply them by name. They 
 If you have CSS, JavaScript or tests that select the library's internal elements by utility class
 (`.flex-col`, `.group\/row`, `.hidden`), those selectors now need the prefix. Prefer the `data-slot`
 and other data attributes the components render; those are stable.
+
+## 4. Portal host components moved to `BlazorBlueprint.Primitives`
+
+`BbPortalHost`, `BbContainerPortalHost`, `BbOverlayPortalHost` and `BbCategoryPortalHost` were in
+`BlazorBlueprint.Primitives.Services`. They are now in `BlazorBlueprint.Primitives`, alongside every
+other primitive component. The services themselves — `IPortalService`, `PortalService`,
+`PortalCategory` — have not moved.
+
+### What to change
+
+Nothing, if your `_Imports.razor` follows the documented setup:
+
+```razor
+@using BlazorBlueprint.Components
+@using BlazorBlueprint.Primitives
+```
+
+If a file imports only `BlazorBlueprint.Primitives.Services` and writes `<BbPortalHost />`, add
+`@using BlazorBlueprint.Primitives` to it.
+
+### Why this is worth a breaking change
+
+A Razor tag that does not resolve to a component is not an error. The compiler emits it as a literal
+HTML element, so `<BbPortalHost />` became `<bbportalhost>`: no host registered, no overlay ever
+rendered, and no build output pointing at the cause. The only visible symptom was a runtime warning
+saying the host was missing from a layout that plainly contained one. Reported in
+[#545](https://github.com/blazorblueprintui/ui/issues/545), where the giveaway was that adding
+`@rendermode` to the tag failed with `RZ10023: Attribute '@rendermode' is only valid when used on a
+component`.
+
+Putting the host in the namespace people already import removes the trap. Two other things guard it
+now: the warning walks through the `@using` check first, and both READMEs carry the using in their
+setup snippets.
+
+> This is the same move v3 made for eight other consumer-facing types, which is why a v3 application
+> that followed that migration already has the right using.
+
+## 5. `NavigationMenuContext` trigger registration is keyed by the trigger
+
+Only affects code that drives the `NavigationMenu` primitive directly. If you use `BbNavigationMenu`
+and its parts, there is nothing to do.
+
+| Removed | Replacement |
+|---|---|
+| `int RegisterTrigger(ElementReference)` | `void RegisterTrigger(object owner, ElementReference)` |
+| `void UpdateTriggerRef(int index, ElementReference)` | `RegisterTrigger(owner, triggerRef)` again — it replaces the reference it already holds |
+| — | `void UnregisterTrigger(object owner)` |
+| — | `int TriggerIndexOf(object owner)` |
+
+### What to change
+
+Pass the trigger component as its own identity, and read its index when you need one rather than
+remembering the one you were handed:
+
+```razor
+@* Before *@
+@code {
+    private int triggerIndex;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender) { triggerIndex = Menu.RegisterTrigger(element); }
+        else { Menu.UpdateTriggerRef(triggerIndex, element); }
+    }
+}
+
+@* After *@
+@implements IDisposable
+@code {
+    protected override void OnAfterRender(bool firstRender) => Menu.RegisterTrigger(this, element);
+
+    private int Index => Menu.TriggerIndexOf(this);
+
+    public void Dispose() => Menu.UnregisterTrigger(this);
+}
+```
+
+### Why it changed
+
+An index-based list cannot express removal: taking an entry out shifts every index already handed
+out, so nothing was ever unregistered. Triggers that had left the page stayed in the list, and
+arrow-key navigation kept stepping onto buttons that no longer existed. A remembered index is the
+same bug in consumer code, which is why `TriggerIndexOf` is a lookup rather than a value you keep.
+
+`GetTriggerAt(int)` and `TriggerCount` are unchanged.
+
+---
+
+## 6. Parameters that never did anything are gone
+
+Each of these was accepted and then ignored. Removing them changes no behaviour — it just turns a
+silent no-op into a compile error. Delete the attribute.
+
+| Removed | Why it did nothing | What to use instead |
+|---|---|---|
+| `BbCalendar.Mode` and the `CalendarMode` enum | `BbCalendar` is single-select; the mode was never read | `BbDateRangePicker` for a range |
+| `BbCommand.CloseOnSelect` | The dialog is what closes, not the command list | `BbCommandDialog.CloseOnSelect` |
+| `Stacked` and `StackGroup` on `BbPie`, `BbFunnel`, `BbGauge`, `BbRadar`, `BbHeatmap` and `BbCandlestick` | None of these series types can stack | Nothing — stacking now lives on `StackableSeriesBase`, so the parameters appear only on `BbBar`, `BbLine`, `BbArea`, `BbScatter` and `BbRadialBar`, where they work |
+
+These are the only public members removed in v4. Everything else in the surface is additive or a
+namespace move (see [4](#4-portal-host-components-moved-to-blazorblueprintprimitives)).
+
+---
 
 ## New v4 editing and scheduling APIs
 

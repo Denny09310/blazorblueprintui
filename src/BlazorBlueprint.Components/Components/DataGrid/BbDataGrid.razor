@@ -13,8 +13,16 @@
             <div class="bb:flex bb:items-center bb:justify-between bb:gap-2 bb:py-4">
                 @if (ShowSearch)
                 {
+                    @* BbInput defaults to UpdateTiming.OnChange, which fires on blur or Enter only.
+                       Left at the default the grid's search never saw a keystroke, so the documented
+                       SearchDebounceMs delay could not start and the provider was only called once
+                       the field lost focus (#543). Debounced is the right mode rather than Immediate:
+                       the browser holds the keystrokes, so Blazor Server sends one message per pause
+                       instead of one per key. *@
                     <BbInput Value="@(_searchInputValue ?? SearchText)"
                              ValueChanged="@HandleSearchInput"
+                             UpdateTiming="UpdateTiming.Debounced"
+                             DebounceInterval="@SearchDebounceMs"
                              Placeholder="@(SearchPlaceholder ?? Localizer["DataGrid.SearchPlaceholder"])"
                              Class="bb:max-w-sm" />
                 }

@@ -26,9 +26,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Breaking Changes
 
-- **`NavigationMenuContext` trigger registration is keyed by the trigger.** `RegisterTrigger(ElementReference)` and `UpdateTriggerRef(int, ElementReference)` are replaced by `RegisterTrigger(object owner, ElementReference)`, `UnregisterTrigger(object owner)` and `TriggerIndexOf(object owner)`. An index-based list could not express removal, so triggers were never removed. Read a trigger's index when you need it rather than remembering one.
-- **Parameters that never did anything are gone.** `BbCalendar.Mode` and the `CalendarMode` enum (the calendar is single-select; use `BbDateRangePicker` for ranges), `BbCommand.CloseOnSelect` (`BbCommandDialog.CloseOnSelect` is the one that closes the dialog), and `Stacked`/`StackGroup` on the series that cannot stack — `BbPie`, `BbFunnel`, `BbGauge`, `BbRadar`, `BbHeatmap` and `BbCandlestick`. Stacking now lives on a `StackableSeriesBase`, so it appears only on `BbBar`, `BbLine`, `BbArea`, `BbScatter` and `BbRadialBar`, where it works.
-- **v4 requires .NET 10 or later.** Components, Primitives, icon packages, demos and tests now target `net10.0`; .NET 8 and .NET 9 are no longer supported. The source SDK is pinned to 10.0.400 with feature-band roll-forward. Retarget consuming applications and use matching v4 Components/Primitives packages. See the [v4 migration guide](V4-MIGRATION-GUIDE.md).
+Every breaking change in v4 is documented in one place — the **[v4 migration guide](V4-MIGRATION-GUIDE.md)**. Its
+checklist is the complete list; each row links to the section explaining what to change and why.
+They are summarised here only so this entry is not silent about them.
+
+| # | Breaking change | Severity |
+|---|---|---|
+| [0](V4-MIGRATION-GUIDE.md#net-10-minimum) | v4 requires .NET 10 or later; .NET 8 and .NET 9 cannot consume it | **High** |
+| [1](V4-MIGRATION-GUIDE.md#1-bbdrawertrigger-and-bbdrawerclose-render-a-real-button) | `BbDrawerTrigger` and `BbDrawerClose` render a real `<button>` | **Medium** |
+| [2](V4-MIGRATION-GUIDE.md#2-bbtooltiptriggeraschild-now-defaults-to-false) | `BbTooltipTrigger.AsChild` now defaults to `false` | **Medium** |
+| [3](V4-MIGRATION-GUIDE.md#3-every-utility-in-blazorblueprintcss-is-prefixed-bb) | Every utility in `blazorblueprint.css` is prefixed `bb:` | **Low**–**Medium** |
+| [4](V4-MIGRATION-GUIDE.md#4-portal-host-components-moved-to-blazorblueprintprimitives) | The portal host components moved to the `BlazorBlueprint.Primitives` namespace | **Low** |
+| [5](V4-MIGRATION-GUIDE.md#5-navigationmenucontext-trigger-registration-is-keyed-by-the-trigger) | `NavigationMenuContext` trigger registration is keyed by the trigger | **Low** |
+| [6](V4-MIGRATION-GUIDE.md#6-parameters-that-never-did-anything-are-gone) | Parameters that never did anything are gone — `BbCalendar.Mode`, `CalendarMode`, `BbCommand.CloseOnSelect`, and `Stacked`/`StackGroup` on the six series that cannot stack | **Low** |
+
+`CalendarMode` and the members in row 6 are the only public API removed in v4. Row 4 is the only
+type that moved. Everything else in the surface is additive.
 
 ### Added
 
@@ -40,9 +53,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **`BbTreeSelect` and `BbCascader`.** Searchable hierarchy pickers with stable keys, form bindings, clear/disabled states and leaf-only selection. TreeSelect supports single/multiple selection with cascading parent checkboxes and indeterminate states. Cascader provides column navigation, full-path search, optional branch selection and keyboard/RTL navigation; opening a selected path or expanding a branch reveals the newest column.
 - **FileUpload transport lifecycle.** Optional `UploadHandler` callbacks receive a size-limited browser stream and cancellation token, report progress, and support cancellation and retry. Browser file references survive subsequent selections; retry starts a fresh attempt from zero. Applications supply the upload destination.
+- **`BbEventCalendar.ContainerClass`.** Styles the view container — the month grid, the week grid or the agenda list — rather than the root, which also wraps the toolbar and so could not be used to size the calendar itself. The same classes apply in every view, so a height survives a switch between Month, Week and Agenda. Pair `Class="flex h-full flex-col"` with `ContainerClass="grow overflow-auto"` to fill the space a page gives you. Requested in [#544](https://github.com/blazorblueprintui/ui/issues/544), along with connected multi-day event bars, which are not in this release.
+- **`BbDataView.SearchDebounceMs`.** The toolbar search now waits out a typing pause before it filters, with the same 300 ms default as `BbDataGrid` ([#543](https://github.com/blazorblueprintui/ui/issues/543)).
 
 ### Fixed
 
+- **Card and other borders no longer render near-black in an application that runs its own Tailwind build.** The default border colour was a bare `* { border-color: var(--border) }` in the shared `base` cascade layer. A consumer's own Tailwind writes its preflight into that same layer, and preflight's `border: 0 solid` resets the colour to `currentColor` — two `*` selectors, one layer, identical specificity, so whichever stylesheet the page links second won. Link `blazorblueprint.css` first, which is what the prefixed-utility fix for [#496](https://github.com/blazorblueprintui/ui/issues/496) encourages, and every library border turned the foreground colour. The rule now matches on the class attribute instead, which settles it on specificity rather than link order, and stays in `base` so a consumer's own `border-*` utilities still win. Scoped to the library's own prefixed classes, so it never touches consumer markup ([#527](https://github.com/blazorblueprintui/ui/issues/527)).
+- **`BbDataGrid` global search honours `SearchDebounceMs` again.** The search field was left on `BbInput`'s `UpdateTiming.OnChange` default, which reports only on blur or Enter — so the grid's own `Task.Delay` debounce never started, an `ItemsProvider` was not called while typing, and clearing the box did not reload until the field lost focus. The input now debounces in the browser at `SearchDebounceMs`, so a run of keystrokes costs one provider call rather than one per key, which matters most on Blazor Server. `BbDataView`'s toolbar search had the same defect and takes the same fix ([#543](https://github.com/blazorblueprintui/ui/issues/543)).
+- **A live `<BbPortalHost />` no longer reports itself missing.** Registration was a boolean, and two hosts overlap more often than that allows: `BbPortalHost` is itself two category hosts, and a layout swap initialises the incoming page's host before the outgoing layout's host disposes. Whichever disposed first cleared the flag for the host still rendering. It is a count now, clamped so an unbalanced dispose cannot poison a later registration ([#545](https://github.com/blazorblueprintui/ui/issues/545)).
 - **Extra HTML attributes no longer crash a render.** `BbDialog`, `BbSheet`, `BbPopover`, `BbHoverCard`, `BbAlertDialog`, `BbAlertDialogPortal` and `BbDataGridColumnVisibility` forwarded captured attributes to a component that could not accept them, so a single `data-testid` threw `InvalidOperationException`. `BbColorPicker`, `BbDateRangePicker`, `BbTimePicker`, `BbThemeSwitcher` and `BbResponsiveNavContent` now render those attributes on their trigger instead of losing them; the context-only roots accept them and log once that they have nowhere to go.
 - **Attributes that were accepted and then dropped.** `BbTextarea`, `BbDatePicker` and `BbInputGroupButton` now render them. `BbFormFieldCheckbox` applies them in every orientation, `BbFormSection` whether or not it collapses, and `BbFormFieldTimePicker` on the picker rather than the surrounding field.
 - **Dangling `aria-describedby`.** `BbFieldDescription` and `BbFieldError` took an `Id` and never rendered it, so every `BbFormField*` control pointed its `aria-describedby` at an element that did not exist.
@@ -91,6 +109,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Documentation and Packaging
 
+- **The `BbPortalHost` setup snippets carry their `@using`, and the missing-host warning checks it first.** An unresolved Razor tag is not a build error, so a missing using turned `<BbPortalHost />` into a literal `<bbportalhost>` element and every overlay silently stopped rendering. Alongside the namespace move above, both READMEs now show the using in the layout snippet and name the symptom, and the warning walks through the `@using` check — including the v3 namespace — before anything about render modes ([#545](https://github.com/blazorblueprintui/ui/issues/545)).
 - **Getting Started dialog snippets name components that exist.** The page showed `<Dialog>`, `<DialogTrigger>` and the rest under `@using BlazorBlueprint.Components.BbDialog`, which is not a namespace — every tag was `Bb`-prefixed and the using is `BlazorBlueprint.Components`. The primitive snippet mixed a fully qualified root with unqualified children; it now shows one `@using` and notes that primitives and components share type names, so a file imports one namespace or fully qualifies the tags. Two Next Steps links pointed at routes that no longer exist.
 - **Previous/next component navigation in the demo header.** Two buttons beside the sidebar trigger step through `ComponentCatalog.DemoPages`, the same flattened list the sidebar, the component homepage and the command search already walk, so "next" always means the next row the reader can see. They disable at the ends and render nothing off that list — on the homepage, a guide or a primitive page there is no meaningful neighbour to offer.
 - Slider gains a vertical example with a live demo, a copyable snippet and an `Orientation` API reference entry. The Controlled Sidebar demo wraps its menu labels in a `span`, which is what icon mode hides.
@@ -130,6 +149,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   **What consumers do.** With your own Tailwind build: nothing in markup; drop any `@source` pointing at the library, which now finds only prefixed tokens and emits nothing. Without one: `class="flex gap-4"` in your own pages no longer matches anything in the library's file — it never officially did — so add a Tailwind build or write `class="bb:flex bb:gap-4"`. The safelisted `shimmer` and `scroll-fade-x` utilities are now `bb:shimmer` and `bb:scroll-fade-x`. Full detail in `V4-MIGRATION-GUIDE.md`.
 
   **Guarded.** New convention tests read the built stylesheet and fail if any utility in `bb-utilities` is unprefixed or anything is written into the shared `utilities` layer, and read the sources and fail on an unprefixed token in a `class` attribute or a `cn(…)` literal — under a prefixed build that token would not collide, it would silently emit nothing. The demo no longer `@source`s the library and is a real consumer, which is how #496 gets caught next time.
+
+  Migration guide: [V4-MIGRATION-GUIDE.md §3](V4-MIGRATION-GUIDE.md#3-every-utility-in-blazorblueprintcss-is-prefixed-bb). Every v4 breaking change is listed there.
 
 ### Fixed
 
@@ -352,9 +373,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
   Worth knowing: **the API surface snapshot cannot catch this.** It records `AsChild : Boolean`, not its default, so the test suite stays green across a change that alters every consumer's rendering. Verified in the running demo instead — a bare icon and plain text both open a tooltip with no opt-in, and a `BbButton` under `AsChild="true"` still does.
 
-  Migration guide: `V4-MIGRATION-GUIDE.md`.
-
-- **BREAKING — `BbDrawerTrigger` and `BbDrawerClose` now render a real `<button>`** — [#507](https://github.com/blazorblueprintui/ui/issues/507), found while working [#459](https://github.com/blazorblueprintui/ui/issues/459). Both were a bare `<div @onclick>` with no `tabindex`, no `role` and no keyboard handler. They worked when the child happened to be focusable — which is what the demos did, wrapping a `BbButton`, so the common path was fine and this went unreported. Pass anything that is not itself focusable, which the API placed no constraint on, and the trigger was unreachable by keyboard and not exposed as a control at all: a WCAG 2.1.1 failure in a shape the component invited, failing silently and passing any mouse test.
+  Migration guide: [V4-MIGRATION-GUIDE.md §2](V4-MIGRATION-GUIDE.md#2-bbtooltiptriggeraschild-now-defaults-to-false). Every v4 breaking change is listed there.
 
 ### Added
 
@@ -448,6 +467,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   The alternative — keeping the `<div>` and adding `tabindex`, `role="button"` and a key handler — was considered and rejected. It breaks nobody, but around an already-focusable child it produces two tab stops and a button nested inside a `role="button"`, which trades one accessibility fault for a quieter one rather than fixing it.
 
   Both also gain the themed focus ring, which unblocks the last two components on [#459](https://github.com/blazorblueprintui/ui/issues/459) — there was previously nothing focusable to draw a ring on.
+
+  Migration guide: [V4-MIGRATION-GUIDE.md §1](V4-MIGRATION-GUIDE.md#1-bbdrawertrigger-and-bbdrawerclose-render-a-real-button). Every v4 breaking change is listed there.
 
 ### Fixed
 

@@ -152,6 +152,31 @@
         <CodeBlock Source="Components/EventCalendar/event-click.txt" />
     </div>
 
+    <!-- Filling the available height -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Filling the Available Height</h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="bg-muted px-1 py-0.5 rounded">Class</code> styles the root, which wraps the toolbar as well
+                as the view, so sizing it does not size the calendar.
+                <code class="bg-muted px-1 py-0.5 rounded">ContainerClass</code> styles the view container itself — the
+                month grid, the week grid, or the agenda list. Make the root a column flex box and let the view grow into
+                what the toolbar leaves behind. The same classes apply in every view, so the height survives a switch.
+            </p>
+        </div>
+        <div class="border rounded-lg p-6">
+            <div class="h-[28rem]">
+                <BbEventCalendar Items="events"
+                                 EventStart="e => e.Start"
+                                 EventEnd="e => e.End"
+                                 EventTitle="e => e.Title"
+                                 Class="flex h-full flex-col"
+                                 ContainerClass="grow overflow-auto" />
+            </div>
+        </div>
+        <CodeBlock Source="Components/EventCalendar/container-class.txt" />
+    </div>
+
     <!-- v1 Notes -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -233,6 +258,9 @@
             <ApiParameter Name="Class" Type="string?" Default="null">
                 Additional CSS classes for the root element.
             </ApiParameter>
+            <ApiParameter Name="ContainerClass" Type="string?" Default="null">
+                Additional CSS classes for the view container — the month grid, the week grid, or the agenda list — rather than the root. The root also wraps the toolbar, so this is what you size to make the calendar fill a page.
+            </ApiParameter>
             <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
                 Additional HTML attributes applied to the root <code>&lt;div&gt;</code> element (e.g. <code>data-testid</code>, <code>aria-label</code>).
             </ApiParameter>
@@ -255,6 +283,7 @@
             <ApiParameter Name="OnDateClick" Type="EventCallback&lt;DateTime&gt;">Callback when a day number (month view) or day header (week view) is clicked.</ApiParameter>
             <ApiParameter Name="OnViewRangeChanged" Type="EventCallback&lt;EventCalendarRange&gt;">Callback when the visible date range changes (including the initial range). Useful for loading events on demand.</ApiParameter>
             <ApiParameter Name="Class" Type="string?">Additional CSS classes to apply to the root element.</ApiParameter>
+            <ApiParameter Name="ContainerClass" Type="string?">Additional CSS classes to apply to the view container (month grid, week grid or agenda list) rather than the root element. The root wraps the toolbar too, so sizing it does not size the view.</ApiParameter>
             <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">Additional attributes to apply to the root element.</ApiParameter>
         </ApiReference>
     </section>

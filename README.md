@@ -128,7 +128,7 @@ builder.Services.AddBlazorBlueprintComponents();
 
 ```razor
 @using BlazorBlueprint.Components
-@using BlazorBlueprint.Primitives.Services
+@using BlazorBlueprint.Primitives
 ```
 
 **3. Add CSS** to your `App.razor` `<head>`:
@@ -150,6 +150,7 @@ If you also run your own Tailwind build, load its output before or after `blazor
 
 ```razor
 @inherits LayoutComponentBase
+@using BlazorBlueprint.Primitives
 
 <div class="min-h-screen bg-background">
     @Body
@@ -157,6 +158,14 @@ If you also run your own Tailwind build, load its output before or after `blazor
 
 <BbPortalHost />
 ```
+
+> The `@using` matters even though step 2 adds it globally — keep it if you import per file instead
+> (for example to avoid type-name clashes with another component library). Without `BbPortalHost` in
+> scope Razor does not treat the tag as a component: it emits a literal `<bbportalhost>` element, with
+> no build error, and every overlay silently fails to render. Adding `@rendermode` to it then fails
+> with `RZ10023: Attribute '@rendermode' is only valid when used on a component`, which is the
+> giveaway. In v3 the host lived in `BlazorBlueprint.Primitives.Services`; see the
+> [v4 migration guide](V4-MIGRATION-GUIDE.md).
 
 **5. Use components:**
 

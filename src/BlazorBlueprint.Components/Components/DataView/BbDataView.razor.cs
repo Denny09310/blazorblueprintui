@@ -167,6 +167,17 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     public bool ShowToolbar { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets how long the toolbar's search input waits after the last keystroke before it
+    /// filters, in milliseconds. Default is 300.
+    /// </summary>
+    /// <remarks>
+    /// The wait happens in the browser, so a run of keystrokes costs one filter pass rather than
+    /// one per key. Matches <c>BbDataGrid.SearchDebounceMs</c>.
+    /// </remarks>
+    [Parameter]
+    public int SearchDebounceMs { get; set; } = 300;
+
+    /// <summary>
     /// Gets or sets whether to show pagination controls.
     /// Default is true.
     /// </summary>
