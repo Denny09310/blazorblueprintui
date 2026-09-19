@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
   **What changes for you.** Tab order: a three-day event was three buttons and is now one, or one per week row when it wraps. `MaxEventsPerDay`: a bar spends that day's budget in every day it covers, so a day carrying a bar shows fewer chips and counts the difference into its "+x more"; bars past the budget are dropped into the same overflow rather than growing the row. The week view has no such limit — it is one tall row — so every bar is drawn there. The agenda view is unchanged: it is a chronological list, and listing each day separately is the point of it. `EventClass` and `EventTemplate` apply to bars exactly as they did to chips.
 
+### Fixed
+
+- **The calendar's day grid is centred instead of hanging to the left.** The seven day cells are a fixed `w-9` each — 252px — while the table is as wide as the month and year selects above it, which is wider. The rows were left-aligned, so the difference showed as dead space to the right of the dates. It appeared when the year select was widened from 80px to 100px (`b39be911`) to stop the year truncating, which is why it looked like it came from nowhere. The header row and every week row now centre their cells, so the day names stay over their columns and the space falls evenly on both sides. `BbDatePicker`, `BbDateRangePicker` and `BbDateTimePicker` embed the same calendar and pick the fix up with it.
+
 ---
 
 ## 2026-09-18
