@@ -404,7 +404,7 @@ public partial class BbEventCalendar<TEvent> : ComponentBase
             var to = end > weekEnd ? weekEnd : end;
             var startColumn = (from - weekStart).Days;
             var span = (to - from).Days + 1;
-            var lane = ClaimLane(occupied, startColumn, span);
+            var lane = DayBandLayout.Claim(occupied, 7, startColumn, span);
 
             if (lane >= maxLanes)
             {
@@ -443,41 +443,6 @@ public partial class BbEventCalendar<TEvent> : ComponentBase
 
         var startCompare = a.Start.CompareTo(b.Start);
         return startCompare != 0 ? startCompare : CompareEvents(a.Item, b.Item);
-    }
-
-    /// <summary>Takes the topmost lane whose columns are all free, adding one if none is.</summary>
-    private static int ClaimLane(List<bool[]> occupied, int startColumn, int span)
-    {
-        for (var lane = 0; ; lane++)
-        {
-            if (lane == occupied.Count)
-            {
-                occupied.Add(new bool[7]);
-            }
-
-            var columns = occupied[lane];
-            var free = true;
-            for (var column = startColumn; column < startColumn + span; column++)
-            {
-                if (columns[column])
-                {
-                    free = false;
-                    break;
-                }
-            }
-
-            if (!free)
-            {
-                continue;
-            }
-
-            for (var column = startColumn; column < startColumn + span; column++)
-            {
-                columns[column] = true;
-            }
-
-            return lane;
-        }
     }
 
     #endregion
@@ -655,9 +620,6 @@ public partial class BbEventCalendar<TEvent> : ComponentBase
     private const int MonthCellPaddingPx = 6;
     private const int MonthDayNumberHeightPx = 24;
     private const int MonthDayNumberGapPx = 4;
-    private const int LaneHeightPx = 22;
-    private const int EventBarHeightPx = 20;
-    private const int EventBarInsetPx = 3;
     private const int MonthBarsTopPx = MonthCellPaddingPx + MonthDayNumberHeightPx + MonthDayNumberGapPx;
 
     // The week view puts its day numbers in a separate header row, so its bars start at the top of
@@ -671,14 +633,7 @@ public partial class BbEventCalendar<TEvent> : ComponentBase
     {
         var baseClasses = EventTemplate is not null ? EventBarTemplateClasses : EventBarBaseClasses;
 
-        // Square off whichever end runs on into another week row, so the two halves read as one bar.
-        var rounding = (bar.ContinuesBefore, bar.ContinuesAfter) switch
-        {
-            (true, true) => "bb:rounded-none",
-            (true, false) => "bb:rounded-l-none",
-            (false, true) => "bb:rounded-r-none",
-            _ => null,
-        };
+        var rounding = DayBandLayout.JoinRounding(bar.ContinuesBefore, bar.ContinuesAfter);
 
         return ClassNames.cn(baseClasses, rounding, EventClass?.Invoke(bar.Event));
     }
@@ -694,35 +649,14 @@ public partial class BbEventCalendar<TEvent> : ComponentBase
     /// assistive technology and puts it at the right point in the tab order; the cell is static
     /// and the row is relative, so the offsets resolve against the row.
     /// </remarks>
-    private static string GetEventBarStyle(EventBar bar, int topBasePx)
-    {
-        var startInset = bar.ContinuesBefore ? 0 : EventBarInsetPx;
-        var endInset = bar.ContinuesAfter ? 0 : EventBarInsetPx;
-        var top = topBasePx + (bar.Lane * LaneHeightPx);
-
-        // The gaps: a bar starting in column s clears s of them, and one spanning n columns swallows
-        // n - 1. The insets then trim whichever end is a real start or finish rather than a join.
-        var left = SignedPixels(bar.StartColumn + startInset);
-        var width = SignedPixels(bar.Span - 1 - startInset - endInset);
-
-        return string.Create(
-            CultureInfo.InvariantCulture,
-            $"left:calc((100% - 6px) * {bar.StartColumn} / 7 {left});width:calc((100% - 6px) * {bar.Span} / 7 {width});top:{top}px;height:{EventBarHeightPx}px;");
-    }
-
-    /// <summary>
-    /// A signed pixel term for a <c>calc()</c>. Written as <c>- 4px</c> rather than <c>+ -4px</c>,
-    /// which is legal but reads like a mistake in devtools.
-    /// </summary>
-    private static string SignedPixels(int value) =>
-        string.Create(CultureInfo.InvariantCulture, $"{(value < 0 ? '-' : '+')} {Math.Abs(value)}px");
+    private static string GetEventBarStyle(EventBar bar, int topBasePx) =>
+        DayBandLayout.BarStyle(bar.StartColumn, bar.Span, 7, bar.Lane, topBasePx, bar.ContinuesBefore, bar.ContinuesAfter);
 
     /// <summary>
     /// Reserves the height the bars float above, so the chips below them are never overlapped.
     /// Every cell in the row reserves the same height, which keeps the chips on one baseline.
     /// </summary>
-    private static string GetLaneSpacerStyle(int laneCount) =>
-        string.Create(CultureInfo.InvariantCulture, $"height:{laneCount * LaneHeightPx}px;");
+    private static string GetLaneSpacerStyle(int laneCount) => DayBandLayout.LaneSpacerStyle(laneCount);
 
     /// <summary>
     /// Names the whole event and the days it covers, not just the part in this row — the visual

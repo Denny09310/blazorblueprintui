@@ -7,62 +7,211 @@
 <section @ref="schedulerElement" class="@ClassNames.cn("bb:@container bb:space-y-3", Class)" aria-label="@(AriaLabel ?? Localizer["Scheduler.Label"])"
          data-scheduler="@editorId" data-slot-minutes="@SlotMinutes" data-time-zone="@TimeZoneId" data-revision="@revision"
          data-initial-scroll-top="@GetInitialScrollTop()?.ToString(CultureInfo.InvariantCulture)"
-         data-allow-drag="@((AllowDrag && !ReadOnly && !saving && !editorOpen).ToString().ToLowerInvariant())"
-         data-allow-resize="@((AllowResize && !ReadOnly && !saving && !editorOpen).ToString().ToLowerInvariant())" @attributes="AdditionalAttributes">
-    <div class="@("bb:grid bb:grid-cols-1 bb:items-center bb:gap-3 bb:@4xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]")" data-scheduler-toolbar>
-        <div class="bb:flex bb:items-center bb:gap-2 bb:justify-self-start" data-scheduler-navigation>
-            <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => NavigateAsync(-1))" AriaLabel="@Localizer["Scheduler.Previous"]">&#8249;</BbButton>
-            <BbButton Variant="ButtonVariant.Outline" OnClick="NavigateToTodayAsync">@Localizer["Scheduler.Today"]</BbButton>
-            <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => NavigateAsync(1))" AriaLabel="@Localizer["Scheduler.Next"]">&#8250;</BbButton>
-        </div>
-        <h2 class="@("bb:row-start-1 bb:text-center bb:font-semibold bb:@4xl:col-start-2")" aria-live="polite">@RangeDate.ToString("D", CultureInfo.CurrentCulture)</h2>
-        <div class="@("bb:flex bb:flex-wrap bb:items-center bb:gap-2 bb:@4xl:justify-end")" data-scheduler-view-controls>
-            @if (EnableTimeZones)
-            {
-                <span class="bb:text-sm bb:text-muted-foreground">@TimeZoneId</span>
-            }
-            @if (View == SchedulerView.Week)
-            {
-                <BbSelect TValue="DayOfWeek" Value="@FirstDayOfWeek" ValueChanged="SetFirstDayOfWeekAsync" DisplayTextSelector="WeekStartLabel">
-                    <BbSelectTrigger Class="bb:w-auto bb:min-w-36" aria-label="@Localizer["Scheduler.WeekStartsOn"]"><BbSelectValue /></BbSelectTrigger>
-                    <BbSelectContent>
-                        <BbSelectItem Value="DayOfWeek.Monday" Text="@WeekStartLabel(DayOfWeek.Monday)" />
-                        <BbSelectItem Value="DayOfWeek.Sunday" Text="@WeekStartLabel(DayOfWeek.Sunday)" />
-                        @if (FirstDayOfWeek is not (DayOfWeek.Monday or DayOfWeek.Sunday))
-                        {
-                            <BbSelectItem Value="@FirstDayOfWeek" Text="@WeekStartLabel(FirstDayOfWeek)" />
-                        }
-                    </BbSelectContent>
-                </BbSelect>
-            }
-            <BbButton Variant="@(View == SchedulerView.Day ? ButtonVariant.Default : ButtonVariant.Outline)" aria-pressed="@((View == SchedulerView.Day).ToString().ToLowerInvariant())" OnClick="@(() => SetViewAsync(SchedulerView.Day))">@Localizer["Scheduler.Day"]</BbButton>
-            <BbButton Variant="@(View == SchedulerView.Week ? ButtonVariant.Default : ButtonVariant.Outline)" aria-pressed="@((View == SchedulerView.Week).ToString().ToLowerInvariant())" OnClick="@(() => SetViewAsync(SchedulerView.Week))">@Localizer["Scheduler.Week"]</BbButton>
-            <BbButton Variant="@(View == SchedulerView.WorkWeek ? ButtonVariant.Default : ButtonVariant.Outline)" aria-pressed="@((View == SchedulerView.WorkWeek).ToString().ToLowerInvariant())" OnClick="@(() => SetViewAsync(SchedulerView.WorkWeek))">@Localizer["Scheduler.WorkWeek"]</BbButton>
-        </div>
-    </div>
+         data-allow-drag="@((AllowDrag && !IsMonth && !ReadOnly && !saving && !editorOpen).ToString().ToLowerInvariant())"
+         data-allow-resize="@((AllowResize && !IsMonth && !ReadOnly && !saving && !editorOpen).ToString().ToLowerInvariant())" @attributes="AdditionalAttributes">
+    @if (ToolbarContent is null)
+    {
+        @DefaultToolbar
+    }
+    else
+    {
+        @ToolbarContent(BuildToolbarContext(DefaultToolbar))
+    }
     @if (loadError != null)
     {
         <p role="alert" class="bb:text-destructive">@loadError</p>
     }
+    @if (loadError == null && NothingSelected)
+    {
+        <p class="bb:rounded-md bb:border bb:p-6 bb:text-center bb:text-sm bb:text-muted-foreground" data-scheduler-empty>@Localizer["Scheduler.NoResourcesSelected"]</p>
+    }
+    else
+    {
+    @if (IsMonth)
+    {
+        @* A different layout entirely from the time lanes: six week rows of day cells, with
+           multi-day runs floating over each row as bars. Drag and resize are forced off above —
+           the pointer code derives times from a 40px-per-slot lane that does not exist here. *@
+        <div class="bb:overflow-hidden bb:rounded-md bb:border" data-scheduler-month role="grid" aria-label="@Localizer["Scheduler.TimeSlots"]">
+            <div class="bb:flex bb:border-b bb:bg-muted/40" role="row">
+                @for (var day = 0; day < 7; day++)
+                {
+                    var name = CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedDayName((DayOfWeek)(((int)EffectiveWeekStart + day) % 7));
+                    <div class="bb:flex-1 bb:min-w-0 bb:p-1 bb:text-center bb:text-xs bb:font-medium bb:text-muted-foreground" role="columnheader">@name</div>
+                }
+            </div>
+            @foreach (var week in monthWeeks)
+            {
+                <div class="bb:relative bb:flex bb:border-b bb:last:border-b-0 bb:min-h-24" role="row">
+                    @for (var index = 0; index < week.Cells.Count; index++)
+                    {
+                        var cell = week.Cells[index];
+                        var cellDate = cell.Date;
+                        var isSelected = IsDaySelected(cellDate);
+                        @* The whole cell is the target, not just the day number: double-clicking or
+                           right-clicking the empty space below the events has to work too. Chips and
+                           bars stop propagation so they keep their own click, double-click and menu. *@
+                        <div class="@ClassNames.cn(MonthCellClass(cell), IsDayBlocked(cellDate) ? "bb:bg-muted/60" : null)" role="gridcell"
+                             data-scheduler-blocked="@IsDayBlocked(cellDate).ToString().ToLowerInvariant()"
+                             @onclick="@(() => SelectDay(cellDate))"
+                             @ondblclick="@(() => CreateEventOnDay(cellDate))"
+                             @oncontextmenu="@(args => IsDayBlocked(cellDate) ? Task.CompletedTask : ShowSlotMenuAsync(args, DayCreateInstant(cellDate), null))" @oncontextmenu:preventDefault="true">
+                            <button type="button" disabled="@ReadOnly" data-scheduler-day="@cellDate.DayNumber"
+                                    class="@MonthDayButtonClass(isSelected)"
+                                    aria-label="@Localizer["Scheduler.DayCell", cellDate.ToString("D", CultureInfo.CurrentCulture)]"
+                                    aria-pressed="@isSelected.ToString().ToLowerInvariant()"
+                                    @onkeydown="@(args => DayKeyDown(args, cellDate))">
+                                @cellDate.Day
+                            </button>
+                            @* Reserves the height the bars float above, so chips are never overlapped. *@
+                            <div aria-hidden="true" style="@DayBandLayout.LaneSpacerStyle(week.LaneCount)"></div>
+                            @foreach (var chip in cell.Chips)
+                            {
+                                var occurrence = chip;
+                                <button @key="@(occurrence.Event.Id + occurrence.Start.Ticks)" type="button" data-scheduler-event="@occurrence.Event.Id"
+                                        class="@ClassNames.cn("bb:mb-0.5 bb:flex bb:w-full bb:items-center bb:gap-1 bb:overflow-hidden bb:rounded bb:px-1 bb:text-start bb:text-xs bb:hover:bg-muted bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring", SelectedRing(IsOccurrenceSelected(occurrence)))"
+                                        aria-label="@OccurrenceLabel(occurrence)" aria-disabled="@ReadOnly.ToString().ToLowerInvariant()"
+                                        @onclick="@(() => SelectOccurrence(occurrence))" @onclick:stopPropagation="true"
+                                        @ondblclick="@(() => EditEvent(occurrence))" @ondblclick:stopPropagation="true"
+                                        @onkeydown="@(args => OccurrenceKeyDown(args, occurrence))"
+                                        @oncontextmenu="@(args => ShowEventMenuAsync(args, occurrence))" @oncontextmenu:preventDefault="true" @oncontextmenu:stopPropagation="true">
+                                    @if (EventTemplate != null)
+                                    {
+                                        @EventTemplate(occurrence)
+                                    }
+                                    else
+                                    {
+                                        <span class="bb:shrink-0 bb:text-muted-foreground">@MonthChipLabel(occurrence)</span>
+                                        <span class="bb:truncate">@occurrence.Event.Title</span>
+                                    }
+                                </button>
+                            }
+                            @if (cell.HiddenCount > 0)
+                            {
+                                <span class="bb:block bb:px-1 bb:text-xs bb:text-muted-foreground">@Localizer["Scheduler.MoreEvents", cell.HiddenCount]</span>
+                            }
+                        </div>
+                    }
+                    @foreach (var bar in week.Bars)
+                    {
+                        var occurrence = bar.Occurrence;
+                        <button @key="@(occurrence.Event.Id + occurrence.Start.Ticks)" type="button" data-scheduler-month-event="@occurrence.Event.Id"
+                                class="@ClassNames.cn(BandBarClass(bar), SelectedRing(IsOccurrenceSelected(occurrence)))" style="@MonthBarStyle(bar)" aria-label="@BandBarLabel(bar)"
+                                aria-disabled="@ReadOnly.ToString().ToLowerInvariant()"
+                                @onclick="@(() => SelectOccurrence(occurrence))" @onclick:stopPropagation="true"
+                                @ondblclick="@(() => EditEvent(occurrence))" @ondblclick:stopPropagation="true"
+                                @onkeydown="@(args => OccurrenceKeyDown(args, occurrence))"
+                                @oncontextmenu="@(args => ShowEventMenuAsync(args, occurrence))" @oncontextmenu:preventDefault="true" @oncontextmenu:stopPropagation="true">
+                            @if (EventTemplate != null)
+                            {
+                                @EventTemplate(occurrence)
+                            }
+                            else
+                            {
+                                <span class="bb:truncate">@occurrence.Event.Title</span>
+                            }
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+    @if (bandRows.Count > 0)
+    {
+        @* Outside the vertical scroll on purpose — the band stays put while the day scrolls under
+           it — but its columns must still line up with the lanes below. Each track therefore
+           repeats the lane row's sizing exactly (flex-1, min-w-[200px], min-w-max on the row so the
+           columns are the same width as the lanes rather than squashed), and scheduler.js mirrors
+           the grid's horizontal scroll onto it. *@
+        <div class="bb:rounded-md bb:border" data-scheduler-all-day role="group" aria-label="@Localizer["Scheduler.AllDayRegion"]">
+            @foreach (var row in bandRows)
+            {
+                <div class="bb:overflow-hidden bb:border-b bb:last:border-b-0" data-scheduler-all-day-track>
+                    @if (row.Resource is not null)
+                    {
+                        @* Labelled above, never beside: a label column would shift every day column. *@
+                        <div class="bb:border-b bb:bg-muted/40 bb:px-2 bb:py-0.5 bb:text-xs bb:font-medium bb:text-muted-foreground">@row.Resource.Title</div>
+                    }
+                    <div class="bb:relative bb:flex bb:min-w-max" style="@FormattableString.Invariant($"height:{row.LaneCount * 22 + 4}px")">
+                        @for (var day = 0; day < DayCount; day++)
+                        {
+                            <div class="bb:flex-1 bb:min-w-[200px] bb:border-e bb:last:border-e-0" aria-hidden="true"></div>
+                        }
+                        @foreach (var bar in row.Bars)
+                        {
+                            var occurrence = bar.Occurrence;
+                            <button @key="@(occurrence.Event.Id + occurrence.Start.Ticks)" type="button" data-scheduler-all-day-event="@occurrence.Event.Id"
+                                    class="@ClassNames.cn(BandBarClass(bar), SelectedRing(IsOccurrenceSelected(occurrence)))" style="@BandBarStyle(bar)" aria-label="@BandBarLabel(bar)"
+                                    aria-disabled="@ReadOnly.ToString().ToLowerInvariant()"
+                                    @onclick="@(() => SelectOccurrence(occurrence))"
+                                    @ondblclick="@(() => EditEvent(occurrence))"
+                                    @onkeydown="@(args => OccurrenceKeyDown(args, occurrence))"
+                                    @oncontextmenu="@(args => ShowEventMenuAsync(args, occurrence))" @oncontextmenu:preventDefault="true">
+                                @if (EventTemplate != null)
+                                {
+                                    @EventTemplate(occurrence)
+                                }
+                                else
+                                {
+                                    <span class="bb:truncate">@occurrence.Event.Title</span>
+                                }
+                            </button>
+                        }
+                    </div>
+                    @if (row.Hidden.Any(count => count > 0))
+                    {
+                        <div class="bb:flex bb:min-w-max">
+                            @for (var day = 0; day < DayCount; day++)
+                            {
+                                var hidden = row.Hidden[day];
+                                <div class="bb:flex-1 bb:min-w-[200px] bb:px-1 bb:pb-1 bb:text-xs bb:text-muted-foreground">
+                                    @if (hidden > 0)
+                                    {
+                                        @Localizer["Scheduler.MoreAllDay", hidden]
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
     <div class="bb:overflow-auto bb:overscroll-contain bb:rounded-md bb:border bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring"
          style="max-height:min(700px,65vh)" data-scheduler-scroll tabindex="0" role="region" aria-label="@Localizer["Scheduler.TimeSlots"]">
         <div class="bb:flex bb:items-start">
-            @foreach (var lane in lanes)
+            @for (var index = 0; index < lanes.Count; index++)
             {
+                var laneIndex = index;
+                var lane = lanes[laneIndex];
                 <section class="bb:flex-1 bb:min-w-[200px] bb:border-e" aria-label="@($"{lane.Date:D} {lane.Resource?.Title}")">
                     <h3 class="bb:sticky bb:top-0 bb:z-10 bb:border-b bb:bg-background bb:p-2 bb:text-sm bb:font-medium">
                         @lane.Date.ToString("ddd d", CultureInfo.CurrentCulture) @lane.Resource?.Title
                     </h3>
-                    <div class="bb:relative" data-scheduler-lane="@lanes.IndexOf(lane)" data-start="@lane.Start.ToUnixTimeMilliseconds()" data-end="@lane.End.ToUnixTimeMilliseconds()"
+                    <div class="bb:relative" data-scheduler-lane="@laneIndex" data-start="@lane.Start.ToUnixTimeMilliseconds()" data-end="@lane.End.ToUnixTimeMilliseconds()"
                          style="@FormattableString.Invariant($"height:{(lane.End - lane.Start).TotalMinutes / SlotMinutes * 40}px")">
                         @for (var slot = lane.Start; slot < lane.End; slot = slot.AddMinutes(SlotMinutes))
                         {
                             var instant = slot;
-                            <button type="button" disabled="@ReadOnly"
-                                    class="bb:absolute bb:left-0 bb:w-full bb:border-b bb:border-dashed bb:text-start bb:text-xs bb:text-muted-foreground bb:hover:bg-muted/50 bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:z-10"
+                            var isSelected = IsSlotSelected(laneIndex, instant);
+                            var isMuted = IsSlotMuted(instant);
+                            var isBlocked = BlockOutsideActiveHours && isMuted;
+                            @* Click selects, double-click creates. Enter also creates: its keydown runs
+                               before the click the browser synthesises, so the editor opens and the slot
+                               is selected behind it. Space only ever produces the click, so it selects. *@
+                            <button type="button" disabled="@(ReadOnly || isBlocked)" data-scheduler-slot="@instant.ToUnixTimeMilliseconds()"
+                                    data-scheduler-muted="@isMuted.ToString().ToLowerInvariant()"
+                                    data-scheduler-blocked="@isBlocked.ToString().ToLowerInvariant()"
+                                    class="@SlotClass(isSelected, isMuted)"
                                     style="@FormattableString.Invariant($"top:{(slot - lane.Start).TotalMinutes / SlotMinutes * 40}px;height:40px")"
-                                    aria-label="@Localizer["Scheduler.CreateAt", TimeZoneInfo.ConvertTime(slot, DisplayZone).ToString("f", CultureInfo.CurrentCulture), lane.Resource?.Title ?? ""]"
-                                    @onclick="@(() => CreateEvent(instant, lane.Resource?.Id))">
+                                    aria-label="@SlotLabel(instant, lane.Resource, isMuted)"
+                                    aria-pressed="@isSelected.ToString().ToLowerInvariant()"
+                                    @onclick="@(() => SelectSlot(laneIndex, instant))"
+                                    @ondblclick="@(() => CreateEvent(instant, lane.Resource?.Id))"
+                                    @onkeydown="@(args => SlotKeyDown(args, instant, lane.Resource?.Id))"
+                                    @oncontextmenu="@(args => isBlocked ? Task.CompletedTask : ShowSlotMenuAsync(args, instant, lane.Resource))" @oncontextmenu:preventDefault="true">
                                 <span class="bb:whitespace-nowrap bb:px-1">@TimeLabel(slot)</span>
                             </button>
                         }
@@ -70,9 +219,13 @@
                         {
                             var occurrence = placement.Occurrence;
                             <button @key="occurrence" type="button" data-scheduler-event="@occurrence.Event.Id" data-start="@occurrence.Start.ToUnixTimeMilliseconds()" data-end="@occurrence.End.ToUnixTimeMilliseconds()"
-                                    class="@ClassNames.cn("bb:group bb:absolute bb:flex bb:flex-col bb:items-start bb:justify-start bb:z-[1] bb:overflow-hidden bb:rounded bb:border bb:border-primary/30 bb:bg-primary/10 bb:px-2 bb:py-1 bb:text-start bb:text-xs bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:z-10", !ReadOnly && AllowDrag ? "bb:cursor-grab bb:touch-none" : null)"
+                                    class="@ClassNames.cn("bb:group bb:absolute bb:flex bb:flex-col bb:items-start bb:justify-start bb:z-[1] bb:overflow-hidden bb:rounded bb:border bb:border-primary/30 bb:bg-primary/10 bb:px-2 bb:py-1 bb:text-start bb:text-xs bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:z-10", SelectedRing(IsOccurrenceSelected(occurrence)), !ReadOnly && AllowDrag ? "bb:cursor-grab bb:touch-none" : null)"
                                     style="@PlacementStyle(lane, placement)" aria-label="@OccurrenceLabel(occurrence)"
-                                    aria-disabled="@ReadOnly.ToString().ToLowerInvariant()" @onclick="@(() => EditEvent(occurrence))">
+                                    aria-disabled="@ReadOnly.ToString().ToLowerInvariant()"
+                                    @onclick="@(() => SelectOccurrence(occurrence))"
+                                    @ondblclick="@(() => EditEvent(occurrence))"
+                                    @onkeydown="@(args => OccurrenceKeyDown(args, occurrence))"
+                                    @oncontextmenu="@(args => ShowEventMenuAsync(args, occurrence))" @oncontextmenu:preventDefault="true">
                                 @if (AllowResize && !ReadOnly && occurrence.Start >= lane.Start)
                                 {
                                     <span data-scheduler-resize="start" aria-hidden="true" title="@Localizer["Scheduler.ResizeStart"]" class="bb:absolute bb:inset-x-0 bb:top-0 bb:z-10 bb:h-2 bb:cursor-ns-resize bb:touch-none bb:hover:bg-primary/30"></span>
@@ -97,6 +250,8 @@
             }
         </div>
     </div>
+    }
+    }
 </section>
 
 <BbDialog Open="@editorOpen" OpenChanged="SetEditorOpen">
@@ -106,154 +261,19 @@
             <BbDialogDescription>@Localizer[EnableTimeZones ? "Scheduler.EditorDescription" : "Scheduler.SingleZoneDescription"]</BbDialogDescription>
         </BbDialogHeader>
         @if (draft != null)
+        @if (draft != null)
         {
             <fieldset disabled="@saving" class="bb:space-y-4">
-                @if (editingOccurrence != null && !string.IsNullOrWhiteSpace(editingOccurrence.Event.RecurrenceRule))
+                @if (EditorContent is null)
                 {
-                    <div class="bb:space-y-2">
-                        <BbLabel For="@(editorId + "-scope")">@Localizer["Scheduler.Scope"]</BbLabel>
-                        <BbSelect TValue="SchedulerEditScope" Value="@editScope" ValueChanged="ScopeChanged" Disabled="@saving"
-                                  DisplayTextSelector="@(value => Localizer[value == SchedulerEditScope.Occurrence ? "Scheduler.Occurrence" : "Scheduler.Series"])">
-                            <BbSelectTrigger id="@(editorId + "-scope")"><BbSelectValue /></BbSelectTrigger>
-                            <BbSelectContent>
-                                <BbSelectItem Value="SchedulerEditScope.Occurrence" Text="@Localizer["Scheduler.Occurrence"]" />
-                                <BbSelectItem Value="SchedulerEditScope.Series" Text="@Localizer["Scheduler.Series"]" />
-                            </BbSelectContent>
-                        </BbSelect>
-                    </div>
+                    @DefaultEditorFields
                 }
-                <div class="bb:space-y-2">
-                    <BbLabel For="@(editorId + "-title")">@Localizer["Scheduler.Title"]</BbLabel>
-                    <BbInput Id="@(editorId + "-title")" @bind-Value="draft.Title" Disabled="@saving" Required="true" />
-                </div>
-                <div class="bb:grid bb:grid-cols-1 bb:gap-4 bb:sm:grid-cols-2">
-                    <div class="bb:space-y-2">
-                        <BbLabel For="@(editorId + "-start")">@Localizer["Scheduler.Start"]</BbLabel>
-                        <BbDateTimePicker id="@(editorId + "-start")" @bind-Value="localStart" Disabled="@saving" Required="true" Class="bb:w-full" />
-                    </div>
-                    <div class="bb:space-y-2">
-                        <BbLabel For="@(editorId + "-end")">@Localizer["Scheduler.End"]</BbLabel>
-                        <BbDateTimePicker id="@(editorId + "-end")" @bind-Value="localEnd" Disabled="@saving" Required="true" Class="bb:w-full" />
-                    </div>
-                </div>
-                @if (EnableTimeZones)
+                else
                 {
-                    <div class="bb:space-y-2">
-                        <BbLabel For="@(editorId + "-zone")">@Localizer["Scheduler.TimeZone"]</BbLabel>
-                        <BbSelect TValue="string" @bind-Value="draft.TimeZoneId" Disabled="@saving" DisplayTextSelector="@(value => value.Replace('_', ' '))">
-                            <BbSelectTrigger id="@(editorId + "-zone")"><BbSelectValue /></BbSelectTrigger>
-                            <BbSelectContent>
-                                @foreach (var zone in TimeZoneIds)
-                                {
-                                    <BbSelectItem Value="@zone" Text="@zone.Replace('_', ' ')" />
-                                }
-                            </BbSelectContent>
-                        </BbSelect>
-                    </div>
-                }
-                @if (IsAmbiguousTime(localStart))
-                {
-                    <div class="bb:space-y-2">
-                        <BbLabel For="@(editorId + "-offset")">@Localizer["Scheduler.StartRepeatedTime"]</BbLabel>
-                        <BbSelect TValue="SchedulerAmbiguousTimeResolution" @bind-Value="startResolution" Disabled="@saving" DisplayTextSelector="ResolutionLabel">
-                            <BbSelectTrigger id="@(editorId + "-offset")"><BbSelectValue /></BbSelectTrigger>
-                            <BbSelectContent>
-                                <BbSelectItem Value="SchedulerAmbiguousTimeResolution.Earlier" Text="@Localizer["Scheduler.EarlierOffset"]" />
-                                <BbSelectItem Value="SchedulerAmbiguousTimeResolution.Later" Text="@Localizer["Scheduler.LaterOffset"]" />
-                            </BbSelectContent>
-                        </BbSelect>
-                    </div>
-                }
-                @if (IsAmbiguousTime(localEnd))
-                {
-                    <div class="bb:space-y-2">
-                        <BbLabel For="@(editorId + "-end-offset")">@Localizer["Scheduler.EndRepeatedTime"]</BbLabel>
-                        <BbSelect TValue="SchedulerAmbiguousTimeResolution" @bind-Value="endResolution" Disabled="@saving" DisplayTextSelector="ResolutionLabel">
-                            <BbSelectTrigger id="@(editorId + "-end-offset")"><BbSelectValue /></BbSelectTrigger>
-                            <BbSelectContent>
-                                <BbSelectItem Value="SchedulerAmbiguousTimeResolution.Earlier" Text="@Localizer["Scheduler.EarlierOffset"]" />
-                                <BbSelectItem Value="SchedulerAmbiguousTimeResolution.Later" Text="@Localizer["Scheduler.LaterOffset"]" />
-                            </BbSelectContent>
-                        </BbSelect>
-                    </div>
-                }
-                @if (editingOccurrence == null || editScope == SchedulerEditScope.Series || string.IsNullOrWhiteSpace(editingOccurrence.Event.RecurrenceRule))
-                {
-                    <div class="bb:space-y-2">
-                        <BbLabel For="@(editorId + "-repeat")">@Localizer["Scheduler.Repeat"]</BbLabel>
-                        <BbSelect TValue="string" Value="@recurrenceFrequency" ValueChanged="FrequencyChanged" Disabled="@saving" DisplayTextSelector="@(value => Localizer[$"Scheduler.Repeat.{value}"])">
-                            <BbSelectTrigger id="@(editorId + "-repeat")"><BbSelectValue /></BbSelectTrigger>
-                            <BbSelectContent>
-                                @if (recurrenceFrequency == "EXISTING")
-                                {
-                                    <BbSelectItem Value="@("EXISTING")" Text="@Localizer["Scheduler.Repeat.EXISTING"]" />
-                                }
-                                @foreach (var frequency in RecurrenceFrequencies)
-                                {
-                                    <BbSelectItem Value="@frequency" Text="@Localizer[$"Scheduler.Repeat.{frequency}"]" />
-                                }
-                            </BbSelectContent>
-                        </BbSelect>
-                    </div>
-                    @if (recurrenceFrequency == "WEEKLY")
-                    {
-                        <fieldset class="bb:space-y-2">
-                            <legend class="bb:mb-2 bb:text-sm bb:font-medium">@Localizer["Scheduler.RepeatOn"]</legend>
-                            <div class="bb:grid bb:grid-cols-2 bb:gap-3 bb:sm:grid-cols-3">
-                                @foreach (var day in RecurrenceWeekDays)
-                                {
-                                    <div class="bb:flex bb:items-center bb:gap-2">
-                                        <BbCheckbox Id="@(editorId + "-repeat-" + day)" Checked="@recurrenceDays.Contains(day)"
-                                                    CheckedChanged="@(selected => ToggleRecurrenceDay(day, selected))" Disabled="@saving" />
-                                        <BbLabel For="@(editorId + "-repeat-" + day)">@CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(day)</BbLabel>
-                                    </div>
-                                }
-                            </div>
-                        </fieldset>
-                    }
-                    @if (recurrenceFrequency == "MONTHLY" && localStart.HasValue)
-                    {
-                        <p class="bb:text-sm bb:text-muted-foreground">@Localizer["Scheduler.MonthlyOn", localStart.Value.Day]</p>
-                    }
-                    @if (recurrenceFrequency == "YEARLY" && localStart.HasValue)
-                    {
-                        <p class="bb:text-sm bb:text-muted-foreground">@Localizer["Scheduler.YearlyOn", localStart.Value.ToString("m", CultureInfo.CurrentCulture)]</p>
-                    }
-                    @if (recurrenceFrequency is not ("NONE" or "EXISTING"))
-                    {
-                        <div class="bb:flex bb:items-center bb:gap-2">
-                            <BbCheckbox Id="@(editorId + "-limit")" @bind-Checked="limitRecurrence" @bind-Checked:after="UpdateRecurrence" Disabled="@saving" />
-                            <BbLabel For="@(editorId + "-limit")">@Localizer["Scheduler.LimitOccurrences"]</BbLabel>
-                        </div>
-                        @if (limitRecurrence)
-                        {
-                            <div class="bb:space-y-2">
-                                <BbLabel For="@(editorId + "-count")">@Localizer["Scheduler.Count"]</BbLabel>
-                                <BbNumericInput TValue="int" Id="@(editorId + "-count")" Min="1" Value="@(recurrenceCount ?? 10)"
-                                                ValueChanged="@(value => { recurrenceCount = value; UpdateRecurrence(); })" Disabled="@saving" />
-                            </div>
-                        }
-                    }
-                    @if (recurrenceFrequency == "EXISTING")
-                    {
-                        <p class="bb:text-sm bb:text-muted-foreground">@Localizer["Scheduler.ExistingRepeatHelp"]</p>
-                    }
-                }
-                @if (Resources.Count > 0)
-                {
-                    <fieldset class="bb:space-y-2">
-                        <legend class="bb:mb-2 bb:text-sm bb:font-medium">@Localizer["Scheduler.Resources"]</legend>
-                        @foreach (var resource in Resources)
-                        {
-                            <div class="bb:flex bb:items-center bb:gap-2">
-                                <BbCheckbox Id="@(editorId + "-resource-" + resource.Id)" Checked="@draft.ResourceIds.Contains(resource.Id)"
-                                            CheckedChanged="@(value => ToggleResource(resource.Id, value))" Disabled="@saving" />
-                                <BbLabel For="@(editorId + "-resource-" + resource.Id)">@resource.Title</BbLabel>
-                            </div>
-                        }
-                    </fieldset>
+                    @EditorContent(BuildEditorContext(DefaultEditorFields))
                 }
             </fieldset>
+        }
         }
         @if (editorError != null && !deleteConfirmationOpen)
         {
@@ -262,28 +282,282 @@
         <BbDialogFooter>
             @if (editingOccurrence != null)
             {
-                <BbAlertDialog Open="@deleteConfirmationOpen" OpenChanged="SetDeleteConfirmationOpen">
-                    <BbAlertDialogTrigger>
-                        <BbButton Variant="ButtonVariant.Destructive" Class="bb:sm:mr-auto" Disabled="@saving" OnClick="RequestDelete" data-scheduler-delete="@editorId">@Localizer["Scheduler.Delete"]</BbButton>
-                    </BbAlertDialogTrigger>
-                    <BbAlertDialogContent>
-                        <BbAlertDialogHeader>
-                            <BbAlertDialogTitle>@Localizer["Scheduler.ConfirmDelete"]</BbAlertDialogTitle>
-                            <BbAlertDialogDescription>@DeleteDescription</BbAlertDialogDescription>
-                        </BbAlertDialogHeader>
-                        @if (editorError != null)
-                        {
-                            <p role="alert" class="bb:text-sm bb:text-destructive">@editorError</p>
-                        }
-                        <BbAlertDialogFooter>
-                            <BbAlertDialogCancel><BbButton Variant="ButtonVariant.Outline" Disabled="@saving">@Localizer["Scheduler.Cancel"]</BbButton></BbAlertDialogCancel>
-                            <BbButton Variant="ButtonVariant.Destructive" Disabled="@saving" OnClick="ConfirmDeleteAsync">@Localizer["Scheduler.Delete"]</BbButton>
-                        </BbAlertDialogFooter>
-                    </BbAlertDialogContent>
-                </BbAlertDialog>
+                <BbButton Variant="ButtonVariant.Destructive" Class="bb:sm:mr-auto" Disabled="@saving" OnClick="RequestDelete" data-scheduler-delete="@editorId">@Localizer["Scheduler.Delete"]</BbButton>
             }
             <BbButton Variant="ButtonVariant.Outline" Disabled="@saving" OnClick="@(() => SetEditorOpen(false))">@Localizer["Scheduler.Cancel"]</BbButton>
             <BbButton Disabled="@saving" OnClick="@(() => SaveAsync(false))">@Localizer["Scheduler.Save"]</BbButton>
         </BbDialogFooter>
     </BbDialogContent>
 </BbDialog>
+
+@* Both the editor's Delete button and the context menu's Delete item open this. It sits at the
+   component root rather than inside the editor dialog, because deleting from the context menu
+   never opens the editor. *@
+<BbAlertDialog Open="@deleteConfirmationOpen" OpenChanged="SetDeleteConfirmationOpen">
+    <BbAlertDialogContent>
+        <BbAlertDialogHeader>
+            <BbAlertDialogTitle>@Localizer["Scheduler.ConfirmDelete"]</BbAlertDialogTitle>
+            <BbAlertDialogDescription>@DeleteDescription</BbAlertDialogDescription>
+        </BbAlertDialogHeader>
+        @if (editorError != null)
+        {
+            <p role="alert" class="bb:text-sm bb:text-destructive">@editorError</p>
+        }
+        <BbAlertDialogFooter>
+            <BbAlertDialogCancel><BbButton Variant="ButtonVariant.Outline" Disabled="@saving">@Localizer["Scheduler.Cancel"]</BbButton></BbAlertDialogCancel>
+            <BbButton Variant="ButtonVariant.Destructive" Disabled="@saving" OnClick="ConfirmDeleteAsync">@Localizer["Scheduler.Delete"]</BbButton>
+        </BbAlertDialogFooter>
+    </BbAlertDialogContent>
+</BbAlertDialog>
+
+@* One menu for the whole scheduler, opened at the pointer. It sits outside the scrolling grid:
+   the content is position:fixed, which a transformed or contained ancestor would re-anchor. *@
+<BbContextMenu @ref="contextMenu">
+    <BbContextMenuContent>
+        @if (slotMenuContext != null)
+        {
+            @(SlotContextMenuContent is null ? slotMenuContext.DefaultItems : SlotContextMenuContent(slotMenuContext))
+        }
+        else if (eventMenuContext != null)
+        {
+            @(EventContextMenuContent is null ? eventMenuContext.DefaultItems : EventContextMenuContent(eventMenuContext))
+        }
+    </BbContextMenuContent>
+</BbContextMenu>
+
+@code {
+    private RenderFragment DefaultEditorFields => @<text>
+        @if (draft != null)
+        {
+                    @if (editingOccurrence != null && !string.IsNullOrWhiteSpace(editingOccurrence.Event.RecurrenceRule))
+                    {
+                        <div class="bb:space-y-2">
+                            <BbLabel For="@(editorId + "-scope")">@Localizer["Scheduler.Scope"]</BbLabel>
+                            <BbSelect TValue="SchedulerEditScope" Value="@editScope" ValueChanged="ScopeChanged" Disabled="@saving"
+                                      DisplayTextSelector="@(value => Localizer[value == SchedulerEditScope.Occurrence ? "Scheduler.Occurrence" : "Scheduler.Series"])">
+                                <BbSelectTrigger id="@(editorId + "-scope")"><BbSelectValue /></BbSelectTrigger>
+                                <BbSelectContent>
+                                    <BbSelectItem Value="SchedulerEditScope.Occurrence" Text="@Localizer["Scheduler.Occurrence"]" />
+                                    <BbSelectItem Value="SchedulerEditScope.Series" Text="@Localizer["Scheduler.Series"]" />
+                                </BbSelectContent>
+                            </BbSelect>
+                        </div>
+                    }
+                    <div class="bb:space-y-2">
+                        <BbLabel For="@(editorId + "-title")">@Localizer["Scheduler.Title"]</BbLabel>
+                        <BbInput Id="@(editorId + "-title")" @bind-Value="draft.Title" Disabled="@saving" Required="true" />
+                    </div>
+                    <div class="bb:flex bb:items-center bb:gap-2">
+                        <BbCheckbox Id="@(editorId + "-all-day")" Checked="@draft.IsAllDay" CheckedChanged="AllDayChanged" Disabled="@saving" />
+                        <BbLabel For="@(editorId + "-all-day")">@Localizer["Scheduler.AllDay"]</BbLabel>
+                    </div>
+                    <div class="bb:grid bb:grid-cols-1 bb:gap-4 bb:sm:grid-cols-2">
+                        <div class="bb:space-y-2">
+                            <BbLabel For="@(editorId + "-start")">@Localizer["Scheduler.Start"]</BbLabel>
+                            @if (draft.IsAllDay)
+                            {
+                                <BbDatePicker id="@(editorId + "-start")" @bind-Value="localStart" Disabled="@saving" Class="bb:w-full" />
+                            }
+                            else
+                            {
+                                <BbDateTimePicker id="@(editorId + "-start")" @bind-Value="localStart" Disabled="@saving" Required="true" Class="bb:w-full" />
+                            }
+                        </div>
+                        <div class="bb:space-y-2">
+                            @* An all-day end date is the last day the event covers, not the exclusive
+                               instant stored on the event. SaveAsync converts between the two. *@
+                            <BbLabel For="@(editorId + "-end")">@Localizer[draft.IsAllDay ? "Scheduler.LastDay" : "Scheduler.End"]</BbLabel>
+                            @if (draft.IsAllDay)
+                            {
+                                <BbDatePicker id="@(editorId + "-end")" @bind-Value="localEnd" Disabled="@saving" Class="bb:w-full" />
+                            }
+                            else
+                            {
+                                <BbDateTimePicker id="@(editorId + "-end")" @bind-Value="localEnd" Disabled="@saving" Required="true" Class="bb:w-full" />
+                            }
+                        </div>
+                    </div>
+                    @if (EnableTimeZones)
+                    {
+                        <div class="bb:space-y-2">
+                            <BbLabel For="@(editorId + "-zone")">@Localizer["Scheduler.TimeZone"]</BbLabel>
+                            <BbSelect TValue="string" @bind-Value="draft.TimeZoneId" Disabled="@saving" DisplayTextSelector="TimeZoneTitle">
+                                <BbSelectTrigger id="@(editorId + "-zone")"><BbSelectValue /></BbSelectTrigger>
+                                <BbSelectContent>
+                                    @foreach (var zone in EditorTimeZones)
+                                    {
+                                        <BbSelectItem Value="@zone.Id" Text="@zone.Title" />
+                                    }
+                                </BbSelectContent>
+                            </BbSelect>
+                        </div>
+                    }
+                    @if (IsAmbiguousTime(localStart))
+                    {
+                        <div class="bb:space-y-2">
+                            <BbLabel For="@(editorId + "-offset")">@Localizer["Scheduler.StartRepeatedTime"]</BbLabel>
+                            <BbSelect TValue="SchedulerAmbiguousTimeResolution" @bind-Value="startResolution" Disabled="@saving" DisplayTextSelector="ResolutionLabel">
+                                <BbSelectTrigger id="@(editorId + "-offset")"><BbSelectValue /></BbSelectTrigger>
+                                <BbSelectContent>
+                                    <BbSelectItem Value="SchedulerAmbiguousTimeResolution.Earlier" Text="@Localizer["Scheduler.EarlierOffset"]" />
+                                    <BbSelectItem Value="SchedulerAmbiguousTimeResolution.Later" Text="@Localizer["Scheduler.LaterOffset"]" />
+                                </BbSelectContent>
+                            </BbSelect>
+                        </div>
+                    }
+                    @if (IsAmbiguousTime(localEnd))
+                    {
+                        <div class="bb:space-y-2">
+                            <BbLabel For="@(editorId + "-end-offset")">@Localizer["Scheduler.EndRepeatedTime"]</BbLabel>
+                            <BbSelect TValue="SchedulerAmbiguousTimeResolution" @bind-Value="endResolution" Disabled="@saving" DisplayTextSelector="ResolutionLabel">
+                                <BbSelectTrigger id="@(editorId + "-end-offset")"><BbSelectValue /></BbSelectTrigger>
+                                <BbSelectContent>
+                                    <BbSelectItem Value="SchedulerAmbiguousTimeResolution.Earlier" Text="@Localizer["Scheduler.EarlierOffset"]" />
+                                    <BbSelectItem Value="SchedulerAmbiguousTimeResolution.Later" Text="@Localizer["Scheduler.LaterOffset"]" />
+                                </BbSelectContent>
+                            </BbSelect>
+                        </div>
+                    }
+                    @if (editingOccurrence == null || editScope == SchedulerEditScope.Series || string.IsNullOrWhiteSpace(editingOccurrence.Event.RecurrenceRule))
+                    {
+                        <div class="bb:space-y-2">
+                            <BbLabel For="@(editorId + "-repeat")">@Localizer["Scheduler.Repeat"]</BbLabel>
+                            <BbSelect TValue="string" Value="@recurrenceFrequency" ValueChanged="FrequencyChanged" Disabled="@saving" DisplayTextSelector="@(value => Localizer[$"Scheduler.Repeat.{value}"])">
+                                <BbSelectTrigger id="@(editorId + "-repeat")"><BbSelectValue /></BbSelectTrigger>
+                                <BbSelectContent>
+                                    @if (recurrenceFrequency == "EXISTING")
+                                    {
+                                        <BbSelectItem Value="@("EXISTING")" Text="@Localizer["Scheduler.Repeat.EXISTING"]" />
+                                    }
+                                    @foreach (var frequency in RecurrenceFrequencies)
+                                    {
+                                        <BbSelectItem Value="@frequency" Text="@Localizer[$"Scheduler.Repeat.{frequency}"]" />
+                                    }
+                                </BbSelectContent>
+                            </BbSelect>
+                        </div>
+                        @if (recurrenceFrequency == "WEEKLY")
+                        {
+                            <fieldset class="bb:space-y-2">
+                                <legend class="bb:mb-2 bb:text-sm bb:font-medium">@Localizer["Scheduler.RepeatOn"]</legend>
+                                <div class="bb:grid bb:grid-cols-2 bb:gap-3 bb:sm:grid-cols-3">
+                                    @foreach (var day in RecurrenceWeekDays)
+                                    {
+                                        <div class="bb:flex bb:items-center bb:gap-2">
+                                            <BbCheckbox Id="@(editorId + "-repeat-" + day)" Checked="@recurrenceDays.Contains(day)"
+                                                        CheckedChanged="@(selected => ToggleRecurrenceDay(day, selected))" Disabled="@saving" />
+                                            <BbLabel For="@(editorId + "-repeat-" + day)">@CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(day)</BbLabel>
+                                        </div>
+                                    }
+                                </div>
+                            </fieldset>
+                        }
+                        @if (recurrenceFrequency == "MONTHLY" && localStart.HasValue)
+                        {
+                            <p class="bb:text-sm bb:text-muted-foreground">@Localizer["Scheduler.MonthlyOn", localStart.Value.Day]</p>
+                        }
+                        @if (recurrenceFrequency == "YEARLY" && localStart.HasValue)
+                        {
+                            <p class="bb:text-sm bb:text-muted-foreground">@Localizer["Scheduler.YearlyOn", localStart.Value.ToString("m", CultureInfo.CurrentCulture)]</p>
+                        }
+                        @if (recurrenceFrequency is not ("NONE" or "EXISTING"))
+                        {
+                            <div class="bb:flex bb:items-center bb:gap-2">
+                                <BbCheckbox Id="@(editorId + "-limit")" @bind-Checked="limitRecurrence" @bind-Checked:after="UpdateRecurrence" Disabled="@saving" />
+                                <BbLabel For="@(editorId + "-limit")">@Localizer["Scheduler.LimitOccurrences"]</BbLabel>
+                            </div>
+                            @if (limitRecurrence)
+                            {
+                                <div class="bb:space-y-2">
+                                    <BbLabel For="@(editorId + "-count")">@Localizer["Scheduler.Count"]</BbLabel>
+                                    <BbNumericInput TValue="int" Id="@(editorId + "-count")" Min="1" Value="@(recurrenceCount ?? 10)"
+                                                    ValueChanged="@(value => { recurrenceCount = value; UpdateRecurrence(); })" Disabled="@saving" />
+                                </div>
+                            }
+                        }
+                        @if (recurrenceFrequency == "EXISTING")
+                        {
+                            <p class="bb:text-sm bb:text-muted-foreground">@Localizer["Scheduler.ExistingRepeatHelp"]</p>
+                        }
+                    }
+                    @if (Resources.Count > 0)
+                    {
+                        <fieldset class="bb:space-y-2">
+                            <legend class="bb:mb-2 bb:text-sm bb:font-medium">@Localizer["Scheduler.Resources"]</legend>
+                            @foreach (var resource in Resources)
+                            {
+                                <div class="bb:flex bb:items-center bb:gap-2">
+                                    <BbCheckbox Id="@(editorId + "-resource-" + resource.Id)" Checked="@draft.ResourceIds.Contains(resource.Id)"
+                                                CheckedChanged="@(value => ToggleResource(resource.Id, value))" Disabled="@saving" />
+                                    <BbLabel For="@(editorId + "-resource-" + resource.Id)">@resource.Title</BbLabel>
+                                </div>
+                            }
+                        </fieldset>
+                    }
+        }
+    </text>;
+
+    private RenderFragment DefaultToolbar => @<text>
+        <div class="@("bb:grid bb:grid-cols-1 bb:items-center bb:gap-3 bb:@4xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]")" data-scheduler-toolbar>
+            <div class="bb:flex bb:items-center bb:gap-2 bb:justify-self-start" data-scheduler-navigation>
+                <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => NavigateAsync(-1))" AriaLabel="@Localizer["Scheduler.Previous"]">&#8249;</BbButton>
+                <BbButton Variant="ButtonVariant.Outline" OnClick="NavigateToTodayAsync">@Localizer["Scheduler.Today"]</BbButton>
+                <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => NavigateAsync(1))" AriaLabel="@Localizer["Scheduler.Next"]">&#8250;</BbButton>
+            </div>
+            @* row-start must stay behind @4xl: in the collapsed single-column grid it would pin the
+               heading to row 1 and push the navigation and view controls below it. *@
+            <h2 class="@("bb:text-center bb:font-semibold bb:@4xl:col-start-2 bb:@4xl:row-start-1")" aria-live="polite">@RangeHeading</h2>
+            <div class="@("bb:flex bb:flex-wrap bb:items-center bb:gap-4 bb:@4xl:justify-end")" data-scheduler-view-controls>
+                @if (EnableTimeZones)
+                {
+                    <span class="bb:text-sm bb:text-muted-foreground">@TimeZoneTitle(TimeZoneId)</span>
+                }
+                @if (ShowResourceFilter && Resources.Count > 0)
+                {
+                    <BbMultiSelect TValue="string" Options="@ResourceFilterOptions" Values="@VisibleResourceIds" ValuesChanged="SetVisibleResourcesAsync"
+                                   Placeholder="@Localizer["Scheduler.Resources.FilterPlaceholder"]" SearchPlaceholder="@Localizer["Scheduler.Resources.FilterSearch"]"
+                                   EmptyMessage="@Localizer["Scheduler.Resources.FilterEmpty"]" Class="bb:w-auto bb:min-w-44"
+                                   aria-label="@Localizer["Scheduler.Resources.Filter"]" />
+                }
+                @if (View == SchedulerView.Week)
+                {
+                    <BbSelect TValue="DayOfWeek" Value="@FirstDayOfWeek" ValueChanged="SetFirstDayOfWeekAsync" DisplayTextSelector="WeekStartLabel">
+                        <BbSelectTrigger Class="bb:w-auto bb:min-w-36" aria-label="@Localizer["Scheduler.WeekStartsOn"]"><BbSelectValue /></BbSelectTrigger>
+                        <BbSelectContent>
+                            <BbSelectItem Value="DayOfWeek.Monday" Text="@WeekStartLabel(DayOfWeek.Monday)" />
+                            <BbSelectItem Value="DayOfWeek.Sunday" Text="@WeekStartLabel(DayOfWeek.Sunday)" />
+                            @if (FirstDayOfWeek is not (DayOfWeek.Monday or DayOfWeek.Sunday))
+                            {
+                                <BbSelectItem Value="@FirstDayOfWeek" Text="@WeekStartLabel(FirstDayOfWeek)" />
+                            }
+                        </BbSelectContent>
+                    </BbSelect>
+                }
+                @* The view buttons are one control group: they keep the tighter gap-2 between
+                   themselves, and wrap as a unit rather than splitting mid-group. *@
+                <div class="bb:flex bb:items-center bb:gap-2" data-scheduler-view-buttons>
+                    <BbButton Variant="@(View == SchedulerView.Day ? ButtonVariant.Default : ButtonVariant.Outline)" aria-pressed="@((View == SchedulerView.Day).ToString().ToLowerInvariant())" OnClick="@(() => SetViewAsync(SchedulerView.Day))">@Localizer["Scheduler.Day"]</BbButton>
+                    <BbButton Variant="@(View == SchedulerView.Week ? ButtonVariant.Default : ButtonVariant.Outline)" aria-pressed="@((View == SchedulerView.Week).ToString().ToLowerInvariant())" OnClick="@(() => SetViewAsync(SchedulerView.Week))">@Localizer["Scheduler.Week"]</BbButton>
+                    <BbButton Variant="@(View == SchedulerView.WorkWeek ? ButtonVariant.Default : ButtonVariant.Outline)" aria-pressed="@((View == SchedulerView.WorkWeek).ToString().ToLowerInvariant())" OnClick="@(() => SetViewAsync(SchedulerView.WorkWeek))">@Localizer["Scheduler.WorkWeek"]</BbButton>
+                    <BbButton Variant="@(IsMonth ? ButtonVariant.Default : ButtonVariant.Outline)" aria-pressed="@(IsMonth.ToString().ToLowerInvariant())" OnClick="@(() => SetViewAsync(SchedulerView.Month))">@Localizer["Scheduler.Month"]</BbButton>
+                </div>
+            </div>
+        </div>
+    </text>;
+
+    private RenderFragment DefaultSlotMenuItems(DateTimeOffset start, string? resourceId) => @<text>
+        @if (!ReadOnly)
+        {
+            <BbContextMenuItem OnClick="@(async () => { await CloseContextMenuAsync(); CreateEvent(start, resourceId); })">@Localizer["Scheduler.Menu.NewEvent"]</BbContextMenuItem>
+        }
+    </text>;
+
+    private RenderFragment DefaultEventMenuItems(SchedulerOccurrence occurrence) => @<text>
+        @if (!ReadOnly)
+        {
+            <BbContextMenuItem OnClick="@(async () => { await CloseContextMenuAsync(); EditEvent(occurrence); })">@Localizer["Scheduler.Menu.EditEvent"]</BbContextMenuItem>
+            <BbContextMenuSeparator />
+            <BbContextMenuItem OnClick="@(async () => { await CloseContextMenuAsync(); RequestDeleteFor(occurrence); })">@Localizer["Scheduler.Menu.DeleteEvent"]</BbContextMenuItem>
+        }
+    </text>;
+}
