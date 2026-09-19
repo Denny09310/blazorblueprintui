@@ -1,0 +1,41 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+
+@if (failed)
+{
+    @if (Fallback is not null)
+    {
+        <div class="@FallbackCssClass" data-slot="image-fallback" role="img" aria-label="@Alt">
+            @Fallback
+        </div>
+    }
+    else if (FallbackSrc is not null)
+    {
+        @* The fallback is an image in its own right, so a broken fallback is not retried. *@
+        <img src="@FallbackSrc"
+             alt="@Alt"
+             class="@CssClass"
+             data-slot="image"
+             data-state="fallback"
+             @attributes="AdditionalAttributes" />
+    }
+    else
+    {
+        <div class="@FallbackCssClass" data-slot="image-fallback" role="img" aria-label="@Alt">
+            <LucideIcon Name="image-off" Class="bb:h-6 bb:w-6 bb:text-muted-foreground" />
+        </div>
+    }
+}
+else
+{
+    <img src="@Src"
+         alt="@Alt"
+         loading="@(Lazy ? "lazy" : null)"
+         decoding="async"
+         class="@CssClass"
+         data-slot="image"
+         data-state="@(loaded ? "loaded" : "loading")"
+         @onload="HandleLoad"
+         @onerror="HandleError"
+         @attributes="AdditionalAttributes" />
+}

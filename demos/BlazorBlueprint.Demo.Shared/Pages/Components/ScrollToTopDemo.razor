@@ -1,0 +1,122 @@
+@page "/components/scroll-to-top"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Scroll To Top - Blazor Blueprint</PageTitle>
+
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Scroll To Top</h1>
+        <p class="text-xl text-muted-foreground">
+            A floating button that appears once the page has been scrolled, and returns it to the top.
+        </p>
+    </div>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Watching a panel</h2>
+            <p class="text-sm text-muted-foreground">
+                Pass a <code class="rounded bg-muted px-1 py-0.5 text-xs">Selector</code> to watch
+                a scrolling panel instead of the document, and
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">Fixed="false"</code> to pin the
+                button inside it. Scroll the panel below.
+            </p>
+        </div>
+        <div id="scroll-demo-panel" class="relative h-72 overflow-auto rounded-lg border p-4">
+            <div class="space-y-3 text-sm text-muted-foreground">
+                @for (var i = 1; i <= 30; i++)
+                {
+                    <p>Row @i — scroll past 120 pixels and the button appears in the corner of this panel.</p>
+                }
+            </div>
+            <BbScrollToTop Selector="#scroll-demo-panel" Fixed="false" VisibleAt="120" />
+        </div>
+        <CodeBlock Source="Components/ScrollToTop/container.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Watching the page</h2>
+            <p class="text-sm text-muted-foreground">
+                With no selector it watches the document. This page's own content scrolls in a
+                panel, so the example below watches that panel by id — the same thing a normal
+                page gets for free from <code class="rounded bg-muted px-1 py-0.5 text-xs">&lt;BbScrollToTop /&gt;</code>.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-6">
+            <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => showPageButton = !showPageButton)">
+                @(showPageButton ? "Hide the page button" : "Show the page button")
+            </BbButton>
+            @if (showPageButton)
+            {
+                <BbScrollToTop Selector="#main-content" VisibleAt="200"
+                               OnScrolledToTop="@(() => status = "Scrolled back to the top.")" />
+            }
+            <p role="status" class="text-sm text-muted-foreground">@status</p>
+        </div>
+        <CodeBlock Source="Components/ScrollToTop/basic.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Appearance</h2>
+            <p class="text-sm text-muted-foreground">
+                It is built on <code class="rounded bg-muted px-1 py-0.5 text-xs">BbFab</code>, so
+                variant, size, shape and placement behave the same way. Shown inline here.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-4 rounded-lg border p-6">
+            <BbFab Placement="FabPlacement.Inline" Variant="FabVariant.Surface" Size="FabSize.Small" Shape="FabShape.Rounded" AriaLabel="Default appearance">
+                <Icon><LucideIcon Name="arrow-up" Size="20" /></Icon>
+            </BbFab>
+            <BbFab Placement="FabPlacement.Inline" Variant="FabVariant.Primary" Size="FabSize.Small" Shape="FabShape.Circle" AriaLabel="Circular primary">
+                <Icon><LucideIcon Name="arrow-up" Size="20" /></Icon>
+            </BbFab>
+            <BbFab Placement="FabPlacement.Inline" Variant="FabVariant.Secondary" AriaLabel="Larger secondary">
+                <Icon><LucideIcon Name="arrow-up" Size="24" /></Icon>
+            </BbFab>
+        </div>
+    </section>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The button has an accessible name from the localized <code>ScrollToTop.Label</code>, or from <code>AriaLabel</code>.</AccessibilityItem>
+            <AccessibilityItem>Nothing renders until the container is scrolled past the threshold, so there is no extra tab stop on a short page.</AccessibilityItem>
+            <AccessibilityItem>The scroll is animated only when the visitor has not asked for reduced motion; the browser reports that and the component honours it.</AccessibilityItem>
+            <AccessibilityItem>The scroll listener is passive and the visible state is de-duplicated, so a fast scroll does not flood the render loop.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move to the button once it is visible"><BbKbd>Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Scroll back to the top"><BbKbd>Enter / Space</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <LocalizationSection
+        Description="The button's accessible name is configurable."
+        Labels="@(new LocalizationSection.LabelInfo[]
+        {
+            new("ScrollToTop.Label", "Scroll back to top", "Accessible name for the button"),
+        })"
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
+{
+    localizer.Set(""ScrollToTop.Label"", ""Nach oben scrollen"");
+});")" />
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+        <ApiReference Since="v4" ComponentName="BbScrollToTop">
+            <ApiParameter Name="Selector" Type="string?">A CSS selector for the scrolling element to watch. The document is watched when not set.</ApiParameter>
+            <ApiParameter Name="VisibleAt" Type="int" Default="300">How far the container must be scrolled, in pixels, before the button appears.</ApiParameter>
+            <ApiParameter Name="Smooth" Type="bool" Default="true">Animates the scroll. Ignored when the visitor has asked for reduced motion.</ApiParameter>
+            <ApiParameter Name="Variant / Size / Shape / Placement / Fixed" Type="FabVariant / FabSize / FabShape / FabPlacement / bool" Default="Surface / Small / Rounded / BottomEnd / true">Forwarded to the underlying <code>BbFab</code>.</ApiParameter>
+            <ApiParameter Name="AriaLabel" Type="string?">The accessible name. Defaults to the localized string.</ApiParameter>
+            <ApiParameter Name="ChildContent" Type="RenderFragment?">The icon. Defaults to an upward arrow.</ApiParameter>
+            <ApiParameter Name="OnScrolledToTop" Type="EventCallback">Raised after the container is scrolled back.</ApiParameter>
+            <ApiParameter Name="Class / AdditionalAttributes" Type="string? / Dictionary&lt;string, object&gt;?">Additional CSS classes and HTML attributes.</ApiParameter>
+        </ApiReference>
+    </section>
+</div>
+
+@code {
+    private bool showPageButton;
+    private string status = "The button appears once this page is scrolled.";
+}

@@ -332,6 +332,18 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["FormWizard.Skip"] = "Skip",
         ["FormWizard.Complete"] = "Complete",
 
+        // Link
+        ["Link.OpensInNewTab"] = "(opens in a new tab)",
+
+        // Scroll to top
+        ["ScrollToTop.Label"] = "Scroll back to top",
+
+        // Exit prompt
+        ["ExitPrompt.Title"] = "Leave without saving?",
+        ["ExitPrompt.Message"] = "Your changes have not been saved. If you leave now, they are lost.",
+        ["ExitPrompt.Stay"] = "Stay on this page",
+        ["ExitPrompt.Leave"] = "Leave and discard",
+
         // Stepper
         ["Stepper.Progress"] = "Progress",
         ["Stepper.Optional"] = "Optional",

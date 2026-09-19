@@ -1768,6 +1768,16 @@
   - View : EventCalendarView
   - ViewChanged : EventCallback<EventCalendarView>
 
+### BbExitPrompt (BlazorBlueprint.Components)
+  - Enabled : Boolean
+  - LeaveLabel : String
+  - Message : String
+  - OnLeft : EventCallback
+  - OnPrompted : EventCallback
+  - OnStayed : EventCallback
+  - StayLabel : String
+  - Title : String
+
 ### BbFab (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaLabel : String
@@ -2616,6 +2626,14 @@
   - Enabled : Boolean
   - Expanded : Boolean
 
+### BbHighlighter (BlazorBlueprint.Components)
+  - CaseSensitive : Boolean
+  - MarkClass : String
+  - Queries : IReadOnlyList<String>
+  - Query : String
+  - Text : String [EditorRequired]
+  - WholeWord : Boolean
+
 ### BbHoverCard (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
@@ -2639,6 +2657,18 @@
   - AsChild : Boolean
   - ChildContent : RenderFragment
   - Class : String
+
+### BbImage (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - Alt : String [EditorRequired]
+  - Class : String
+  - Fallback : RenderFragment
+  - FallbackSrc : String
+  - Fit : ImageFit
+  - Lazy : Boolean
+  - OnError : EventCallback
+  - OnLoad : EventCallback
+  - Src : String [EditorRequired]
 
 ### BbInput (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -2874,6 +2904,19 @@
   - ChildContent : RenderFragment
   - Direction : GradientDirection
   - ParentFill : BbFill [CascadingParameter]
+
+### BbLink (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Class : String
+  - Disabled : Boolean
+  - Href : String [EditorRequired]
+  - OnClick : EventCallback<MouseEventArgs>
+  - Rel : String
+  - ShowExternalIcon : Boolean
+  - Target : String
+  - Underline : LinkUnderline
+  - Variant : LinkVariant
 
 ### BbMarkdownEditor (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -3698,6 +3741,21 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - Class : String
   - Orientation : ScrollAreaOrientation
+
+### BbScrollToTop (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
+  - ChildContent : RenderFragment
+  - Class : String
+  - Fixed : Boolean
+  - OnScrolledToTop : EventCallback
+  - Placement : FabPlacement
+  - Selector : String
+  - Shape : FabShape
+  - Size : FabSize
+  - Smooth : Boolean
+  - Variant : FabVariant
+  - VisibleAt : Int32
 
 ### BbSectionHeader (BlazorBlueprint.Components)
   - Actions : RenderFragment
@@ -5070,6 +5128,13 @@
   - Start = 0
   - End = 1
 
+### ImageFit (BlazorBlueprint.Components)
+  - None = 0
+  - Cover = 1
+  - Contain = 2
+  - Fill = 3
+  - ScaleDown = 4
+
 ### InputFieldErrorKind (BlazorBlueprint.Components)
   - Parse = 0
   - PatternValidation = 1
@@ -5147,6 +5212,17 @@
   - Solid = 0
   - Dashed = 1
   - Dotted = 2
+
+### LinkUnderline (BlazorBlueprint.Components)
+  - Hover = 0
+  - Always = 1
+  - None = 2
+
+### LinkVariant (BlazorBlueprint.Components)
+  - Default = 0
+  - Inherit = 1
+  - Muted = 2
+  - Destructive = 3
 
 ### MarkerElement (BlazorBlueprint.Components)
   - Div = 0

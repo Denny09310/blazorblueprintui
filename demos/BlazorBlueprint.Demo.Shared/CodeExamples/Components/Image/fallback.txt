@@ -1,0 +1,10 @@
+@* Your own content replaces a broken image, keeping the alt text as its accessible name. *@
+<BbImage Src="@user.AvatarUrl" Alt="@user.Name" Fit="ImageFit.Cover"
+         Class="bb:h-16 bb:w-16 bb:rounded-full">
+    <Fallback>
+        <span class="bb:text-sm bb:font-medium">@user.Initials</span>
+    </Fallback>
+</BbImage>
+
+@* Or a second URL. A failure of that one is not retried. *@
+<BbImage Src="@user.AvatarUrl" FallbackSrc="images/avatar-placeholder.png" Alt="@user.Name" />
