@@ -18,7 +18,7 @@ This guide is written as v4 is built, so it grows as changes land.
 | [0](#net-10-minimum) | .NET 10 minimum for all Bb packages | **High** | Retarget applications to `net10.0` or later; .NET 8/9 cannot consume v4 |
 | [1](#1-bbdrawertrigger-and-bbdrawerclose-render-a-real-button) | `BbDrawerTrigger` / `BbDrawerClose` render a real `<button>` | **Medium** | Add `AsChild="true"` where the child is already a control |
 | [2](#2-bbtooltiptriggeraschild-now-defaults-to-false) | `BbTooltipTrigger.AsChild` default → `false` | **Medium** | Add `AsChild="true"` where the child consumes the trigger context, such as a `BbButton` |
-| [3](#3-every-utility-in-blazorblueprintcss-is-prefixed-bb) | Every utility in `blazorblueprint.css` is prefixed `bb:` | **Low** for most; **Medium** if you relied on the shipped utilities without your own Tailwind build | Nothing if you run Tailwind. Otherwise, see below |
+| [3](#3-every-utility-in-blazorblueprintcss-is-prefixed-bb) | Every utility in `blazorblueprint.css` is prefixed `bb:` | **Low** for most; **Medium** if you relied on the shipped utilities without your own Tailwind build | Running Tailwind: set the default border colour in your own stylesheet (one `@layer base` rule). Not running it: see below |
 | [4](#4-portal-host-components-moved-to-blazorblueprintprimitives) | The portal host components moved to the `BlazorBlueprint.Primitives` namespace | **Low** | Nothing if your `_Imports.razor` already has `@using BlazorBlueprint.Primitives`. Otherwise add it |
 | [5](#5-navigationmenucontext-trigger-registration-is-keyed-by-the-trigger) | `NavigationMenuContext` trigger registration is keyed by the trigger | **Low** | Only affects code that drives the primitive directly. Pass the component instead of an index |
 | [6](#6-parameters-that-never-did-anything-are-gone) | Parameters that never did anything are gone | **Low** | Delete them. None of them changed any behaviour |
@@ -181,12 +181,43 @@ when it merges, so your unprefixed class still replaces the library's for the sa
 <BbCard Class="p-6">        @* renders class="… bb:rounded-lg bb:border … p-6" *@
 ```
 
-Two things to check:
+Three things to check:
 
 - **Remove any `@source` that points at the Blazor Blueprint package or sources.** It was never
   needed, and under v4 it finds `bb:flex`, does not recognise the `bb` variant, and emits nothing.
 - **Load order no longer matters** for utilities. Keep your theme before `blazorblueprint.css` as
   before; put your Tailwind output wherever you like.
+- **Set the default border colour in your own stylesheet.** Add this to the file that holds your
+  `@import "tailwindcss"`:
+
+  ```css
+  @layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+      border-color: var(--border);
+    }
+  }
+  ```
+
+  Without it, your own `border`, `border-b`, `border-t` and so on render in the text colour —
+  near-black in light mode — instead of the theme's grey. Library components are unaffected: they
+  use `bb:`-prefixed utilities that carry their own colour.
+
+  **Why your stylesheet and not ours.** Tailwind's preflight sets `border: 0 solid`, and because
+  that is a shorthand it resets `border-color` to `currentColor`. Both stylesheets write their
+  preflight into the shared `base` layer at the same specificity, so the one that loads last wins —
+  and that is yours. The library's own default is discarded for the whole document. The rule has to
+  live in the stylesheet that loads last, which is why we cannot ship it for you.
+
+  This is not new in v4. The library has put its default in `@layer base` since at least 3.17.0, so
+  the collision existed there too. It surfaces now because v4 is the release that makes running your
+  own Tailwind build alongside the library safe, so more people do it — and because upgrading is
+  when you rebuild your CSS and notice.
+
+  If you already followed the shadcn setup, you have this line and there is nothing to do.
 
 ### If you do not run Tailwind
 
