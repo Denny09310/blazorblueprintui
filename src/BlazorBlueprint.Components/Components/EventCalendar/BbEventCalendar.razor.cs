@@ -601,8 +601,8 @@ public partial class BbEventCalendar<TEvent> : ComponentBase
 
     #region Styling
 
-    private const string ChipBaseClasses = "bb:block bb:w-full bb:rounded bb:px-1.5 bb:py-0.5 bb:text-left bb:text-xs bb:font-medium bb:bg-primary/10 bb:text-primary bb:hover:bg-primary/20 bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
-    private const string ChipTemplateClasses = "bb:block bb:w-full bb:rounded bb:text-left bb:text-xs bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
+    private const string ChipBaseClasses = "bb:block bb:w-full bb:rounded bb:px-1.5 bb:py-0.5 bb:text-start bb:text-xs bb:font-medium bb:bg-primary/10 bb:text-primary bb:hover:bg-primary/20 bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
+    private const string ChipTemplateClasses = "bb:block bb:w-full bb:rounded bb:text-start bb:text-xs bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
     private const string DayNumberBaseClasses = "bb:flex bb:h-6 bb:w-6 bb:items-center bb:justify-center bb:rounded-full bb:text-xs bb:font-medium bb:hover:bg-accent bb:hover:text-accent-foreground bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
     private const string DayNumberTodayClasses = "bb:flex bb:h-6 bb:w-6 bb:items-center bb:justify-center bb:rounded-full bb:text-xs bb:font-medium bb:bg-primary bb:text-primary-foreground bb:hover:bg-primary bb:hover:text-primary-foreground bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
 
@@ -626,8 +626,8 @@ public partial class BbEventCalendar<TEvent> : ComponentBase
     // the cell's padding box rather than below a day-number button.
     private const int WeekBarsTopPx = MonthCellPaddingPx;
 
-    private const string EventBarBaseClasses = "bb:absolute bb:z-10 bb:flex bb:items-center bb:overflow-hidden bb:rounded bb:px-1.5 bb:text-left bb:text-xs bb:font-medium bb:bg-primary/10 bb:text-primary bb:hover:bg-primary/20 bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
-    private const string EventBarTemplateClasses = "bb:absolute bb:z-10 bb:flex bb:items-center bb:overflow-hidden bb:rounded bb:text-left bb:text-xs bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
+    private const string EventBarBaseClasses = "bb:absolute bb:z-10 bb:flex bb:items-center bb:overflow-hidden bb:rounded bb:px-1.5 bb:text-start bb:text-xs bb:font-medium bb:bg-primary/10 bb:text-primary bb:hover:bg-primary/20 bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
+    private const string EventBarTemplateClasses = "bb:absolute bb:z-10 bb:flex bb:items-center bb:overflow-hidden bb:rounded bb:text-start bb:text-xs bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
 
     private string GetEventBarClasses(EventBar bar)
     {

@@ -67,13 +67,13 @@
             @* Badge *@
             @if (!string.IsNullOrEmpty(Badge))
             {
-                <BbBadge Variant="BadgeVariant.Secondary" Class="bb:ml-auto bb:text-xs bb:px-1.5 bb:py-0 bb:h-5">@Badge</BbBadge>
+                <BbBadge Variant="BadgeVariant.Secondary" Class="bb:ms-auto bb:text-xs bb:px-1.5 bb:py-0 bb:h-5">@Badge</BbBadge>
             }
 
             @* Actions (visible on hover) *@
             @if (ActionsTemplate != null)
             {
-                <span class="bb:ml-auto bb:opacity-0 bb:group-hover/treeitem:opacity-100 bb:transition-opacity bb:shrink-0 bb:flex bb:items-center bb:gap-0.5">
+                <span class="bb:ms-auto bb:opacity-0 bb:group-hover/treeitem:opacity-100 bb:transition-opacity bb:shrink-0 bb:flex bb:items-center bb:gap-0.5">
                     @ActionsTemplate
                 </span>
             }

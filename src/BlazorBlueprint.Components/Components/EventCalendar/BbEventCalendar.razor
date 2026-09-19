@@ -118,7 +118,7 @@
                                     @if (hiddenCount > 0)
                                     {
                                         <button type="button"
-                                                class="bb:block bb:w-full bb:truncate bb:rounded bb:px-1.5 bb:py-0.5 bb:text-left bb:text-xs bb:text-muted-foreground bb:hover:bg-accent bb:hover:text-accent-foreground bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring"
+                                                class="bb:block bb:w-full bb:truncate bb:rounded bb:px-1.5 bb:py-0.5 bb:text-start bb:text-xs bb:text-muted-foreground bb:hover:bg-accent bb:hover:text-accent-foreground bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring"
                                                 @onclick="@(() => ShowMoreAsync(day))">
                                             @Localizer["EventCalendar.MoreEvents", hiddenCount]
                                         </button>
@@ -250,7 +250,7 @@
                         {
                             <li>
                                 <button type="button"
-                                        class="@ClassNames.cn("bb:flex bb:w-full bb:items-center bb:gap-3 bb:rounded-md bb:px-2 bb:py-1.5 bb:text-left bb:text-sm bb:hover:bg-accent bb:hover:text-accent-foreground bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring", EventClass?.Invoke(item))"
+                                        class="@ClassNames.cn("bb:flex bb:w-full bb:items-center bb:gap-3 bb:rounded-md bb:px-2 bb:py-1.5 bb:text-start bb:text-sm bb:hover:bg-accent bb:hover:text-accent-foreground bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring", EventClass?.Invoke(item))"
                                         @onclick="@(() => HandleEventClick(item))">
                                     <span class="bb:w-28 bb:shrink-0 bb:text-xs bb:text-muted-foreground">@GetEventTimeLabel(item)</span>
                                     @if (EventTemplate is not null)

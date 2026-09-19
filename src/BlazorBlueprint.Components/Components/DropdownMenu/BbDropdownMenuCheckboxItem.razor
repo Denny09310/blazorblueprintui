@@ -78,7 +78,7 @@
     }
 
     private string CssClass => ClassNames.cn(
-        "bb:relative bb:flex bb:cursor-default bb:select-none bb:items-center bb:rounded-sm bb:py-1.5 bb:pl-8 bb:pr-2",
+        "bb:relative bb:flex bb:cursor-default bb:select-none bb:items-center bb:rounded-sm bb:py-1.5 bb:ps-8 bb:pe-2",
         "bb:text-sm bb:outline-none bb:transition-colors",
         "bb:focus:bg-(--bb-menu-accent) bb:focus:text-(--bb-menu-accent-foreground)",
         "bb:data-[disabled=true]:pointer-events-none bb:data-[disabled=true]:opacity-50",
@@ -86,5 +86,5 @@
         Class
     );
 
-    private const string IndicatorClass = "bb:absolute bb:left-2 bb:flex bb:h-3.5 bb:w-3.5 bb:items-center bb:justify-center";
+    private const string IndicatorClass = "bb:absolute bb:start-2 bb:flex bb:h-3.5 bb:w-3.5 bb:items-center bb:justify-center";
 }

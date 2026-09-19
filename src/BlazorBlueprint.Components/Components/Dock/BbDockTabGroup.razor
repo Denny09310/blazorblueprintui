@@ -85,7 +85,7 @@
                                     continue;
                                 }
 
-                                <BbDropdownMenuItem Class="bb:pr-1" OnClick="() => Dock.ActivatePanel(GroupNode, hiddenPanel.Id)">
+                                <BbDropdownMenuItem Class="bb:pe-1" OnClick="() => Dock.ActivatePanel(GroupNode, hiddenPanel.Id)">
                                     <div class="bb:flex bb:w-full bb:items-center bb:gap-2">
                                         @if (hiddenPanel.Icon is not null)
                                         {
@@ -95,7 +95,7 @@
                                         @if (hiddenPanel.CanClose)
                                         {
                                             <button type="button"
-                                                    class="bb:ml-auto bb:inline-flex bb:h-5 bb:w-5 bb:shrink-0 bb:items-center bb:justify-center bb:rounded-sm bb:text-muted-foreground bb:transition-colors bb:hover:bg-foreground/10 bb:hover:text-foreground"
+                                                    class="bb:ms-auto bb:inline-flex bb:h-5 bb:w-5 bb:shrink-0 bb:items-center bb:justify-center bb:rounded-sm bb:text-muted-foreground bb:transition-colors bb:hover:bg-foreground/10 bb:hover:text-foreground"
                                                     aria-label="@Localizer["Dock.CloseTab", hiddenPanel.Title]"
                                                     title="@Localizer["Dock.CloseTab", hiddenPanel.Title]"
                                                     @onclick="() => Dock.ClosePanelAsync(hiddenPanel.Id)"

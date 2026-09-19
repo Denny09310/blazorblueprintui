@@ -155,14 +155,21 @@ public partial class BbRadioGroup<TValue> : ComponentBase
     /// </summary>
     private bool shouldPreventDefault;
 
+    /// <summary>The writing direction, when a BbDirectionProvider supplies one.</summary>
+    [CascadingParameter]
+    private DirectionContext? Direction { get; set; }
+
+    private bool IsRtl => DirectionContext.Resolve(Direction);
+
     /// <summary>
     /// Handles keyboard navigation for the radio group.
     /// </summary>
     /// <param name="args">The keyboard event arguments.</param>
     /// <remarks>
     /// Keyboard interaction support:
-    /// - Arrow Down/Right: Navigate to next radio item
-    /// - Arrow Up/Left: Navigate to previous radio item
+    /// - Arrow Down: Navigate to next radio item; Arrow Up: previous
+    /// - Arrow Right/Left: Navigate along the reading direction, so they swap in a
+    ///   right-to-left layout
     /// - Automatically selects the navigated item and focuses it
     /// - Prevents default browser scroll behavior for arrow keys only
     /// </remarks>
@@ -182,13 +189,22 @@ public partial class BbRadioGroup<TValue> : ComponentBase
         switch (args.Key)
         {
             case "ArrowDown":
-            case "ArrowRight":
                 shouldPreventDefault = true;
                 await NavigateNext(enabledItems);
                 break;
 
-            case "ArrowUp":
+            // The horizontal arrows follow the reading direction; Up and Down never flip.
+            case "ArrowRight":
+                shouldPreventDefault = true;
+                await (IsRtl ? NavigatePrevious(enabledItems) : NavigateNext(enabledItems));
+                break;
+
             case "ArrowLeft":
+                shouldPreventDefault = true;
+                await (IsRtl ? NavigateNext(enabledItems) : NavigatePrevious(enabledItems));
+                break;
+
+            case "ArrowUp":
                 shouldPreventDefault = true;
                 await NavigatePrevious(enabledItems);
                 break;

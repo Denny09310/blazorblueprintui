@@ -580,7 +580,7 @@ public partial class BbScheduler
         DayBandLayout.BarStyle(bar.StartColumn, bar.Span, DayCount, bar.Lane, 2, bar.ContinuesBefore, bar.ContinuesAfter);
 
     private static string BandBarClass(BandBar bar) => ClassNames.cn(
-        "bb:absolute bb:z-10 bb:flex bb:items-center bb:overflow-hidden bb:rounded bb:px-1.5 bb:text-left bb:text-xs bb:font-medium bb:bg-primary/10 bb:text-primary bb:hover:bg-primary/20 bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:absolute bb:z-10 bb:flex bb:items-center bb:overflow-hidden bb:rounded bb:px-1.5 bb:text-start bb:text-xs bb:font-medium bb:bg-primary/10 bb:text-primary bb:hover:bg-primary/20 bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
         DayBandLayout.JoinRounding(bar.ContinuesBefore, bar.ContinuesAfter));
 
     /// <summary>

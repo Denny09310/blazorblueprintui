@@ -1,0 +1,124 @@
+@page "/guides/rtl"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Right-to-Left - Blazor Blueprint</PageTitle>
+
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Right-to-Left</h1>
+        <p class="text-xl text-muted-foreground">
+            Wrap the layout in <code class="rounded bg-muted px-1 py-0.5 text-lg">BbDirectionProvider</code>
+            and the library mirrors. Use the toggle in the header to see any page in both directions.
+        </p>
+    </div>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Setup</h2>
+        <p class="text-sm text-muted-foreground">
+            The provider goes around the whole layout, including the overlay hosts. An overlay
+            renders through <code class="rounded bg-muted px-1 py-0.5 text-xs">BbPortalHost</code>,
+            so it needs the direction too.
+        </p>
+        <CodeBlock Source="Guides/Rtl/setup.txt" />
+        <p class="text-sm text-muted-foreground">
+            The provider renders no box of its own, so adding it changes no layout. It writes a
+            <code class="rounded bg-muted px-1 py-0.5 text-xs">dir</code> attribute and cascades a
+            <code class="rounded bg-muted px-1 py-0.5 text-xs">DirectionContext</code>.
+        </p>
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">How it works</h2>
+        <div class="space-y-3 text-sm text-muted-foreground">
+            <p>
+                <strong class="text-foreground">Layout mirrors through CSS.</strong> Every spacing,
+                border, radius and alignment utility the library ships is logical
+                (<code class="rounded bg-muted px-1 py-0.5 text-xs">margin-inline-start</code>, not
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">margin-left</code>), so the
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">dir</code> attribute is all it takes.
+                A convention test keeps it that way.
+            </p>
+            <p>
+                <strong class="text-foreground">Overlays follow their trigger.</strong> A popover,
+                menu or dialog copies the direction from the element that opened it as it opens, the
+                same way it copies a local theme. So the provider works even when the portal host
+                sits outside it.
+            </p>
+            <p>
+                <strong class="text-foreground">Positioning is already logical.</strong>
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">PopoverAlign.Start</code> and
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">End</code> resolve against the
+                writing direction, so an end-aligned menu stays on the trailing edge.
+            </p>
+            <p>
+                <strong class="text-foreground">Arrow keys follow the reading direction.</strong> In
+                tabs, toggle groups, radio groups, menus and the tree,
+                <BbKbd>&#8594;</BbKbd> moves the way the items are drawn rather than the way the key
+                points. <BbKbd>&#8593;</BbKbd> and <BbKbd>&#8595;</BbKbd> never flip.
+            </p>
+            <p>
+                <strong class="text-foreground">No provider, no change.</strong> Without one, a
+                component follows <code class="rounded bg-muted px-1 py-0.5 text-xs">CultureInfo.CurrentCulture</code>,
+                which is what the library did before the provider existed.
+            </p>
+        </div>
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Physical sides stay physical</h2>
+        <p class="text-sm text-muted-foreground">
+            A parameter that names a physical side keeps its promise. These do not mirror, by design
+            — pass the other value if you want the other side:
+        </p>
+        <ul class="ms-4 list-disc space-y-1 text-sm text-muted-foreground">
+            <li><code class="rounded bg-muted px-1 py-0.5 text-xs">SheetSide</code>, <code class="rounded bg-muted px-1 py-0.5 text-xs">DrawerDirection</code> and <code class="rounded bg-muted px-1 py-0.5 text-xs">SidebarSide</code></li>
+            <li><code class="rounded bg-muted px-1 py-0.5 text-xs">ToastPosition</code> and <code class="rounded bg-muted px-1 py-0.5 text-xs">BadgeDotPosition</code></li>
+            <li><code class="rounded bg-muted px-1 py-0.5 text-xs">PopoverSide</code>, which reports the side an overlay actually landed on</li>
+        </ul>
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Not mirrored yet</h2>
+        <div class="rounded-r-lg border-s-4 border-primary bg-primary/5 p-4">
+            <p class="text-sm text-muted-foreground">
+                A few components place their content with pixel or percentage maths measured from
+                the left edge, so mirroring the paint alone would put them out of step with the
+                maths behind it. These stay left-to-right inside a right-to-left page:
+                <strong class="text-foreground">Slider</strong>,
+                <strong class="text-foreground">RangeSlider</strong>,
+                <strong class="text-foreground">Carousel</strong>,
+                <strong class="text-foreground">Scheduler</strong>,
+                <strong class="text-foreground">EventCalendar</strong> day bands,
+                <strong class="text-foreground">DashboardGrid</strong>,
+                <strong class="text-foreground">Dock</strong> and
+                <strong class="text-foreground">Resizable</strong>. Everything else mirrors.
+            </p>
+        </div>
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Reading the direction yourself</h2>
+        <p class="text-sm text-muted-foreground">
+            A component of your own can read the same value. Resolve it through
+            <code class="rounded bg-muted px-1 py-0.5 text-xs">DirectionContext.Resolve</code>, which
+            falls back to the culture when there is no provider, so you never test for null.
+        </p>
+        <CodeBlock Source="Guides/Rtl/reading.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+
+        <ApiReference Since="v4" ComponentName="BbDirectionProvider">
+            <ApiParameter Name="Direction" Type="TextDirection" Default="Auto">Auto follows the current culture. LeftToRight and RightToLeft set it explicitly.</ApiParameter>
+            <ApiParameter Name="ChildContent" Type="RenderFragment?">The content the direction applies to.</ApiParameter>
+        </ApiReference>
+
+        <ApiReference Since="v4" ComponentName="DirectionContext">
+            <ApiParameter Name="Direction" Type="TextDirection">The direction as configured, before Auto is resolved.</ApiParameter>
+            <ApiParameter Name="IsRightToLeft" Type="bool">The resolved direction. Auto resolves against the current culture.</ApiParameter>
+            <ApiParameter Name="Attribute" Type="string">The value for an HTML <code>dir</code> attribute: <code>"rtl"</code> or <code>"ltr"</code>.</ApiParameter>
+            <ApiParameter Name="Resolve(DirectionContext?)" Type="static bool">Resolves a cascaded context, falling back to the current culture when there is no provider.</ApiParameter>
+        </ApiReference>
+    </section>
+</div>

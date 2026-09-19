@@ -1,27 +1,36 @@
 @inherits LayoutComponentBase
 <PageTitle>BlazorBlueprint Demo</PageTitle>
 
-<BbSidebarProvider DefaultOpen="true" HeightClass="h-screen">
-    <DemoSidebar />
+@* Everything sits inside the provider, including the overlay hosts: an overlay rendered through
+   the portal host needs the direction too. *@
+<BbDirectionProvider Direction="@direction">
+    <BbSidebarProvider DefaultOpen="true" HeightClass="h-screen">
+        <DemoSidebar />
 
-    <BbSidebarInset Class="overflow-hidden">
-        <header class="flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 z-10 focus:outline-none">
-            <BbSidebarTrigger />
-            <DemoPager />
-            <div class="ml-auto flex items-center gap-2">
-                <CommandSearch />
-                <AnimationToggle />
-                <BbDarkModeToggle />
-                <BbThemeSwitcher />
+        <BbSidebarInset Class="overflow-hidden">
+            <header class="flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 z-10 focus:outline-none">
+                <BbSidebarTrigger />
+                <DemoPager />
+                <div class="ms-auto flex items-center gap-2">
+                    <CommandSearch />
+                    <AnimationToggle />
+                    <DirectionToggle Direction="@direction" DirectionChanged="@(value => direction = value)" />
+                    <BbDarkModeToggle />
+                    <BbThemeSwitcher />
+                </div>
+            </header>
+
+            <div id="main-content" class="flex-1 overflow-auto p-6 md:p-8">
+                @Body
             </div>
-        </header>
+        </BbSidebarInset>
+    </BbSidebarProvider>
 
-        <div id="main-content" class="flex-1 overflow-auto p-6 md:p-8">
-            @Body
-        </div>
-    </BbSidebarInset>
-</BbSidebarProvider>
+    <BbToastProvider Position="ToastPosition.BottomRight" />
+    <BbDialogProvider />
+    <BbPortalHost />
+</BbDirectionProvider>
 
-<BbToastProvider Position="ToastPosition.BottomRight" />
-<BbDialogProvider />
-<BbPortalHost />
+@code {
+    private TextDirection direction = TextDirection.LeftToRight;
+}

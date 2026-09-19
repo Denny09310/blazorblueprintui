@@ -143,12 +143,12 @@
     // root, so an in-flow scrollbar is laid out after it and clipped by the root's
     // overflow: hidden — which is why the vertical bar never appeared, even with Type.Always (#483).
     private string VerticalScrollbarClass => ClassNames.cn(
-        "bb:absolute bb:right-0 bb:top-0 bb:bottom-0 bb:z-10 bb:flex bb:touch-none bb:select-none bb:w-2.5 bb:border-l bb:border-l-transparent bb:p-[1px]",
+        "bb:absolute bb:end-0 bb:top-0 bb:bottom-0 bb:z-10 bb:flex bb:touch-none bb:select-none bb:w-2.5 bb:border-s bb:border-s-transparent bb:p-[1px]",
         ScrollbarVisibilityClass
     );
 
     private string HorizontalScrollbarClass => ClassNames.cn(
-        "bb:absolute bb:bottom-0 bb:left-0 bb:right-0 bb:z-10 bb:flex bb:touch-none bb:select-none bb:flex-col bb:h-2.5 bb:border-t bb:border-t-transparent bb:p-[1px]",
+        "bb:absolute bb:bottom-0 bb:inset-x-0 bb:z-10 bb:flex bb:touch-none bb:select-none bb:flex-col bb:h-2.5 bb:border-t bb:border-t-transparent bb:p-[1px]",
         ScrollbarVisibilityClass
     );
 

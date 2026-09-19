@@ -49,7 +49,7 @@ public partial class BbTimelineConnector : ComponentBase
 
     private string CssClass => ClassNames.cn(
         "bb:w-0.5",
-        !IsSolid ? "bb:border-l-2" : null,
+        !IsSolid ? "bb:border-s-2" : null,
         !IsSolid ? ConnectorStyle switch
         {
             TimelineConnectorStyle.Dashed => "bb:border-dashed",

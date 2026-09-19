@@ -21,10 +21,10 @@
             @if (ShowSearch)
             {
                 <div class="bb:flex bb:items-center bb:rounded-t-md bb:border-b bb:border-border bb:px-3 bb:focus-within:ring-2 bb:focus-within:ring-ring bb:focus-within:ring-inset bb:focus-within:border-b-transparent">
-                    <LucideIcon Name="search" Size="16" Class="bb:mr-2 bb:h-4 bb:w-4 bb:shrink-0 bb:opacity-50" aria-hidden="true" />
+                    <LucideIcon Name="search" Size="16" Class="bb:me-2 bb:h-4 bb:w-4 bb:shrink-0 bb:opacity-50" aria-hidden="true" />
                     <BbInput Id="@searchId" @bind-Value="search" UpdateTiming="UpdateTiming.Immediate"
                              Placeholder="@Localizer["TreeSelect.Search"]" AriaLabel="@Localizer["TreeSelect.Search"]" aria-controls="@treeId"
-                             Class="bb:ml-2 bb:h-11 bb:rounded-none bb:border-0 bb:bg-transparent bb:px-0 bb:py-3 bb:text-sm bb:focus-visible:ring-0" />
+                             Class="bb:ms-2 bb:h-11 bb:rounded-none bb:border-0 bb:bg-transparent bb:px-0 bb:py-3 bb:text-sm bb:focus-visible:ring-0" />
                 </div>
             }
             <div class="bb:max-h-64 bb:overflow-auto bb:p-1">

@@ -45,7 +45,7 @@
             {
                 <div class="bb:space-y-2">
                     <span class="bb:text-sm bb:font-medium bb:text-muted-foreground">@item.Text</span>
-                    <div class="bb:pl-4 bb:space-y-2 bb:border-l">
+                    <div class="bb:ps-4 bb:space-y-2 bb:border-s">
                         @foreach (var child in item.Children)
                         {
                             <NavLink href="@child.Href" Match="@child.Match" class="bb:block bb:text-sm bb:hover:text-primary">@child.Text</NavLink>

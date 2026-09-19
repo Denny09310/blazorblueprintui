@@ -229,8 +229,8 @@ public partial class BbDateRangePicker : ComponentBase
     private const string CellEmpty = "bb:h-9 bb:w-9 bb:flex-1 bb:text-center bb:text-sm bb:p-0";
     private const string CellDefault = "bb:h-9 bb:w-9 bb:flex-1 bb:text-center bb:text-sm bb:p-0 bb:relative";
     private const string CellInRange = "bb:h-9 bb:w-9 bb:flex-1 bb:text-center bb:text-sm bb:p-0 bb:relative bb:bg-accent";
-    private const string CellRangeStart = "bb:h-9 bb:w-9 bb:flex-1 bb:text-center bb:text-sm bb:p-0 bb:relative bb:rounded-l-md bb:bg-accent";
-    private const string CellRangeEnd = "bb:h-9 bb:w-9 bb:flex-1 bb:text-center bb:text-sm bb:p-0 bb:relative bb:rounded-r-md bb:bg-accent";
+    private const string CellRangeStart = "bb:h-9 bb:w-9 bb:flex-1 bb:text-center bb:text-sm bb:p-0 bb:relative bb:rounded-s-md bb:bg-accent";
+    private const string CellRangeEnd = "bb:h-9 bb:w-9 bb:flex-1 bb:text-center bb:text-sm bb:p-0 bb:relative bb:rounded-e-md bb:bg-accent";
 
     private const string DayBase = "bb:inline-flex bb:h-9 bb:w-full bb:items-center bb:justify-center bb:rounded-md bb:text-sm bb:font-normal bb:ring-offset-background bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2 bb:disabled:pointer-events-none bb:disabled:opacity-50";
     private const string DayDefault = DayBase + " bb:hover:bg-accent bb:hover:text-accent-foreground";
@@ -601,7 +601,7 @@ public partial class BbDateRangePicker : ComponentBase
 
     private string ButtonCssClass => ClassNames.cn(
         ShowTwoMonths ? "bb:w-[300px]" : "bb:w-[240px]",
-        "bb:justify-start bb:text-left bb:font-normal",
+        "bb:justify-start bb:text-start bb:font-normal",
         Value == null ? "bb:text-muted-foreground" : null,
         Disabled ? "bb:opacity-50 bb:pointer-events-none" : null,
         Class

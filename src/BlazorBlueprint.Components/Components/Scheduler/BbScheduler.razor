@@ -282,7 +282,7 @@
         <BbDialogFooter>
             @if (editingOccurrence != null)
             {
-                <BbButton Variant="ButtonVariant.Destructive" Class="bb:sm:mr-auto" Disabled="@saving" OnClick="RequestDelete" data-scheduler-delete="@editorId">@Localizer["Scheduler.Delete"]</BbButton>
+                <BbButton Variant="ButtonVariant.Destructive" Class="bb:sm:me-auto" Disabled="@saving" OnClick="RequestDelete" data-scheduler-delete="@editorId">@Localizer["Scheduler.Delete"]</BbButton>
             }
             <BbButton Variant="ButtonVariant.Outline" Disabled="@saving" OnClick="@(() => SetEditorOpen(false))">@Localizer["Scheduler.Cancel"]</BbButton>
             <BbButton Disabled="@saving" OnClick="@(() => SaveAsync(false))">@Localizer["Scheduler.Save"]</BbButton>

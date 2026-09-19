@@ -36,16 +36,16 @@ public partial class BbButtonGroup : ComponentBase
     [
         // Remove borders and rounded corners between adjacent buttons
         "bb:[&>button:not(:first-child):not(:last-child)]:rounded-none",
-        "bb:[&>button:not(:first-child)]:border-l-0",
-        "bb:[&>button:first-child:not(:only-child)]:rounded-r-none",
-        "bb:[&>button:last-child:not(:only-child)]:rounded-l-none",
+        "bb:[&>button:not(:first-child)]:border-s-0",
+        "bb:[&>button:first-child:not(:only-child)]:rounded-e-none",
+        "bb:[&>button:last-child:not(:only-child)]:rounded-s-none",
 
         // Handle separators - buttons adjacent to separators keep their borders
-        "bb:[&>button:has(+[data-slot=separator])]:rounded-r-none",
-        "bb:[&>[data-slot=separator]+button]:rounded-l-none bb:[&>[data-slot=separator]+button]:!border-l bb:[&>[data-slot=separator]+button]:border-input",
+        "bb:[&>button:has(+[data-slot=separator])]:rounded-e-none",
+        "bb:[&>[data-slot=separator]+button]:rounded-s-none bb:[&>[data-slot=separator]+button]:!border-s bb:[&>[data-slot=separator]+button]:border-input",
 
         // Handle nested button groups with gaps
-        "bb:[&>[data-slot=button-group]:not(:first-child)]:ml-2",
+        "bb:[&>[data-slot=button-group]:not(:first-child)]:ms-2",
 
         // Focus state z-index (bring focused button above others)
         "bb:[&>button:focus]:relative bb:[&>button:focus]:z-10"

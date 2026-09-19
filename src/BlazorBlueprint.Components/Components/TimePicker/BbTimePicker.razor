@@ -10,7 +10,7 @@
                 Disabled="@Disabled"
                 aria-required="@(Required ? "true" : null)"
                 @attributes="AdditionalAttributes">
-            <LucideIcon Name="clock" Class="bb:mr-2 bb:h-4 bb:w-4" />
+            <LucideIcon Name="clock" Class="bb:me-2 bb:h-4 bb:w-4" />
             @if (Value.HasValue)
             {
                 <span>@FormatTime(Value.Value)</span>
@@ -112,7 +112,7 @@
                 @if (Format == TimeFormat.Hour12)
                 {
                     <!-- AM/PM Toggle -->
-                    <div class="bb:flex bb:flex-col bb:items-center bb:ml-2">
+                    <div class="bb:flex bb:flex-col bb:items-center bb:ms-2">
                         <span class="bb:text-xs bb:text-muted-foreground bb:mb-1">&nbsp;</span>
                         <div class="bb:flex bb:flex-col bb:border bb:rounded-md bb:overflow-hidden">
                             <button type="button"
@@ -459,7 +459,7 @@
     }
 
     private string ButtonCssClass => ClassNames.cn(
-        "bb:w-[180px] bb:justify-start bb:text-left bb:font-normal",
+        "bb:w-[180px] bb:justify-start bb:text-start bb:font-normal",
         !Value.HasValue ? "bb:text-muted-foreground" : null,
         Disabled ? "bb:opacity-50 bb:pointer-events-none" : null,
         Class
