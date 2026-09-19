@@ -644,7 +644,7 @@ Blazor Blueprint implements components in Blazor and C#, drawing on the design o
 - [Floating UI](https://floating-ui.com/) — Bundled positioning engine for floating elements; MIT License.
 - [Apache ECharts](https://echarts.apache.org/) — Bundled charting engine; Apache License 2.0.
 - [SortableJS](https://sortablejs.github.io/Sortable/) — Bundled drag-and-drop sorting library; MIT License.
-- [Quill](https://quilljs.com/) — Rich text editing engine, loaded by the host application; BSD 3-Clause License.
+- [Quill](https://quilljs.com/) — Bundled rich text editing engine; BSD 3-Clause License.
 - [Markdig](https://github.com/xoofx/markdig) — Markdown parsing and HTML rendering; BSD 2-Clause License.
 - [HtmlSanitizer](https://github.com/mganss/HtmlSanitizer) — HTML sanitization for the rich text and Markdown editors; MIT License.
 
