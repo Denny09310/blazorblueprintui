@@ -1,11 +1,11 @@
-## What's New in v4.0.0-beta.9
+## What's New in v4.0.0-beta.10
 
 **This is a prerelease.** The API may still change before the stable v4.0.0 release.
 
 ### Breaking Changes
 
 - **.NET 10**: the package now targets `net10.0` only and depends on `Microsoft.AspNetCore.Components.Web` 10.0.12. .NET 8 and .NET 9 are no longer supported.
-- **BlazorBlueprint.Primitives**: the dependency is now 4.0.0-beta.9, which has its own breaking changes. Keep Components and Primitives on matching v4 versions. See the Primitives release notes and `V4-MIGRATION-GUIDE.md`.
+- **BlazorBlueprint.Primitives**: the dependency is now 4.0.0-beta.10, which has its own breaking changes. Keep Components and Primitives on matching v4 versions. See the Primitives release notes and `V4-MIGRATION-GUIDE.md`.
 - **BbPortalHost**: the portal hosts move from `BlazorBlueprint.Primitives.Services` to `BlazorBlueprint.Primitives`. Add `@using BlazorBlueprint.Primitives` to the layout that holds the host. Without it Razor emits a literal `<bbportalhost>` element, with no build error, and every overlay silently fails to render.
 - **Stylesheet**: every Tailwind utility in `blazorblueprint.css` is now prefixed `bb:` (`.bb\:flex`) and lives in its own `bb-utilities` cascade layer, so your Tailwind build and the library's can no longer emit the same class. The layer order is `properties, theme, base, components, bb-utilities, utilities, bb`.
 - **Class parameter**: no markup change is needed. `ClassNames.cn` merges across the prefix, so `Class="p-6"` still replaces the library's `bb:p-4`.
@@ -33,6 +33,7 @@
 - **BbSortable**: in a drop between two connected lists, the source list's `OnRemove` now runs before the target list's `OnAdd`.
 - **IVirtualizedGroupHandler**: gains `TryHoverItem(string elementId)`. Custom implementations must add it.
 - **BbRichTextEditor**: Quill 2 is now required. The Quill 1 fallback for `getSemanticHTML` is removed, and the setup notes pin `quill@2.0.3`.
+- **BbScheduler**: a single click on a slot or an event now only highlights it. Double-click, Enter or the context menu opens the editor. Enter on an empty slot still creates an event.
 
 ### New Components
 
@@ -61,6 +62,17 @@
 
 ### New Features
 
+- **BbScheduler**: `SchedulerView.Month` adds a month grid of six week rows, capped by `MaxEventsPerDay` and navigated a calendar month at a time. Drag and resize are off in that view.
+- **BbScheduler**: all-day events through `SchedulerEvent.IsAllDay`, drawn as bars in a band above the time grid. `End` is exclusive, matching iCalendar's `DTEND`, and recurrence counts whole local days, so a daily series holds its date across a 23- or 25-hour day.
+- **BbScheduler**: multi-day bars stack into lanes, a run crossing a week boundary is squared off at the join, `MaxAllDayRows` caps the band, and with two or more resources visible the band groups by resource.
+- **BbScheduler**: context menus on slots and events, replaceable through `SlotContextMenuContent` and `EventContextMenuContent`. Render the context's `DefaultItems` to keep the built-in entries. Delete confirms without opening the editor. New `SchedulerSlotMenuContext` and `SchedulerEventMenuContext`.
+- **BbScheduler**: a resource filter with bindable `VisibleResourceIds` and `ShowResourceFilter`. Null shows every resource, an empty list shows none, and the empty string selects the Unassigned lane.
+- **BbScheduler**: `ActiveHours` mutes the slots outside each weekday's ranges, and `BlockOutsideActiveHours` turns muting into refusal. New `SchedulerDayHours`.
+- **BbScheduler**: `ToolbarContent` and `EditorContent` wrap or replace the toolbar and the event editor. Both carry `DefaultContent`, through the new `SchedulerToolbarContext` and `SchedulerEditorContext`.
+- **BbScheduler**: `TimeZones` supplies your own zone list and labels through `SchedulerTimeZone`, instead of the full IANA list named by identifier. A stored zone outside the list is appended, so an event is never moved quietly.
+- **SchedulerEvent**: now derivable, so an application can carry its own fields. `Clone` is virtual, `CopyTo` is protected, and **BbScheduler**'s `NewEventFactory` makes a new event your type.
+- **SchedulerEngine**: new `StartOfDay`, which resolves a local date to an instant in zones that advance the clock at midnight.
+- **BbTagInput**: `TagInputTrigger.Blur` commits the typed text when the input loses focus. It is off by default, it commits the text rather than a highlighted suggestion, and rejected text stays in the input and reports through `OnTagRejected`.
 - **BbDataGrid**: `DataGridEditMode.Cell` and `Batch` editing. Drafts are isolated copies from `EditItemFactory` (required for these modes), validated before save, and kept when a save is rejected.
 - **BbDataGrid**: batch editing adds `OnBatchCommit`, `OnBatchCancel`, `CommitBatchAsync` and `CancelBatchAsync`, and `StartCellEditAsync` opens a cell editor from code.
 - **DataGridRowCommitContext**: new `OriginalItem`, the unchanged source record in cell mode. **DataGridBatchCommitContext** is new.
@@ -102,6 +114,11 @@
 
 ### Bug Fixes
 
+- **BbDataGrid**: a cell editor no longer paints over Save and Cancel in a narrow column, and a checkbox, switch or toggle editor keeps its border instead of stretching to an empty-looking cell.
+- **BbScheduler**: a stray `}` no longer renders as text in the event editor.
+- **BbScheduler**: the toolbar heading no longer jumps above the navigation on a narrow container, the time-zone label no longer reads as part of the view buttons, and Month view with a resource selected no longer claims no resources are selected.
+- **BbCalendar**: the day grid is centred, so the dates no longer hang to the left of a wider header. **BbDatePicker**, **BbDateRangePicker** and **BbDateTimePicker** embed the same calendar and pick the fix up.
+- **BbContextMenuContent**: a menu opened near the right or bottom edge of the viewport now flips or clamps instead of opening off-screen, through the Primitives update.
 - **Borders**: borders no longer render near-black under a consumer Tailwind build. The consumer's own preflight reset the shared `*` rule to `currentColor`, and which stylesheet won depended on link order. The default now matches on the class attribute instead.
 - **group and peer markers**: the library shipped only the prefixed `bb:group` and `bb:peer` markers, which a consumer's Tailwind build never matches, so every `group-*` and `peer-*` variant written against library markup did nothing. `ClassNames.cn` now carries the bare twin of any marker it keeps, which covers 30 components.
 - **Overlay roots**: an extra HTML attribute on **BbDialog**, **BbSheet**, **BbPopover**, **BbHoverCard** and the other overlay roots crashed the render with `InvalidOperationException`. The context-only roots now accept extra attributes, and the roots that render an element put them on it.
@@ -149,6 +166,7 @@
 - **Scrollbars**: native scrollbars inside library components follow the theme in light and dark mode, and the stylesheet sets `color-scheme` for each mode.
 - **BbSidebar**: a closed non-collapsible sidebar is now `inert` and `aria-hidden`, and its width transition respects reduced motion.
 - **Localization**: `DefaultBbLocalizer` adds strings for the new components and features, including the resizable handle, and the last of the hard-coded English is gone.
+- **Localization**: `DefaultBbLocalizer` adds strings for the scheduler's month view, all-day band, context menus, resource filter and active hours.
 - **Package**: adds a dependency on `Ical.Net` 5.2.3 for scheduler recurrence. The package now includes `LICENSE`, `NOTICE` and `THIRD-PARTY-NOTICES.txt`, also served at `_content/BlazorBlueprint.Components/THIRD-PARTY-NOTICES.txt`.
 - **BbRichTextEditor**: `table`, `code`, `align`, `color`, `background` and `image` are registered formats, so bound or pasted HTML keeps them. The sanitizer allows `data:image/*` on `<img src>` only.
 - **BbDarkModeToggle**: icons are now `h-4 w-4`, matching **BbThemeSwitcher**.
