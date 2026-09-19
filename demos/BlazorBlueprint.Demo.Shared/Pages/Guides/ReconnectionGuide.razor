@@ -27,11 +27,30 @@
         </div>
         <div class="rounded-r-lg border-s-4 border-primary bg-primary/5 p-4">
             <p class="text-sm text-muted-foreground">
-                Each preview clears itself after four seconds. The <strong class="text-foreground">Failed</strong>
+                Each preview clears itself after twelve seconds. The <strong class="text-foreground">Failed</strong>
                 and <strong class="text-foreground">Rejected</strong> states carry working buttons —
                 Reload really does reload.
             </p>
         </div>
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Why the counter starts around 11</h2>
+        <p class="text-sm text-muted-foreground">
+            It is not skipping attempts. Blazor's default policy retries
+            <strong class="text-foreground">ten times with no gap at all</strong>, then waits five
+            seconds between attempts 11 and 20, then thirty seconds up to the limit of thirty. The
+            first ten are over in a few hundred milliseconds — far faster than anyone can read — so
+            the first number a person actually sees is 11.
+        </p>
+        <p class="text-sm text-muted-foreground">
+            That is also why the countdown only appears from attempt 11. While the gap is zero there
+            is nothing to count, and the framework only adds
+            <code class="rounded bg-muted px-1 py-0.5 text-xs">components-reconnect-retrying</code>
+            once there is a real wait. Change any of it with
+            <code class="rounded bg-muted px-1 py-0.5 text-xs">reconnectionOptions.retryIntervalMilliseconds</code>
+            and <code class="rounded bg-muted px-1 py-0.5 text-xs">maxRetries</code> when you start Blazor.
+        </p>
     </section>
 
     <section class="space-y-4">
@@ -114,18 +133,33 @@
 
     private async Task Preview(string classes)
     {
+        // The countdown ticks here the way the framework ticks it -- once a second -- so the
+        // preview shows the real behaviour rather than a number frozen at 5.
         await JS.InvokeVoidAsync("eval", $$"""
             (() => {
                 const m = document.getElementById('components-reconnect-modal');
                 if (!m) return;
-                const attempt = document.getElementById('components-reconnect-current-attempt');
-                if (attempt) attempt.innerText = '3';
-                const max = document.getElementById('components-reconnect-max-retries');
-                if (max) max.innerText = '30';
-                const secs = document.getElementById('components-seconds-to-next-attempt');
-                if (secs) secs.innerText = '5';
+                clearInterval(window.__bbReconnectPreview);
+                const set = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+                set('components-reconnect-current-attempt', '12');
+                set('components-reconnect-max-retries', '30');
                 m.className = '{{classes}}';
-                setTimeout(() => { m.className = ''; }, 4000);
+
+                if (m.classList.contains('components-reconnect-retrying')) {
+                    let secs = 5;
+                    let attempt = 12;
+                    set('components-seconds-to-next-attempt', secs);
+                    window.__bbReconnectPreview = setInterval(() => {
+                        secs -= 1;
+                        if (secs < 1) { secs = 5; attempt += 1; set('components-reconnect-current-attempt', attempt); }
+                        set('components-seconds-to-next-attempt', secs);
+                    }, 1000);
+                }
+
+                setTimeout(() => {
+                    clearInterval(window.__bbReconnectPreview);
+                    m.className = '';
+                }, 12000);
             })();
             """);
     }
