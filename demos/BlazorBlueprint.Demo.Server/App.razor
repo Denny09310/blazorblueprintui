@@ -20,6 +20,43 @@
 <body>
     <BlazorBlueprint.Demo.Routes @rendermode="InteractiveServer" />
 
+    @* Blazor drives this from the host page, because a dropped circuit cannot render a component.
+       The styling ships in blazorblueprint.css and reads the theme variables, so it follows the
+       application's theme in light and dark. Remove this block and the framework falls back to its
+       own unstyled overlay. *@
+    <div id="components-reconnect-modal">
+        <div class="bb-reconnect-dialog" role="alertdialog" aria-modal="true" aria-live="assertive" aria-labelledby="bb-reconnect-heading">
+            <div class="bb-reconnect-spinner" aria-hidden="true"></div>
+
+            <h2 id="bb-reconnect-heading" class="bb-reconnect-heading">
+                <span data-when="show retrying">Reconnecting</span>
+                <span data-when="paused">Connection paused</span>
+                <span data-when="failed">Could not reconnect</span>
+                <span data-when="resume-failed">Could not resume</span>
+                <span data-when="rejected">Session expired</span>
+            </h2>
+
+            <p class="bb-reconnect-text">
+                <span data-when="show">The connection to the server was lost. Trying to restore it.</span>
+                <span data-when="retrying">Next attempt in <span id="components-seconds-to-next-attempt">0</span>s.</span>
+                <span data-when="paused">The connection was paused. It will resume on its own.</span>
+                <span data-when="failed">The server did not answer. Your work is still here.</span>
+                <span data-when="resume-failed">The paused session could not be resumed.</span>
+                <span data-when="rejected">The server could not restore this session. Reloading will start a new one.</span>
+            </p>
+
+            <p class="bb-reconnect-attempt" data-when="show retrying">
+                Attempt <span id="components-reconnect-current-attempt">1</span> of <span id="components-reconnect-max-retries">8</span>
+            </p>
+
+            <div class="bb-reconnect-actions">
+                <button type="button" class="bb-reconnect-button" data-when="failed resume-failed" onclick="Blazor.reconnect()">Try again</button>
+                <button type="button" class="bb-reconnect-button" data-variant="secondary" data-when="failed resume-failed" onclick="location.reload()">Reload</button>
+                <button type="button" class="bb-reconnect-button" data-when="rejected" onclick="location.reload()">Reload</button>
+            </div>
+        </div>
+    </div>
+
     <div id="blazor-error-ui" style="display: none;">
         An error has occurred. This application may no longer respond until reloaded.
         <a href="" class="reload">Reload</a>
