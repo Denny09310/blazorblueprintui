@@ -207,12 +207,17 @@ public partial class BbRadialBar : StackableSeriesBase
             option.Title = new EChartsTitleOption
             {
                 Text = centerLabel.Text,
+
+                // left/top already centre the whole title block on the polar centre.
+                // Adding textAlign/textVerticalAlign makes ECharts treat left/top as the
+                // text anchor and centre the text on it a second time, which shifts the
+                // block up and to the left by half its own size. Line alignment inside
+                // the block belongs on textStyle.align instead.
                 Left = "center",
                 Top = "middle",
-                TextAlign = "center",
-                TextVerticalAlign = "middle",
                 TextStyle = new EChartsTextStyleOption
                 {
+                    Align = "center",
                     FontSize = centerLabel.FontSize,
                     FontWeight = centerLabel.FontWeight,
                     Color = "var(--foreground)"
@@ -230,12 +235,14 @@ public partial class BbRadialBar : StackableSeriesBase
             option.Title = new EChartsTitleOption
             {
                 Text = text,
+
+                // See the note above: left/top place the block, textStyle.align centres
+                // the two lines within it. textAlign/textVerticalAlign would centre it twice.
                 Left = "center",
                 Top = "middle",
-                TextAlign = "center",
-                TextVerticalAlign = "middle",
                 TextStyle = new EChartsTextStyleOption
                 {
+                    Align = "center",
                     Rich = new Dictionary<string, EChartsRichStyleOption>
                     {
                         ["value"] = new EChartsRichStyleOption
