@@ -25,6 +25,21 @@ public static class SchedulerEngine
         return new DateTimeOffset(local, offset);
     }
 
+    /// <summary>
+    /// The instant a local date starts at. A few zones advance the clock at midnight, so the first
+    /// valid wall minute of the day is used rather than 00:00.
+    /// </summary>
+    public static DateTimeOffset StartOfDay(DateTime localDate, string timeZoneId)
+    {
+        var zone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+        var local = localDate.Date;
+        while (zone.IsInvalidTime(local))
+        {
+            local = local.AddMinutes(1);
+        }
+        return ToInstant(local, timeZoneId);
+    }
+
     /// <summary>Validates identifiers, time bounds, time zone and the supported RRULE frequency.</summary>
     public static void Validate(SchedulerEvent item)
     {
@@ -70,16 +85,27 @@ public static class SchedulerEngine
                 throw new ArgumentException("Scheduler event IDs must be unique.", nameof(events));
             }
             var duration = item.End - item.Start;
+            var zone = TimeZoneInfo.FindSystemTimeZoneById(item.TimeZoneId);
+
+            // An all-day event is measured in whole local days, never in a fixed TimeSpan. A day
+            // that gains or loses an hour to daylight saving is 23 or 25 hours long, so a stored
+            // 24-hour duration would drift and land the bar on the wrong day.
+            var wholeDays = item.IsAllDay
+                ? Math.Max(1, (int)(TimeZoneInfo.ConvertTime(item.End, zone).Date - TimeZoneInfo.ConvertTime(item.Start, zone).Date).TotalDays)
+                : 0;
+
             if (string.IsNullOrWhiteSpace(item.RecurrenceRule))
             {
                 Add(item.Start);
                 continue;
             }
 
-            var zone = TimeZoneInfo.FindSystemTimeZoneById(item.TimeZoneId);
+            var seriesStart = item.IsAllDay
+                ? TimeZoneInfo.ConvertTime(item.Start, zone).Date
+                : TimeZoneInfo.ConvertTime(item.Start, zone).DateTime;
             var calendarEvent = new CalendarEvent
             {
-                DtStart = new CalDateTime(TimeZoneInfo.ConvertTime(item.Start, zone).DateTime, item.TimeZoneId),
+                DtStart = new CalDateTime(seriesStart, item.TimeZoneId),
                 RecurrenceRule = ParseRule(item.RecurrenceRule)
             };
             var earliest = rangeStart > DateTimeOffset.MinValue + duration ? rangeStart - duration : DateTimeOffset.MinValue;
@@ -95,7 +121,19 @@ public static class SchedulerEngine
 
             void Add(DateTimeOffset start)
             {
-                var end = start + duration;
+                DateTimeOffset end;
+                if (item.IsAllDay)
+                {
+                    // Floor to the local date first, so an exclusion recorded against a normalised
+                    // occurrence still matches and the time components are genuinely ignored.
+                    var localDate = TimeZoneInfo.ConvertTime(start, zone).Date;
+                    start = StartOfDay(localDate, item.TimeZoneId);
+                    end = StartOfDay(localDate.AddDays(wholeDays), item.TimeZoneId);
+                }
+                else
+                {
+                    end = start + duration;
+                }
                 if (start < rangeEnd && end > rangeStart && !item.ExcludedStarts.Contains(start))
                 {
                     if (result.Count >= maximumOccurrences)

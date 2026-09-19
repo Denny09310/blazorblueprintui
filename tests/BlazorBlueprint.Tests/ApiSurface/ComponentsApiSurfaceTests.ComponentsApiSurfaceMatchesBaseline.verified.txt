@@ -3584,29 +3584,42 @@
   - Width : String
 
 ### BbScheduler (BlazorBlueprint.Components)
+  - ActiveHours : IReadOnlyList<SchedulerDayHours>
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AllowDrag : Boolean
   - AllowResize : Boolean
   - AriaLabel : String
+  - BlockOutsideActiveHours : Boolean
   - Class : String
   - Date : DateOnly
   - DateChanged : EventCallback<DateOnly>
+  - EditorContent : RenderFragment<SchedulerEditorContext>
   - EnableTimeZones : Boolean
   - EndHour : Int32
+  - EventContextMenuContent : RenderFragment<SchedulerEventMenuContext>
   - EventTemplate : RenderFragment<SchedulerOccurrence>
   - Events : IReadOnlyList<SchedulerEvent>
   - EventsChanged : EventCallback<IReadOnlyList<SchedulerEvent>>
   - FirstDayOfWeek : DayOfWeek
   - FirstDayOfWeekChanged : EventCallback<DayOfWeek>
   - InitialScrollHour : Int32?
+  - MaxAllDayRows : Int32
+  - MaxEventsPerDay : Int32
+  - NewEventFactory : Func<SchedulerEvent>
   - OnEventChange : EventCallback<SchedulerChangeContext>
   - ReadOnly : Boolean
   - Resources : IReadOnlyList<SchedulerResource>
+  - ShowResourceFilter : Boolean
+  - SlotContextMenuContent : RenderFragment<SchedulerSlotMenuContext>
   - SlotMinutes : Int32
   - StartHour : Int32
   - TimeZoneId : String
+  - TimeZones : IReadOnlyList<SchedulerTimeZone>
+  - ToolbarContent : RenderFragment<SchedulerToolbarContext>
   - View : SchedulerView
   - ViewChanged : EventCallback<SchedulerView>
+  - VisibleResourceIds : IReadOnlyList<String>
+  - VisibleResourceIdsChanged : EventCallback<IReadOnlyList<String>>
 
 ### BbScreenTransition (BlazorBlueprint.Components)
   - ChildContent : RenderFragment
@@ -5137,6 +5150,7 @@
   - Day = 0
   - Week = 1
   - WorkWeek = 2
+  - Month = 3
 
 ### ScrollAreaOrientation (BlazorBlueprint.Components)
   - Vertical = 0
