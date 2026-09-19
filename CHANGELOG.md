@@ -107,6 +107,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **The radial chart's centre label sat off-centre, and its chart title vanished.** The label in the
+  middle of the donut was drawn half its own size up and to the left. The title carried
+  `left: "center"` and `top: "middle"` to place the block, and `textAlign`/`textVerticalAlign` as
+  well; ECharts treats those as alternatives, not as a pair, and given an explicit `textAlign` it
+  skips the shift that compensates for the anchor. Line alignment inside the block moves to
+  `textStyle.align`, which is what the two-line value-and-title label actually needed.
+
+  Separately, a radial bar borrows the chart title to draw that centre text, because a polar bar
+  series has no centre label of its own — so a chart that set both `Title` and a `BbCenterLabel`
+  silently kept only whichever was written last. ECharts accepts an array of titles, so both now fit.
+
+- **Radial bar labels no longer overwrite each other.** `ShowLabels` placed each label at the angular
+  midpoint of its own bar, so bars carrying similar values put their labels in the same wedge and the
+  names piled up illegibly however large the chart was drawn. Each label now sits at the start of its
+  own ring, where the rings are a bar-width apart and the names stack instead of colliding.
+
 - **DataGrid cell editors no longer cover Save and Cancel, or wreck a checkbox.** The editor slot reset every direct-child `button`, which was wrong in both directions. A combobox and a multi select wrap their trigger in a container, so the reset never reached it and the trigger kept its own default width — 200px and 300px — inside a narrower cell, overflowing the slot and painting straight over the addon holding Save and Cancel. Both buttons stayed in the DOM, visible and reachable by keyboard, so nothing short of a hit test showed the problem. Meanwhile a checkbox, switch or toggle editor *is* a plain button, so the same reset stretched it to the full cell and stripped its border, leaving an unchecked cell looking empty.
 
   The reset now targets popup triggers by `aria-haspopup`, which reaches a wrapped trigger and never touches a checkbox or a multi select's tag chips. The slot clips its overflow and the addon owns its own stacking context, so no editor can cover the buttons that commit or cancel the edit whatever it renders. Reported against `4.0.0-beta.9` with measurements.

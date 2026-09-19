@@ -93,10 +93,15 @@ public partial class BbRadialBar : StackableSeriesBase
 
         if (ShowLabels)
         {
+            // "middle" puts each label at the angular midpoint of its own bar. Bars that carry
+            // similar values have their midpoints at similar angles, so the labels pile into the
+            // same wedge and overwrite one another however large the chart is drawn. "insideStart"
+            // anchors each label to the start of its own ring instead, where the rings are always
+            // one bar-width apart, so they stack rather than collide.
             series.Label = new EChartsLabelOption
             {
                 Show = true,
-                Position = "middle",
+                Position = "insideStart",
                 Rotate = "tangential",
                 Formatter = "{b}",
                 Color = "#fff",
