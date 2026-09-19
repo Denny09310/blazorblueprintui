@@ -101,6 +101,137 @@ public class SchedulerEngineTests
         Assert.Throws<ArgumentException>(() => SchedulerEngine.Expand([item, item.Clone()], Utc(2026, 9, 1), Utc(2026, 10, 1)));
     }
 
+    [Fact]
+    public void ASingleAllDayEventCoversExactlyOneLocalDay()
+    {
+        var item = AllDay(new DateTime(2026, 9, 19), 1, "America/New_York");
+
+        var occurrence = Assert.Single(SchedulerEngine.Expand([item], Utc(2026, 9, 1), Utc(2026, 10, 1)));
+
+        Assert.Equal(SchedulerEngine.StartOfDay(new DateTime(2026, 9, 19), "America/New_York"), occurrence.Start);
+        Assert.Equal(SchedulerEngine.StartOfDay(new DateTime(2026, 9, 20), "America/New_York"), occurrence.End);
+    }
+
+    [Fact]
+    public void AllDayTimeComponentsAreIgnoredRatherThanHonoured()
+    {
+        var item = AllDay(new DateTime(2026, 9, 19), 1);
+        // A consumer flipping IsAllDay on existing timed data leaves the clock times behind.
+        item.Start = item.Start.AddHours(9);
+        item.End = item.End.AddHours(17);
+
+        var occurrence = Assert.Single(SchedulerEngine.Expand([item], Utc(2026, 9, 1), Utc(2026, 10, 1)));
+
+        Assert.Equal(TimeSpan.Zero, occurrence.Start.TimeOfDay);
+        Assert.Equal(TimeSpan.FromDays(1), occurrence.End - occurrence.Start);
+    }
+
+    [Fact]
+    public void AMultiDayAllDayEventKeepsItsDayCountNotItsHourCount()
+    {
+        var item = AllDay(new DateTime(2026, 9, 17), 3, "America/New_York");
+
+        var occurrence = Assert.Single(SchedulerEngine.Expand([item], Utc(2026, 9, 1), Utc(2026, 10, 1)));
+
+        Assert.Equal(SchedulerEngine.StartOfDay(new DateTime(2026, 9, 20), "America/New_York"), occurrence.End);
+    }
+
+    [Theory]
+    // Spring forward: 2026-03-08 in New York is 23 hours long.
+    [InlineData("2026-03-06", 4, "America/New_York")]
+    // Autumn back: 2026-11-01 in New York is 25 hours long.
+    [InlineData("2026-10-30", 4, "America/New_York")]
+    public void ADailyAllDaySeriesStaysOnMidnightAcrossADaylightSavingBoundary(string first, int count, string zone)
+    {
+        var start = DateTime.Parse(first, System.Globalization.CultureInfo.InvariantCulture);
+        var item = AllDay(start, 1, zone);
+        item.RecurrenceRule = $"FREQ=DAILY;COUNT={count}";
+
+        var occurrences = SchedulerEngine.Expand([item], Utc(2026, 1, 1), Utc(2027, 1, 1));
+
+        Assert.Equal(count, occurrences.Count);
+        for (var day = 0; day < count; day++)
+        {
+            var expectedDate = start.AddDays(day);
+            Assert.Equal(SchedulerEngine.StartOfDay(expectedDate, zone), occurrences[day].Start);
+            Assert.Equal(SchedulerEngine.StartOfDay(expectedDate.AddDays(1), zone), occurrences[day].End);
+            // The point of the whole exercise: every occurrence begins at local midnight, even on
+            // the 23- and 25-hour days a fixed 24-hour duration would drift across.
+            Assert.Equal(TimeSpan.Zero, TimeZoneInfo.ConvertTime(occurrences[day].Start,
+                TimeZoneInfo.FindSystemTimeZoneById(zone)).TimeOfDay);
+        }
+    }
+
+    [Fact]
+    public void ADailyAllDaySeriesWouldDriftIfDurationWereAFixedTimeSpan()
+    {
+        // Guards the specific regression: across autumn-back, day 3 of the series must not begin
+        // at 23:00 on day 2.
+        var item = AllDay(new DateTime(2026, 10, 30), 1, "America/New_York");
+        item.RecurrenceRule = "FREQ=DAILY;COUNT=4";
+
+        var occurrences = SchedulerEngine.Expand([item], Utc(2026, 1, 1), Utc(2027, 1, 1));
+
+        Assert.Equal([30, 31, 1, 2], occurrences
+            .Select(o => TimeZoneInfo.ConvertTime(o.Start, TimeZoneInfo.FindSystemTimeZoneById("America/New_York")).Day)
+            .ToArray());
+    }
+
+    [Fact]
+    public void AnAllDayEventInAZoneThatAdvancesAtMidnightStartsAtTheFirstValidMinute()
+    {
+        // Africa/Cairo moved its clocks forward at midnight on 2026-04-24.
+        const string zone = "Africa/Cairo";
+        var item = AllDay(new DateTime(2026, 4, 24), 1, zone);
+
+        var occurrence = Assert.Single(SchedulerEngine.Expand([item], Utc(2026, 4, 1), Utc(2026, 5, 1)));
+
+        Assert.Equal(SchedulerEngine.StartOfDay(new DateTime(2026, 4, 24), zone), occurrence.Start);
+        Assert.False(TimeZoneInfo.FindSystemTimeZoneById(zone)
+            .IsInvalidTime(TimeZoneInfo.ConvertTime(occurrence.Start, TimeZoneInfo.FindSystemTimeZoneById(zone)).DateTime));
+    }
+
+    [Fact]
+    public void AnAllDayOccurrenceCanBeExcludedByItsNormalisedStart()
+    {
+        var item = AllDay(new DateTime(2026, 9, 17), 1);
+        item.RecurrenceRule = "FREQ=DAILY;COUNT=3";
+        item.ExcludedStarts.Add(SchedulerEngine.StartOfDay(new DateTime(2026, 9, 18), "UTC"));
+
+        var occurrences = SchedulerEngine.Expand([item], Utc(2026, 9, 1), Utc(2026, 10, 1));
+
+        Assert.Equal([17, 19], occurrences.Select(o => o.Start.UtcDateTime.Day).ToArray());
+    }
+
+    [Fact]
+    public void AllDaySurvivesACloneSoTheEditorCannotLoseIt()
+    {
+        var item = AllDay(new DateTime(2026, 9, 19), 2);
+        Assert.True(item.Clone().IsAllDay);
+    }
+
+    [Fact]
+    public void TimedEventsStillUseAFixedDurationAcrossDaylightSaving()
+    {
+        // The all-day rule must not leak into timed events: a 60-minute meeting stays 60 minutes.
+        var item = Appointment(new DateTime(2026, 10, 30, 9, 0, 0), "America/New_York");
+        item.RecurrenceRule = "FREQ=DAILY;COUNT=4";
+
+        var occurrences = SchedulerEngine.Expand([item], Utc(2026, 1, 1), Utc(2027, 1, 1));
+
+        Assert.All(occurrences, o => Assert.Equal(TimeSpan.FromHours(1), o.End - o.Start));
+    }
+
+    private static SchedulerEvent AllDay(DateTime localDate, int days, string zone = "UTC") => new()
+    {
+        Id = "allday",
+        Title = "Conference",
+        Start = SchedulerEngine.StartOfDay(localDate, zone),
+        End = SchedulerEngine.StartOfDay(localDate.AddDays(days), zone),
+        TimeZoneId = zone,
+        IsAllDay = true
+    };
+
     private static SchedulerEvent Appointment(DateTime local, string zone = "UTC")
     {
         var start = SchedulerEngine.ToInstant(local, zone);

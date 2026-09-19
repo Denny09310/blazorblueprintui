@@ -338,3 +338,35 @@ export function focusInitial(container, initialFocus) {
   else if (initialFocus === 'last') navigateLast(container);
   else if (initialFocus === 'container') container.focus({ preventScroll: true });
 }
+
+/**
+ * Keeps a pointer-positioned menu inside the viewport.
+ *
+ * ContextMenu places its content at the raw click coordinates, so a right-click near the bottom
+ * or right edge would otherwise render the menu partly off-screen with no way to reach the items.
+ * Flips the menu back across the pointer when it does not fit, which is what native context menus
+ * do, and falls back to clamping when it does not fit on either side.
+ *
+ * @param {HTMLElement} container The menu panel, already positioned at (x, y).
+ * @param {number} x The pointer's clientX.
+ * @param {number} y The pointer's clientY.
+ * @param {number} margin Pixels to keep between the menu and the viewport edge.
+ */
+export function clampToViewport(container, x, y, margin = 8) {
+  if (!container) return;
+  const { offsetWidth: width, offsetHeight: height } = container;
+  if (!width || !height) return;
+
+  const limitX = window.innerWidth - margin;
+  const limitY = window.innerHeight - margin;
+
+  // Flip back across the pointer first; only clamp if the menu fits on neither side.
+  let left = x + width > limitX ? x - width : x;
+  let top = y + height > limitY ? y - height : y;
+
+  left = Math.max(margin, Math.min(left, limitX - width));
+  top = Math.max(margin, Math.min(top, limitY - height));
+
+  container.style.left = `${left}px`;
+  container.style.top = `${top}px`;
+}

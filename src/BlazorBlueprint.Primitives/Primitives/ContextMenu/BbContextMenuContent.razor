@@ -91,6 +91,9 @@
 
                 // initialize() disposes any existing instance before re-initializing,
                 // so this is safe to call when re-opening at a new position.
+                // Clamp before focusing: the menu is placed at raw pointer coordinates, so near a
+                // viewport edge it would otherwise open partly off-screen and scroll on focus.
+                await menuKeyboardModule.InvokeVoidAsync("menuKeyboard.clampToViewport", contentRef, Context!.X, Context.Y, 8);
                 await menuKeyboardModule.InvokeVoidAsync("menuKeyboard.initialize", contentRef, dotNetRef, instanceId,
                     new { mode = "vertical", loop = Loop, initialFocus = "first" });
             }

@@ -39,6 +39,15 @@ export function initialize(root, dotNet) {
     if (viewport && root.dataset.initialScrollTop != null) {
         viewport.scrollTop = Number(root.dataset.initialScrollTop);
     }
+    // The all-day band sits outside the scroll container so it does not scroll away vertically.
+    // Mirror the horizontal scroll onto it, or its day columns drift out of line with the lanes.
+    const allDayTracks = () => root.querySelectorAll('[data-scheduler-all-day-track]');
+    const syncAllDayScroll = () => {
+        if (!viewport) return;
+        allDayTracks().forEach(track => { track.scrollLeft = viewport.scrollLeft; });
+    };
+    viewport?.addEventListener('scroll', syncAllDayScroll, { passive: true });
+    syncAllDayScroll();
     const allowed = action => root.dataset[action === 'move' ? 'allowDrag' : 'allowResize'] === 'true';
     const bounds = lane => ({ start: Number(lane.dataset.start), end: Number(lane.dataset.end) });
     const endPreview = () => {
@@ -162,6 +171,8 @@ export function initialize(root, dotNet) {
             // A disconnected circuit cannot commit. The original DOM was never moved.
         } finally { pending = false; }
     };
+    // Covers dblclick as well as click: a gesture that ends over a slot must not also create
+    // an event there. dblclick is a separate event type and is not suppressed by guarding click.
     const click = event => {
         if (Date.now() < suppressClickUntil) { event.preventDefault(); event.stopImmediatePropagation(); }
     };
@@ -176,17 +187,20 @@ export function initialize(root, dotNet) {
     root.addEventListener('pointercancel', pointerCancel);
     root.addEventListener('lostpointercapture', pointerCancel);
     root.addEventListener('click', click, true);
+    root.addEventListener('dblclick', click, true);
     root.addEventListener('dragstart', dragStart);
     document.addEventListener('keydown', key, true);
     window.addEventListener('blur', cancel);
     instances.set(root, () => {
         cancel();
+        viewport?.removeEventListener('scroll', syncAllDayScroll);
         root.removeEventListener('pointerdown', down);
         root.removeEventListener('pointermove', move);
         root.removeEventListener('pointerup', up);
         root.removeEventListener('pointercancel', pointerCancel);
         root.removeEventListener('lostpointercapture', pointerCancel);
         root.removeEventListener('click', click, true);
+        root.removeEventListener('dblclick', click, true);
         root.removeEventListener('dragstart', dragStart);
         document.removeEventListener('keydown', key, true);
         window.removeEventListener('blur', cancel);
