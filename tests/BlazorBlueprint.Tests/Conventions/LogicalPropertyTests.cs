@@ -117,6 +117,104 @@ public partial class LogicalPropertyTests
     }
 
     /// <summary>
+    /// A physical CSS property in a hand-authored rule. The Tailwind sweep could not see these
+    /// — they are not utility classes — and a one-sided rule is where the first right-to-left
+    /// defects turned up after the sweep: a list indent, a blockquote rule, a timeline
+    /// alignment.
+    /// </summary>
+    [GeneratedRegex(
+        @"(?<!-)\b(?<prop>margin|padding|border)-(?<side>left|right)\b|\btext-align:\s*(?<align>left|right)\b",
+        RegexOptions.Compiled)]
+    private static partial Regex PhysicalCssProperty();
+
+    /// <summary>
+    /// A declaration is symmetric when the rule sets the same property on both sides, which says
+    /// nothing about direction and needs no logical form.
+    /// </summary>
+    private static bool IsSymmetricPair(string[] lines, int index, Match match)
+    {
+        var prop = match.Groups["prop"].Value;
+
+        if (prop.Length == 0)
+        {
+            return false;
+        }
+
+        var opposite = prop + "-" + (match.Groups["side"].Value == "left" ? "right" : "left");
+
+        // The pair is written adjacently by convention; scan the whole declaration block instead
+        // of the neighbouring line so reordering does not defeat the check.
+        var start = index;
+        while (start > 0 && !lines[start].Contains('{'))
+        {
+            start--;
+        }
+
+        var end = index;
+        while (end < lines.Length - 1 && !lines[end].Contains('}'))
+        {
+            end++;
+        }
+
+        return lines[start..(end + 1)].Any(line => line.Contains(opposite, StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Hand-authored stylesheets checked alongside the component source: the library's Tailwind
+    /// input, and the demo site's, which is the docs users read.
+    /// </summary>
+    private static IEnumerable<FileInfo> Stylesheets()
+    {
+        string[] relative =
+        [
+            Path.Combine("src", "BlazorBlueprint.Components", "wwwroot", "css", "blazorblueprint-input.css"),
+            Path.Combine("demos", "BlazorBlueprint.Demo.Shared", "wwwroot", "css", "app-input.css"),
+        ];
+
+        return relative
+            .Select(path => new FileInfo(Path.Combine(SourceTree.RepoRoot.FullName, path)))
+            .Where(file => file.Exists);
+    }
+
+    [Fact]
+    public void HandWrittenCssUsesLogicalProperties()
+    {
+        var offenders = new List<string>();
+
+        foreach (var file in Stylesheets())
+        {
+            var lines = File.ReadAllLines(file.FullName);
+
+            for (var i = 0; i < lines.Length; i++)
+            {
+                // Tailwind's own generated utility names appear in selectors (.bb\:pl-4); the
+                // classes themselves are covered by the source-side check above.
+                if (lines[i].TrimStart().StartsWith('.') || lines[i].Contains(@"\:", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                foreach (var match in PhysicalCssProperty().Matches(lines[i]).Cast<Match>())
+                {
+                    if (IsSymmetricPair(lines, i, match))
+                    {
+                        continue;
+                    }
+
+                    offenders.Add($"{SourceTree.RelativePath(file)}:{i + 1} {match.Value.Trim()}");
+                }
+            }
+        }
+
+        Assert.True(offenders.Count == 0,
+            "These hand-authored declarations set one physical side, so the rule does not mirror "
+            + "under dir=\"rtl\". Use the logical property — margin-inline-start, padding-inline-end, "
+            + "border-inline-start, text-align: start — or set both sides, which is symmetric and "
+            + $"needs no change:{Environment.NewLine}"
+            + string.Join(Environment.NewLine, offenders));
+    }
+
+    /// <summary>
     /// An exemption that no longer has a physical class in it is stale, and a stale exemption
     /// silently stops guarding the file it names.
     /// </summary>

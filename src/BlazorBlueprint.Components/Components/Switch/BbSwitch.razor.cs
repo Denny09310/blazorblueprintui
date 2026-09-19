@@ -246,13 +246,15 @@ public partial class BbSwitch : ComponentBase
     {
         get
         {
-            // Size variants and translations
+            // Size variants and translations. A transform has no logical form, so the checked
+            // offset is negated under dir="rtl" — otherwise the thumb travels away from the
+            // trailing edge and lands outside the track.
             var (thumbSize, translateX) = Size switch
             {
-                SwitchSize.Small => ("bb:h-4 bb:w-4", Checked ? "bb:translate-x-4" : "bb:translate-x-0"),
-                SwitchSize.Medium => ("bb:h-5 bb:w-5", Checked ? "bb:translate-x-5" : "bb:translate-x-0"),
-                SwitchSize.Large => ("bb:h-6 bb:w-6", Checked ? "bb:translate-x-7" : "bb:translate-x-0"),
-                _ => ("bb:h-5 bb:w-5", Checked ? "bb:translate-x-5" : "bb:translate-x-0")
+                SwitchSize.Small => ("bb:h-4 bb:w-4", Checked ? "bb:translate-x-4 bb:rtl:-translate-x-4" : "bb:translate-x-0"),
+                SwitchSize.Medium => ("bb:h-5 bb:w-5", Checked ? "bb:translate-x-5 bb:rtl:-translate-x-5" : "bb:translate-x-0"),
+                SwitchSize.Large => ("bb:h-6 bb:w-6", Checked ? "bb:translate-x-7 bb:rtl:-translate-x-7" : "bb:translate-x-0"),
+                _ => ("bb:h-5 bb:w-5", Checked ? "bb:translate-x-5 bb:rtl:-translate-x-5" : "bb:translate-x-0")
             };
 
             return ClassNames.cn(
