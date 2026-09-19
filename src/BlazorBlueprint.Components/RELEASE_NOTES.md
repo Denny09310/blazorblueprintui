@@ -1,11 +1,9 @@
-## What's New in v4.0.0-beta.10
-
-**This is a prerelease.** The API may still change before the stable v4.0.0 release.
+## What's New in v4.0.0
 
 ### Breaking Changes
 
 - **.NET 10**: the package now targets `net10.0` only and depends on `Microsoft.AspNetCore.Components.Web` 10.0.12. .NET 8 and .NET 9 are no longer supported.
-- **BlazorBlueprint.Primitives**: the dependency is now 4.0.0-beta.10, which has its own breaking changes. Keep Components and Primitives on matching v4 versions. See the Primitives release notes and `V4-MIGRATION-GUIDE.md`.
+- **BlazorBlueprint.Primitives**: the dependency is now 4.0.0, which has its own breaking changes. Keep Components and Primitives on matching v4 versions. See the Primitives release notes and `V4-MIGRATION-GUIDE.md`.
 - **BbPortalHost**: the portal hosts move from `BlazorBlueprint.Primitives.Services` to `BlazorBlueprint.Primitives`. Add `@using BlazorBlueprint.Primitives` to the layout that holds the host. Without it Razor emits a literal `<bbportalhost>` element, with no build error, and every overlay silently fails to render.
 - **Stylesheet**: every Tailwind utility in `blazorblueprint.css` is now prefixed `bb:` (`.bb\:flex`) and lives in its own `bb-utilities` cascade layer, so your Tailwind build and the library's can no longer emit the same class. The layer order is `properties, theme, base, components, bb-utilities, utilities, bb`.
 - **Class parameter**: no markup change is needed. `ClassNames.cn` merges across the prefix, so `Class="p-6"` still replaces the library's `bb:p-4`.
@@ -15,6 +13,7 @@
 - **Theme variables**: Tailwind's generated variables are prefixed too (`--bb-spacing`, `--bb-default-transition-duration`). Semantic tokens such as `--background` and `--border` are unchanged.
 - **CursorExtensions.ToClass**: returns the prefixed class (`bb:cursor-pointer`).
 - **Internal class names**: CSS, JavaScript or tests that select internal elements by utility class (`.flex-col`, `.hidden`) need the prefix. Prefer the `data-slot` and other data attributes, which are stable.
+- **Logical CSS utilities**: every spacing, border, radius and alignment utility the library emits is now logical (`ms-2` rather than `ml-2`, `pe-1` rather than `pr-1`) across 110 files. CSS or tests that matched a physical utility class on library markup need updating. `Class` overrides are unaffected.
 - **BbCalendar**: `Mode` and the `CalendarMode` enum are removed. The parameter never selected anything; use **BbDateRangePicker** for a range.
 - **BbCommand**: `CloseOnSelect` is removed. Nothing read it; close the surrounding overlay from `OnValueChange`.
 - **BbCandlestick**, **BbFunnel**, **BbGauge**, **BbHeatmap**, **BbPie**, **BbRadar**: `Stacked` and `StackGroup` are removed. These series cannot stack, and the values were never read. Both stay on **BbBar**, **BbLine**, **BbArea**, **BbScatter** and **BbRadialBar**.
@@ -37,6 +36,16 @@
 
 ### New Components
 
+- **BbChip**, **BbChipSet<TValue>**: an interactive badge with a selected state, a dismiss button, or both, in five variants and three sizes. A chip renders as a plain span until something makes it interactive; the set owns `None`, `Single` or `Multiple` selection, supplies the chips' defaults, honours `Required`, and drops a dismissed chip's value from the selection before reporting it.
+- **BbFab**: a floating action button, raised and pinned to one of five logical placements, fixed to the viewport or to the nearest positioned ancestor. Built on **BbButton**, so it works as an `AsChild` trigger for a speed dial. Sits above a bottom navigation bar, clears the device safe area, and `Shape="FabShape.Circle"` makes it a circle, or a pill once it carries a label.
+- **BbStepper**, **BbStep**: a progress indicator for a sequence of steps, horizontal or vertical, with optional per-step content rendered only while that step is active. State is derived from position and `BbStep.State` overrides it. Deliberately not a form, which is what separates it from **BbFormWizard**.
+- **BbLink**: the inline counterpart to **BbButton**, rendering a bare anchor on the text baseline. Four colour treatments including one that inherits the surrounding text, `Underline` always / on hover / never, and a focus ring that follows the text so a link wrapping mid-sentence reads as one link. `Target="_blank"` adds `rel="noopener noreferrer"`, and `ShowExternalIcon` appends an icon with a screen-reader note.
+- **BbHighlighter**: marks the runs of a string that match one or many search terms, as `<mark>` elements so the highlight is not colour alone. Overlapping matches merge into one run, `WholeWord` stops a short term marking a fragment, and the text renders as text, so a term from a search box cannot inject an element.
+- **BbImage**: shows your own content, a second URL through `FallbackSrc`, or a neutral placeholder when a source fails. The fallback keeps the accessible name and inherits your classes, `OnError` fires as well, and images are lazy by default.
+- **BbScrollToTop**: a floating button that appears once the document, or a panel named by `Selector`, is scrolled past `VisibleAt`, and returns it to the top. It renders nothing below the threshold, so it adds no tab stop on a short page. Built on **BbFab** and honours reduced motion.
+- **BbExitPrompt**: holds a navigation while there is unsaved work. In-application navigation is refused and the component's own **BbAlertDialog** asks; closing the tab or reloading arms the browser's own prompt.
+- **BbRoseChart**, **BbRose**: a pie whose sectors vary in radius as well as angle. `RoseMode.Radius` keeps proportional angles and adds radius on top; `RoseMode.Area` gives every sector the same angle and varies the radius alone. Derives from **BbPie**, so the donut hole, labels, leader lines and a child **BbCenterLabel** work unchanged.
+- **BbSankeyChart**, **BbSankey**: shows how a quantity splits and recombines between stages. Binds a collection of links — a source name, a target name and a value per row — and derives the nodes from the names in first-seen order. Hovering a node dims everything it is not connected to. A link that would close a cycle, a row missing a name and a non-numeric value are dropped, so one bad row cannot blank the chart.
 - **BbScheduler**: day, week and work-week time slots with resource lanes, overlapping events, an event editor with delete confirmation, and drag-to-move and resize that snap to `SlotMinutes`. Supports recurrence (edit one occurrence or the series), IANA time zones with DST checks, `FirstDayOfWeek`, `InitialScrollHour`, and `OnEventChange` with `Cancel` to reject a change.
 - **SchedulerEngine**: public helpers to expand recurring events (`Expand`), apply an edit (`ApplyChange`), validate an event and convert a local time to an instant (`ToInstant`).
 - **BbTreeSelect**: searchable hierarchy picker with single or multiple selection, cascading checkboxes with indeterminate states, `LeafOnly`, clearing and `EditContext` binding.
@@ -62,6 +71,10 @@
 
 ### New Features
 
+- **Right-to-left support**: wrap the layout in **BbDirectionProvider** and the library mirrors for Arabic or Hebrew. Mirroring is CSS, not C#, so there is no second stylesheet and no runtime branching. Overlays copy the direction from the element that opened them, so the provider works even when **BbPortalHost** sits outside it. `TextDirection.Auto`, the default, follows `CultureInfo.CurrentCulture`, so nothing changes until an application asks for it.
+- **Right-to-left geometry**: the components that place content with pixel or percentage maths read the direction at the moment of the gesture, so the maths agrees with the paint. **BbSlider** and **BbRangeSlider** fill from the reading edge and swap their horizontal arrows, **BbCarousel** moves its arrows to the leading and trailing edges, **BbScheduler** and **BbEventCalendar** offset events past the gutter on the reading side, and **BbDashboardGrid**, **BbDock** and **BbResizable** drag, drop and resize along the reading direction.
+- **Right-to-left keyboard navigation**: arrow keys follow the reading direction in tabs, toggle groups, radio groups, menus and the tree, while Up and Down keep their meaning. In a right-to-left tree, ArrowLeft opens a node.
+- **Physical-side parameters keep their promise** and do not mirror: `SheetSide`, `DrawerDirection`, `SidebarSide`, `ToastPosition`, `BadgeDotPosition`, the `PopoverSide` an overlay reports, and `SankeyNodeAlign`. Pass the other value for the other side. See the Right-to-Left guide.
 - **BbScheduler**: `SchedulerView.Month` adds a month grid of six week rows, capped by `MaxEventsPerDay` and navigated a calendar month at a time. Drag and resize are off in that view.
 - **BbScheduler**: all-day events through `SchedulerEvent.IsAllDay`, drawn as bars in a band above the time grid. `End` is exclusive, matching iCalendar's `DTEND`, and recurrence counts whole local days, so a daily series holds its date across a 23- or 25-hour day.
 - **BbScheduler**: multi-day bars stack into lanes, a run crossing a week boundary is squared off at the join, `MaxAllDayRows` caps the band, and with two or more resources visible the band groups by resource.
@@ -114,6 +127,11 @@
 
 ### Bug Fixes
 
+- **BbRadialBarChart**: a `Title` and a **BbCenterLabel** no longer evict each other. A radial bar borrows the chart title to draw the text in the hole, so setting both silently kept whichever was written last. Both now fit.
+- **BbRadialBarChart**: the centre label is centred on the donut. It sat half its own size up and to the left, because the explicit `textAlign` made ECharts skip the shift that compensates for the anchor.
+- **BbRadialBar**: with `ShowLabels`, bars carrying similar values no longer pile their labels into the same wedge. Each label sits at the start of its own ring, so the names stack instead of colliding.
+- **BbSwitch**: the thumb travels the correct way in a right-to-left layout. A transform has no logical form, so the checked offset stayed physical and moved the thumb out of the track.
+- **Stylesheet**: five hand-authored rules now use logical properties — the rich text editor's list indent and blockquote rule, the timeline's end alignment and padding, and the date-range picker's presets divider. They did not mirror because the logical-property sweep read `.razor` and `.cs` files, not stylesheets.
 - **BbDataGrid**: a cell editor no longer paints over Save and Cancel in a narrow column, and a checkbox, switch or toggle editor keeps its border instead of stretching to an empty-looking cell.
 - **BbScheduler**: a stray `}` no longer renders as text in the event editor.
 - **BbScheduler**: the toolbar heading no longer jumps above the navigation on a narrow container, the time-zone label no longer reads as part of the view buttons, and Month view with a resource selected no longer claims no resources are selected.
@@ -161,38 +179,8 @@
 - **BbToggleGroup**: without a bound value, items show the pressed state as soon as they are toggled.
 - **BbSortable**: no longer calls `OnUpdate` for an out-of-range or unchanged index, or when `Sort` is false.
 
-### Improvements
+### Improvements and performance
 
-- **Scrollbars**: native scrollbars inside library components follow the theme in light and dark mode, and the stylesheet sets `color-scheme` for each mode.
-- **BbSidebar**: a closed non-collapsible sidebar is now `inert` and `aria-hidden`, and its width transition respects reduced motion.
-- **Localization**: `DefaultBbLocalizer` adds strings for the new components and features, including the resizable handle, and the last of the hard-coded English is gone.
-- **Localization**: `DefaultBbLocalizer` adds strings for the scheduler's month view, all-day band, context menus, resource filter and active hours.
-- **Package**: adds a dependency on `Ical.Net` 5.2.3 for scheduler recurrence. The package now includes `LICENSE`, `NOTICE` and `THIRD-PARTY-NOTICES.txt`, also served at `_content/BlazorBlueprint.Components/THIRD-PARTY-NOTICES.txt`.
-- **BbRichTextEditor**: `table`, `code`, `align`, `color`, `background` and `image` are registered formats, so bound or pasted HTML keeps them. The sanitizer allows `data:image/*` on `<img src>` only.
-- **BbDarkModeToggle**: icons are now `h-4 w-4`, matching **BbThemeSwitcher**.
-- **Reduced motion**: the `.bb-no-animate` exemption matches both `bb:animate-spin` / `bb:animate-pulse` and bare `animate-spin` / `animate-pulse`.
-- **BbCommandInput**: the focus ring moves from the `<input>` to its row.
-- **ThemeService**: invalid colour names in `localStorage` fall back to the default in the browser, without an extra round trip.
-- **BbNavigationMenuTrigger**: ArrowDown no longer waits 50 ms before focusing the first item.
-- **BbSortable**: items render with `role="listitem"`, and the live status region and keyboard instructions have stable ids.
-- **Documentation**: `V4-MIGRATION-GUIDE.md` is now the single list of v4 breaking changes, and the CHANGELOG links into it.
-
-### Performance
-
-- **BbDataGrid**, **BbDataView**: the search box debounces in the browser, which costs one provider call per typing pause rather than one per key. This matters most on Blazor Server.
-- **BbDataGrid**: paged `IQueryable` sources without search, grouping or virtualization count and page on the query provider instead of loading every row.
-- **BbCommand**: filtered results and item positions are cached and shared, so items no longer rescan the filtered list.
-- **BbSlider**, **BbRangeSlider**, **BbColorPicker**: drag feedback updates in the browser. Value updates during a drag are sent at most about every 50 ms, and the final value is sent on release.
-- **BbRating**: hover updates when the pointer enters an icon, not on every mouse move.
-- **BbTreeView**: search indexes parents and visible nodes, so rendering no longer repeats descendant searches.
-- **BbEventCalendar**: a multi-day bar is positioned with a `calc()` over the seven-column grid, so it needs no measuring and no JavaScript at any width.
-- **Overlays**: **BbSelect**, **BbPopover**, **BbDropdownMenu**, **BbCombobox** and other floating overlays open and close in one interop call each instead of five, through the Primitives update.
-- **BbCombobox**, **BbMultiSelect**: the search box is focused inside the call that opens the popover, not after a render, a 50 ms wait and another round trip.
-- **BbSelect**, **BbPopover**, **BbDropdownMenu**: focus returns to the trigger inside the close call.
-- **BbPopoverContent**: requests the portal ready callback only when `OnContentReady` is set.
-- **BbCommandItem**: one delegated hover listener per list replaces per-item mouse handlers, and `ShouldRender` stops a focus move from re-rendering every item.
-- **BbCommandList**, **BbSelectContent**, **BbMultiSelect**, **BbDataView**: infinite scroll watches for the bottom in the browser and calls .NET once, instead of a round trip per scroll event.
-- **JavaScript modules**: each module is imported once per circuit and shared by all component instances.
-- **Core bundle**: the five modules used on most pages ship as one file, cutting module imports per page from 3–6 to 1–3.
-- **ThemeService**, **BbSidebarProvider**: initialize in one interop call each instead of two to four.
-- **BbDataGrid**: key and click handlers are attached once to the grid and delegated, instead of once per row.
+NuGet caps release notes at 35,000 characters, so the remaining improvement and
+performance entries live in the full changelog:
+https://github.com/blazorblueprintui/ui/blob/main/CHANGELOG.md
