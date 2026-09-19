@@ -1,0 +1,8 @@
+@* State overrides the state derived from position. *@
+<BbStepper ActiveStep="2">
+    <BbStep Title="Collected" />
+    <BbStep Title="Rejected" State="StepState.Error" />
+    <BbStep Title="In review" />
+    <BbStep Title="Extra checks" Optional="true" State="StepState.Skipped" />
+    <BbStep Title="Archived" Disabled="true" />
+</BbStepper>

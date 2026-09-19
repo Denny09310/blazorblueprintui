@@ -519,9 +519,14 @@ function activateDrag(state) {
     state.originalPositions = getWidgetPositions(grid, null);
   }
 
-  // Capture grab offset (pointer position relative to widget's top-left corner)
+  // Capture grab offset (pointer position relative to the widget's leading top corner). The
+  // grid's first column is drawn at the right under dir="rtl", so the horizontal offset is
+  // measured from the widget's right edge there and every later sum stays in grid space.
   const widgetRect = state.originalWidget.getBoundingClientRect();
-  state.grabOffsetX = state.startX - widgetRect.left;
+  state.rtl = getComputedStyle(state.originalWidget).direction === 'rtl';
+  state.grabOffsetX = state.rtl
+    ? widgetRect.right - state.startX
+    : state.startX - widgetRect.left;
   state.grabOffsetY = state.startY - widgetRect.top;
 
   document.body.style.userSelect = 'none';
@@ -543,7 +548,9 @@ function updateDrag(state, e) {
   const rowHeight = state.options.rowHeight;
 
   // Calculate target column and row from pointer position, adjusted for grab offset
-  const relX = e.clientX - gridRect.left - (state.grabOffsetX || 0);
+  const relX = state.rtl
+    ? gridRect.right - e.clientX - (state.grabOffsetX || 0)
+    : e.clientX - gridRect.left - (state.grabOffsetX || 0);
   const relY = e.clientY - gridRect.top - (state.grabOffsetY || 0);
 
   let targetCol = Math.round(relX / (cellWidth + gap)) + 1;
@@ -649,7 +656,10 @@ function updateResize(state, e) {
   const cellWidth = (gridRect.width - (cols - 1) * gap) / cols;
   const rowHeight = state.options.rowHeight;
 
-  const dx = e.clientX - state.startX;
+  // A handle sits on the widget's logical edge, so dragging towards the trailing edge grows the
+  // span in both directions: the pointer's travel is read along the reading direction.
+  const rtl = getComputedStyle(state.originalWidget ?? state.dragGrid).direction === 'rtl';
+  const dx = (e.clientX - state.startX) * (rtl ? -1 : 1);
   const dy = e.clientY - state.startY;
 
   const handle = state.activeHandle;

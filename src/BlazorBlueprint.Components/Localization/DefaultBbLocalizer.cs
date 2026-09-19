@@ -52,6 +52,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Cascader.Clear"] = "Clear selection",
         ["Cascader.Level"] = "Level {0}",
 
+        // Chip
+        ["Chip.Dismiss"] = "Remove",
+
         // Combobox
         ["Combobox.EmptyMessage"] = "No results found.",
         ["Combobox.Placeholder"] = "Select an option...",
@@ -328,6 +331,26 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["FormWizard.Next"] = "Next",
         ["FormWizard.Skip"] = "Skip",
         ["FormWizard.Complete"] = "Complete",
+
+        // Link
+        ["Link.OpensInNewTab"] = "(opens in a new tab)",
+
+        // Scroll to top
+        ["ScrollToTop.Label"] = "Scroll back to top",
+
+        // Exit prompt
+        ["ExitPrompt.Title"] = "Leave without saving?",
+        ["ExitPrompt.Message"] = "Your changes have not been saved. If you leave now, they are lost.",
+        ["ExitPrompt.Stay"] = "Stay on this page",
+        ["ExitPrompt.Leave"] = "Leave and discard",
+
+        // Stepper
+        ["Stepper.Progress"] = "Progress",
+        ["Stepper.Optional"] = "Optional",
+        ["Stepper.StepPosition"] = "Step {0} of {1}",
+        ["Stepper.Completed"] = "Completed",
+        ["Stepper.Error"] = "Error",
+        ["Stepper.Skipped"] = "Skipped",
 
         // MarkdownEditor
         ["MarkdownEditor.SelectHeadingLevel"] = "Select heading level",

@@ -14,6 +14,11 @@
 </CascadingValue>
 
 @code {
+    /// <summary>The writing direction, when a BbDirectionProvider supplies one.</summary>
+    [CascadingParameter] private DirectionContext? Direction { get; set; }
+
+    private bool IsRtl => DirectionContext.Resolve(Direction);
+
     private ToggleGroupContext<TValue> context = new();
     private List<BbToggleGroupItem<TValue>>? cachedEnabledItems;
     private int lastItemsVersion;
@@ -209,11 +214,17 @@
 
         switch (args.Key)
         {
+            // In a horizontal group the arrows follow the reading direction, so the focus moves
+            // the way the items are drawn rather than the way the key points.
             case "ArrowRight" when isHorizontal:
+                await (IsRtl ? NavigatePrevious(enabledItems) : NavigateNext(enabledItems));
+                break;
             case "ArrowDown" when !isHorizontal:
                 await NavigateNext(enabledItems);
                 break;
             case "ArrowLeft" when isHorizontal:
+                await (IsRtl ? NavigateNext(enabledItems) : NavigatePrevious(enabledItems));
+                break;
             case "ArrowUp" when !isHorizontal:
                 await NavigatePrevious(enabledItems);
                 break;

@@ -22,7 +22,7 @@
         <div class="@RangeClass"
              style="@(IsVertical
                  ? $"bottom: var(--bb-range-start, {StartPercentageValue}); height: var(--bb-range-width, {RangePercentageValue});"
-                 : $"left: var(--bb-range-start, {StartPercentageValue}); width: var(--bb-range-width, {RangePercentageValue});")">
+                 : $"inset-inline-start: var(--bb-range-start, {StartPercentageValue}); width: var(--bb-range-width, {RangePercentageValue});")">
         </div>
     </div>
 
@@ -37,7 +37,7 @@
          aria-orientation="@(IsVertical ? "vertical" : "horizontal")"
          tabindex="@(Disabled ? -1 : 0)"
          class="@StartThumbClass"
-         style="@(IsVertical ? $"bottom: var(--bb-range-start, {StartPercentageValue});" : $"left: var(--bb-range-start, {StartPercentageValue});")"
+         style="@(IsVertical ? $"bottom: var(--bb-range-start, {StartPercentageValue});" : $"inset-inline-start: var(--bb-range-start, {StartPercentageValue});")"
          @onkeydown="@(e => HandleStartKeyDown(e))">
         @if (ShowTooltips)
         {
@@ -56,7 +56,7 @@
          aria-orientation="@(IsVertical ? "vertical" : "horizontal")"
          tabindex="@(Disabled ? -1 : 0)"
          class="@EndThumbClass"
-         style="@(IsVertical ? $"bottom: var(--bb-range-end, {EndPercentageValue});" : $"left: var(--bb-range-end, {EndPercentageValue});")"
+         style="@(IsVertical ? $"bottom: var(--bb-range-end, {EndPercentageValue});" : $"inset-inline-start: var(--bb-range-end, {EndPercentageValue});")"
          @onkeydown="@(e => HandleEndKeyDown(e))">
         @if (ShowTooltips)
         {
@@ -72,17 +72,22 @@
             var tickPercent = ((tick - Min) / (Max - Min)) * 100;
             var tickOffset = tickPercent.ToString("0.##", CultureInfo.InvariantCulture);
             <div class="@(IsVertical
-                     ? "bb:absolute bb:right-full bb:mr-1 bb:h-0.5 bb:w-2 bb:bg-muted-foreground/30"
+                     ? "bb:absolute bb:end-full bb:me-1 bb:h-0.5 bb:w-2 bb:bg-muted-foreground/30"
                      : "bb:absolute bb:top-4 bb:w-0.5 bb:h-2 bb:bg-muted-foreground/30")"
                  style="@(IsVertical
                      ? $"bottom: {tickOffset}%; transform: translateY(50%);"
-                     : $"left: {tickOffset}%; transform: translateX(-50%);")">
+                     : $"inset-inline-start: {tickOffset}%; transform: translateX(-50%);")">
             </div>
         }
     }
 </div>
 
 @code {
+    /// <summary>The writing direction, when a BbDirectionProvider supplies one.</summary>
+    [CascadingParameter] private DirectionContext? Direction { get; set; }
+
+    private bool IsRtl => DirectionContext.Resolve(Direction);
+
     private ElementReference _trackRef;
     private IJSObjectReference? _jsModule;
     private DotNetObjectReference<BbRangeSlider>? _dotNetRef;
@@ -337,13 +342,19 @@
 
         switch (e.Key)
         {
-            case "ArrowRight":
             case "ArrowUp":
                 await SetStartValue(StartValue + Step);
                 break;
-            case "ArrowLeft":
             case "ArrowDown":
                 await SetStartValue(StartValue - Step);
+                break;
+            // The horizontal arrows move along the track as it is drawn, so they swap in a
+            // right-to-left slider. Up and Down keep their meaning either way.
+            case "ArrowRight":
+                await SetStartValue(StartValue + (IsRtl ? -Step : Step));
+                break;
+            case "ArrowLeft":
+                await SetStartValue(StartValue + (IsRtl ? Step : -Step));
                 break;
             case "PageUp":
                 await SetStartValue(StartValue + largeStep);
@@ -368,13 +379,19 @@
 
         switch (e.Key)
         {
-            case "ArrowRight":
             case "ArrowUp":
                 await SetEndValue(EndValue + Step);
                 break;
-            case "ArrowLeft":
             case "ArrowDown":
                 await SetEndValue(EndValue - Step);
+                break;
+            // The horizontal arrows move along the track as it is drawn, so they swap in a
+            // right-to-left slider. Up and Down keep their meaning either way.
+            case "ArrowRight":
+                await SetEndValue(EndValue + (IsRtl ? -Step : Step));
+                break;
+            case "ArrowLeft":
+                await SetEndValue(EndValue + (IsRtl ? Step : -Step));
                 break;
             case "PageUp":
                 await SetEndValue(EndValue + largeStep);
@@ -449,7 +466,7 @@
 
     private string TooltipClass => ClassNames.cn(
         IsVertical
-            ? "bb:absolute bb:left-full bb:ml-2 bb:top-1/2 bb:-translate-y-1/2"
+            ? "bb:absolute bb:start-full bb:ms-2 bb:top-1/2 bb:-translate-y-1/2"
             : "bb:absolute bb:-top-8 bb:left-1/2 bb:-translate-x-1/2",
         "bb:px-2 bb:py-1 bb:text-xs bb:bg-primary bb:text-primary-foreground bb:rounded",
         "bb:whitespace-nowrap"

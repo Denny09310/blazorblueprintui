@@ -47,12 +47,12 @@ public partial class BbSplitButton : ComponentBase
     );
 
     private static string PrimaryButtonClass => ClassNames.cn(
-        "bb:!rounded-r-none bb:border-r-0 bb:focus-visible:z-10"
+        "bb:!rounded-e-none bb:border-e-0 bb:focus-visible:z-10"
     );
 
     private string DropdownButtonClass => ClassNames.cn(
-        "bb:!rounded-l-none bb:!px-2 bb:focus-visible:z-10",
-        Variant == ButtonVariant.Outline ? "bb:border-l" : "bb:border-l bb:border-l-primary-foreground/20"
+        "bb:!rounded-s-none bb:!px-2 bb:focus-visible:z-10",
+        Variant == ButtonVariant.Outline ? "bb:border-s" : "bb:border-s bb:border-s-primary-foreground/20"
     );
 
     private ButtonSize DropdownButtonSize => Size switch

@@ -1,0 +1,18 @@
+@namespace BlazorBlueprint.Components
+
+<BbButton Variant="@MappedVariant"
+          Class="@CssClass"
+          Disabled="@Disabled"
+          OnClick="@OnClick"
+          AriaLabel="@AriaLabel"
+          data-slot="fab"
+          @attributes="AdditionalAttributes">
+    @if (Icon is not null)
+    {
+        <span class="bb:inline-flex bb:shrink-0 bb:items-center">@Icon</span>
+    }
+    @if (ChildContent is not null)
+    {
+        <span class="bb:truncate">@ChildContent</span>
+    }
+</BbButton>

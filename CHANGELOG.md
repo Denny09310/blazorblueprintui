@@ -11,6 +11,68 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **The last two chart gaps: a rose and a sankey.**
+
+  `BbRoseChart` draws a pie whose sectors vary in radius as well as angle, so a set of categories
+  ranks by length instead of by an angle the eye is bad at judging. `BbRose` derives from `BbPie`
+  rather than repeating it, so the donut hole, the labels, the leader lines and a child
+  `BbCenterLabel` all work here unchanged — and a fix to the pie's label handling reaches the rose
+  as well. `Mode` is the one addition: `RoseMode.Radius` keeps the pie's proportional angles and
+  adds radius on top, so a sector carries the value twice and a small one stays visible;
+  `RoseMode.Area` gives every sector the same angle and varies the radius alone, which is the honest
+  choice for a fixed set of categories — twelve months, seven days — rather than parts of a whole.
+
+  `BbSankeyChart` shows how a quantity splits and recombines as it moves between stages. Bind a
+  collection of **links** rather than of nodes: `BbSankey` reads a source name, a target name and a
+  value from each row, and derives the node list from the names in the order they are first seen,
+  which is also the order they take their colours from the chart palette. Hovering a node dims
+  everything it is not connected to, which is the reason to draw a sankey rather than a bar chart.
+
+  **A sankey is a directed acyclic graph.** ECharts throws out of its layout when the links form a
+  cycle, and a thrown layout blanks the whole chart rather than dropping the one bad ribbon — so a
+  link that would close a cycle, including a link from a node to itself, is left out in C# and the
+  rest of the diagram is drawn. A row missing either name is dropped because a link needs both ends,
+  and a row whose value is not a number is dropped rather than coerced to zero, because a
+  zero-width ribbon reads as a real flow that happens to be tiny.
+
+  A node in the outermost column points its label at the edge of the canvas, where ECharts draws it
+  and lets it overflow — the reason a sankey so often ends in a clipped `B` where `Bounced` should
+  be. Those nodes are given the opposite `LabelPosition`, so the text turns inwards and stays
+  readable however long the name is. `SankeyNodeAlign` names a physical side, not a reading-order
+  one: ECharts computes the layout and does not mirror it under `dir="rtl"`. `Draggable` is off by
+  default, unlike ECharts itself, because a dragged node stays where it was dropped with no way back
+  short of a reload.
+
+- **Five small components that close the last of the MudBlazor gaps.**
+
+  `BbLink` is the inline counterpart to `BbButton`. A button with `ButtonVariant.Link` looks like a link but keeps a button's height and padding, so it breaks the rhythm of a paragraph; this renders a bare anchor on the text baseline. Four colour treatments including one that inherits the surrounding text, underline always / on hover / never, and a focus ring that follows the text rather than a box, so a link that wraps mid-sentence reads as one link. `Target="_blank"` adds `rel="noopener noreferrer"` for you, and `ShowExternalIcon` appends an icon with a screen-reader note.
+
+  `BbHighlighter` marks the parts of a string that match a search term, so a result list can show why each row matched. Matched runs render as `<mark>`, which browsers and screen readers already treat as "relevant to a search", so the highlight is not colour alone. One term or many; overlapping matches merge into one run rather than nesting. `WholeWord` stops a short term marking a fragment inside every other word. The text renders as text, so a term from a search box cannot inject an element.
+
+  `BbImage` shows something sensible when a source cannot be loaded: your own content, a second URL, or a neutral placeholder. A bare `<img>` with a dead URL leaves a broken-icon box and the alt text, which reads as a bug rather than missing data. The fallback keeps the image's accessible name and inherits your classes, so a round thumbnail stays round. `OnError` fires as well, so a dead URL can be logged. Lazy by default; turn it off above the fold.
+
+  `BbScrollToTop` is a floating button that appears once a container is scrolled and returns it to the top. It renders nothing below the threshold, so it costs no tab stop on a short page. Point it at a scrolling panel with `Selector` or leave it watching the document. Built on `BbFab`, so placement, shape and safe-area handling match, and the scroll is animated only when the visitor has not asked for reduced motion.
+
+  `BbExitPrompt` holds a navigation while there is unsaved work. A navigation inside the application is refused and the component's own `BbAlertDialog` asks, so the wording and buttons match the rest of the interface; closing the tab or reloading arms the browser's own prompt, which shows its own wording because that cannot be set from script. The handler refuses first and reissues the navigation from the button rather than from inside the router's pipeline — navigating from inside it moved the URL without rendering the destination.
+
+- **Right-to-left support.** `BbDirectionProvider` sets the writing direction for everything inside it, so the library mirrors for Arabic or Hebrew. Wrap the layout in it, including the overlay hosts. It renders no box of its own — `display: contents` — so adding it changes no layout; it writes a `dir` attribute and cascades a `DirectionContext`. `TextDirection.Auto`, the default, follows `CultureInfo.CurrentCulture`, which is what every component did before the provider existed, so nothing changes until you ask for it.
+
+  Layout mirrors through CSS rather than through C#: every spacing, border, radius and alignment utility the library ships is now logical — `margin-inline-start`, not `margin-left` — across 110 files. A convention test keeps it that way, and carries the list of files where a physical side is genuinely correct, each with its reason. Overlays are covered too: a popover, menu or dialog copies the direction from the element that opened it as it opens, the same mechanism that already carried a local theme across the portal boundary, so the provider works even when `BbPortalHost` sits outside it. Alignment needed no change — `PopoverAlign.Start` and `End` already resolve against the writing direction.
+
+  Arrow keys follow the reading direction in tabs, toggle groups, radio groups, menus and the tree: Right moves the way the items are drawn rather than the way the key points, while Up and Down never flip. In the tree it is ArrowLeft that opens a node.
+
+  **Geometry mirrors too.** The components that place content with pixel or percentage maths read the direction at the moment of the gesture, so the maths agrees with the paint. `BbSlider` and `BbRangeSlider` fill from the reading edge and treat a click there as the minimum; their horizontal arrows swap while Up and Down keep their meaning. `BbCarousel` already flipped its own translation and keyboard — its arrows now sit outside the leading and trailing edges. `BbScheduler` places events past the time gutter on the reading side, and its drag preview clears the gutter on the correct side. `BbEventCalendar` multi-day bars run the other way and square off at the correct join. `BbDashboardGrid` drags and resizes along the reading direction, with each widget's handles on its logical edges. `BbDock` mirrors its drop zones, tab order and drop indicator together, so a drop lands where the indicator says. `BbResizable` grows the leading panel when the handle moves towards the leading edge.
+
+  **What does not mirror, by design.** A parameter that names a physical side keeps its promise: `SheetSide`, `DrawerDirection`, `SidebarSide`, `ToastPosition`, `BadgeDotPosition`, and the `PopoverSide` an overlay reports. Pass the other value if you want the other side. See the Right-to-Left guide.
+
+- **`BbChip` and `BbChipSet`.** A chip is the interactive counterpart to a badge: it carries a selected state, a dismiss button, or both. Five variants and three sizes, each variant with its own selected treatment, plus an `Icon` fragment that takes an avatar as readily as an icon. A chip renders as a plain span until something makes it interactive, so a static chip is not announced as a button; a selectable one carries `aria-pressed`, and the dismiss button gets its own accessible name from `DismissLabel` or the localized `Chip.Dismiss`.
+
+  `BbChipSet<TValue>` owns the selection for its chips — `None`, `Single` or `Multiple` — and supplies their default variant, size, dismiss button and check mark. Chips stay non-generic and carry their value as `object`, so a set needs one `TValue` rather than one per chip; the set unboxes on every operation, and a chip with no value, or a value of the wrong type, falls out of the selection rather than throwing. `Required` keeps at least one chip selected. Dismissing a chip inside a set drops its value from the selection first and then reports it, so a filter cannot stay selected after its chip has gone. `ShowCheckMark` is off by default because the mark widens the chip as it appears, which reflows a wrapped row.
+
+- **`BbFab`.** A floating action button: raised, pinned to a corner, carrying the one main action of a screen. It is built on `BbButton`, so it works as an `AsChild` trigger — that is how a speed dial is composed, with the button opening a `BbDropdownMenu` instead of running an action. Five placements written in logical properties, so the corner follows the reading direction, pinned to the viewport or to the nearest positioned ancestor through `Fixed`. It sits above a bottom navigation bar and below the overlay layer, and clears the device safe area so a home indicator cannot cover it. Supplying `ChildContent` widens the button with a label. Corners follow the theme's radius by default — the same `rounded-md` every other component uses — and `Shape="FabShape.Circle"` makes it a full circle instead, or a pill once it carries a label. An icon-only button needs `AriaLabel` — it has no text of its own.
+
+- **`BbStepper` and `BbStep`.** A progress indicator for a sequence of steps, horizontal or vertical, with optional per-step content rendered only while that step is active. It is deliberately not a form: it holds no `EditContext`, validates nothing and renders no navigation buttons, which is what separates it from `BbFormWizard`. State is derived from position — behind the active step is complete, ahead is pending — and `BbStep.State` overrides that, which is how an error or a skipped step is shown. `Clickable` turns each marker into a button, and a `Disabled` step refuses activation. The indicator is an ordered list, the active step carries `aria-current="step"`, and each step adds hidden text with its position and its state, so a state is never colour alone.
+
 - **Active hours.** `ActiveHours` names the part of each weekday the schedule is about, and everything outside it is muted. A day with no range is muted end to end, so weekends need no entry; two ranges for one day mute the gap between them, which is how you get a lunch break. Times are wall times in the display zone, so a day that gains or loses an hour keeps the same clock boundaries. Start is inclusive and End exclusive; `TimeOnly` cannot express 24:00, so `TimeOnly.MinValue` as the End runs to the end of the day. Muted slots say so to a screen reader rather than relying on the tint. An empty list — the default — mutes nothing.
 
   `BlockOutsideActiveHours` turns muting into refusal: the slots are disabled, their context menu is suppressed, and any drag or resize landing outside is rejected. In Month, which has no time axis, it closes only the days with no range at all. It guards the pointer and keyboard surfaces — it does not validate the `Events` you supply, and `CreateEvent` stays open as the programmatic escape hatch.

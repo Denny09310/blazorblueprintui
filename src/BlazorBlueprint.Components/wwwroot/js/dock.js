@@ -261,8 +261,18 @@ function onTabUp(state, e) {
         .catch(() => { });
 }
 
+/**
+ * Whether the dock lays its panels out right to left. The dock's model is ordered — a zone of
+ * "left" means "before this panel" — and a flex row reverses under dir="rtl", so the pointer's
+ * horizontal decisions are mirrored to keep the model in step with what is on screen.
+ */
+function isRtl(dock) {
+    return getComputedStyle(dock.rootEl).direction === "rtl";
+}
+
 function computeTarget(dock, x, y) {
     const r = dock.rootEl.getBoundingClientRect();
+    const rtl = isRtl(dock);
 
     if (x < r.left || x > r.right || y < r.top || y > r.bottom) {
         return { type: "float" };
@@ -274,17 +284,17 @@ function computeTarget(dock, x, y) {
         return {
             type: "reorder",
             groupId: stripEl.getAttribute("data-dock-tabstrip"),
-            index: computeInsertIndex(stripEl, x)
+            index: computeInsertIndex(stripEl, x, rtl)
         };
     }
 
     // A band along the dock's outer border docks against the whole dock.
     const edge = 26;
     if (x - r.left < edge) {
-        return { type: "root", zone: "left" };
+        return { type: "root", zone: rtl ? "right" : "left" };
     }
     if (r.right - x < edge) {
-        return { type: "root", zone: "right" };
+        return { type: "root", zone: rtl ? "left" : "right" };
     }
     if (y - r.top < edge) {
         return { type: "root", zone: "top" };
@@ -299,7 +309,7 @@ function computeTarget(dock, x, y) {
     }
 
     const gid = groupEl.getAttribute("data-dock-group");
-    const zone = zoneWithin(groupEl.getBoundingClientRect(), x, y);
+    const zone = zoneWithin(groupEl.getBoundingClientRect(), x, y, rtl);
     return { type: "group", groupId: gid, zone };
 }
 
@@ -322,19 +332,22 @@ function findClosestAt(dock, x, y, selector) {
 }
 
 // The insertion slot (0..tabCount) for a pointer x over a tab strip, using each tab's midpoint.
-function computeInsertIndex(stripEl, x) {
+function computeInsertIndex(stripEl, x, rtl) {
     const tabs = stripEl.querySelectorAll("[data-dock-tab]");
     for (let i = 0; i < tabs.length; i++) {
         const tr = tabs[i].getBoundingClientRect();
-        if (x < tr.left + tr.width / 2) {
+        // Tabs are drawn in model order along the reading direction, so a right-to-left strip
+        // reaches the next tab as the pointer moves left.
+        const past = rtl ? x > tr.left + tr.width / 2 : x < tr.left + tr.width / 2;
+        if (past) {
             return i;
         }
     }
     return tabs.length;
 }
 
-function zoneWithin(r, x, y) {
-    const rx = (x - r.left) / r.width;
+function zoneWithin(r, x, y, rtl) {
+    const rx = rtl ? (r.right - x) / r.width : (x - r.left) / r.width;
     const ry = (y - r.top) / r.height;
     const m = 0.22;
     const inMidX = rx > m && rx < 1 - m;
@@ -376,6 +389,7 @@ function drawIndicator(state, t) {
 
     const ind = state.indicator;
     ind.style.display = "block";
+    const rtl = isRtl(state.dock);
 
     let box;
     if (t.type === "reorder") {
@@ -384,7 +398,7 @@ function drawIndicator(state, t) {
             ind.style.display = "none";
             return;
         }
-        box = insertionLineBox(stripEl, t.index);
+        box = insertionLineBox(stripEl, t.index, rtl);
         // A solid caret line between tabs rather than a translucent fill.
         ind.style.background = ACCENT_SOLID;
         ind.style.border = "none";
@@ -392,14 +406,14 @@ function drawIndicator(state, t) {
         ind.style.background = ACCENT_BG;
         ind.style.border = ACCENT_BORDER;
         if (t.type === "root") {
-            box = zoneBox(state.dock.rootEl.getBoundingClientRect(), t.zone, 0.3);
+            box = zoneBox(state.dock.rootEl.getBoundingClientRect(), t.zone, 0.3, rtl);
         } else {
             const gEl = state.dock.rootEl.querySelector(`[data-dock-group="${t.groupId}"]`);
             if (!gEl) {
                 ind.style.display = "none";
                 return;
             }
-            box = zoneBox(gEl.getBoundingClientRect(), t.zone, 0.5);
+            box = zoneBox(gEl.getBoundingClientRect(), t.zone, 0.5, rtl);
         }
     }
 
@@ -409,22 +423,31 @@ function drawIndicator(state, t) {
     ind.style.height = `${box.height}px`;
 }
 
-function insertionLineBox(stripEl, index) {
+function insertionLineBox(stripEl, index, rtl) {
     const tabs = stripEl.querySelectorAll("[data-dock-tab]");
     const sr = stripEl.getBoundingClientRect();
+    // The caret sits on the leading edge of the tab the drop would push along, which is the
+    // right-hand edge when the strip reads right to left.
+    const leading = el => rtl ? el.getBoundingClientRect().right : el.getBoundingClientRect().left;
+    const trailing = el => rtl ? el.getBoundingClientRect().left : el.getBoundingClientRect().right;
     let lineX;
     if (tabs.length === 0) {
-        lineX = sr.left;
+        lineX = rtl ? sr.right : sr.left;
     } else if (index >= tabs.length) {
-        lineX = tabs[tabs.length - 1].getBoundingClientRect().right;
+        lineX = trailing(tabs[tabs.length - 1]);
     } else {
-        lineX = tabs[index].getBoundingClientRect().left;
+        lineX = leading(tabs[index]);
     }
     return { left: lineX - 1, top: sr.top, width: 2, height: sr.height };
 }
 
-function zoneBox(r, zone, frac) {
-    switch (zone) {
+function zoneBox(r, zone, frac, rtl) {
+    // The zone names are model order, not screen sides, so they are read back to screen sides
+    // through the reading direction — the same mapping computeTarget applied on the way in.
+    const side = rtl && (zone === "left" || zone === "right")
+        ? (zone === "left" ? "right" : "left")
+        : zone;
+    switch (side) {
         case "left":
             return { left: r.left, top: r.top, width: r.width * frac, height: r.height };
         case "right":

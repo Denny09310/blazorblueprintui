@@ -1,4 +1,4 @@
-## What's New in v4.0.0-beta.8
+## What's New in v4.0.0-beta.10
 
 **This is a prerelease.** The API may still change before the stable v4.0.0 release.
 
@@ -13,6 +13,9 @@
 - **BbTableRow**, **BbDataGridRow**, **BbMenubarContent**, **BbSortable**: the Tailwind utilities these primitives render (row focus ring, menubar backdrop, sortable `sr-only` live region) are now `bb:`-prefixed. A consumer's own Tailwind build no longer emits them, so remove any `@source` that points at the library and update CSS or test selectors that matched the old class names.
 - **BbSortable**: keyboard sorting is on by default, so each item, or its drag handle, is now a tab stop. Set `KeyboardSorting="false"` to keep the previous tab order.
 - **BbSortable**: in a cross-list drop between two `BbSortable` lists, the source list's `OnRemove` now runs before the target list's `OnAdd`. Code that relied on the old order must be updated.
+- **Portal hosts**: `BbPortalHost`, `BbOverlayPortalHost`, `BbContainerPortalHost` and `BbCategoryPortalHost` move from the `BlazorBlueprint.Primitives.Services` namespace to `BlazorBlueprint.Primitives`. Without the new `@using`, Razor emits a literal `<bbportalhost>` element with no build error and no portal host.
+- **NavigationMenuContext**: `RegisterTrigger(ElementReference)` and `UpdateTriggerRef(int, ElementReference)` are replaced by `RegisterTrigger(object, ElementReference)`, `UnregisterTrigger(object)` and `TriggerIndexOf(object)`. A trigger is keyed by the component now, not by a position.
+- **INativeOverlayService** gains `FallBackToJavaScript()`. A custom implementation of the interface must add it.
 
 ### New Components
 
@@ -22,7 +25,7 @@
 
 ### New Features
 
-- **Native dialog rendering**: **BbDialog** gains a `RenderingStrategy` parameter. Set it to `OverlayRenderingStrategy.Native` to render a browser `<dialog>` element driven by `showModal()`, which works across Blazor render-mode boundaries and does not need a portal host. When the browser lacks `showModal()` support, a warning is logged and the dialog does not render as a modal.
+- **Native dialog rendering**: **BbDialog** gains a `RenderingStrategy` parameter. Set it to `OverlayRenderingStrategy.Native` to render a browser `<dialog>` element driven by `showModal()`, which works across Blazor render-mode boundaries and does not need a portal host.
 - **OverlayRenderingOptions**: `AddBlazorBlueprintPrimitives` now accepts a configure callback to set a global `DefaultStrategy` for all overlays.
 - **INativeOverlayService**: new scoped service that resolves the effective rendering strategy and drives the native `<dialog>` element (show, close, focus, and lifecycle events).
 - **BbDialogContent** gains `CloseOnOverlayClick` to control whether a backdrop click closes a native dialog.
@@ -45,12 +48,17 @@
 - **BbSortable** gains `CanMove` and `CanDrop`, which reject a reorder or a cross-list drop before any list callback runs.
 - **BbSortable** gains `DragOverlayTemplate`, a decorative preview that follows the pointer during a drag. Setting it turns on the fallback renderer.
 - **BbSortable**: when `Handle` is not set, an element marked `data-bb-sortable-handle` inside an item becomes the drag handle. A disabled handle cannot start a drag.
+- **BbSortable** gains `MovedAnnouncement`, `RemovedAnnouncement`, `ReceivedAnnouncement`, `MoveRejectedAnnouncement` and `DropRejectedAnnouncement`, so a localized app can translate the live-region text that was hard-coded English.
 - **BbToggleGroup** gains `Required`, which stops the user from clearing the last selected value.
 - **Theme scopes**: an overlay or a sortable drag preview opened from inside an element marked `data-bb-theme-scope` copies that element's theme CSS variables and font, and follows changes to them while open.
 - **Tree keyboard navigation**: in a tree marked `data-tree-select="true"`, Space expands or collapses a branch without changing the value, and Enter selects the item or toggles its checkbox.
+- **BbDialog**, **BbDialogPortal**, **BbPopover**, **BbHoverCard** and **BbSheet** accept `AdditionalAttributes`. These roots render no element of their own, so the attributes have nowhere to land and are reported once per component instance.
+- **HoverCardContext** gains `CancelPendingClose()` and `PendingCloseCancelled`, so the trigger and the content can cancel each other's close timer.
+- **INativeOverlayService.FallBackToJavaScript** stops resolving anything to the native strategy, so every later overlay renders through the JavaScript strategy.
 
 ### Bug Fixes
 
+- **BbContextMenuContent**: a menu opened near the right or bottom edge of the viewport now flips back across the pointer, or clamps to the edge, instead of opening partly off-screen.
 - **Overlays**: Escape now closes only the topmost open overlay. A popover inside a dialog no longer closes the dialog on the first press.
 - **Overlays**: the close waits only for the overlay's own finite exit animation. A spinner or a child transition (tree chevron, hovered row, checkbox) no longer makes a closed popup reappear briefly.
 - **Overlays**: navigating away from an open select, popover or menu no longer logs `System.ArgumentException: There is no tracked object`.
@@ -72,12 +80,30 @@
 - **BbSortable** no longer calls `OnUpdate` for a move with an out-of-range or unchanged index, or when `Sort` is false.
 - **JavaScript modules**: a browser or CDN that serves a stale copy of a bundled module no longer kills the circuit at the first call. The bundle fails at load with an error that names the file and says what to do.
 - **NavigationMenuContext**: the close timer catches every exception, so an unexpected error in the fire-and-forget handler can no longer close the Blazor Server circuit.
+- **Overlay roots**: extra HTML attributes splatted onto `BbDialog`, `BbPopover`, `BbHoverCard` or `BbSheet` no longer throw `InvalidOperationException`. A single `data-testid` on a styled wrapper crashed the render.
+- **ARIA state attributes** bound to a bool rendered an empty value when true and vanished when false. `BbCollapsibleTrigger`, `BbCollapsibleContent`, `BbMenubarTrigger` and `BbTabsTrigger` now write `"true"` or `"false"`.
+- **BbRadioGroup** suppressed the default action of every key, so Tab could not leave the group. Only the arrow keys are suppressed now.
+- **BbSwitch** toggled twice for one Space press and ended where it started. The button's own click is the only handler now.
+- **BbToggleGroupItem** in single mode announced as a radio with no state. It renders `aria-checked` with `role="radio"` and `aria-pressed` with `role="button"`, and the group root uses `role="radiogroup"` in single mode.
+- **BbToggleGroupItem** never unregistered from its group, so arrow keys stepped onto buttons that had left the page. Arrow navigation now starts from the item that actually holds focus after a click or a Tab.
+- **BbDropdownMenuTrigger** with `AsChild`: Enter or Space opened the menu and closed it again, because the trigger toggled and the child button's own click toggled back.
+- **BbHoverCard**: moving the pointer from the trigger onto the card no longer closes it. The trigger's close timer is now cancelled as well as the content's.
+- **BbHoverCardContent** wrote the enum name into `data-side` instead of the CSS value.
+- **BbMenubarContent** and **BbDashboardWidget**: a consumer `style` no longer replaces the component's own. Any style at all left a closed menubar panel on screen and dropped a widget out of the grid.
+- **BbNavigationMenuTrigger**: every trigger registered into the same slot, so arrow keys moved to the wrong button. Registration is keyed by the trigger and removed when it is disposed.
+- **BbDialog** and **BbSheet** declared a `Dispose` method but not `IDisposable`, so Blazor never called it. Each root left a handler attached to its context.
+- **BbPortalHost**: a live host reported itself missing and every portal logged the warning. Host registration is a clamped count, because two hosts overlap during a layout swap.
+- **AddBlazorBlueprintPrimitives** configures an already registered `OverlayRenderingOptions` in place. Calling it before `AddBlazorBlueprintComponents` no longer loses the caller's configuration.
+- **Native dialog**: a browser without `<dialog>.showModal()` now falls back to the JavaScript strategy. It used to log a warning and render a dialog with no backdrop, no focus trap and no Escape.
+- **primitives.css** defines the few utility classes the primitives render themselves. In an app without the Components stylesheet, screen-reader-only text showed as ordinary paragraphs and the menubar dismiss overlay had no size to click.
 
 ### Improvements
 
 - **Package licensing**: the NuGet package now includes `LICENSE`, `NOTICE` and `THIRD-PARTY-NOTICES.txt` (also served at `_content/BlazorBlueprint.Primitives/THIRD-PARTY-NOTICES.txt`), and the bundled Floating UI file carries its MIT license header.
 - **README** documents the JavaScript bundle, the `overlay.open` pattern, the rules for adding a primitive that needs JavaScript, and the bundled license notices.
 - **BbSortable** renders each item with `role="listitem"` and a `data-bb-sortable-item` attribute, and gives its live status region and keyboard instructions stable ids.
+- **README** documents the `_content/BlazorBlueprint.Primitives/css/primitives.css` link and what breaks without it.
+- **Missing portal host warning** now names the namespace move first, together with the `RZ10023` error that gives the mistake away.
 
 ### Performance
 

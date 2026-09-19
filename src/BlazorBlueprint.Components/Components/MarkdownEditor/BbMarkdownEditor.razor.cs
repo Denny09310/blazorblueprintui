@@ -147,7 +147,7 @@ public partial class BbMarkdownEditor : ComponentBase, IAsyncDisposable
         "bb:[&_h1]:text-2xl bb:[&_h1]:font-bold bb:[&_h1]:mb-2",
         "bb:[&_h2]:text-xl bb:[&_h2]:font-bold bb:[&_h2]:mb-2",
         "bb:[&_h3]:text-lg bb:[&_h3]:font-bold bb:[&_h3]:mb-2",
-        "bb:[&_p]:mb-2 bb:[&_ul]:list-disc bb:[&_ul]:ml-4 bb:[&_ol]:list-decimal bb:[&_ol]:ml-4",
+        "bb:[&_p]:mb-2 bb:[&_ul]:list-disc bb:[&_ul]:ms-4 bb:[&_ol]:list-decimal bb:[&_ol]:ms-4",
         "bb:[&_li]:mb-1 bb:[&_strong]:font-bold bb:[&_em]:italic bb:[&_u]:underline"
     );
 

@@ -1,0 +1,130 @@
+@page "/components/image"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Image - Blazor Blueprint</PageTitle>
+
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Image</h1>
+        <p class="text-xl text-muted-foreground">
+            An image that shows something sensible when the source cannot be loaded.
+        </p>
+    </div>
+
+    <div class="rounded-r-lg border-s-4 border-primary bg-primary/5 p-4">
+        <p class="text-sm text-muted-foreground">
+            A bare <code class="rounded bg-muted px-1 py-0.5 text-xs">&lt;img&gt;</code> with a dead
+            URL leaves a broken-icon box and the alt text, which reads as a bug in the page rather
+            than missing data.
+        </p>
+    </div>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Fit</h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">Cover</code> crops to fill the
+                box, which is what a fixed-size thumbnail wants.
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">Contain</code> leaves space
+                instead.
+            </p>
+        </div>
+        <div class="grid grid-cols-2 gap-4 rounded-lg border p-6 sm:grid-cols-4">
+            @foreach (var fit in new[] { ImageFit.Cover, ImageFit.Contain, ImageFit.Fill, ImageFit.ScaleDown })
+            {
+                <div class="space-y-2">
+                    <BbImage Src="@Photo" Alt="A placeholder landscape" Fit="@fit" Lazy="false"
+                             Class="bb:h-24 bb:w-full bb:rounded-md bb:border" />
+                    <p class="text-xs text-muted-foreground">@fit</p>
+                </div>
+            }
+        </div>
+        <CodeBlock Source="Components/Image/basic.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Fallback</h2>
+            <p class="text-sm text-muted-foreground">
+                All four sources below are broken. The fallback keeps the image's accessible name,
+                so a screen reader still describes what should have been there. Your classes apply
+                to the fallback too, so a round thumbnail stays round.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-end gap-6 rounded-lg border p-6">
+            <div class="space-y-2">
+                <BbImage Src="@Broken" Alt="Mathew Taylor" Fit="ImageFit.Cover" Lazy="false"
+                         Class="bb:h-16 bb:w-16 bb:rounded-full">
+                    <Fallback><span class="bb:text-sm bb:font-medium">MT</span></Fallback>
+                </BbImage>
+                <p class="text-xs text-muted-foreground">Initials</p>
+            </div>
+            <div class="space-y-2">
+                <BbImage Src="@Broken" Alt="A report chart" Fit="ImageFit.Cover" Lazy="false"
+                         Class="bb:h-16 bb:w-24 bb:rounded-md">
+                    <Fallback><LucideIcon Name="chart-column" Class="bb:h-5 bb:w-5" /></Fallback>
+                </BbImage>
+                <p class="text-xs text-muted-foreground">An icon</p>
+            </div>
+            <div class="space-y-2">
+                <BbImage Src="@Broken" FallbackSrc="@Photo" Alt="A placeholder landscape" Lazy="false"
+                         Fit="ImageFit.Cover" Class="bb:h-16 bb:w-24 bb:rounded-md" />
+                <p class="text-xs text-muted-foreground">A second URL</p>
+            </div>
+            <div class="space-y-2">
+                <BbImage Src="@Broken" Alt="Nothing to show" Lazy="false"
+                         Class="bb:h-16 bb:w-24 bb:rounded-md" />
+                <p class="text-xs text-muted-foreground">Default placeholder</p>
+            </div>
+        </div>
+        <CodeBlock Source="Components/Image/fallback.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Reporting a failure</h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">OnError</code> fires as well as
+                the fallback rendering, so a dead URL can be logged rather than only drawn.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-6">
+            <BbImage Src="@Broken" Alt="A broken source" Lazy="false"
+                     OnError="@(() => failures++)"
+                     Class="bb:h-16 bb:w-24 bb:rounded-md" />
+            <p role="status" class="text-sm text-muted-foreground">
+                Failures reported: @failures
+            </p>
+        </div>
+    </section>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The fallback renders with <code>role="img"</code> and the same <code>Alt</code>, so the accessible name survives the swap.</AccessibilityItem>
+            <AccessibilityItem>A decorative image should pass an empty <code>Alt</code>, which hides it from a screen reader rather than describing it badly.</AccessibilityItem>
+            <AccessibilityItem>Images are lazy by default. Turn <code>Lazy</code> off above the fold, where deferring the load delays the largest paint rather than helping it.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="The component takes no focus of its own"><BbKbd>None</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+        <ApiReference Since="v4" ComponentName="BbImage">
+            <ApiParameter Name="Src / Alt" Type="string?">The image URL and its alternative text. Both required; pass an empty Alt for a decorative image.</ApiParameter>
+            <ApiParameter Name="Fallback" Type="RenderFragment?">Content shown when the image fails. Takes precedence over FallbackSrc.</ApiParameter>
+            <ApiParameter Name="FallbackSrc" Type="string?">A second URL to try. A failure of this one is not retried, so a missing pair cannot loop.</ApiParameter>
+            <ApiParameter Name="Fit" Type="ImageFit" Default="None">None, Cover, Contain, Fill or ScaleDown.</ApiParameter>
+            <ApiParameter Name="Lazy" Type="bool" Default="true">Defers loading until the image is near the viewport.</ApiParameter>
+            <ApiParameter Name="OnError / OnLoad" Type="EventCallback">Raised when the image fails or finishes loading.</ApiParameter>
+            <ApiParameter Name="Class / AdditionalAttributes" Type="string? / Dictionary&lt;string, object&gt;?">Additional CSS classes, which apply to the fallback too, and HTML attributes for the image element.</ApiParameter>
+        </ApiReference>
+    </section>
+</div>
+
+@code {
+    private const string Photo = "_content/BlazorBlueprint.Demo.Shared/images/placeholder-landscape.svg";
+    private const string Broken = "_content/BlazorBlueprint.Demo.Shared/images/does-not-exist.png";
+    private int failures;
+}

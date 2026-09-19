@@ -1,0 +1,4 @@
+<BbSankeyChart Data="@flows" Height="320px">
+    <BbChartTooltip />
+    <BbSankey SourceKey="from" TargetKey="to" DataKey="value" />
+</BbSankeyChart>

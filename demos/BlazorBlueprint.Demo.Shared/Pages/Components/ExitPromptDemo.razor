@@ -1,0 +1,141 @@
+@page "/components/exit-prompt"
+
+<PageTitle>Exit Prompt - Blazor Blueprint</PageTitle>
+
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Exit Prompt</h1>
+        <p class="text-xl text-muted-foreground">
+            Holds a navigation while there is unsaved work, and asks before letting it go.
+        </p>
+    </div>
+
+    <div class="rounded-r-lg border-s-4 border-primary bg-primary/5 p-4">
+        <p class="text-sm text-muted-foreground">
+            <strong>Two different departures.</strong> A navigation inside the application is held
+            and this component's own dialog is shown. Closing the tab, reloading, or following a
+            link out of the application arms the browser's own prompt — browsers deliberately
+            ignore a custom message there and show their own wording, which cannot be changed from
+            script. That is why the in-application case is handled separately.
+        </p>
+    </div>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Guarding a form</h2>
+            <p class="text-sm text-muted-foreground">
+                Type in the field to make the form dirty, then use the link below it. The
+                navigation is held until you answer. Saving clears the guard.
+            </p>
+        </div>
+        <div class="space-y-4 rounded-lg border p-6">
+            <BbExitPrompt Enabled="@dirty"
+                          OnPrompted="@(() => status = "A navigation was held.")"
+                          OnStayed="@(() => status = "You stayed. The draft is intact.")"
+                          OnLeft="@(() => status = "You left. The draft was discarded.")" />
+
+            <div class="max-w-sm space-y-3">
+                <BbFormFieldInput Label="Draft title" Value="@title" ValueChanged="@OnTitleChanged" TValue="string" />
+                <div class="flex items-center gap-2">
+                    <BbButton OnClick="Save" Disabled="@(!dirty)">Save</BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" OnClick="Reset">Reset</BbButton>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4 border-t pt-4 text-sm">
+                <BbLink Href="/components/link">Navigate away to the Link page</BbLink>
+                <span class="text-muted-foreground">
+                    Guard is @(dirty ? "armed" : "down").
+                </span>
+            </div>
+
+            <p role="status" class="text-sm text-muted-foreground">@status</p>
+        </div>
+        <CodeBlock Source="Components/ExitPrompt/basic.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Wording</h2>
+            <p class="text-sm text-muted-foreground">
+                The title, body and both buttons take your text, or the localized defaults. This
+                applies to the in-application dialog only.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-6 text-sm">
+            <p class="text-muted-foreground">
+                Defaults: <strong class="text-foreground">Leave without saving?</strong> —
+                "Your changes have not been saved. If you leave now, they are lost." with
+                <strong class="text-foreground">Stay on this page</strong> and
+                <strong class="text-foreground">Leave and discard</strong>.
+            </p>
+        </div>
+    </section>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The prompt is a <code>BbAlertDialog</code>, so it traps focus, is announced as a dialog, and cannot be dismissed by a click outside — the choice has to be made.</AccessibilityItem>
+            <AccessibilityItem>Escape counts as staying, which is the safe answer for an unsaved draft.</AccessibilityItem>
+            <AccessibilityItem>Nothing renders until a navigation is actually held, so an armed prompt adds no markup and no tab stop.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between the two answers"><BbKbd>Tab / Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Cancel the navigation and keep the work"><BbKbd>Escape</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <LocalizationSection
+        Description="Every string in the in-application dialog is configurable. The browser's own prompt shows its own wording and cannot be changed."
+        Labels="@(new LocalizationSection.LabelInfo[]
+        {
+            new("ExitPrompt.Title", "Leave without saving?", "Dialog title"),
+            new("ExitPrompt.Message", "Your changes have not been saved…", "Dialog body"),
+            new("ExitPrompt.Stay", "Stay on this page", "Cancels the navigation"),
+            new("ExitPrompt.Leave", "Leave and discard", "Continues the navigation"),
+        })"
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
+{
+    localizer.Set(""ExitPrompt.Title"", ""Ohne Speichern verlassen?"");
+    localizer.Set(""ExitPrompt.Stay"", ""Auf dieser Seite bleiben"");
+});")" />
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+        <ApiReference Since="v4" ComponentName="BbExitPrompt">
+            <ApiParameter Name="Enabled" Type="bool" Default="false">Whether there is unsaved work to guard. Nothing is intercepted while false.</ApiParameter>
+            <ApiParameter Name="Title / Message" Type="string?">The dialog title and body. Default to the localized strings.</ApiParameter>
+            <ApiParameter Name="StayLabel / LeaveLabel" Type="string?">The two button labels.</ApiParameter>
+            <ApiParameter Name="OnPrompted" Type="EventCallback">Raised when a navigation is held and the dialog shown.</ApiParameter>
+            <ApiParameter Name="OnLeft / OnStayed" Type="EventCallback">Raised when the navigation continues, or is cancelled.</ApiParameter>
+        </ApiReference>
+    </section>
+</div>
+
+@code {
+    private const string Original = "Quarterly report";
+
+    private string title = Original;
+    private bool dirty;
+    private string status = "The guard arms as soon as the field changes.";
+
+    private void OnTitleChanged(string value)
+    {
+        title = value;
+        // Compared against the saved value rather than "has it ever been touched", so typing a
+        // change and undoing it puts the guard back down.
+        dirty = !string.Equals(title, Original, StringComparison.Ordinal);
+    }
+
+    private void Save()
+    {
+        dirty = false;
+        status = "Saved. The guard is down.";
+    }
+
+    private void Reset()
+    {
+        title = Original;
+        dirty = false;
+        status = "Reset. The guard is down.";
+    }
+}

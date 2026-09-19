@@ -173,6 +173,19 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
                 series.Center = ["50%", centerY];
                 ShrinkPieRadius(series, 0.85);
             }
+            // A sankey places itself rather than sitting in the grid, so it has to be told to
+            // leave the legend's edge alone or the two draw over each other.
+            else if (series.Type is "sankey")
+            {
+                if (legendAtBottom)
+                {
+                    series.Bottom = gridPadding;
+                }
+                else
+                {
+                    series.Top = gridPadding;
+                }
+            }
         }
 
         // Radar: shift center and shrink radius

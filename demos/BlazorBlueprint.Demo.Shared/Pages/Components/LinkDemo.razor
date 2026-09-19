@@ -1,0 +1,128 @@
+@page "/components/link"
+
+<PageTitle>Link - Blazor Blueprint</PageTitle>
+
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Link</h1>
+        <p class="text-xl text-muted-foreground">
+            A styled anchor for a link inside text.
+        </p>
+    </div>
+
+    <div class="rounded-r-lg border-s-4 border-primary bg-primary/5 p-4">
+        <p class="text-sm text-muted-foreground">
+            <strong>Link or Button?</strong> A
+            <code class="rounded bg-muted px-1 py-0.5 text-xs">BbButton</code> with
+            <code class="rounded bg-muted px-1 py-0.5 text-xs">ButtonVariant.Link</code> looks like
+            a link but keeps a button's height and padding, so it breaks the rhythm of a paragraph.
+            Use the button for an action, and this for navigation.
+        </p>
+    </div>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">In a paragraph</h2>
+        <div class="rounded-lg border p-6">
+            <p class="text-sm leading-relaxed">
+                A link sits on the text baseline, so it does not change the line height around it.
+                Read the <BbLink Href="/guides/rtl">right-to-left guide</BbLink> before you start,
+                then look at <BbLink Href="/components/button">buttons</BbLink> for the difference
+                between navigation and an action. A link that wraps across a line break still
+                shows one focus ring for the whole
+                <BbLink Href="/components/typography">run of text rather than one ring per line</BbLink>.
+            </p>
+        </div>
+        <CodeBlock Source="Components/Link/basic.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Variants</h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">Inherit</code> takes the
+                surrounding text colour, for a link that should not pull the eye.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-6 rounded-lg border p-6 text-sm">
+            <BbLink Href="#">Default</BbLink>
+            <span class="text-muted-foreground">Inside muted text: <BbLink Href="#" Variant="LinkVariant.Inherit">Inherit</BbLink></span>
+            <BbLink Href="#" Variant="LinkVariant.Muted">Muted</BbLink>
+            <BbLink Href="#" Variant="LinkVariant.Destructive">Destructive</BbLink>
+        </div>
+        <CodeBlock Source="Components/Link/variants.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Underline</h2>
+            <p class="text-sm text-muted-foreground">
+                Underlined on hover and focus by default.
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">Always</code> is the safest
+                choice inside a block of text, because colour alone is not an accessible cue.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-6 rounded-lg border p-6 text-sm">
+            <BbLink Href="#" Underline="LinkUnderline.Hover">On hover (default)</BbLink>
+            <BbLink Href="#" Underline="LinkUnderline.Always">Always</BbLink>
+            <BbLink Href="#" Underline="LinkUnderline.None">Never</BbLink>
+        </div>
+        <CodeBlock Source="Components/Link/underline.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Opening elsewhere</h2>
+            <p class="text-sm text-muted-foreground">
+                A link with <code class="rounded bg-muted px-1 py-0.5 text-xs">Target="_blank"</code>
+                gets <code class="rounded bg-muted px-1 py-0.5 text-xs">rel="noopener noreferrer"</code>
+                automatically, so the opened page cannot reach back into this one. The icon carries
+                a screen-reader note, so the new tab is announced and not only drawn.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-6 rounded-lg border p-6 text-sm">
+            <BbLink Href="https://github.com/blazorblueprintui/ui" Target="_blank" ShowExternalIcon="true">
+                Blazor Blueprint on GitHub
+            </BbLink>
+            <BbLink Href="#" Disabled="true">Disabled</BbLink>
+        </div>
+        <CodeBlock Source="Components/Link/external.txt" />
+    </section>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>A disabled link drops its <code>href</code> and its tab stop, so it is neither followed nor reached by keyboard.</AccessibilityItem>
+            <AccessibilityItem>The external-link icon is followed by hidden text, so the destination is announced.</AccessibilityItem>
+            <AccessibilityItem>The focus ring follows the text rather than a box, so a link that wraps mid-sentence reads as one link.</AccessibilityItem>
+            <AccessibilityItem>Underline on hover also applies on focus, so a keyboard user gets the same cue as a pointer user.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move to the link"><BbKbd>Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Follow the link"><BbKbd>Enter</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <LocalizationSection
+        Description="The screen-reader note beside the external-link icon is configurable."
+        Labels="@(new LocalizationSection.LabelInfo[]
+        {
+            new("Link.OpensInNewTab", "(opens in a new tab)", "Hidden text beside the external-link icon"),
+        })"
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
+{
+    localizer.Set(""Link.OpensInNewTab"", ""(öffnet in einem neuen Tab)"");
+});")" />
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+        <ApiReference Since="v4" ComponentName="BbLink">
+            <ApiParameter Name="Href" Type="string?">The target URL. Required.</ApiParameter>
+            <ApiParameter Name="Target / Rel" Type="string?">The anchor's target and rel. Rel defaults to <code>noopener noreferrer</code> when Target is <code>_blank</code>.</ApiParameter>
+            <ApiParameter Name="Variant" Type="LinkVariant" Default="Default">Default, Inherit, Muted or Destructive.</ApiParameter>
+            <ApiParameter Name="Underline" Type="LinkUnderline" Default="Hover">Hover, Always or None.</ApiParameter>
+            <ApiParameter Name="ShowExternalIcon" Type="bool" Default="false">Appends an external-link icon with a screen-reader note.</ApiParameter>
+            <ApiParameter Name="Disabled / OnClick" Type="bool / EventCallback&lt;MouseEventArgs&gt;" Default="false">Disabled state and click callback.</ApiParameter>
+            <ApiParameter Name="ChildContent" Type="RenderFragment?">The link text.</ApiParameter>
+            <ApiParameter Name="Class / AdditionalAttributes" Type="string? / Dictionary&lt;string, object&gt;?">Additional CSS classes and HTML attributes.</ApiParameter>
+        </ApiReference>
+    </section>
+</div>

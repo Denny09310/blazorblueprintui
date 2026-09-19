@@ -42,7 +42,7 @@
                     <span class="bb:text-muted-foreground">@EffectivePlaceholder</span>
                 }
             </div>
-            <div class="bb:flex bb:shrink-0 bb:items-center bb:gap-1 bb:ml-2">
+            <div class="bb:flex bb:shrink-0 bb:items-center bb:gap-1 bb:ms-2">
                 @if (HasSelectedItems && OverflowCount > 0 && SingleLine)
                 {
                     <span class="bb:shrink-0 bb:whitespace-nowrap bb:text-xs bb:text-muted-foreground">+@OverflowCount more</span>
@@ -83,7 +83,7 @@
                      stroke-width="2"
                      stroke-linecap="round"
                      stroke-linejoin="round"
-                     class="bb:mr-2 bb:h-4 bb:w-4 bb:shrink-0 bb:opacity-50">
+                     class="bb:me-2 bb:h-4 bb:w-4 bb:shrink-0 bb:opacity-50">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
                 </svg>
@@ -94,7 +94,7 @@
                        @bind="_searchQuery"
                        @bind:event="oninput"
                        @bind:after="HandleSearchQueryChangedAsync"
-                       class="bb:flex bb:h-11 bb:w-full bb:rounded-md bb:bg-transparent bb:py-3 bb:text-sm bb:outline-none bb:placeholder:text-muted-foreground bb:disabled:cursor-not-allowed bb:disabled:opacity-50 bb:ml-2" />
+                       class="bb:flex bb:h-11 bb:w-full bb:rounded-md bb:bg-transparent bb:py-3 bb:text-sm bb:outline-none bb:placeholder:text-muted-foreground bb:disabled:cursor-not-allowed bb:disabled:opacity-50 bb:ms-2" />
             </div>
 
             @* Items list section *@

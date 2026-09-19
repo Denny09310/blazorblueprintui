@@ -56,7 +56,7 @@
                         <BlazorBlueprint.Primitives.Table.BbTableRow TData="TData" Class="bb:border-b bb:transition-colors bb:hover:bg-muted/50 bb:data-[state=selected]:bg-muted">
                             @if (SelectionMode == DataTableSelectionMode.Multiple)
                             {
-                                <BlazorBlueprint.Primitives.Table.BbTableHeaderCell TData="TData" Class="bb:h-12 bb:px-4 bb:text-left bb:align-middle bb:font-medium bb:text-muted-foreground bb:w-12" role="columnheader">
+                                <BlazorBlueprint.Primitives.Table.BbTableHeaderCell TData="TData" Class="bb:h-12 bb:px-4 bb:text-start bb:align-middle bb:font-medium bb:text-muted-foreground bb:w-12" role="columnheader">
                                     <div @onclick:stopPropagation="true">
                                         @if (ShouldShowSelectAllPrompt())
                                         {
@@ -101,7 +101,7 @@
                                     : (column.Sortable ? "none" : null);
 
                                 <BlazorBlueprint.Primitives.Table.BbTableHeaderCell TData="TData" ColumnId="@(column.Sortable ? column.Id : null)"
-                                                 Class="@ClassNames.cn("bb:h-12 bb:px-4 bb:text-left bb:align-middle bb:font-medium bb:text-muted-foreground", column.Sortable ? "bb:cursor-pointer bb:select-none" : "", column.HeaderClass)"
+                                                 Class="@ClassNames.cn("bb:h-12 bb:px-4 bb:text-start bb:align-middle bb:font-medium bb:text-muted-foreground", column.Sortable ? "bb:cursor-pointer bb:select-none" : "", column.HeaderClass)"
                                                  style="@GetColumnWidthStyle(column)"
                                                  aria-sort="@ariaSortValue">
                                     <div class="bb:flex bb:items-center bb:gap-2">
@@ -149,7 +149,7 @@
                                 }
                                 @foreach (var column in _columns.Where(c => c.Visible))
                                 {
-                                    <BlazorBlueprint.Primitives.Table.BbTableCell Class="@ClassNames.cn("bb:p-4 bb:align-middle bb:[&:has([role=checkbox])]:pr-0", column.CellClass)">
+                                    <BlazorBlueprint.Primitives.Table.BbTableCell Class="@ClassNames.cn("bb:p-4 bb:align-middle bb:[&:has([role=checkbox])]:pe-0", column.CellClass)">
                                         @if (column.CellTemplate != null)
                                         {
                                             @column.CellTemplate(item)

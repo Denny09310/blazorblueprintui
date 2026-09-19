@@ -1,0 +1,25 @@
+@namespace BlazorBlueprint.Components
+
+@* The dialog is only built while a navigation is actually being held, so an armed prompt that is
+   never triggered costs nothing. *@
+@if (pending is not null)
+{
+    <BbAlertDialog Open="true" OpenChanged="HandleOpenChangedAsync">
+        <BbAlertDialogContent>
+            <BbAlertDialogHeader>
+                <BbAlertDialogTitle>@(Title ?? Localizer["ExitPrompt.Title"])</BbAlertDialogTitle>
+                <BbAlertDialogDescription>
+                    @(Message ?? Localizer["ExitPrompt.Message"])
+                </BbAlertDialogDescription>
+            </BbAlertDialogHeader>
+            <BbAlertDialogFooter>
+                <BbButton Variant="ButtonVariant.Outline" OnClick="StayAsync">
+                    @(StayLabel ?? Localizer["ExitPrompt.Stay"])
+                </BbButton>
+                <BbButton Variant="ButtonVariant.Destructive" OnClick="LeaveAsync">
+                    @(LeaveLabel ?? Localizer["ExitPrompt.Leave"])
+                </BbButton>
+            </BbAlertDialogFooter>
+        </BbAlertDialogContent>
+    </BbAlertDialog>
+}

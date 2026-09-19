@@ -349,15 +349,15 @@ public partial class BbCurrencyInput : ComponentBase
         "bb:aria-[invalid=true]:border-destructive",
         "bb:transition-colors",
         "bb:md:text-sm",
-        "bb:text-right bb:tabular-nums",
-        ShowSymbol && Currency.SymbolBefore ? "bb:border-l-0" : "bb:rounded-l-md",
-        ShowSymbol && !Currency.SymbolBefore ? "bb:border-r-0" : "bb:rounded-r-md",
+        "bb:text-end bb:tabular-nums",
+        ShowSymbol && Currency.SymbolBefore ? "bb:border-s-0" : "bb:rounded-s-md",
+        ShowSymbol && !Currency.SymbolBefore ? "bb:border-e-0" : "bb:rounded-e-md",
         Class
     );
 
     private string SymbolClass => ClassNames.cn(
         "bb:flex bb:h-10 bb:items-center bb:justify-center bb:px-3 bb:border bb:border-input bb:bg-muted bb:text-muted-foreground bb:text-sm",
-        Currency.SymbolBefore ? "bb:border-r-0" : "bb:border-l-0",
+        Currency.SymbolBefore ? "bb:border-e-0" : "bb:border-s-0",
         Disabled ? "bb:opacity-50" : null
     );
 

@@ -157,27 +157,27 @@ public partial class BbAlert : ComponentBase, IAsyncDisposable
         // Base alert styles
         "bb:relative bb:w-full bb:rounded-lg bb:border bb:p-4 bb:text-foreground",
         // Extra right padding for dismiss button
-        Dismissible ? "bb:pr-10" : null,
+        Dismissible ? "bb:pe-10" : null,
         // Extra bottom padding and overflow clip for countdown bar
         ShowCountdown && AutoDismissAfter.HasValue ? "bb:pb-2 bb:overflow-hidden" : null,
         // Accent border style (thick left border)
-        AccentBorder ? "bb:border-l-4" : null,
-        Icon != null ? "bb:[&>svg+div]:translate-y-[-3px] bb:[&>svg]:absolute bb:[&>svg]:left-4 bb:[&>svg]:top-4 bb:[&:has(svg)]:pl-11" : null,
+        AccentBorder ? "bb:border-s-4" : null,
+        Icon != null ? "bb:[&>svg+div]:translate-y-[-3px] bb:[&>svg]:absolute bb:[&>svg]:start-4 bb:[&>svg]:top-4 bb:[&:has(svg)]:ps-11" : null,
         // Variant-specific styles (border color, background tint, icon color)
         Variant switch
         {
             AlertVariant.Default => "bb:bg-muted/30 bb:[&>svg]:text-muted-foreground",
             AlertVariant.Success => AccentBorder
-                ? "bb:border-l-alert-success bb:bg-alert-success-bg bb:border-alert-success/30 bb:[&>svg]:text-alert-success"
+                ? "bb:border-s-alert-success bb:bg-alert-success-bg bb:border-alert-success/30 bb:[&>svg]:text-alert-success"
                 : "bb:border-alert-success/30 bb:bg-alert-success-bg bb:[&>svg]:text-alert-success",
             AlertVariant.Info => AccentBorder
-                ? "bb:border-l-alert-info bb:bg-alert-info-bg bb:border-alert-info/30 bb:[&>svg]:text-alert-info"
+                ? "bb:border-s-alert-info bb:bg-alert-info-bg bb:border-alert-info/30 bb:[&>svg]:text-alert-info"
                 : "bb:border-alert-info/30 bb:bg-alert-info-bg bb:[&>svg]:text-alert-info",
             AlertVariant.Warning => AccentBorder
-                ? "bb:border-l-alert-warning bb:bg-alert-warning-bg bb:border-alert-warning/30 bb:[&>svg]:text-alert-warning"
+                ? "bb:border-s-alert-warning bb:bg-alert-warning-bg bb:border-alert-warning/30 bb:[&>svg]:text-alert-warning"
                 : "bb:border-alert-warning/30 bb:bg-alert-warning-bg bb:[&>svg]:text-alert-warning",
             AlertVariant.Danger => AccentBorder
-                ? "bb:border-l-alert-danger bb:bg-alert-danger-bg bb:border-alert-danger/30 bb:[&>svg]:text-alert-danger"
+                ? "bb:border-s-alert-danger bb:bg-alert-danger-bg bb:border-alert-danger/30 bb:[&>svg]:text-alert-danger"
                 : "bb:border-alert-danger/30 bb:bg-alert-danger-bg bb:[&>svg]:text-alert-danger",
             _ => "bb:bg-muted/30 bb:[&>svg]:text-muted-foreground"
         },

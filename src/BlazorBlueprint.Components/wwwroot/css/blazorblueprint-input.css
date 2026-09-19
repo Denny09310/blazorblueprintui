@@ -622,7 +622,7 @@
   /* Lists */
   [data-slot="rich-text-editor"] .ql-editor ul,
   [data-slot="rich-text-editor"] .ql-editor ol {
-    padding-left: 1.5em;
+    padding-inline-start: 1.5em;
     margin: 0.5em 0;
   }
 
@@ -680,14 +680,14 @@
 /* Timeline right-aligned content */
 @layer components {
   [data-timeline-end] {
-    text-align: right;
+    text-align: end;
   }
 
   /* Flex-column containers (TimelineContent): align children to the right */
   [data-timeline-end] > :where(.bb\:flex-col) {
     align-items: flex-end;
-    padding-left: 0;
-    padding-right: 0.5rem;
+    padding-inline-start: 0;
+    padding-inline-end: 0.5rem;
   }
 
   /* Flex-row containers (TimelineHeader): justify items to the right */
@@ -725,8 +725,8 @@
 
   /* Blockquote - !important required to override Tailwind preflight resets */
   [data-slot="rich-text-editor"] .ql-editor blockquote {
-    border-left: 4px solid var(--border) !important;
-    padding-left: 1em !important;
+    border-inline-start: 4px solid var(--border) !important;
+    padding-inline-start: 1em !important;
     margin: 0.5em 0 !important;
     color: var(--muted-foreground) !important;
     font-style: italic !important;
@@ -786,8 +786,8 @@
       position: relative;
       overflow-x: visible;
       border-bottom-width: 0;
-      border-right-style: var(--tw-border-style);
-      border-right-width: 1px;
+      border-inline-end-style: var(--tw-border-style);
+      border-inline-end-width: 1px;
       min-width: 140px;
       padding: 0;
     }

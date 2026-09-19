@@ -80,6 +80,10 @@
 
 ### BbContainerPortalHost (BlazorBlueprint.Primitives)
 
+### BbDirectionProvider (BlazorBlueprint.Primitives)
+  - ChildContent : RenderFragment
+  - Direction : TextDirection
+
 ### BbOverlayPortalHost (BlazorBlueprint.Primitives)
 
 ### BbPortalHost (BlazorBlueprint.Primitives)
@@ -604,6 +608,7 @@
   - Required : Boolean
   - Value : TValue
   - ValueChanged : EventCallback<TValue>
+  - Direction : DirectionContext [CascadingParameter]
 
 ### BbScrollArea (BlazorBlueprint.Primitives.ScrollArea)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -746,6 +751,7 @@
   - Step : Double
   - Value : Double?
   - ValueChanged : EventCallback<Double>
+  - Direction : DirectionContext [CascadingParameter]
 
 ### BbSliderRange (BlazorBlueprint.Primitives.Slider)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -891,6 +897,7 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - Context : TabsContext [CascadingParameter]
+  - Direction : DirectionContext [CascadingParameter]
 
 ### BbTabsTrigger (BlazorBlueprint.Primitives.Tabs)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -929,6 +936,7 @@
   - ValueChanged : EventCallback<TValue>
   - Values : List<TValue>
   - ValuesChanged : EventCallback<List<TValue>>
+  - Direction : DirectionContext [CascadingParameter]
 
 ### BbTooltip (BlazorBlueprint.Primitives.Tooltip)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -1171,6 +1179,11 @@
 ### TabsOrientation (BlazorBlueprint.Primitives.Tabs)
   - Horizontal = 0
   - Vertical = 1
+
+### TextDirection (BlazorBlueprint.Primitives)
+  - Auto = 0
+  - LeftToRight = 1
+  - RightToLeft = 2
 
 ### ToggleGroupType (BlazorBlueprint.Primitives.Toggle)
   - Single = 0

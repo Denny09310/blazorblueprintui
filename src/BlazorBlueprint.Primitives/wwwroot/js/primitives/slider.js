@@ -18,8 +18,12 @@ export function initialize(trackElement, dotNetRef, sliderId, options) {
     const vertical = (trackElement.getAttribute('data-orientation') ?? options?.orientation) === 'vertical';
     const size = vertical ? rect.height : rect.width;
     if (size <= 0) return;
+    // A horizontal track fills from its reading edge, so in a right-to-left slider the
+    // distance is measured from the right: clicking the left end must mean the maximum.
+    const rtl = getComputedStyle(trackElement).direction === 'rtl';
+    const horizontal = rtl ? (rect.right - e.clientX) / size : (e.clientX - rect.left) / size;
     const percentage = Math.max(0, Math.min(1, vertical
-      ? 1 - (e.clientY - rect.top) / size : (e.clientX - rect.left) / size));
+      ? 1 - (e.clientY - rect.top) / size : horizontal));
     const min = Number(trackElement.getAttribute('data-min') ?? 0);
     const max = Number(trackElement.getAttribute('data-max') ?? 100);
     const step = Number(trackElement.getAttribute('data-step') ?? 1);

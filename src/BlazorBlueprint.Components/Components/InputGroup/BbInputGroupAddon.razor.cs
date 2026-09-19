@@ -131,18 +131,18 @@ public partial class BbInputGroupAddon : ComponentBase
 
             var alignmentClasses = Align switch
             {
-                InputGroupAlign.InlineStart => "bb:pl-3 bb:pr-0 bb:py-0", // Left edge spacing + no gap to input (input has its own pl-3)
-                InputGroupAlign.InlineEnd => "bb:pr-3 bb:pl-0 bb:py-0", // Right edge spacing + no gap from input (input has its own pr-3)
+                InputGroupAlign.InlineStart => "bb:ps-3 bb:pe-0 bb:py-0", // Leading edge spacing + no gap to input (the input has its own ps-3)
+                InputGroupAlign.InlineEnd => "bb:pe-3 bb:ps-0 bb:py-0", // Trailing edge spacing + no gap from input (the input has its own pe-3)
                 InputGroupAlign.BlockStart => "bb:px-3 bb:pt-2 bb:pb-1 bb:w-full", // Removed border for seamless integration
                 InputGroupAlign.BlockEnd => "bb:px-3 bb:pb-2 bb:pt-1 bb:w-full", // Removed border for seamless integration
-                _ => "bb:pl-3 bb:pr-0 bb:py-0"
+                _ => "bb:ps-3 bb:pe-0 bb:py-0"
             };
 
             // Adjust for button children - create uniform 6px spacing on all sides
             var buttonAdjustments = Align switch
             {
-                InputGroupAlign.InlineStart => "bb:has-[>button]:pl-1.5 bb:has-[>button]:!py-1.5", // Uniform 6px spacing all sides
-                InputGroupAlign.InlineEnd => "bb:has-[>button]:pr-1.5 bb:has-[>button]:!py-1.5", // Uniform 6px spacing all sides
+                InputGroupAlign.InlineStart => "bb:has-[>button]:ps-1.5 bb:has-[>button]:!py-1.5", // Uniform 6px spacing all sides
+                InputGroupAlign.InlineEnd => "bb:has-[>button]:pe-1.5 bb:has-[>button]:!py-1.5", // Uniform 6px spacing all sides
                 InputGroupAlign.BlockStart => "bb:has-[>button]:-mt-1 bb:has-[>button]:pt-1",
                 InputGroupAlign.BlockEnd => "bb:has-[>button]:-mb-1 bb:has-[>button]:pb-1",
                 _ => ""

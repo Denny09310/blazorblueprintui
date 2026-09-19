@@ -94,7 +94,7 @@ public partial class BbSeparator : ComponentBase
             : "bb:h-full bb:w-[1px]",
         LineStyle != SeparatorLineStyle.Solid ? "bb:bg-transparent bb:border-border" : null,
         LineStyle == SeparatorLineStyle.Dashed ? "bb:border-dashed" : LineStyle == SeparatorLineStyle.Dotted ? "bb:border-dotted" : null,
-        LineStyle != SeparatorLineStyle.Solid ? Orientation == SeparatorOrientation.Horizontal ? "bb:h-0 bb:border-t" : "bb:w-0 bb:border-l" : null,
+        LineStyle != SeparatorLineStyle.Solid ? Orientation == SeparatorOrientation.Horizontal ? "bb:h-0 bb:border-t" : "bb:w-0 bb:border-s" : null,
         Class
     );
 

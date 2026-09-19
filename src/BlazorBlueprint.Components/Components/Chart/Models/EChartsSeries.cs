@@ -211,6 +211,38 @@ internal sealed class EChartsSeriesOption
     [JsonPropertyName("title")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public EChartsSeriesTitleOption? Title { get; set; }
+
+    // Rose properties
+
+    [JsonPropertyName("roseType")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? RoseType { get; set; }
+
+    // Sankey properties
+
+    [JsonPropertyName("links")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<object?>? Links { get; set; }
+
+    [JsonPropertyName("orient")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Orient { get; set; }
+
+    [JsonPropertyName("nodeAlign")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? NodeAlign { get; set; }
+
+    [JsonPropertyName("nodeWidth")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? NodeWidth { get; set; }
+
+    [JsonPropertyName("nodeGap")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? NodeGap { get; set; }
+
+    [JsonPropertyName("draggable")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? Draggable { get; set; }
 }
 
 internal sealed class EChartsBackgroundStyleOption

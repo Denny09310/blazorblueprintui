@@ -24,6 +24,11 @@
 </CascadingValue>
 
 @code {
+    /// <summary>The writing direction, when a BbDirectionProvider supplies one.</summary>
+    [CascadingParameter] private DirectionContext? Direction { get; set; }
+
+    private bool IsRtl => DirectionContext.Resolve(Direction);
+
     private ElementReference trackRef;
     private double internalValue;
     private IJSObjectReference? jsModule;
@@ -195,15 +200,23 @@
 
         switch (e.Key)
         {
-            case "ArrowRight":
             case "ArrowUp":
                 shouldPreventDefault = true;
                 await SetValueAsync(CurrentValue + stepSize);
                 break;
-            case "ArrowLeft":
             case "ArrowDown":
                 shouldPreventDefault = true;
                 await SetValueAsync(CurrentValue - stepSize);
+                break;
+            // The horizontal arrows move along the track as it is drawn, so they swap in a
+            // right-to-left slider. Up and Down keep their meaning either way.
+            case "ArrowRight":
+                shouldPreventDefault = true;
+                await SetValueAsync(CurrentValue + (IsRtl ? -stepSize : stepSize));
+                break;
+            case "ArrowLeft":
+                shouldPreventDefault = true;
+                await SetValueAsync(CurrentValue + (IsRtl ? stepSize : -stepSize));
                 break;
             case "PageUp":
                 shouldPreventDefault = true;

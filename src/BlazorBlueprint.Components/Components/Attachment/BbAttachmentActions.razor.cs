@@ -26,6 +26,6 @@ public partial class BbAttachmentActions : ComponentBase
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "bb:relative bb:z-20 bb:flex bb:shrink-0 bb:items-center bb:group-data-[orientation=vertical]/attachment:absolute bb:group-data-[orientation=vertical]/attachment:top-3 bb:group-data-[orientation=vertical]/attachment:right-3 bb:group-data-[orientation=vertical]/attachment:gap-1",
+        "bb:relative bb:z-20 bb:flex bb:shrink-0 bb:items-center bb:group-data-[orientation=vertical]/attachment:absolute bb:group-data-[orientation=vertical]/attachment:top-3 bb:group-data-[orientation=vertical]/attachment:end-3 bb:group-data-[orientation=vertical]/attachment:gap-1",
         Class);
 }

@@ -7,7 +7,7 @@
                 Class="@ButtonCssClass"
                 Disabled="@Disabled"
                 @attributes="AdditionalAttributes">
-            <LucideIcon Name="calendar" Class="bb:mr-2 bb:h-4 bb:w-4" />
+            <LucideIcon Name="calendar" Class="bb:me-2 bb:h-4 bb:w-4" />
             @if (Value != null)
             {
                 <span>@FormatRange(Value)</span>
@@ -90,7 +90,7 @@
                             @if (ShowTwoMonths)
                             {
                                 @* Second Calendar *@
-                                <div class="bb:hidden bb:flex-1 bb:border-l" data-drp-calendar-2>
+                                <div class="bb:hidden bb:flex-1 bb:border-s" data-drp-calendar-2>
                                     <div class="bb:flex bb:items-center bb:justify-between bb:mb-3">
                                         <div class="bb:w-7"></div>
                                         <span class="bb:text-sm bb:font-medium">@GetMonthName(_displayMonth2.Month) @_displayMonth2.Year</span>
@@ -145,7 +145,7 @@
                     @if (ShowTwoMonths)
                     {
                         @* Second Calendar *@
-                        <div class="bb:hidden bb:flex-1 bb:border-l" data-drp-calendar-2>
+                        <div class="bb:hidden bb:flex-1 bb:border-s" data-drp-calendar-2>
                             <div class="bb:flex bb:items-center bb:justify-between bb:mb-3">
                                 <div class="bb:w-7"></div>
                                 <span class="bb:text-sm bb:font-medium">@GetMonthName(_displayMonth2.Month) @_displayMonth2.Year</span>

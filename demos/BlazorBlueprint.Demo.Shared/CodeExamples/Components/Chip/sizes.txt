@@ -1,0 +1,3 @@
+<BbChip Size="ChipSize.Small">Small</BbChip>
+<BbChip Size="ChipSize.Default">Default</BbChip>
+<BbChip Size="ChipSize.Large">Large</BbChip>

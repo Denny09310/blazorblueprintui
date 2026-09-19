@@ -7,7 +7,7 @@
     @attributes="AdditionalAttributes">
     @if (Icon != null)
     {
-        <span class="bb:mr-2 bb:h-4 bb:w-4 bb:shrink-0 bb:[&>svg]:h-4 bb:[&>svg]:w-4">@Icon</span>
+        <span class="bb:me-2 bb:h-4 bb:w-4 bb:shrink-0 bb:[&>svg]:h-4 bb:[&>svg]:w-4">@Icon</span>
     }
     @ChildContent
 </BlazorBlueprint.Primitives.ContextMenu.BbContextMenuItem>
@@ -44,7 +44,7 @@
         "bb:relative bb:flex bb:cursor-default bb:select-none bb:items-center bb:rounded-sm bb:px-2 bb:py-1.5 bb:text-sm bb:outline-none",
         "bb:hover:bg-(--bb-menu-accent) bb:hover:text-(--bb-menu-accent-foreground) bb:focus:bg-(--bb-menu-accent) bb:focus:text-(--bb-menu-accent-foreground)",
         Disabled ? "bb:pointer-events-none bb:opacity-50" : null,
-        Inset ? "bb:pl-8" : null,
+        Inset ? "bb:ps-8" : null,
         Class
     );
 }

@@ -1,0 +1,6 @@
+@* Case-sensitive, and only from the start of a word. *@
+<BbHighlighter Text="@title" Query="@search" CaseSensitive="true" />
+<BbHighlighter Text="@title" Query="@search" WholeWord="true" />
+
+@* Your own mark styling. *@
+<BbHighlighter Text="@title" Query="@search" MarkClass="bb:bg-amber-200 bb:text-amber-950" />

@@ -340,13 +340,13 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
     private string CssClass => ClassNames.cn(
         "bb:flex bb:h-10 bb:w-full bb:border bb:border-input bb:bg-background bb:px-3 bb:py-2 bb:text-base",
         "bb:placeholder:text-muted-foreground",
-        ShowButtons ? "bb:rounded-l-md" : "bb:rounded-md",
+        ShowButtons ? "bb:rounded-s-md" : "bb:rounded-md",
         "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
         "bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
         "bb:aria-[invalid=true]:border-destructive",
         "bb:transition-colors",
         "bb:md:text-sm",
-        ShowButtons ? "bb:pr-8 bb:border-r-0" : null,
+        ShowButtons ? "bb:pe-8 bb:border-e-0" : null,
         Class
     );
 
@@ -367,7 +367,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
         "bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
         "bb:first:border-b-0",
-        "bb:first:rounded-tr-md bb:last:rounded-br-md",
+        "bb:first:rounded-se-md bb:last:rounded-ee-md",
         "bb:transition-colors"
     );
 

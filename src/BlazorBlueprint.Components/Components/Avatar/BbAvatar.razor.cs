@@ -99,7 +99,7 @@ public partial class BbAvatar : ComponentBase
     };
 
     private string DotCssClass => ClassNames.cn(
-        "bb:absolute bb:bottom-0 bb:right-0 bb:block bb:rounded-full bb:ring-2 bb:ring-background",
+        "bb:absolute bb:bottom-0 bb:end-0 bb:block bb:rounded-full bb:ring-2 bb:ring-background",
         DotSizeClass,
         DotClass ?? "bb:bg-primary"
     );

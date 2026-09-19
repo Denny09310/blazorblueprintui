@@ -1,0 +1,9 @@
+<BbChipSet TValue="string" @bind-Value="status" Variant="ChipVariant.Outline">
+    <BbChip Value="@("open")">Open</BbChip>
+    <BbChip Value="@("paused")">Paused</BbChip>
+    <BbChip Value="@("closed")">Closed</BbChip>
+</BbChipSet>
+
+@code {
+    private string? status = "open";
+}

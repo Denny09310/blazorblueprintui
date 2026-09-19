@@ -31,10 +31,10 @@
 
     private string AlignClass => Align switch
     {
-        MenubarContentAlign.Start => "bb:left-0",
+        MenubarContentAlign.Start => "bb:start-0",
         MenubarContentAlign.Center => "bb:left-1/2 bb:-translate-x-1/2",
-        MenubarContentAlign.End => "bb:right-0",
-        _ => "bb:left-0"
+        MenubarContentAlign.End => "bb:end-0",
+        _ => "bb:start-0"
     };
 
     private string CssClass => ClassNames.cn(

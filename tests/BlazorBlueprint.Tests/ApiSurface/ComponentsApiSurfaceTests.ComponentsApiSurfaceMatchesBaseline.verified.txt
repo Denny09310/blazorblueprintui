@@ -616,6 +616,43 @@
   - Values : IReadOnlyCollection<TValue>
   - ValuesChanged : EventCallback<IReadOnlyCollection<TValue>>
 
+### BbChip (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Class : String
+  - Disabled : Boolean
+  - DismissLabel : String
+  - Dismissible : Boolean?
+  - Icon : RenderFragment
+  - OnClick : EventCallback<MouseEventArgs>
+  - OnDismiss : EventCallback<MouseEventArgs>
+  - Selectable : Boolean
+  - Selected : Boolean
+  - SelectedChanged : EventCallback<Boolean>
+  - ShowCheckMark : Boolean?
+  - Size : ChipSize?
+  - Value : Object
+  - Variant : ChipVariant?
+  - SetContext : ChipSetContext [CascadingParameter]
+
+### BbChipSet`1 (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Class : String
+  - Disabled : Boolean
+  - Dismissible : Boolean
+  - OnDismiss : EventCallback<TValue>
+  - Required : Boolean
+  - SelectionMode : ChipSelectionMode
+  - ShowCheckMark : Boolean
+  - Size : ChipSize
+  - Value : TValue
+  - ValueChanged : EventCallback<TValue>
+  - Values : List<TValue>
+  - ValuesChanged : EventCallback<List<TValue>>
+  - Variant : ChipVariant
+  - Wrap : Boolean
+
 ### BbCollapsible (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
@@ -1731,6 +1768,31 @@
   - View : EventCalendarView
   - ViewChanged : EventCallback<EventCalendarView>
 
+### BbExitPrompt (BlazorBlueprint.Components)
+  - Enabled : Boolean
+  - LeaveLabel : String
+  - Message : String
+  - OnLeft : EventCallback
+  - OnPrompted : EventCallback
+  - OnStayed : EventCallback
+  - StayLabel : String
+  - Title : String
+
+### BbFab (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
+  - ChildContent : RenderFragment
+  - Class : String
+  - Disabled : Boolean
+  - Fixed : Boolean
+  - Icon : RenderFragment
+  - OnClick : EventCallback<MouseEventArgs>
+  - Placement : FabPlacement
+  - SafeArea : Boolean
+  - Shape : FabShape
+  - Size : FabSize
+  - Variant : FabVariant
+
 ### BbField (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
@@ -2564,6 +2626,14 @@
   - Enabled : Boolean
   - Expanded : Boolean
 
+### BbHighlighter (BlazorBlueprint.Components)
+  - CaseSensitive : Boolean
+  - MarkClass : String
+  - Queries : IReadOnlyList<String>
+  - Query : String
+  - Text : String [EditorRequired]
+  - WholeWord : Boolean
+
 ### BbHoverCard (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
@@ -2587,6 +2657,18 @@
   - AsChild : Boolean
   - ChildContent : RenderFragment
   - Class : String
+
+### BbImage (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - Alt : String [EditorRequired]
+  - Class : String
+  - Fallback : RenderFragment
+  - FallbackSrc : String
+  - Fit : ImageFit
+  - Lazy : Boolean
+  - OnError : EventCallback
+  - OnLoad : EventCallback
+  - Src : String [EditorRequired]
 
 ### BbInput (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -2822,6 +2904,19 @@
   - ChildContent : RenderFragment
   - Direction : GradientDirection
   - ParentFill : BbFill [CascadingParameter]
+
+### BbLink (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Class : String
+  - Disabled : Boolean
+  - Href : String [EditorRequired]
+  - OnClick : EventCallback<MouseEventArgs>
+  - Rel : String
+  - ShowExternalIcon : Boolean
+  - Target : String
+  - Underline : LinkUnderline
+  - Variant : LinkVariant
 
 ### BbMarkdownEditor (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -3456,6 +3551,7 @@
   - TickValues : Double[]
   - Value : ValueTuple<Double, Double>
   - ValueChanged : EventCallback<ValueTuple<Double, Double>>
+  - Direction : DirectionContext [CascadingParameter]
 
 ### BbRating (BlazorBlueprint.Components)
   - ActiveColor : String
@@ -3556,6 +3652,72 @@
   - Value : String
   - ValueChanged : EventCallback<String>
 
+### BbRose (BlazorBlueprint.Components)
+  - ActiveIndex : Int32?
+  - ChildContent : RenderFragment
+  - Color : String
+  - DataKey : String
+  - InnerRadius : Int32
+  - LabelColor : String
+  - LabelFontSize : Int32?
+  - LabelFormatter : String
+  - LabelPosition : LabelPosition
+  - Mode : RoseMode
+  - Name : String
+  - NameKey : String
+  - OuterRadius : Int32
+  - PaddingAngle : Int32
+  - ShowLabelLine : Boolean?
+  - ShowLabels : Boolean
+
+### BbRoseChart (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Class : String
+  - Config : ChartConfig
+  - Data : Object
+  - EnableAnimations : Boolean
+  - Height : String
+  - OnChartClick : EventCallback
+  - OnDataPointClick : EventCallback<ChartClickEventArgs>
+  - Title : String
+  - Width : String
+
+### BbSankey (BlazorBlueprint.Components)
+  - ChildContent : RenderFragment
+  - Color : String
+  - Curveness : Double
+  - DataKey : String
+  - Draggable : Boolean
+  - FocusAdjacent : Boolean
+  - LabelColor : String
+  - LabelFontSize : Int32?
+  - LabelFormatter : String
+  - LabelPosition : LabelPosition
+  - LinkColor : SankeyLinkColor
+  - LinkOpacity : Double
+  - Name : String
+  - NodeAlign : SankeyNodeAlign
+  - NodeGap : Int32
+  - NodeWidth : Int32
+  - Orientation : SankeyOrientation
+  - ShowLabels : Boolean
+  - SourceKey : String
+  - TargetKey : String
+
+### BbSankeyChart (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Class : String
+  - Config : ChartConfig
+  - Data : Object
+  - EnableAnimations : Boolean
+  - Height : String
+  - OnChartClick : EventCallback
+  - OnDataPointClick : EventCallback<ChartClickEventArgs>
+  - Title : String
+  - Width : String
+
 ### BbScatter (BlazorBlueprint.Components)
   - ChildContent : RenderFragment
   - Color : String
@@ -3645,6 +3807,21 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - Class : String
   - Orientation : ScrollAreaOrientation
+
+### BbScrollToTop (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
+  - ChildContent : RenderFragment
+  - Class : String
+  - Fixed : Boolean
+  - OnScrolledToTop : EventCallback
+  - Placement : FabPlacement
+  - Selector : String
+  - Shape : FabShape
+  - Size : FabSize
+  - Smooth : Boolean
+  - Variant : FabVariant
+  - VisibleAt : Int32
 
 ### BbSectionHeader (BlazorBlueprint.Components)
   - Actions : RenderFragment
@@ -4069,6 +4246,29 @@
 ### BbSplitButtonSeparator (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - Class : String
+
+### BbStep (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Class : String
+  - Description : String
+  - Disabled : Boolean
+  - Icon : String
+  - Optional : Boolean
+  - State : StepState?
+  - Title : String [EditorRequired]
+  - Stepper : BbStepper [CascadingParameter]
+
+### BbStepper (BlazorBlueprint.Components)
+  - ActiveStep : Int32
+  - ActiveStepChanged : EventCallback<Int32>
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Class : String
+  - Clickable : Boolean
+  - ContentClass : String
+  - IndicatorClass : String
+  - Orientation : StepperOrientation
 
 ### BbSwitch (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -4769,6 +4969,23 @@
   - Horizontal = 0
   - Vertical = 1
 
+### ChipSelectionMode (BlazorBlueprint.Components)
+  - None = 0
+  - Single = 1
+  - Multiple = 2
+
+### ChipSize (BlazorBlueprint.Components)
+  - Small = 0
+  - Default = 1
+  - Large = 2
+
+### ChipVariant (BlazorBlueprint.Components)
+  - Default = 0
+  - Secondary = 1
+  - Outline = 2
+  - Destructive = 3
+  - Soft = 4
+
 ### ColorFormat (BlazorBlueprint.Components)
   - Hex = 0
   - RGB = 1
@@ -4864,6 +5081,29 @@
   - Week = 1
   - Agenda = 2
 
+### FabPlacement (BlazorBlueprint.Components)
+  - BottomEnd = 0
+  - BottomStart = 1
+  - BottomCenter = 2
+  - TopEnd = 3
+  - TopStart = 4
+  - Inline = 5
+
+### FabShape (BlazorBlueprint.Components)
+  - Rounded = 0
+  - Circle = 1
+
+### FabSize (BlazorBlueprint.Components)
+  - Small = 0
+  - Default = 1
+  - Large = 2
+
+### FabVariant (BlazorBlueprint.Components)
+  - Primary = 0
+  - Secondary = 1
+  - Surface = 2
+  - Destructive = 3
+
 ### FieldGroupOrientation (BlazorBlueprint.Components)
   - Vertical = 0
   - Horizontal = 1
@@ -4954,6 +5194,13 @@
   - Start = 0
   - End = 1
 
+### ImageFit (BlazorBlueprint.Components)
+  - None = 0
+  - Cover = 1
+  - Contain = 2
+  - Fill = 3
+  - ScaleDown = 4
+
 ### InputFieldErrorKind (BlazorBlueprint.Components)
   - Parse = 0
   - PatternValidation = 1
@@ -5031,6 +5278,17 @@
   - Solid = 0
   - Dashed = 1
   - Dotted = 2
+
+### LinkUnderline (BlazorBlueprint.Components)
+  - Hover = 0
+  - Always = 1
+  - None = 2
+
+### LinkVariant (BlazorBlueprint.Components)
+  - Default = 0
+  - Inherit = 1
+  - Muted = 2
+  - Destructive = 3
 
 ### MarkerElement (BlazorBlueprint.Components)
   - Div = 0
@@ -5133,6 +5391,24 @@
   - Horizontal = 0
   - Vertical = 1
 
+### RoseMode (BlazorBlueprint.Components)
+  - Radius = 0
+  - Area = 1
+
+### SankeyLinkColor (BlazorBlueprint.Components)
+  - Gradient = 0
+  - Source = 1
+  - Target = 2
+
+### SankeyNodeAlign (BlazorBlueprint.Components)
+  - Justify = 0
+  - Left = 1
+  - Right = 2
+
+### SankeyOrientation (BlazorBlueprint.Components)
+  - Horizontal = 0
+  - Vertical = 1
+
 ### SchedulerAmbiguousTimeResolution (BlazorBlueprint.Components)
   - Earlier = 0
   - Later = 1
@@ -5231,6 +5507,17 @@
   - Small = 0
   - Default = 1
   - Large = 2
+
+### StepState (BlazorBlueprint.Components)
+  - Pending = 0
+  - Active = 1
+  - Completed = 2
+  - Error = 3
+  - Skipped = 4
+
+### StepperOrientation (BlazorBlueprint.Components)
+  - Horizontal = 0
+  - Vertical = 1
 
 ### SwitchSize (BlazorBlueprint.Components)
   - Small = 0

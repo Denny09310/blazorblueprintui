@@ -580,7 +580,7 @@ public partial class BbScheduler
         DayBandLayout.BarStyle(bar.StartColumn, bar.Span, DayCount, bar.Lane, 2, bar.ContinuesBefore, bar.ContinuesAfter);
 
     private static string BandBarClass(BandBar bar) => ClassNames.cn(
-        "bb:absolute bb:z-10 bb:flex bb:items-center bb:overflow-hidden bb:rounded bb:px-1.5 bb:text-left bb:text-xs bb:font-medium bb:bg-primary/10 bb:text-primary bb:hover:bg-primary/20 bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:absolute bb:z-10 bb:flex bb:items-center bb:overflow-hidden bb:rounded bb:px-1.5 bb:text-start bb:text-xs bb:font-medium bb:bg-primary/10 bb:text-primary bb:hover:bg-primary/20 bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
         DayBandLayout.JoinRounding(bar.ContinuesBefore, bar.ContinuesAfter));
 
     /// <summary>
@@ -687,7 +687,7 @@ public partial class BbScheduler
         var height = Math.Max(20, (to - from).TotalMinutes / SlotMinutes * 40) - 4;
         var left = 100.0 * placement.Column / placement.Columns;
         var width = 100.0 / placement.Columns;
-        return FormattableString.Invariant($"top:{top}px;height:{height}px;left:calc(4.5rem + (100% - 4.5rem) * {left / 100} + 4px);width:calc((100% - 4.5rem) * {width / 100} - 8px);");
+        return FormattableString.Invariant($"top:{top}px;height:{height}px;inset-inline-start:calc(4.5rem + (100% - 4.5rem) * {left / 100} + 4px);width:calc((100% - 4.5rem) * {width / 100} - 8px);");
     }
 
     /// <summary>Whether a slot is both outside the active hours and closed to interaction.</summary>

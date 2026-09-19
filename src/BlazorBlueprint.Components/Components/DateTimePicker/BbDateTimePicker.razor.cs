@@ -354,7 +354,7 @@ public partial class BbDateTimePicker : ComponentBase
     /// Gets the computed CSS classes for the trigger button.
     /// </summary>
     private string ButtonCssClass => ClassNames.cn(
-        "bb:w-[280px] bb:justify-start bb:text-left bb:font-normal",
+        "bb:w-[280px] bb:justify-start bb:text-start bb:font-normal",
         // #459: the browser's own outline otherwise, next to the themed ring on the field above.
         "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2",
         !Value.HasValue ? "bb:text-muted-foreground" : null,

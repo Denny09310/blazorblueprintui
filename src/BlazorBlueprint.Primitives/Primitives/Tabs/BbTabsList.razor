@@ -14,6 +14,9 @@
 </div>
 
 @code {
+    /// <summary>The writing direction, when a BbDirectionProvider supplies one.</summary>
+    [CascadingParameter] private DirectionContext? Direction { get; set; }
+
     private string _ariaOrientation => Context.Orientation == TabsOrientation.Horizontal ? "horizontal" : "vertical";
     private List<BbTabsTrigger> _triggers = new();
     private ElementReference _elementRef;
@@ -72,7 +75,7 @@
 
         var nextIndex = -1;
         var isHorizontal = Context.Orientation == TabsOrientation.Horizontal;
-        var isRtl = System.Globalization.CultureInfo.CurrentCulture.TextInfo.IsRightToLeft;
+        var isRtl = DirectionContext.Resolve(Direction);
 
         switch (key)
         {
