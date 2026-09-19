@@ -157,6 +157,8 @@ builder.Services.AddBlazorBlueprintComponents();
 
 If you also run your own Tailwind build, load its output before or after `blazorblueprint.css` — the library's utilities are prefixed `bb:`, so the two never define the same class. Do not `@source` the library from your Tailwind input; it is not needed. See [THEMING.md](THEMING.md).
 
+**Blazor Server only — a themed reconnection dialog.** Give your host page an element with `id="components-reconnect-modal"` and Blazor drives it instead of building its own plain white overlay. The styling ships in `blazorblueprint.css` and reads your theme variables, so light and dark need no configuration. Copy the block from the [Reconnection guide](demos/BlazorBlueprint.Demo.Shared/Pages/Guides/ReconnectionGuide.razor) — it cannot be a Blazor component, because the dialog only appears once the circuit is already down.
+
 **4. Add BbPortalHost** to your root layout (required for overlays like Dialog, Sheet, Popover):
 
 ```razor
