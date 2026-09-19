@@ -261,7 +261,6 @@
             <BbDialogDescription>@Localizer[EnableTimeZones ? "Scheduler.EditorDescription" : "Scheduler.SingleZoneDescription"]</BbDialogDescription>
         </BbDialogHeader>
         @if (draft != null)
-        @if (draft != null)
         {
             <fieldset disabled="@saving" class="bb:space-y-4">
                 @if (EditorContent is null)
@@ -273,7 +272,6 @@
                     @EditorContent(BuildEditorContext(DefaultEditorFields))
                 }
             </fieldset>
-        }
         }
         @if (editorError != null && !deleteConfirmationOpen)
         {
