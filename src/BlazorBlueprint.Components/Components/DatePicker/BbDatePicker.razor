@@ -26,7 +26,7 @@
                     Class="@ButtonCssClass"
                     aria-required="@(Required ? "true" : null)"
                     @attributes="AdditionalAttributes">
-                <LucideIcon Name="calendar" Class="bb:mr-2 bb:h-4 bb:w-4" />
+                <LucideIcon Name="calendar" Class="bb:me-2 bb:h-4 bb:w-4" />
                 @if (Value.HasValue)
                 {
                     <span>@Value.Value.ToString(DateFormat)</span>
@@ -313,7 +313,7 @@
     /// Gets the computed CSS classes for the trigger button.
     /// </summary>
     private string ButtonCssClass => ClassNames.cn(
-        "bb:w-[280px] bb:justify-start bb:text-left bb:font-normal",
+        "bb:w-[280px] bb:justify-start bb:text-start bb:font-normal",
         !Value.HasValue ? "bb:text-muted-foreground" : null,
         Disabled ? "bb:opacity-50 bb:pointer-events-none" : null,
         Class

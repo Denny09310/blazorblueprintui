@@ -27,7 +27,7 @@
                         @if (!Disabled)
                         {
                             <button type="button"
-                                    class="bb:ml-0.5 bb:rounded-full bb:outline-none bb:focus-visible:ring-1 bb:focus-visible:ring-ring bb:hover:bg-secondary-foreground/20"
+                                    class="bb:ms-0.5 bb:rounded-full bb:outline-none bb:focus-visible:ring-1 bb:focus-visible:ring-ring bb:hover:bg-secondary-foreground/20"
                                     aria-label="@Localizer["TagInput.RemoveTag", tag]"
                                     @onclick="GetRemoveHandler(tag)"
                                     @onclick:stopPropagation="true">
@@ -57,7 +57,7 @@
         @if (Clearable && _currentTags.Count > 0 && !Disabled)
         {
             <button type="button"
-                    class="bb:ml-auto bb:shrink-0 bb:rounded-sm bb:opacity-70 bb:hover:opacity-100 bb:focus:outline-none bb:focus-visible:ring-1 bb:focus-visible:ring-ring"
+                    class="bb:ms-auto bb:shrink-0 bb:rounded-sm bb:opacity-70 bb:hover:opacity-100 bb:focus:outline-none bb:focus-visible:ring-1 bb:focus-visible:ring-ring"
                     aria-label="@Localizer["TagInput.ClearAllTags"]"
                     @onclick="ClearAll"
                     @onclick:stopPropagation="true">
@@ -68,7 +68,7 @@
 
     @if (_suggestionsOpen && _filteredSuggestions.Count > 0)
     {
-        <div class="bb:absolute bb:left-0 bb:right-0 bb:top-full bb:z-50 bb:mt-1 bb:rounded-md bb:border bb:border-input bb:bg-popover bb:p-1 bb:shadow-md bb:max-h-48 bb:overflow-y-auto">
+        <div class="bb:absolute bb:inset-x-0 bb:top-full bb:z-50 bb:mt-1 bb:rounded-md bb:border bb:border-input bb:bg-popover bb:p-1 bb:shadow-md bb:max-h-48 bb:overflow-y-auto">
             <ul id="@($"{_instanceId}-suggestions")"
                 role="listbox"
                 aria-label="@Localizer["TagInput.TagSuggestions"]">

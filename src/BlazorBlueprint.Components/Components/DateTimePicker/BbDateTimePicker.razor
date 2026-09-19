@@ -13,7 +13,7 @@
                 Disabled="@Disabled"
                 aria-required="@(Required ? "true" : null)"
                 @attributes="AdditionalAttributes">
-            <LucideIcon Name="calendar-clock" Class="bb:mr-2 bb:h-4 bb:w-4" />
+            <LucideIcon Name="calendar-clock" Class="bb:me-2 bb:h-4 bb:w-4" />
             @if (Value.HasValue)
             {
                 <span>@Value.Value.ToString(EffectiveFormat)</span>
@@ -118,7 +118,7 @@
                 @if (TimeFormat == TimeFormat.Hour12)
                 {
                     <!-- AM/PM Toggle -->
-                    <div class="bb:flex bb:flex-col bb:items-center bb:ml-2">
+                    <div class="bb:flex bb:flex-col bb:items-center bb:ms-2">
                         <span class="bb:text-xs bb:text-muted-foreground bb:mb-1">&nbsp;</span>
                         <div class="bb:flex bb:flex-col bb:border bb:rounded-md bb:overflow-hidden">
                             <button type="button"

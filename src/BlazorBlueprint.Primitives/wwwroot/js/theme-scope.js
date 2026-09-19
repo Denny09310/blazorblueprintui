@@ -20,8 +20,12 @@ export function inheritTheme(reference, floating) {
       else floating.style.removeProperty(name);
     }
     floating.style.fontFamily = styles.fontFamily;
+    // The reference's own direction, not the scope's: a BbDirectionProvider need not be the
+    // same element as the theme scope, and the trigger sits inside both.
+    floating.style.direction = getComputedStyle(reference).direction;
   };
   const previousFont = floating.style.fontFamily;
+  const previousDirection = floating.style.direction;
   sync();
   const observer = new MutationObserver(sync);
   // A containing theme or document palette can change while the overlay is open.
@@ -40,5 +44,6 @@ export function inheritTheme(reference, floating) {
       else floating.style.removeProperty(name);
     }
     floating.style.fontFamily = previousFont;
+    floating.style.direction = previousDirection;
   };
 }

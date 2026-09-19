@@ -666,7 +666,7 @@ public partial class BbFormWizard : ComponentBase
         }
 
         return ClassNames.cn(
-            "bb:transition-colors bb:ml-[15px]",
+            "bb:transition-colors bb:ms-[15px]",
             state == WizardStepState.Completed ? "bb:w-0.5 bb:h-8 bb:bg-primary" : "bb:w-0.5 bb:h-8 bb:bg-border"
         );
     }

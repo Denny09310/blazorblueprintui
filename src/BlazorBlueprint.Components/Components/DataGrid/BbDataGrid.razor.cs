@@ -4196,7 +4196,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private string GetHeaderCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
         bool isExpandColumn, bool isLastLeft, bool isFirstRight)
     {
-        var baseClass = "bb:h-12 bb:px-4 bb:text-left bb:align-middle bb:font-medium bb:text-muted-foreground";
+        var baseClass = "bb:h-12 bb:px-4 bb:text-start bb:align-middle bb:font-medium bb:text-muted-foreground";
 
         var pinnedClass = "";
         if (column.Pinned != ColumnPinning.None)
@@ -4208,11 +4208,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         var separatorClass = "";
         if (isLastLeft)
         {
-            separatorClass = "bb:border-r bb:border-border";
+            separatorClass = "bb:border-e bb:border-border";
         }
         else if (isFirstRight)
         {
-            separatorClass = "bb:border-l bb:border-border";
+            separatorClass = "bb:border-s bb:border-border";
         }
 
         if (isSelectColumn || isExpandColumn)
@@ -4276,11 +4276,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         var separatorClass = "";
         if (isLastLeft)
         {
-            separatorClass = "bb:border-r bb:border-border";
+            separatorClass = "bb:border-e bb:border-border";
         }
         else if (isFirstRight)
         {
-            separatorClass = "bb:border-l bb:border-border";
+            separatorClass = "bb:border-s bb:border-border";
         }
 
         if (isSelectColumn || isExpandColumn)

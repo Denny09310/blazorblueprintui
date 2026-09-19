@@ -112,10 +112,10 @@
                         @FilterContent
                     }
 
-                    @* Right side: ToolbarActions + layout toggle (both pushed to the right with ml-auto) *@
+                    @* Trailing side: ToolbarActions + layout toggle (both pushed along with ms-auto) *@
                     @if (ToolbarActions != null || CanToggleLayout)
                     {
-                        <div class="bb:ml-auto bb:flex bb:items-center bb:gap-2">
+                        <div class="bb:ms-auto bb:flex bb:items-center bb:gap-2">
                             @if (ToolbarActions != null)
                             {
                                 @ToolbarActions

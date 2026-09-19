@@ -40,7 +40,7 @@ public partial class BbBubbleReactions : ComponentBase
     private string CssClass => ClassNames.cn(
         "bb:absolute bb:z-10 bb:flex bb:w-fit bb:shrink-0 bb:items-center bb:justify-center bb:gap-1 bb:rounded-full bb:bg-muted bb:px-1.5 bb:py-0.5 bb:text-sm bb:ring-3 bb:ring-card bb:has-[button]:p-0",
         Side == BubbleReactionsSide.Top ? "bb:top-0 bb:-translate-y-3/4" : "bb:bottom-0 bb:translate-y-3/4",
-        Align == BubbleReactionsAlign.Start ? "bb:left-3" : "bb:right-3",
+        Align == BubbleReactionsAlign.Start ? "bb:start-3" : "bb:end-3",
         Class
     );
 }

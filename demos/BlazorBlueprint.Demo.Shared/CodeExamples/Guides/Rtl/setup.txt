@@ -1,0 +1,12 @@
+@* MainLayout.razor *@
+<BbDirectionProvider Direction="TextDirection.RightToLeft">
+    <div class="flex">
+        <NavMenu />
+        <main>@Body</main>
+    </div>
+
+    @* Inside the provider, so overlays inherit the direction. *@
+    <BbToastProvider />
+    <BbDialogProvider />
+    <BbPortalHost />
+</BbDirectionProvider>

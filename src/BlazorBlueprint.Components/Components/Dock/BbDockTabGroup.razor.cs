@@ -257,14 +257,14 @@ public partial class BbDockTabGroup : ComponentBase, IAsyncDisposable
         IsFloating ? "bb:cursor-move" : null);
 
     private static string TabClass(bool isActive, bool isHidden) => ClassNames.cn(
-        "bb:group/tab bb:relative bb:flex bb:h-full bb:min-w-[88px] bb:max-w-[200px] bb:cursor-default bb:items-center bb:gap-1.5 bb:border-r bb:border-border/40 bb:px-2.5 bb:text-xs bb:transition-colors",
+        "bb:group/tab bb:relative bb:flex bb:h-full bb:min-w-[88px] bb:max-w-[200px] bb:cursor-default bb:items-center bb:gap-1.5 bb:border-e bb:border-border/40 bb:px-2.5 bb:text-xs bb:transition-colors",
         isHidden ? "bb:hidden" : null,
         isActive
             ? "bb:z-10 bb:-mb-px bb:border-b bb:border-background bb:bg-background bb:text-foreground bb:after:absolute bb:after:inset-x-0 bb:after:top-0 bb:after:h-[2px] bb:after:bg-primary"
             : "bb:bg-transparent bb:text-muted-foreground bb:hover:bg-background/50 bb:hover:text-foreground");
 
     private static string CloseClass() => ClassNames.cn(
-        "bb:ml-auto bb:inline-flex bb:h-4 bb:w-4 bb:shrink-0 bb:items-center bb:justify-center bb:rounded-sm bb:opacity-60 bb:transition-opacity bb:hover:bg-foreground/10 bb:hover:!opacity-100");
+        "bb:ms-auto bb:inline-flex bb:h-4 bb:w-4 bb:shrink-0 bb:items-center bb:justify-center bb:rounded-sm bb:opacity-60 bb:transition-opacity bb:hover:bg-foreground/10 bb:hover:!opacity-100");
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()

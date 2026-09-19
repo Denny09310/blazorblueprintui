@@ -107,16 +107,16 @@ public partial class BbInputGroup : ComponentBase
         "bb:has-[>[data-align=block-end]]:h-auto bb:has-[>[data-align=block-end]]:flex-col bb:has-[>[data-align=block-end]]:items-stretch",
 
         // Reduce input padding when any inline addons present for compact spacing
-        "bb:has-[>[data-align=inline-start]]:[&>input]:pl-1",
-        "bb:has-[>[data-align=inline-start]]:[&>textarea]:pl-1",
-        "bb:has-[>[data-align=inline-end]]:[&>input]:pr-1",
-        "bb:has-[>[data-align=inline-end]]:[&>textarea]:pr-1",
+        "bb:has-[>[data-align=inline-start]]:[&>input]:ps-1",
+        "bb:has-[>[data-align=inline-start]]:[&>textarea]:ps-1",
+        "bb:has-[>[data-align=inline-end]]:[&>input]:pe-1",
+        "bb:has-[>[data-align=inline-end]]:[&>textarea]:pe-1",
 
         // Further reduce when button addons present for tight integration
-        "bb:has-[>[data-align=inline-start]>button]:[&>input]:pl-1.5",
-        "bb:has-[>[data-align=inline-start]>button]:[&>textarea]:pl-1.5",
-        "bb:has-[>[data-align=inline-end]>button]:[&>input]:pr-1.5",
-        "bb:has-[>[data-align=inline-end]>button]:[&>textarea]:pr-1.5",
+        "bb:has-[>[data-align=inline-start]>button]:[&>input]:ps-1.5",
+        "bb:has-[>[data-align=inline-start]>button]:[&>textarea]:ps-1.5",
+        "bb:has-[>[data-align=inline-end]>button]:[&>input]:pe-1.5",
+        "bb:has-[>[data-align=inline-end]>button]:[&>textarea]:pe-1.5",
 
         // Reduce input vertical padding when inline addons have buttons for uniform spacing
         "bb:has-[>[data-align=inline-start]>button]:[&>input]:py-1.5",

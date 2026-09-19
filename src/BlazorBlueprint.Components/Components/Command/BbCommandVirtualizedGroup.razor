@@ -21,7 +21,7 @@
                 var displayedCount = EnableLazyLoading ? _filteredCount : (_filteredItems?.Count ?? 0);
                 @if (displayedCount != _totalCount)
                 {
-                    <span class="bb:ml-1 bb:opacity-70">(@displayedCount of @_totalCount)</span>
+                    <span class="bb:ms-1 bb:opacity-70">(@displayedCount of @_totalCount)</span>
                 }
             }
         </div>

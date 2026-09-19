@@ -118,7 +118,14 @@ export function initialize(containerElement, dotNetRef, instanceId) {
     const items = getVisibleTreeItems(containerElement);
     const currentIndex = items.indexOf(currentItem);
 
-    switch (e.key) {
+    // Expanding follows the reading direction: in a right-to-left tree it is ArrowLeft that
+    // opens a node and ArrowRight that closes it.
+    const rtl = getComputedStyle(containerElement).direction === 'rtl';
+    const key = rtl && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')
+      ? (e.key === 'ArrowLeft' ? 'ArrowRight' : 'ArrowLeft')
+      : e.key;
+
+    switch (key) {
       case 'ArrowDown': {
         e.preventDefault();
         // Move focus to next visible node

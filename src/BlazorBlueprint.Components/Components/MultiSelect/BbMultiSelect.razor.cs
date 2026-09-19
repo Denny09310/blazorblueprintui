@@ -871,7 +871,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// Gets the CSS class for the tag remove button.
     /// </summary>
     private static string TagRemoveButtonCssClass =>
-        "bb:ml-0.5 bb:rounded-full bb:outline-none bb:hover:bg-secondary-foreground/20 bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
+        "bb:ms-0.5 bb:rounded-full bb:outline-none bb:hover:bg-secondary-foreground/20 bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
 
     /// <summary>
     /// Gets the CSS class for the dropdown item.

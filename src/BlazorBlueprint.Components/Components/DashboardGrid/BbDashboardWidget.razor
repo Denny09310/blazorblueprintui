@@ -35,7 +35,7 @@
     @if (_isEditable && OnRemove.HasDelegate)
     {
         <button type="button"
-                class="bb:absolute bb:top-2 bb:right-2 bb:z-20 bb:p-1 bb:rounded-md bb:opacity-0 bb:group-hover:opacity-100 bb:transition-opacity bb:text-muted-foreground bb:hover:text-destructive bb:hover:bg-destructive/10"
+                class="bb:absolute bb:top-2 bb:end-2 bb:z-20 bb:p-1 bb:rounded-md bb:opacity-0 bb:group-hover:opacity-100 bb:transition-opacity bb:text-muted-foreground bb:hover:text-destructive bb:hover:bg-destructive/10"
                 aria-label="@Localizer["DashboardGrid.RemoveWidget"]"
                 @onclick="HandleRemove"
                 @onclick:stopPropagation="true">

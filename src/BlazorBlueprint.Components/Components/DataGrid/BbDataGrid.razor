@@ -40,7 +40,7 @@
                                   Size="ButtonSize.Small"
                                   OnClick="@(async () => await ExportToCsvAsync())"
                                   AriaLabel="@Localizer["DataGrid.ExportAriaLabel"]">
-                            <LucideIcon Name="download" Class="bb:w-4 bb:h-4 bb:mr-2" />
+                            <LucideIcon Name="download" Class="bb:w-4 bb:h-4 bb:me-2" />
                             @Localizer["DataGrid.Export"]
                         </BbButton>
                     </div>
@@ -73,7 +73,7 @@
                grouping, so the active levels are shown in order with their own controls. *@
             <div class="bb:flex bb:flex-wrap bb:items-center bb:gap-1 bb:pb-3 bb:text-sm" role="group"
                  aria-label="@Localizer["DataGrid.GroupingBreadcrumbLabel"]">
-                <span class="bb:text-muted-foreground bb:mr-1">@Localizer["DataGrid.GroupingBreadcrumbLabel"]</span>
+                <span class="bb:text-muted-foreground bb:me-1">@Localizer["DataGrid.GroupingBreadcrumbLabel"]</span>
                 @for (var levelIndex = 0; levelIndex < _gridState.Grouping.ActiveGroups.Count; levelIndex++)
                 {
                     var level = _gridState.Grouping.ActiveGroups[levelIndex];
@@ -104,7 +104,7 @@
                     }
                 }
                 <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small"
-                          Class="bb:ml-1 bb:h-7"
+                          Class="bb:ms-1 bb:h-7"
                           OnClick="ClearGroupingAsync">
                     @Localizer["DataGrid.ClearGrouping"]
                 </BbButton>
@@ -236,7 +236,7 @@
                                     {
                                         @if (Reorderable && column.Reorderable)
                                         {
-                                            <LucideIcon Name="grip-vertical" Class="bb:absolute bb:left-1 bb:top-1/2 bb:-translate-y-1/2 bb:w-3 bb:h-3 bb:text-muted-foreground/40 bb:opacity-0 bb:group-hover/header:opacity-100 bb:transition-opacity bb:pointer-events-none" />
+                                            <LucideIcon Name="grip-vertical" Class="bb:absolute bb:start-1 bb:top-1/2 bb:-translate-y-1/2 bb:w-3 bb:h-3 bb:text-muted-foreground/40 bb:opacity-0 bb:group-hover/header:opacity-100 bb:transition-opacity bb:pointer-events-none" />
                                         }
                                         <div class="bb:flex bb:items-center bb:gap-2">
                                             @if (ShowExpandAll && isHierarchyColumn)
@@ -348,14 +348,14 @@
                                                             @if (isGroupedByColumn)
                                                             {
                                                                 <BbDropdownMenuItem OnClick="@(() => HandleUngroupColumnAsync(menuColumn.ColumnId))">
-                                                                    <LucideIcon Name="ungroup" Class="bb:w-4 bb:h-4 bb:mr-2" />
+                                                                    <LucideIcon Name="ungroup" Class="bb:w-4 bb:h-4 bb:me-2" />
                                                                     @Localizer["DataGrid.UngroupColumn"]
                                                                 </BbDropdownMenuItem>
                                                             }
                                                             else
                                                             {
                                                                 <BbDropdownMenuItem OnClick="@(() => HandleGroupByColumnAsync(menuColumn.ColumnId))">
-                                                                    <LucideIcon Name="group" Class="bb:w-4 bb:h-4 bb:mr-2" />
+                                                                    <LucideIcon Name="group" Class="bb:w-4 bb:h-4 bb:me-2" />
                                                                     @Localizer["DataGrid.GroupByColumn", menuColumn.Title ?? string.Empty]
                                                                 </BbDropdownMenuItem>
                                                                 @if (_gridState.Grouping.HasGroups)
@@ -364,7 +364,7 @@
                                                                        user is not asked to choose between two actions that do the same
                                                                        thing. *@
                                                                     <BbDropdownMenuItem OnClick="@(() => HandleAddGroupColumnAsync(menuColumn.ColumnId))">
-                                                                        <LucideIcon Name="list-tree" Class="bb:w-4 bb:h-4 bb:mr-2" />
+                                                                        <LucideIcon Name="list-tree" Class="bb:w-4 bb:h-4 bb:me-2" />
                                                                         @Localizer["DataGrid.AddGroupByColumn", menuColumn.Title ?? string.Empty]
                                                                     </BbDropdownMenuItem>
                                                                 }
@@ -376,7 +376,7 @@
                                         </div>
                                         @if (Resizable && column.Resizable)
                                         {
-                                            <div class="bb:absolute bb:right-0 bb:top-0 bb:bottom-0 bb:w-2 bb:cursor-col-resize bb:hover:bg-primary/20 bb:active:bg-primary/40"
+                                            <div class="bb:absolute bb:end-0 bb:top-0 bb:bottom-0 bb:w-2 bb:cursor-col-resize bb:hover:bg-primary/20 bb:active:bg-primary/40"
                                                  data-resize-handle="@column.ColumnId"></div>
                                         }
                                     }
@@ -805,7 +805,7 @@
                             @if (renderItem.HasChildren)
                             {
                                 <button type="button"
-                                        class="bb:inline-flex bb:items-center bb:justify-center bb:rounded-md bb:w-6 bb:h-6 bb:mr-1 bb:hover:bg-muted bb:transition-colors bb:shrink-0"
+                                        class="bb:inline-flex bb:items-center bb:justify-center bb:rounded-md bb:w-6 bb:h-6 bb:me-1 bb:hover:bg-muted bb:transition-colors bb:shrink-0"
                                         aria-expanded="@renderItem.IsExpanded.ToString().ToLowerInvariant()"
                                         aria-label="@(renderItem.IsExpanded ? Localizer["DataGrid.Collapse"] : Localizer["DataGrid.Expand"])"
                                         @onclick="@(() => HandleHierarchyNodeToggle(item))"
@@ -816,7 +816,7 @@
                             }
                             else
                             {
-                                <span class="bb:inline-block bb:w-6 bb:mr-1 bb:shrink-0"></span>
+                                <span class="bb:inline-block bb:w-6 bb:me-1 bb:shrink-0"></span>
                             }
                             @if (ShouldRenderEditor(column, item))
                             {
@@ -869,7 +869,7 @@
                             <div class="bb:min-w-0 bb:flex-1 bb:overflow-hidden bb:[&_input]:min-w-0 bb:[&_input]:border-0 bb:[&_input]:shadow-none bb:[&_input]:focus-visible:ring-0 bb:[&_button[aria-haspopup]]:w-full bb:[&_button[aria-haspopup]]:min-w-0 bb:[&_button[aria-haspopup]]:border-0 bb:[&_button[aria-haspopup]]:shadow-none bb:[&_button[aria-haspopup]]:focus-visible:ring-0 bb:[&_button[aria-haspopup]>span]:truncate">
                                 @RenderCellEditor(column, item)
                             </div>
-                            <BbInputGroupAddon Align="InputGroupAlign.InlineEnd" Class="bb:relative bb:z-10 bb:shrink-0 bb:gap-0.5 bb:pr-1">
+                            <BbInputGroupAddon Align="InputGroupAlign.InlineEnd" Class="bb:relative bb:z-10 bb:shrink-0 bb:gap-0.5 bb:pe-1">
                                 <BbInputGroupButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Class="bb:w-7 bb:!p-1.5 bb:rounded-sm"
                                                     Disabled="@savingEdits" AriaLabel="@Localizer["DataGrid.SaveRow"]" OnClick="@(async () => await CommitEditAsync())">
                                     <LucideIcon Name="check" Size="14" aria-hidden="true" />
@@ -912,7 +912,7 @@
         }
         @if (IsCellEditable(column))
         {
-            <button type="button" id="@(sizingOnly ? null : CellTriggerId(item, column.ColumnId))" disabled="@(savingEdits || sizingOnly)" class="bb:ml-2 bb:inline-flex bb:rounded bb:p-1 bb:hover:bg-muted"
+            <button type="button" id="@(sizingOnly ? null : CellTriggerId(item, column.ColumnId))" disabled="@(savingEdits || sizingOnly)" class="bb:ms-2 bb:inline-flex bb:rounded bb:p-1 bb:hover:bg-muted"
                     aria-label="@Localizer["DataGrid.EditCell", column.Title ?? column.ColumnId]" @onclick:stopPropagation="true"
                     @onclick="@(() => StartCellEditAsync(item, column.ColumnId))">
                 <LucideIcon Name="pencil" Class="bb:w-3 bb:h-3" />

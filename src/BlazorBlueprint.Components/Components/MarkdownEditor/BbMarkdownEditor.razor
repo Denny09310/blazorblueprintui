@@ -24,7 +24,7 @@
             @* Toolbar - only visible in Write mode *@
             @if (_activeTab == "write")
             {
-                <div class="bb:flex bb:items-center bb:gap-1 bb:ml-auto">
+                <div class="bb:flex bb:items-center bb:gap-1 bb:ms-auto">
                     @* Heading dropdown *@
                     <BbDropdownMenu>
                         <BbDropdownMenuTrigger AsChild>
@@ -40,19 +40,19 @@
                             <BbDropdownMenuLabel>Text Style</BbDropdownMenuLabel>
                             <BbDropdownMenuSeparator />
                             <BbDropdownMenuItem OnClick="@(() => ApplyHeading(0))">
-                                <LucideIcon Name="pilcrow" Size="14" Class="bb:mr-2" />
+                                <LucideIcon Name="pilcrow" Size="14" Class="bb:me-2" />
                                 Normal
                             </BbDropdownMenuItem>
                             <BbDropdownMenuItem OnClick="@(() => ApplyHeading(1))">
-                                <LucideIcon Name="heading-1" Size="14" Class="bb:mr-2" />
+                                <LucideIcon Name="heading-1" Size="14" Class="bb:me-2" />
                                 Heading 1
                             </BbDropdownMenuItem>
                             <BbDropdownMenuItem OnClick="@(() => ApplyHeading(2))">
-                                <LucideIcon Name="heading-2" Size="14" Class="bb:mr-2" />
+                                <LucideIcon Name="heading-2" Size="14" Class="bb:me-2" />
                                 Heading 2
                             </BbDropdownMenuItem>
                             <BbDropdownMenuItem OnClick="@(() => ApplyHeading(3))">
-                                <LucideIcon Name="heading-3" Size="14" Class="bb:mr-2" />
+                                <LucideIcon Name="heading-3" Size="14" Class="bb:me-2" />
                                 Heading 3
                             </BbDropdownMenuItem>
                         </BbDropdownMenuContent>
