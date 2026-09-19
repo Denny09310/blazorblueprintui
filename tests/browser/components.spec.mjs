@@ -586,3 +586,98 @@ test("Interactive Auto uses Server initially and WebAssembly on the next visit",
         await page.goto(`/components/${route}`, { waitUntil: "networkidle" });
     });
 });
+
+test("DataGrid cell editors fit narrow columns and never cover Save or Cancel", async ({
+    page,
+}) => {
+    // Two regressions shared one block of classes on the editor slot.
+    //
+    // A combobox and a multi select wrap their trigger in a container, so the grid's
+    // `[&>button]` reset never reached it and the trigger kept its own PopoverWidth —
+    // 200px and 300px — inside a narrower cell. The trigger then painted over the addon
+    // holding Save and Cancel. Both buttons stayed in the DOM, visible and focusable, so
+    // nothing but a hit test catches it.
+    //
+    // A checkbox is a plain button, which that same reset *did* reach: it was stretched
+    // to the full cell and had its border removed, so an unchecked cell looked empty.
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/components/datagrid-editing", { waitUntil: "networkidle" });
+
+    const grid = page.locator('[aria-label="Editors in narrow columns"]');
+    await expect(grid).toBeVisible();
+
+    for (const column of ["Status", "Skills", "Approved"]) {
+        await grid.getByRole("button", { name: `Edit ${column}` }).first().click();
+
+        const editor = grid.locator("[data-bb-cell-editor]");
+        await expect(editor).toBeVisible();
+
+        const measured = await editor.evaluate((element) => {
+            const slot = element.querySelector('[class*="flex-1"]');
+            const trigger = element.querySelector("button[aria-haspopup]");
+            const checkbox = element.querySelector('button[role="checkbox"]');
+            const button = (pattern) =>
+                [...element.querySelectorAll("button")].find((candidate) =>
+                    pattern.test(candidate.getAttribute("aria-label") || ""),
+                );
+            // The only assertion that catches "painted over": ask the browser what is
+            // actually on top at the button's own centre point.
+            const onTop = (target) => {
+                const box = target.getBoundingClientRect();
+                const hit = document.elementFromPoint(
+                    Math.round(box.x + box.width / 2),
+                    Math.round(box.y + box.height / 2),
+                );
+                return hit === target || target.contains(hit);
+            };
+            const save = button(/save/i);
+            const cancel = button(/cancel/i);
+            return {
+                slotWidth: Math.round(slot.getBoundingClientRect().width),
+                triggerWidth: trigger
+                    ? Math.round(trigger.getBoundingClientRect().width)
+                    : null,
+                checkboxWidth: checkbox
+                    ? Math.round(checkbox.getBoundingClientRect().width)
+                    : null,
+                checkboxBorder: checkbox
+                    ? getComputedStyle(checkbox).borderTopWidth
+                    : null,
+                saveOnTop: onTop(save),
+                cancelOnTop: onTop(cancel),
+            };
+        });
+
+        assert.equal(
+            measured.saveOnTop,
+            true,
+            `${column}: Save is covered by the editor`,
+        );
+        assert.equal(
+            measured.cancelOnTop,
+            true,
+            `${column}: Cancel is covered by the editor`,
+        );
+
+        if (measured.triggerWidth !== null) {
+            assert.ok(
+                measured.triggerWidth <= measured.slotWidth,
+                `${column}: trigger is ${measured.triggerWidth}px in a ${measured.slotWidth}px slot`,
+            );
+        }
+
+        if (measured.checkboxWidth !== null) {
+            assert.ok(
+                measured.checkboxWidth < 40,
+                `${column}: checkbox stretched to ${measured.checkboxWidth}px`,
+            );
+            assert.notEqual(
+                measured.checkboxBorder,
+                "0px",
+                `${column}: checkbox lost its border`,
+            );
+        }
+
+        await editor.getByRole("button", { name: /cancel/i }).click();
+    }
+});

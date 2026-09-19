@@ -854,10 +854,22 @@
                     <fieldset disabled="@savingEdits" data-bb-cell-editor @onclick:stopPropagation="true"
                               class="bb:col-start-1 bb:row-start-1 bb:min-w-0 bb:space-y-1 bb:[contain:inline-size]">
                         <BbInputGroup Class="bb:h-auto bb:min-h-10 bb:focus-within:ring-2 bb:focus-within:ring-ring">
-                            <div class="bb:min-w-0 bb:flex-1 bb:[&_input]:min-w-0 bb:[&_input]:border-0 bb:[&_input]:shadow-none bb:[&_input]:focus-visible:ring-0 bb:[&>button]:w-full bb:[&>button]:min-w-0 bb:[&>button]:border-0 bb:[&>button]:shadow-none bb:[&>button]:focus-visible:ring-0 bb:[&>button>span]:truncate">
+                            @* The reset targets popup triggers by aria-haspopup rather than by being
+                               a direct child button. Two reasons. A combobox or multi select wraps its
+                               trigger in a container, so a child selector never reached it and the
+                               trigger kept its own fixed PopoverWidth — 300px inside a 110px cell —
+                               and painted over Save and Cancel. And a checkbox, switch or toggle
+                               editor renders a plain button that a child selector *did* reach, which
+                               stretched it full width and stripped its border. Tag chips inside a
+                               multi select are plain buttons too, so they must stay untouched.
+
+                               overflow-hidden here, and shrink-0 with a stacking context on the addon,
+                               are the backstop: whatever an editor does, it cannot cover the buttons
+                               that commit or cancel the edit. *@
+                            <div class="bb:min-w-0 bb:flex-1 bb:overflow-hidden bb:[&_input]:min-w-0 bb:[&_input]:border-0 bb:[&_input]:shadow-none bb:[&_input]:focus-visible:ring-0 bb:[&_button[aria-haspopup]]:w-full bb:[&_button[aria-haspopup]]:min-w-0 bb:[&_button[aria-haspopup]]:border-0 bb:[&_button[aria-haspopup]]:shadow-none bb:[&_button[aria-haspopup]]:focus-visible:ring-0 bb:[&_button[aria-haspopup]>span]:truncate">
                                 @RenderCellEditor(column, item)
                             </div>
-                            <BbInputGroupAddon Align="InputGroupAlign.InlineEnd" Class="bb:gap-0.5 bb:pr-1">
+                            <BbInputGroupAddon Align="InputGroupAlign.InlineEnd" Class="bb:relative bb:z-10 bb:shrink-0 bb:gap-0.5 bb:pr-1">
                                 <BbInputGroupButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Class="bb:w-7 bb:!p-1.5 bb:rounded-sm"
                                                     Disabled="@savingEdits" AriaLabel="@Localizer["DataGrid.SaveRow"]" OnClick="@(async () => await CommitEditAsync())">
                                     <LucideIcon Name="check" Size="14" aria-hidden="true" />
