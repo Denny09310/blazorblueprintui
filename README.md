@@ -1,6 +1,7 @@
 # Blazor Blueprint
 
 [![Website](https://img.shields.io/badge/Website-blazorblueprintui.com-blue)](https://blazorblueprintui.com)
+[![Stars](https://img.shields.io/github/stars/blazorblueprintui/ui?style=flat&logo=github&label=Stars)](https://github.com/blazorblueprintui/ui/stargazers)
 [![NuGet](https://img.shields.io/nuget/v/BlazorBlueprint.Components)](https://www.nuget.org/packages/BlazorBlueprint.Components)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
 
@@ -19,7 +20,7 @@ Beautiful UI components for Blazor, built with accessibility in mind. Inspired b
 </p>
 
 <p align="center">
-  <strong>Styled Components</strong> · <strong>Headless Primitives</strong> · <strong>11 Chart Types</strong> · <strong>5,300+ Icons</strong>
+  <strong>Styled Components</strong> · <strong>Headless Primitives</strong> · <strong>13 Chart Types</strong> · <strong>5,300+ Icons</strong>
 </p>
 
 ## Table of Contents
@@ -52,13 +53,14 @@ Blazor developers lack a modern, design-system-first UI library equivalent to wh
 
 ## What's New in v4
 
-See the [changelog](CHANGELOG.md#2026-09-18) for the full list and the [migration guide](V4-MIGRATION-GUIDE.md) for breaking changes.
+See the [changelog](CHANGELOG.md#2026-09-19) for the full list and the [migration guide](V4-MIGRATION-GUIDE.md) for breaking changes.
 
 - **.NET 10 minimum** — Components, Primitives and icon packages target `net10.0`. v4 drops .NET 8 and .NET 9 support.
 - **DataGrid cell and batch editing** — Isolated drafts, validation, rejected-save recovery and keyboard save/cancel. Inline editors preserve column widths, support custom Bb input controls, and reapply sorting after accepted edits. Applications supply a deep-copy `EditItemFactory` and persistence callbacks.
 - **Scheduler** — Day, Week and Monday–Friday WorkWeek views, a Monday/Sunday week-start selector, resource lanes and overlapping appointments. Create/edit events with Bb controls, confirm deletions, drag to move and resize either time boundary. Recurring series support individual exceptions; IANA time zones include daylight-saving validation. Configure 15/30/60-minute slots with `SlotMinutes`, or hide time-zone controls with `EnableTimeZones="false"` to use the configured `TimeZoneId` for display and editing. `@bind-FirstDayOfWeek` retains the Week preference; WorkWeek always starts Monday and navigates by seven days.
 - **TreeSelect and Cascader** — Searchable hierarchy selection with form bindings and keyboard navigation. TreeSelect supports cascading parent checkboxes and indeterminate states; Cascader reveals the selected path and scrolls to newly opened levels.
 - **FileUpload lifecycle** — Supply an `UploadHandler` for progress, cancellation and retry, with browser file references retained across selections.
+- **Right-to-left support** — Wrap the layout in `BbDirectionProvider` and the library mirrors for Arabic or Hebrew. Layout mirrors through logical CSS properties rather than through C#, a convention test keeps it that way, overlays inherit the direction across the portal boundary, and the components that place content with pixel maths read the direction at the moment of the gesture. Parameters that name a physical side — `SheetSide`, `ToastPosition` and the rest — keep their promise, by design. See the [Right-to-Left guide](demos/BlazorBlueprint.Demo.Shared/Pages/Guides/RtlGuide.razor).
 
 Try these features in the [source demos](#demo-applications).
 
@@ -208,7 +210,7 @@ Blazor Blueprint includes the styled component families below, with composable s
 
 ### New in this v4 checkout
 
-The current expansion adds **42 styled Razor components**: 18 primary controls and 24 composition helpers. The primary controls have **18 focused demo pages**, each with live examples, snippets, accessibility guidance and API references. Composition helpers are documented within their owning component's page. The component homepage, sidebar and command search share the same demo-page catalog; related pages are grouped consistently, and every menu link opens a distinct demo. The combined shopping example is a **[Mobile Shop recipe](demos/BlazorBlueprint.Demo.Shared/Pages/Recipes/MobileShopRecipe.razor)** at `/recipes/mobile-shop`.
+The current expansion adds **52 styled Razor components**: 26 primary controls and 26 composition helpers. The primary controls have **26 focused demo pages**, each with live examples, snippets, accessibility guidance and API references. Composition helpers are documented within their owning component's page. The component homepage, sidebar and command search share the same demo-page catalog; related pages are grouped consistently, and every menu link opens a distinct demo. The combined shopping example is a **[Mobile Shop recipe](demos/BlazorBlueprint.Demo.Shared/Pages/Recipes/MobileShopRecipe.razor)** at `/recipes/mobile-shop`.
 
 Sidebar and homepage `v4` badges identify new components only. Existing components keep their original status; API-reference badges identify individual properties, methods, enum values and supporting components added in v4 (compared with v3.17). These are source additions pending release, not a claim about the stable package.
 
@@ -224,9 +226,13 @@ All names below include the `Bb` prefix in code. Generic type parameters are omi
 | Context menu (6) | `BbContextMenuCheckboxItem`, `BbContextMenuRadioGroup`, `BbContextMenuRadioItem`, `BbContextMenuSub`, `BbContextMenuSubTrigger`, `BbContextMenuSubContent` | `/components/context-menu` |
 | Menubar (5) | `BbMenubarRadioGroup`, `BbMenubarRadioItem`, `BbMenubarSub`, `BbMenubarSubTrigger`, `BbMenubarSubContent` | `/components/menubar` |
 | Sidebar (4) | `BbSidebarPillNav`, `BbSidebarPillNavItem`, `BbSidebarPillInset`, `BbSidebarSelectionIndicator` | `/components/sidebar` |
+| Chips (2) | `BbChip`, `BbChipSet` | `/components/chip` |
+| Stepper (2) | `BbStepper`, `BbStep` | `/components/stepper` |
+| Action (1) | `BbFab` | `/components/fab` |
+| Text and page helpers (5) | `BbLink`, `BbHighlighter`, `BbImage`, `BbScrollToTop`, `BbExitPrompt` | `/components/link`, `/components/highlighter`, `/components/image`, `/components/scroll-to-top`, `/components/exit-prompt` |
 | Other helpers (3) | `BbBadgeIcon`, `BbSortableHandle`, `BbThemeScope` | `/components/badge`, `/components/sortable`, `/components/theme` |
 
-The Primitives package also gains six shared headless components used by the styled menu families: `BbMenuRadioGroup`, `BbMenuRadioItem`, `BbMenuSub`, `BbMenuSubTrigger`, `BbMenuSubContent`, and `BlazorBlueprint.Primitives.ContextMenu.BbContextMenuCheckboxItem`. They are supporting implementations, counted separately from the 42 styled components.
+The Primitives package also gains six shared headless components used by the styled menu families: `BbMenuRadioGroup`, `BbMenuRadioItem`, `BbMenuSub`, `BbMenuSubTrigger`, `BbMenuSubContent`, and `BlazorBlueprint.Primitives.ContextMenu.BbContextMenuCheckboxItem`. They are supporting implementations, counted separately from the 52 styled components.
 
 Existing components gain DataView selection/grouping/list virtualization and a mobile toolbar; MultiSelect footer/close; FilterBuilder presets/editors; Drawer snapping; Select bottom sheets; theme presets; richer Carousel controls; keyboard Sortable/drop permissions; and Badge, ToggleGroup and Separator variants. All additions remain open source.
 
@@ -262,7 +268,7 @@ Production-ready components for complex data-driven applications:
 | **Dynamic Form** | Schema-driven form rendering — define fields, validation rules, and layout in a schema object, and the component generates the complete form with appropriate inputs, conditional visibility, and error display. |
 | **Filter Builder** | Visual query builder for constructing complex filter expressions with AND/OR logic, nested condition groups, and type-aware operators. Pairs with DataGrid for interactive data exploration. |
 | **Form Wizard** | Multi-step form wizard with progress indicators, per-step validation, optional/skippable steps, and navigation controls. |
-| **Chart** | 11 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Scatter) built on Apache ECharts with a declarative composition API and automatic theme integration. |
+| **Chart** | 13 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Rose, Sankey, Scatter) built on Apache ECharts with a declarative composition API and automatic theme integration. |
 | **Dock** | IDE-style docking layout — drag-and-drop panels between regions, pinning, maximize, close/reopen, pop-out floating panels, and tab-strip overflow. |
 | **Event Calendar** | Agenda/event calendar with Month, Week, and Agenda views, generic over your own event model, with per-event templates and styling. |
 | **Rich Text Editor** | WYSIWYG editor on Quill 2 — headings, lists and checklists, links, images with an upload hook, tables, text colour and highlight, alignment, inline and block code, undo/redo — with sanitised HTML and Delta output. |
@@ -382,7 +388,7 @@ Production-ready components for complex data-driven applications:
 
 | Component            | Description                                                                                                        |
 |----------------------|--------------------------------------------------------------------------------------------------------------------|
-| **Chart**            | 11 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Scatter) with theme integration |
+| **Chart**            | 13 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Rose, Sankey, Scatter) with theme integration |
 | **Dashboard Grid**   | Drag-and-drop, resizable widget layout for dashboards with responsive breakpoints, state persistence, and keyboard accessibility |
 | **DataGrid**         | Enterprise data grid with row/cell/batch editing, validation, sorting, per-column filtering, row grouping with aggregates, hierarchical tree data, selection, expandable rows, row virtualization, context menu, pinned columns, column reordering/resizing/visibility, and state persistence |
 | **DataTable**        | Tables with sorting, filtering, pagination, and row selection                                                      |
@@ -423,7 +429,7 @@ Building blocks for chat and AI-agent interfaces:
 
 ## Primitives
 
-Blazor Blueprint's **28 headless primitives** provide behavior, ARIA attributes, and keyboard support without any styling. They handle all the complex interaction logic — focus trapping, ARIA attributes, keyboard shortcuts, portal rendering — while giving you complete control over appearance.
+Blazor Blueprint's **29 headless primitives** provide behavior, ARIA attributes, and keyboard support without any styling. They handle all the complex interaction logic — focus trapping, ARIA attributes, keyboard shortcuts, portal rendering — while giving you complete control over appearance.
 
 Use primitives when you need full design freedom or are building a custom design system.
 
@@ -437,6 +443,7 @@ Use primitives when you need full design freedom or are building a custom design
 | **Dashboard Grid** | Widget layout state, drag-and-drop coordination, resize handling, responsive breakpoints |
 | **DataGrid** | Headless data grid with sorting, filtering, pagination, selection, expansion, row grouping, and state management |
 | **Dialog** | Focus trapping, escape to close, scroll locking, portal rendering |
+| **Direction** | Writing direction for everything inside it, cascaded as a context and written as a `dir` attribute |
 | **Dropdown Menu** | Open/close, keyboard navigation, click-outside dismissal |
 | **Hover Card** | Hover intent, delay timing, portal positioning |
 | **Label** | Label-control association |
@@ -520,7 +527,7 @@ Apply the `.dark` class to your `<html>` element. All components automatically s
 
 ## Localization
 
-All component chrome strings (button labels, placeholders, ARIA labels, status messages) are localizable via the `IBbLocalizer` interface. The built-in `DefaultBbLocalizer` provides English defaults for all 290+ strings.
+All component chrome strings (button labels, placeholders, ARIA labels, status messages) are localizable via the `IBbLocalizer` interface. The built-in `DefaultBbLocalizer` provides English defaults for all 470 strings.
 
 ### Quick Start
 
