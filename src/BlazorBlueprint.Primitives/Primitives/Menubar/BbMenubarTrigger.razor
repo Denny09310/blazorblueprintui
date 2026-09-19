@@ -3,7 +3,7 @@
 <button type="button"
         role="menuitem"
         aria-haspopup="menu"
-        aria-expanded="@(Menu?.IsOpen == true)"
+        aria-expanded="@(Menu?.IsOpen == true ? "true" : "false")"
         data-state="@(Menu?.IsOpen == true ? "open" : "closed")"
         @onclick="HandleClick"
         @onmouseenter="HandleMouseEnter"

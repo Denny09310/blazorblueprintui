@@ -126,6 +126,10 @@ public partial class BbFunnel : SeriesBase
             },
             ItemStyle = new EChartsItemStyleOption
             {
+                // A pie or funnel colours each slice from the chart palette; an explicit Color on
+                // the series paints all of them. Left unset, the parameter was inherited, offered
+                // and then ignored.
+                Color = GetResolvedColor(),
                 BorderColor = "var(--background)",
                 BorderWidth = Gap > 0 ? Gap : null
             },

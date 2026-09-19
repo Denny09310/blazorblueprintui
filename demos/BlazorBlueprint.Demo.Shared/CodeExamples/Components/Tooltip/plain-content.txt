@@ -1,5 +1,5 @@
-@* Plain content does not consume TriggerContext, so the trigger
-   has to render its own element: AsChild="false". *@
+@* Plain content does not consume TriggerContext, so the trigger has to
+   render its own element. That is the default, spelled out here. *@
 <BbTooltip>
     <BbTooltipTrigger AsChild="false">
         <LucideIcon Name="house" Size="18" Class="cursor-help text-green-600" />
@@ -18,10 +18,10 @@
     </BbTooltipContent>
 </BbTooltip>
 
-@* The default, AsChild="true", is for a child that consumes
-   TriggerContext and wires the hover/focus behaviour up itself. *@
+@* AsChild="true" is for a child that consumes TriggerContext and
+   wires the hover/focus behaviour up itself. *@
 <BbTooltip>
-    <BbTooltipTrigger>
+    <BbTooltipTrigger AsChild="true">
         <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon">
             <LucideIcon Name="info" Size="16" />
         </BbButton>

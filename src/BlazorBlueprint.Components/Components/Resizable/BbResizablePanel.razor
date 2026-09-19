@@ -1,7 +1,7 @@
 @namespace BlazorBlueprint.Components
 @using System.Globalization
 
-<div class="@CssClass" style="@Style" data-bb-resizable-panel="@PanelIndexAttribute" data-bb-resizable-group="@Group?.GroupId" @attributes="AdditionalAttributes">
+<div id="@PanelElementId" class="@CssClass" style="@MergedStyle" data-bb-resizable-panel="@PanelIndexAttribute" data-bb-resizable-group="@Group?.GroupId" @attributes="@InlineStyleMerge.WithoutStyle(AdditionalAttributes)">
     @ChildContent
 </div>
 
@@ -36,6 +36,12 @@
     /// <summary>
     /// Whether the panel can be collapsed.
     /// </summary>
+    /// <remarks>
+    /// A collapsible panel may be dragged all the way shut: below half of <see cref="MinSize"/> it
+    /// snaps to zero, and it reopens at <see cref="MinSize"/> on the way back. Without this the
+    /// panel stops at <see cref="MinSize"/> as any other does. The flag was declared and read
+    /// nowhere, so it had no effect at all.
+    /// </remarks>
     [Parameter]
     public bool Collapsible { get; set; }
 
@@ -54,6 +60,15 @@
     private int _panelIndex = -1;
 
     private bool IsHorizontal => Group?.GetDirection() == ResizableDirection.Horizontal;
+
+    /// <summary>
+    /// A stable id, so the handle in front of this panel can name it through <c>aria-controls</c>.
+    /// Null until the panel has registered, which omits the attribute rather than emitting a
+    /// half-formed one.
+    /// </summary>
+    private string? PanelElementId => Group is not null && _panelIndex >= 0
+        ? Group.PanelElementId(_panelIndex)
+        : null;
 
     // Rendered as data attributes so the drag loop can address this element without a round trip.
     // Null until the panel has registered, which omits the attribute rather than emitting "-1".
@@ -77,16 +92,29 @@
     {
         if (Group != null)
         {
-            _panelIndex = Group.RegisterPanel(DefaultSize, MinSize, MaxSize);
+            _panelIndex = Group.RegisterPanel(DefaultSize, MinSize, MaxSize, Collapsible);
         }
     }
+
+    /// <summary>
+    /// The panel's own flex sizing followed by the consumer's style, so a supplied <c>style</c>
+    /// adds to it rather than replacing it.
+    /// </summary>
+    /// <remarks>
+    /// The splat used to overwrite the flex-basis and the min/max bounds — the whole of what makes
+    /// the panel resizable.
+    /// </remarks>
+    private string? MergedStyle => InlineStyleMerge.Merge(Style, AdditionalAttributes);
 
     private string Style
     {
         get
         {
             var size = CurrentSize.ToString("F2", CultureInfo.InvariantCulture);
-            var min = MinSize.ToString(CultureInfo.InvariantCulture);
+
+            // A collapsible panel has to be able to reach zero, so the CSS floor cannot be MinSize
+            // — that is the point it snaps past, not a hard limit.
+            var min = (Collapsible ? 0 : MinSize).ToString(CultureInfo.InvariantCulture);
             var max = MaxSize.ToString(CultureInfo.InvariantCulture);
             return IsHorizontal
                 ? $"flex: 1 0 {size}%; min-width: {min}%; max-width: {max}%; overflow: auto;"
@@ -95,7 +123,7 @@
     }
 
     private string CssClass => ClassNames.cn(
-        "relative",
+        "bb:relative",
         Class
     );
 }

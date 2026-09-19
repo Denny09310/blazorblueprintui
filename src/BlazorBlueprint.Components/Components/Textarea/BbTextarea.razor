@@ -5,7 +5,7 @@
 
 @if (ShowCharacterCount)
 {
-    <div class="space-y-1.5" data-textarea-wrapper>
+    <div class="bb:space-y-1.5" data-textarea-wrapper>
         <textarea
             @ref="inputRef"
             id="@EffectiveId"
@@ -19,8 +19,9 @@
             aria-label="@AriaLabel"
             aria-describedby="@AriaDescribedBy"
             aria-invalid="@EffectiveAriaInvalid"
-            data-slot="textarea-control"></textarea>
-        <p class="text-xs text-muted-foreground text-right" data-character-count>@CharacterCountText</p>
+            data-slot="textarea-control"
+            @attributes="AdditionalAttributes"></textarea>
+        <p class="bb:text-xs bb:text-muted-foreground bb:text-end" data-character-count>@CharacterCountText</p>
     </div>
 }
 else
@@ -38,5 +39,6 @@ else
         aria-label="@AriaLabel"
         aria-describedby="@AriaDescribedBy"
         aria-invalid="@EffectiveAriaInvalid"
-        data-slot="textarea-control"></textarea>
+        data-slot="textarea-control"
+        @attributes="AdditionalAttributes"></textarea>
 }

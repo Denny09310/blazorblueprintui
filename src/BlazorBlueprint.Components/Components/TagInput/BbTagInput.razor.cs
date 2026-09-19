@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -94,8 +95,13 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
     public bool AllowDuplicates { get; set; }
 
     /// <summary>
-    /// Which keys trigger tag creation. Combine flags with bitwise OR.
+    /// What commits the typed text as a tag. Combine flags with bitwise OR.
+    /// Defaults to <see cref="TagInputTrigger.Enter"/> and <see cref="TagInputTrigger.Comma"/>.
     /// </summary>
+    /// <remarks>
+    /// Every value except <see cref="TagInputTrigger.Blur"/> is a key. Add <c>Blur</c> to also
+    /// commit when the user clicks or tabs away, so a half-typed entry is not lost.
+    /// </remarks>
     [Parameter]
     public TagInputTrigger AddTrigger { get; set; } = TagInputTrigger.Enter | TagInputTrigger.Comma;
 
@@ -223,8 +229,7 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
         {
             try
             {
-                _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/tag-input.js");
+                _jsModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/tag-input.js");
                 _dotNetRef = DotNetObjectReference.Create(this);
                 await _jsModule.InvokeVoidAsync("initialize",
                     _containerRef,
@@ -517,6 +522,17 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Closes the suggestion list when focus really has left, and commits any typed text when
+    /// <see cref="TagInputTrigger.Blur"/> is set.
+    /// </summary>
+    /// <remarks>
+    /// The commit rides the same delay that already defers closing the suggestions, which is what
+    /// makes it safe. Clicking a suggestion cancels the token before the delay elapses, so the
+    /// suggestion is added and the typed fragment behind it is not. Focus returning to the input
+    /// cancels it too. Tab needs no special case: when Tab is also a trigger it commits on the
+    /// keystroke and clears the text, so the blur that follows finds nothing to add.
+    /// </remarks>
     private async Task HandleBlur()
     {
         // Delay closing to allow mousedown on suggestions to fire first
@@ -528,12 +544,21 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
         try
         {
             await Task.Delay(150, token);
-            if (!token.IsCancellationRequested)
+            if (token.IsCancellationRequested)
             {
-                _suggestionsOpen = false;
-                _suggestionIndex = -1;
-                StateHasChanged();
+                return;
             }
+
+            if (AddTrigger.HasFlag(TagInputTrigger.Blur))
+            {
+                // The typed text, not the highlighted suggestion: leaving the field is not a way
+                // to accept a suggestion the user never confirmed.
+                await TryAddTag(_inputText);
+            }
+
+            _suggestionsOpen = false;
+            _suggestionIndex = -1;
+            StateHasChanged();
         }
         catch (OperationCanceledException)
         {
@@ -619,27 +644,27 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
     // ══════════════════════════════════════════════════════════════════
 
     private string ContainerCssClass => ClassNames.cn(
-        "flex flex-wrap items-center gap-1.5 min-h-10 w-full rounded-md",
-        "border px-3 py-2 text-sm",
-        "transition-colors",
-        "focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+        "bb:flex bb:flex-wrap bb:items-center bb:gap-1.5 bb:min-h-10 bb:w-full bb:rounded-md",
+        "bb:border bb:px-3 bb:py-2 bb:text-sm",
+        "bb:transition-colors",
+        "bb:focus-within:outline-none bb:focus-within:ring-2 bb:focus-within:ring-ring bb:focus-within:ring-offset-2",
         Variant switch
         {
-            TagInputVariant.Secondary => "border-input bg-secondary/50",
-            _ => "border-input bg-background"
+            TagInputVariant.Secondary => "bb:border-input bb:bg-secondary/50",
+            _ => "bb:border-input bb:bg-background"
         },
-        IsInvalid ? "border-destructive focus-within:ring-destructive" : null,
-        Disabled ? "opacity-50 cursor-not-allowed" : null,
+        IsInvalid ? "bb:border-destructive bb:focus-within:ring-destructive" : null,
+        Disabled ? "bb:opacity-50 bb:cursor-not-allowed" : null,
         Class
     );
 
     private static string InputCssClass =>
-        "flex-1 min-w-[120px] bg-transparent outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed text-sm";
+        "bb:flex-1 bb:min-w-[120px] bb:bg-transparent bb:outline-none bb:placeholder:text-muted-foreground bb:disabled:cursor-not-allowed bb:text-sm";
 
     private static string SuggestionItemCssClass(bool isActive) => ClassNames.cn(
-        "flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm",
-        "hover:bg-accent hover:text-accent-foreground",
-        isActive ? "bg-accent text-accent-foreground" : null
+        "bb:flex bb:cursor-pointer bb:select-none bb:items-center bb:rounded-sm bb:px-2 bb:py-1.5 bb:text-sm",
+        "bb:hover:bg-accent bb:hover:text-accent-foreground",
+        isActive ? "bb:bg-accent bb:text-accent-foreground" : null
     );
 
     // ══════════════════════════════════════════════════════════════════
@@ -674,7 +699,6 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
             try
             {
                 await _jsModule.InvokeVoidAsync("dispose", _instanceId);
-                await _jsModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

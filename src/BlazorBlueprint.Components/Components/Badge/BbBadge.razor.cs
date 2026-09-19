@@ -12,7 +12,7 @@ namespace BlazorBlueprint.Components;
 /// </para>
 /// <para>
 /// Features:
-/// - 4 visual variants (Default, Secondary, Destructive, Outline)
+/// - Solid, outlined, semantic and soft variants
 /// - Compact, inline-friendly design
 /// - Accessible with semantic HTML
 /// - RTL (Right-to-Left) support
@@ -72,32 +72,40 @@ public partial class BbBadge : ComponentBase
     public string? DotClass { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
-        "transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-        ShowDot ? "relative" : null,
+        "bb:inline-flex bb:items-center bb:gap-1 bb:rounded-full bb:border bb:px-2.5 bb:py-0.5 bb:text-xs bb:font-semibold",
+        "bb:transition-colors bb:focus:outline-none bb:focus:ring-2 bb:focus:ring-ring bb:focus:ring-offset-2",
+        ShowDot ? "bb:relative" : null,
         Variant switch
         {
-            BadgeVariant.Default => "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
-            BadgeVariant.Secondary => "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-            BadgeVariant.Destructive => "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-            BadgeVariant.Outline => "text-foreground",
-            _ => "border-transparent bg-primary text-primary-foreground hover:bg-primary/80"
+            BadgeVariant.Default => "bb:border-transparent bb:bg-primary bb:text-primary-foreground bb:hover:bg-primary/80",
+            BadgeVariant.Secondary => "bb:border-transparent bb:bg-secondary bb:text-secondary-foreground bb:hover:bg-secondary/80",
+            BadgeVariant.Destructive => "bb:border-transparent bb:bg-destructive bb:text-destructive-foreground bb:hover:bg-destructive/80",
+            BadgeVariant.Outline => "bb:text-foreground",
+            BadgeVariant.Success => "bb:border-transparent bb:bg-emerald-700 bb:text-white",
+            BadgeVariant.Warning => "bb:border-transparent bb:bg-amber-300 bb:text-amber-950",
+            BadgeVariant.Info => "bb:border-transparent bb:bg-blue-700 bb:text-white",
+            BadgeVariant.Soft => "bb:border-transparent bb:bg-primary/10 bb:text-primary",
+            BadgeVariant.SoftDestructive => "bb:border-transparent bb:bg-destructive/10 bb:text-destructive",
+            BadgeVariant.SoftSuccess => "bb:border-transparent bb:bg-emerald-100 bb:text-emerald-800 bb:dark:bg-emerald-950 bb:dark:text-emerald-300",
+            BadgeVariant.SoftWarning => "bb:border-transparent bb:bg-amber-100 bb:text-amber-800 bb:dark:bg-amber-950 bb:dark:text-amber-300",
+            BadgeVariant.SoftInfo => "bb:border-transparent bb:bg-blue-100 bb:text-blue-800 bb:dark:bg-blue-950 bb:dark:text-blue-300",
+            _ => "bb:border-transparent bb:bg-primary bb:text-primary-foreground bb:hover:bg-primary/80"
         },
         Class
     );
 
     private string DotPositionClass => DotPosition switch
     {
-        BadgeDotPosition.TopRight => "-top-1 -right-1",
-        BadgeDotPosition.TopLeft => "-top-1 -left-1",
-        BadgeDotPosition.BottomRight => "-bottom-1 -right-1",
-        BadgeDotPosition.BottomLeft => "-bottom-1 -left-1",
-        _ => "-top-1 -right-1"
+        BadgeDotPosition.TopRight => "bb:-top-1 bb:-right-1",
+        BadgeDotPosition.TopLeft => "bb:-top-1 bb:-left-1",
+        BadgeDotPosition.BottomRight => "bb:-bottom-1 bb:-right-1",
+        BadgeDotPosition.BottomLeft => "bb:-bottom-1 bb:-left-1",
+        _ => "bb:-top-1 bb:-right-1"
     };
 
     private string DotCssClass => ClassNames.cn(
-        "absolute block h-2 w-2 rounded-full ring-2 ring-background",
+        "bb:absolute bb:block bb:h-2 bb:w-2 bb:rounded-full bb:ring-2 bb:ring-background",
         DotPositionClass,
-        DotClass ?? "bg-primary"
+        DotClass ?? "bb:bg-primary"
     );
 }

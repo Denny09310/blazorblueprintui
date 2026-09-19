@@ -47,10 +47,23 @@ export function createFocusTrap(container, mode = 'first', initialFocusElement =
         if (e.key !== 'Tab') return;
 
         const focusableElements = getFocusableElements();
-        if (focusableElements.length === 0) return;
+        if (focusableElements.length === 0) {
+            e.preventDefault();
+            container.focus();
+            return;
+        }
 
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
+
+        // Autofocus can target the container or a listbox with tabindex=-1. Those are not
+        // in the tab sequence, and WebKit can otherwise jump straight to the page behind
+        // the modal. Enter the trapped sequence explicitly in the requested direction.
+        if (!focusableElements.includes(document.activeElement)) {
+            e.preventDefault();
+            (e.shiftKey ? lastElement : firstElement).focus();
+            return;
+        }
 
         // Shift + Tab on first element: focus last
         if (e.shiftKey && document.activeElement === firstElement) {

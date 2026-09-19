@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -24,7 +25,6 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     private DotNetObjectReference<BbMultiSelect<TValue>>? _dotNetRef;
     private ElementReference _searchInputRef;
     private bool _jsSetupDone;
-    private bool _focusDone;
 
     // ShouldRender tracking fields
     private bool _parametersChanged;
@@ -191,7 +191,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// Ignored when MatchTriggerWidth is true.
     /// </summary>
     [Parameter]
-    public string PopoverWidth { get; set; } = "w-[300px]";
+    public string PopoverWidth { get; set; } = "bb:w-[300px]";
 
     /// <summary>
     /// Gets or sets whether to match the dropdown width to the trigger element width.
@@ -206,7 +206,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// Set to <c>null</c> or empty to disable the active style.
     /// </summary>
     [Parameter]
-    public string? ActiveClass { get; set; } = "bg-accent text-accent-foreground";
+    public string? ActiveClass { get; set; } = "bb:bg-accent bb:text-accent-foreground";
 
     /// <summary>
     /// Gets or sets whether clicking outside the dropdown should close it.
@@ -246,7 +246,8 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     public Expression<Func<IEnumerable<TValue>?>>? ValuesExpression { get; set; }
 
     private ElementReference _listboxScrollRef;
-    private IJSObjectReference? _elementUtilsModule;
+    private DotNetObjectReference<BbMultiSelect<TValue>>? _nearBottomRef;
+    private int _nearBottomObserver;
 
     /// <summary>
     /// Tracks whether the popover is currently open.
@@ -388,8 +389,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
 
             try
             {
-                _multiSelectModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/multiselect.js");
+                _multiSelectModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/multiselect.js");
 
                 _dotNetRef = DotNetObjectReference.Create(this);
 
@@ -399,6 +399,13 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
                     _dotNetRef,
                     $"{Id}-search",
                     $"{Id}-listbox");
+
+                // No @onscroll on the listbox — see BbCommandList. The browser watches it and
+                // calls back once per arrival at the bottom.
+                if (OnLoadMore.HasDelegate)
+                {
+                    _ = ObserveNearBottomAsync();
+                }
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
@@ -424,6 +431,8 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
 
     private async Task CleanupJsAsync()
     {
+        await UnobserveNearBottomAsync();
+
         if (_multiSelectModule != null)
         {
             try
@@ -436,7 +445,6 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
             }
         }
         _jsSetupDone = false;
-        _focusDone = false;
     }
 
     /// <summary>
@@ -449,7 +457,6 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
         _isOpen = isOpen;
         if (!isOpen)
         {
-            _focusDone = false; // Reset for next open
         }
     }
 
@@ -472,6 +479,24 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// to the trigger so keyboard navigation continues from the right place.
     /// </summary>
     private Task Close() => CloseCore(restoreFocus: true);
+
+    /// <summary>Replaces the default clear/close footer, outside the scrolling option list.</summary>
+    [Parameter]
+    public RenderFragment? FooterContent { get; set; }
+
+    /// <summary>Closes the list, clears the search and restores trigger focus on the renderer dispatcher.</summary>
+    public Task CloseAsync() => InvokeAsync(async () =>
+    {
+        if (!_isOpen) { return; }
+        try
+        {
+            await Close();
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    });
 
     /// <summary>
     /// Closes the dropdown. <paramref name="restoreFocus"/> controls whether focus returns to the
@@ -505,32 +530,6 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// Handles click-outside events when AutoClose is enabled.
     /// </summary>
     private async Task HandleClickOutside() => await CloseCore(restoreFocus: false);
-
-    /// <summary>
-    /// Handles the popover content ready event to focus the search input.
-    /// This is called when the popover is fully positioned and visible.
-    /// </summary>
-    private async Task HandleContentReady()
-    {
-        // Guard against multiple calls per open
-        if (_focusDone)
-        {
-            return;
-        }
-
-        _focusDone = true;
-
-        try
-        {
-            // Small delay to let browser finish processing DOM changes
-            await Task.Delay(50);
-            await _searchInputRef.FocusAsync();
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-        {
-            // Expected during circuit disconnect or disposal
-        }
-    }
 
     /// <summary>
     /// Handles option toggle (selection/deselection).
@@ -736,28 +735,53 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
         StateHasChanged();
     }
 
-    private async Task HandleListboxScroll()
+    private async Task ObserveNearBottomAsync()
+    {
+        try
+        {
+            var module = await PrimitiveModules.GetAsync(JSRuntime);
+            _nearBottomRef ??= DotNetObjectReference.Create(this);
+            _nearBottomObserver = await module.InvokeAsync<int>(
+                "elementUtils.observeNearBottom", _listboxScrollRef, _nearBottomRef, nameof(JsOnNearBottom), 80.0);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
+        {
+            // Circuit gone, prerendering, or the listbox already torn down. Load-more is a courtesy.
+        }
+    }
+
+    private async Task UnobserveNearBottomAsync()
+    {
+        if (_nearBottomObserver == 0 || !PrimitiveModules.TryGetLoaded(JSRuntime, out var module))
+        {
+            return;
+        }
+
+        var id = _nearBottomObserver;
+        _nearBottomObserver = 0;
+
+        try
+        {
+            await module.InvokeVoidAsync("elementUtils.unobserveNearBottom", id);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Circuit gone — the listener went with the document.
+        }
+    }
+
+    /// <summary>
+    /// Called from JavaScript when the listbox scrolls near its bottom.
+    /// </summary>
+    [JSInvokable]
+    public async Task JsOnNearBottom()
     {
         if (!OnLoadMore.HasDelegate || IsLoading)
         {
             return;
         }
 
-        _elementUtilsModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-            "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
-
-        try
-        {
-            var nearBottom = await _elementUtilsModule.InvokeAsync<bool>("isNearBottom", _listboxScrollRef, 80.0);
-            if (nearBottom)
-            {
-                await OnLoadMore.InvokeAsync();
-            }
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-        {
-            // Expected during circuit disconnect or disposal
-        }
+        await OnLoadMore.InvokeAsync();
     }
 
     public async ValueTask DisposeAsync()
@@ -765,34 +789,10 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
         GC.SuppressFinalize(this);
         await CleanupJsAsync();
 
-        if (_multiSelectModule != null)
-        {
-            try
-            {
-                await _multiSelectModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-            _multiSelectModule = null;
-        }
-
-        if (_elementUtilsModule != null)
-        {
-            try
-            {
-                await _elementUtilsModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-            _elementUtilsModule = null;
-        }
-
         _dotNetRef?.Dispose();
         _dotNetRef = null;
+        _nearBottomRef?.Dispose();
+        _nearBottomRef = null;
     }
 
     /// <summary>
@@ -834,21 +834,21 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// <summary>
     /// Gets the CSS class for the multiselect container.
     /// </summary>
-    private static string ContainerClass => "relative";
+    private static string ContainerClass => "bb:relative";
 
     /// <summary>
     /// Gets the CSS class for the trigger button.
     /// Uses caching to avoid recomputation on every render.
     /// </summary>
     private string TriggerCssClass => ClassNames.cn(
-        "inline-flex items-center justify-between rounded-md text-sm font-medium",
-        "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "disabled:opacity-50 disabled:pointer-events-none",
-        "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        "bb:inline-flex bb:items-center bb:justify-between bb:rounded-md bb:text-sm bb:font-medium",
+        "bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:disabled:opacity-50 bb:disabled:pointer-events-none",
+        "bb:border bb:border-input bb:bg-background bb:hover:bg-accent bb:hover:text-accent-foreground",
         _isOpen ? ActiveClass : null,
         // Single-line keeps a fixed height so wrapping tags can't grow the trigger; the default
         // uses a min-height so the trigger expands to fit tags that wrap onto further rows.
-        SingleLine ? "h-10 px-3 py-1.5" : "min-h-10 px-3 py-1.5",
+        SingleLine ? "bb:h-10 bb:px-3 bb:py-1.5" : "bb:min-h-10 bb:px-3 bb:py-1.5",
         PopoverWidth,
         Class
     );
@@ -858,40 +858,40 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// wraps them onto additional rows.
     /// </summary>
     private string TagListClass => SingleLine
-        ? "flex flex-nowrap items-center gap-1 flex-1 min-w-0 overflow-hidden"
-        : "flex flex-wrap items-center gap-1 flex-1 min-w-0";
+        ? "bb:flex bb:flex-nowrap bb:items-center bb:gap-1 bb:flex-1 bb:min-w-0 bb:overflow-hidden"
+        : "bb:flex bb:flex-wrap bb:items-center bb:gap-1 bb:flex-1 bb:min-w-0";
 
     /// <summary>
     /// CSS for each selected tag badge. In single-line mode tags keep their size (and clip) rather
     /// than shrinking to fit.
     /// </summary>
-    private string TagBadgeClass => SingleLine ? "gap-1 shrink-0" : "gap-1";
+    private string TagBadgeClass => SingleLine ? "bb:gap-1 bb:shrink-0" : "bb:gap-1";
 
     /// <summary>
     /// Gets the CSS class for the tag remove button.
     /// </summary>
     private static string TagRemoveButtonCssClass =>
-        "ml-0.5 rounded-full outline-none hover:bg-secondary-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+        "bb:ms-0.5 bb:rounded-full bb:outline-none bb:hover:bg-secondary-foreground/20 bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
 
     /// <summary>
     /// Gets the CSS class for the dropdown item.
     /// </summary>
     internal static string ItemCssClass =>
-        "relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none " +
-        "data-[focused=true]:bg-accent data-[focused=true]:text-accent-foreground " +
-        "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50";
+        "bb:relative bb:flex bb:cursor-pointer bb:select-none bb:items-center bb:gap-2 bb:rounded-sm bb:px-2 bb:py-1.5 bb:text-sm bb:outline-none " +
+        "bb:data-[focused=true]:bg-accent bb:data-[focused=true]:text-accent-foreground " +
+        "bb:data-[disabled=true]:pointer-events-none bb:data-[disabled=true]:opacity-50";
 
     /// <summary>
     /// Gets the CSS class for the checkbox.
     /// Uses data-state attribute from Checkbox primitive for checked/unchecked/indeterminate styling.
     /// </summary>
     internal static string CheckboxCssClass =>
-        "h-4 w-4 shrink-0 rounded-sm border border-primary flex items-center justify-center " +
-        "focus-visible:outline-none " +
-        "disabled:cursor-not-allowed disabled:opacity-50 " +
-        "data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground " +
-        "data-[state=indeterminate]:bg-primary data-[state=indeterminate]:text-primary-foreground " +
-        "data-[state=unchecked]:bg-background";
+        "bb:h-4 bb:w-4 bb:shrink-0 bb:rounded-sm bb:border bb:border-primary bb:flex bb:items-center bb:justify-center " +
+        "bb:focus-visible:outline-none " +
+        "bb:disabled:cursor-not-allowed bb:disabled:opacity-50 " +
+        "bb:data-[state=checked]:bg-primary bb:data-[state=checked]:text-primary-foreground " +
+        "bb:data-[state=indeterminate]:bg-primary bb:data-[state=indeterminate]:text-primary-foreground " +
+        "bb:data-[state=unchecked]:bg-background";
 
     // ── Compositional mode support (used by MultiSelectItem) ───────────
 

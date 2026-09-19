@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Primitives.DashboardGrid
+@using BlazorBlueprint.Primitives.Utilities
 @implements IDisposable
 
 <div role="article"
@@ -12,8 +13,8 @@
      data-min-row-span="@EffectiveMinRowSpan"
      data-max-col-span="@MaxColumnSpan"
      data-max-row-span="@MaxRowSpan"
-     style="@_gridStyle"
-     @attributes="AdditionalAttributes">
+     style="@MergedGridStyle"
+     @attributes="@InlineStyleMerge.WithoutStyle(AdditionalAttributes)">
     <CascadingValue Value="this" IsFixed="true">
         @ChildContent
     </CascadingValue>
@@ -36,6 +37,16 @@
     [Parameter] public bool Static { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// The widget's grid placement followed by the consumer's style, so a supplied <c>style</c>
+    /// adds to it rather than replacing it.
+    /// </summary>
+    /// <remarks>
+    /// The splat used to overwrite the grid-column and grid-row placement, dropping the widget out
+    /// of the layout entirely.
+    /// </remarks>
+    private string? MergedGridStyle => InlineStyleMerge.Merge(_gridStyle, AdditionalAttributes);
 
     internal WidgetPosition CurrentPosition => GetCurrentPosition();
 

@@ -1,5 +1,7 @@
 @namespace BlazorBlueprint.Primitives.Popover
 @implements IDisposable
+@using Microsoft.Extensions.Logging
+@inject ILogger<BbPopover> Logger
 
 @* Popover primitive root component - headless, unstyled behavior only *@
 <CascadingValue Value="@_context" IsFixed="false">
@@ -22,6 +24,17 @@
     /// </para>
     /// </summary>
     private bool lastNotifiedOpen;
+
+    /// <summary>
+    /// Accepted so that a styled wrapper can splat its own attributes onto this root, but it has
+    /// no effect: BbPopover renders no element of its own — it only supplies context to its children.
+    /// Put extra attributes on BbPopoverContent or BbPopoverTrigger instead.
+    /// Supplying attributes here logs a warning once per component instance.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool rootAttributesWarningLogged;
 
     /// <summary>
     /// The child content to render within the popover context.
@@ -94,6 +107,13 @@
 
     protected override void OnParametersSet()
     {
+        rootAttributesWarningLogged = ContextRootAttributes.WarnOnce(
+            Logger,
+            rootAttributesWarningLogged,
+            "BbPopover",
+            "Put extra attributes on BbPopoverContent or BbPopoverTrigger instead.",
+            AdditionalAttributes);
+
         if (_state.IsControlled && Open.HasValue)
         {
             var previousIsOpen = _context.State.IsOpen;

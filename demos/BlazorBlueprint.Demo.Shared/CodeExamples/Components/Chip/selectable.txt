@@ -1,0 +1,6 @@
+@* A single chip that owns its own selected state. *@
+<BbChip Selectable="true" @bind-Selected="showArchived">Archived</BbChip>
+
+@code {
+    private bool showArchived;
+}

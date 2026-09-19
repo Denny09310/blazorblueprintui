@@ -1,5 +1,6 @@
+@* BbButton consumes TriggerContext, so the trigger needs no element of its own. *@
 <BbTooltip>
-    <BbTooltipTrigger>
+    <BbTooltipTrigger AsChild="true">
         <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon">
             <LucideIcon Name="info" Size="16" />
         </BbButton>

@@ -17,7 +17,7 @@
 @code {
     private string? _activeItem;
     private CancellationTokenSource? _closeTimerCts;
-    private List<ElementReference> _triggerRefs = new();
+    private readonly List<(object Owner, ElementReference Element)> _triggerRefs = new();
 
     protected override void OnInitialized()
     {
@@ -81,25 +81,60 @@
     }
 
     /// <summary>
-    /// Registers a trigger element for keyboard navigation.
+    /// Registers a trigger for keyboard navigation, or replaces the element reference already held
+    /// for it once that element exists.
     /// </summary>
-    internal int RegisterTrigger(ElementReference triggerRef)
+    /// <remarks>
+    /// Keyed by the trigger component rather than by a position it has to remember, so an entry can
+    /// be removed without shifting the ones after it. The trigger used to reach in here by
+    /// reflection to replace its own slot after the first render, and nothing ever removed one.
+    /// </remarks>
+    internal void RegisterTrigger(object owner, ElementReference triggerRef)
     {
-        _triggerRefs.Add(triggerRef);
-        return _triggerRefs.Count - 1;
+        var index = IndexOfTrigger(owner);
+
+        if (index >= 0)
+        {
+            _triggerRefs[index] = (owner, triggerRef);
+            return;
+        }
+
+        _triggerRefs.Add((owner, triggerRef));
     }
 
     /// <summary>
-    /// Gets the trigger element at the specified index.
+    /// Removes a trigger from keyboard navigation when it is disposed.
+    /// </summary>
+    internal void UnregisterTrigger(object owner)
+    {
+        var index = IndexOfTrigger(owner);
+
+        if (index >= 0)
+        {
+            _triggerRefs.RemoveAt(index);
+        }
+    }
+
+    /// <summary>
+    /// Gets the trigger element at the specified index, in registration order.
     /// </summary>
     internal ElementReference? GetTriggerAt(int index)
     {
         if (index >= 0 && index < _triggerRefs.Count)
         {
-            return _triggerRefs[index];
+            return _triggerRefs[index].Element;
         }
         return null;
     }
+
+    /// <summary>
+    /// The trigger's current position in the list, or -1 when it is not registered. Arrow-key
+    /// navigation reads it rather than remembering an index that removals would invalidate.
+    /// </summary>
+    internal int TriggerIndexOf(object owner) => IndexOfTrigger(owner);
+
+    private int IndexOfTrigger(object owner) =>
+        _triggerRefs.FindIndex(entry => ReferenceEquals(entry.Owner, owner));
 
     /// <summary>
     /// Gets the total number of registered triggers.
@@ -124,6 +159,12 @@
         {
             // Timer was cancelled, do nothing
         }
+        catch (Exception)
+        {
+            // async void: nothing awaits this, so an exception that escapes has no caller to reach and
+            // Blazor Server treats it as fatal — the circuit closes and the user sees the reconnect
+            // overlay. Everything this method does is best-effort, and none of it is worth that.
+        }
     }
 
     /// <summary>
@@ -140,8 +181,8 @@
     /// Gets the computed CSS classes for the navigation menu.
     /// </summary>
     private string CssClass => ClassNames.cn(
-        "relative flex max-w-max flex-1 items-center justify-center",
-        _activeItem != null ? "z-50" : "z-10",
+        "bb:relative bb:flex bb:max-w-max bb:flex-1 bb:items-center bb:justify-center",
+        _activeItem != null ? "bb:z-50" : "bb:z-10",
         Class
     );
 }

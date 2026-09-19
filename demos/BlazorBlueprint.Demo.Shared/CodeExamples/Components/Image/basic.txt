@@ -1,0 +1,2 @@
+<BbImage Src="@photo" Alt="A harbour at dusk" Fit="ImageFit.Cover"
+         Class="bb:h-40 bb:w-full bb:rounded-lg" />

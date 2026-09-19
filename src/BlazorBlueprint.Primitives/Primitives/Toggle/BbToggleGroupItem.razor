@@ -1,15 +1,18 @@
 @typeparam TValue
 @namespace BlazorBlueprint.Primitives.Toggle
+@implements IDisposable
 
 <button @ref="elementRef"
         type="button"
         role="@Role"
-        aria-pressed="@IsPressed.ToString().ToLower()"
+        aria-checked="@(IsSingle ? IsPressed.ToString().ToLowerInvariant() : null)"
+        aria-pressed="@(IsSingle ? null : IsPressed.ToString().ToLowerInvariant())"
         data-state="@(IsPressed ? "on" : "off")"
         data-orientation="@Context?.Orientation"
         disabled="@IsDisabled"
         tabindex="@TabIndex"
         @onclick="HandleClick"
+        @onfocus="HandleFocus"
         @attributes="AdditionalAttributes">
     @ChildContent
 </button>
@@ -66,7 +69,19 @@
         }
     }
 
-    private string Role => Context?.Type == ToggleGroupType.Single ? "radio" : "button";
+    /// <summary>Whether the group this item belongs to allows only one selection.</summary>
+    private bool IsSingle => Context?.Type == ToggleGroupType.Single;
+
+    /// <summary>
+    /// The ARIA role for this item, and with it the state attribute that goes alongside.
+    /// </summary>
+    /// <remarks>
+    /// <c>aria-pressed</c> belongs to <c>role="button"</c> and <c>aria-checked</c> to
+    /// <c>role="radio"</c>. Single mode rendered the radio role with the button's state attribute,
+    /// which is not a combination screen readers report — the item announced as a radio whose
+    /// selected state was simply absent.
+    /// </remarks>
+    private string Role => IsSingle ? "radio" : "button";
 
     private int TabIndex
     {
@@ -103,6 +118,16 @@
         Context?.Items.Add(this);
     }
 
+    /// <summary>
+    /// Tells the group which item actually holds focus.
+    /// </summary>
+    /// <remarks>
+    /// The group used to track only the item its own arrow handling last focused, so after the
+    /// user clicked or tabbed to a different item the next arrow key moved from the stale one and
+    /// focus jumped somewhere unrelated.
+    /// </remarks>
+    private void HandleFocus() => Context?.ItemFocused?.Invoke(this);
+
     private async Task HandleClick()
     {
         if (IsDisabled || Value == null || Context?.ToggleItem == null)
@@ -125,8 +150,17 @@
         }
     }
 
+    /// <summary>
+    /// Removes this item from its group.
+    /// </summary>
+    /// <remarks>
+    /// The component declared this method but never <c>IDisposable</c>, so Blazor never called it.
+    /// Items removed from the markup stayed in the group's list forever, and arrow-key navigation
+    /// kept walking onto buttons that were no longer on the page.
+    /// </remarks>
     public void Dispose()
     {
         Context?.Items.Remove(this);
+        GC.SuppressFinalize(this);
     }
 }

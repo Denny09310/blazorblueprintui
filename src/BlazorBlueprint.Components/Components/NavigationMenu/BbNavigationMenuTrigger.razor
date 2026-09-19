@@ -1,6 +1,7 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Icons.Lucide.Components
 @inject IJSRuntime JSRuntime
+@implements IDisposable
 
 @*
     Navigation Menu Trigger - opens a dropdown content panel.
@@ -25,7 +26,6 @@
 
 @code {
     private ElementReference _buttonRef;
-    private int _triggerIndex = -1;
     private bool _preventKeyDefault = false;
     private IJSObjectReference? _navModule;
 
@@ -66,26 +66,29 @@
 
     protected override void OnInitialized()
     {
-        if (Menu != null)
-        {
-            _triggerIndex = Menu.RegisterTrigger(_buttonRef);
-        }
+        Menu?.RegisterTrigger(this, _buttonRef);
         MenuItem?.RegisterTrigger(this);
     }
 
     protected override void OnAfterRender(bool firstRender)
     {
-        if (firstRender && Menu != null && _triggerIndex >= 0)
+        if (firstRender)
         {
-            // Re-register with the actual element reference after render
-            var triggers = typeof(BbNavigationMenu)
-                .GetField("_triggerRefs", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?
-                .GetValue(Menu) as List<ElementReference>;
-            if (triggers != null && _triggerIndex < triggers.Count)
-            {
-                triggers[_triggerIndex] = _buttonRef;
-            }
+            // The element reference is only real now, so replace the placeholder registered above.
+            // This used to reach into the menu's private list by reflection to overwrite a slot it
+            // had memorised the index of.
+            Menu?.RegisterTrigger(this, _buttonRef);
         }
+    }
+
+    /// <summary>
+    /// Leaves the menu's trigger list, so arrow-key navigation stops stepping onto a button that is
+    /// no longer on the page.
+    /// </summary>
+    public void Dispose()
+    {
+        Menu?.UnregisterTrigger(this);
+        GC.SuppressFinalize(this);
     }
 
     private void HandleClick()
@@ -116,9 +119,11 @@
                 if (MenuItem != null)
                 {
                     MenuItem.CancelCloseTimer();
+                    // Ask the content to focus its first item once it has rendered, rather than
+                    // sleeping 50ms and hoping the render has landed. The content knows exactly
+                    // when it is on screen; a timer only guesses.
+                    MenuItem.FocusFirstContentItemOnOpen();
                     MenuItem.IsOpen = true;
-                    await Task.Delay(50);
-                    await MenuItem.FocusFirstContentItemAsync();
                 }
                 break;
             case "ArrowUp":
@@ -141,9 +146,14 @@
 
     private async Task FocusTriggerAtOffset(int offset)
     {
-        if (Menu == null || _triggerIndex < 0) return;
+        if (Menu == null) return;
 
-        var newIndex = _triggerIndex + offset;
+        // Read the position now rather than remembering one: a trigger removed from the page takes
+        // its entry with it, and every index after it shifts.
+        var index = Menu.TriggerIndexOf(this);
+        if (index < 0) return;
+
+        var newIndex = index + offset;
         if (newIndex < 0) newIndex = Menu.TriggerCount - 1;
         if (newIndex >= Menu.TriggerCount) newIndex = 0;
 
@@ -164,8 +174,7 @@
         {
             try
             {
-                _navModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/navigation-menu.js");
+                _navModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/navigation-menu.js");
             }
             catch { }
         }
@@ -201,11 +210,11 @@
     /// Gets the computed CSS classes for the trigger.
     /// </summary>
     private string CssClass => ClassNames.cn(
-        "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium",
-        "transition-colors hover:bg-accent hover:text-accent-foreground",
-        "focus:bg-accent focus:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        "disabled:pointer-events-none disabled:opacity-50",
-        "data-[state=open]:bg-accent/50",
+        "bb:group bb:inline-flex bb:h-10 bb:w-max bb:items-center bb:justify-center bb:rounded-md bb:bg-background bb:px-4 bb:py-2 bb:text-sm bb:font-medium",
+        "bb:transition-colors bb:hover:bg-accent bb:hover:text-accent-foreground",
+        "bb:focus:bg-accent bb:focus:text-accent-foreground bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2",
+        "bb:disabled:pointer-events-none bb:disabled:opacity-50",
+        "bb:data-[state=open]:bg-accent/50",
         Class
     );
 
@@ -213,7 +222,7 @@
     /// Gets the computed CSS classes for the chevron icon.
     /// </summary>
     private string ChevronCssClass => ClassNames.cn(
-        "relative top-[1px] ml-1 h-3 w-3 transition duration-200",
-        MenuItem?.IsOpen == true ? "rotate-180" : null
+        "bb:relative bb:top-[1px] bb:ms-1 bb:h-3 bb:w-3 bb:transition bb:duration-200",
+        MenuItem?.IsOpen == true ? "bb:rotate-180" : null
     );
 }

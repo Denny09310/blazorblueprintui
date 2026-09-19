@@ -1,0 +1,13 @@
+<BbChip Variant="ChipVariant.Soft">
+    <Icon><LucideIcon Name="tag" Class="bb:h-3.5 bb:w-3.5" /></Icon>
+    <ChildContent>Invoice</ChildContent>
+</BbChip>
+
+<BbChip Dismissible="true" OnDismiss="Remove">
+    <Icon>
+        <BbAvatar Class="bb:h-5 bb:w-5">
+            <BbAvatarFallback Class="bb:text-[10px]">MT</BbAvatarFallback>
+        </BbAvatar>
+    </Icon>
+    <ChildContent>Mathew</ChildContent>
+</BbChip>

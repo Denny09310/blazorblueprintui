@@ -42,17 +42,17 @@ public partial class BbSplitButton : ComponentBase
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "inline-flex",
+        "bb:inline-flex",
         Class
     );
 
     private static string PrimaryButtonClass => ClassNames.cn(
-        "!rounded-r-none border-r-0 focus-visible:z-10"
+        "bb:!rounded-e-none bb:border-e-0 bb:focus-visible:z-10"
     );
 
     private string DropdownButtonClass => ClassNames.cn(
-        "!rounded-l-none !px-2 focus-visible:z-10",
-        Variant == ButtonVariant.Outline ? "border-l" : "border-l border-l-primary-foreground/20"
+        "bb:!rounded-s-none bb:!px-2 bb:focus-visible:z-10",
+        Variant == ButtonVariant.Outline ? "bb:border-s" : "bb:border-s bb:border-s-primary-foreground/20"
     );
 
     private ButtonSize DropdownButtonSize => Size switch

@@ -1,0 +1,12 @@
+@* The FAB is a button, so it works as an AsChild trigger for a menu. *@
+<BbDropdownMenu>
+    <BbDropdownMenuTrigger AsChild="true">
+        <BbFab AriaLabel="Create" Fixed="false">
+            <Icon><LucideIcon Name="plus" Size="24" /></Icon>
+        </BbFab>
+    </BbDropdownMenuTrigger>
+    <BbDropdownMenuContent Side="PopoverSide.Top" Align="PopoverAlign.End">
+        <BbDropdownMenuItem OnClick="NewTask">New task</BbDropdownMenuItem>
+        <BbDropdownMenuItem OnClick="NewNote">New note</BbDropdownMenuItem>
+    </BbDropdownMenuContent>
+</BbDropdownMenu>

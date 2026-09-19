@@ -54,6 +54,10 @@ internal sealed class EChartsAxisPointerOption
 
 internal sealed class EChartsTextStyleOption
 {
+    [JsonPropertyName("align")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Align { get; set; }
+
     [JsonPropertyName("color")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Color { get; set; }

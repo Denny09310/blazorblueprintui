@@ -122,6 +122,23 @@
         <CodeBlock Source="Components/RangeSlider/default-values.txt" />
     </div>
 
+    <!-- Vertical -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Vertical</h2>
+            <p class="text-sm text-muted-foreground">
+                Runs bottom to top. Give the slider a height; it fills its container.
+            </p>
+        </div>
+        <div class="h-48">
+            <BbRangeSlider @bind-Value="_verticalRange"
+                         Orientation="RangeSliderOrientation.Vertical"
+                         ShowTooltips="true" />
+        </div>
+        <p class="text-sm text-muted-foreground">Range: @_verticalRange.Start - @_verticalRange.End</p>
+        <CodeBlock Source="Components/RangeSlider/vertical.txt" />
+    </div>
+
     <!-- Disabled -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -201,6 +218,9 @@
                 <ApiParameter Name="FormatValueFunc" Type="Func<double, string>?">
                     Custom value formatter.
                 </ApiParameter>
+                <ApiParameter Name="Orientation" Type="RangeSliderOrientation" Default="Horizontal">
+                    <code>Vertical</code> runs the slider bottom to top; it fills the height of its container.
+                </ApiParameter>
                 <ApiParameter Name="Disabled" Type="bool">
                     Disables the slider.
                 </ApiParameter>
@@ -219,4 +239,5 @@
     private (double Start, double End) _minGapValue = (30, 70);
     private (double Start, double End) _tickValue = (25, 75);
     private (double Start, double End) _priceRange = (50, 350);
+    private (double Start, double End) _verticalRange = (20, 80);
 }

@@ -193,6 +193,15 @@ public class InputConverter<TValue>
 
         var culture = ResolvedCulture;
 
+        // Enums are matched by name, before the type switch: they have no fixed set of types to
+        // list, and the switch's fallthrough would reject every one of them as "no converter
+        // registered" — the same gap that made an enum-typed BbNativeSelect silently reset to its
+        // default value.
+        if (parseType.IsEnum)
+        {
+            return (TValue)Enum.Parse(parseType, input, ignoreCase: true);
+        }
+
         object result = parseType switch
         {
             Type t when t == typeof(string) => input,
@@ -235,6 +244,14 @@ public class InputConverter<TValue>
         if (parseType == typeof(string))
         {
             return value as string;
+        }
+
+        // The enum's name, not its numeric value: an enum is IFormattable, and a culture-aware
+        // ToString on one produces the name anyway, but being explicit keeps this the exact inverse
+        // of the parse above.
+        if (parseType.IsEnum)
+        {
+            return value.ToString();
         }
 
         if (value is IFormattable formattable)

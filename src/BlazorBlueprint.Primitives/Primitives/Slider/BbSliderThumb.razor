@@ -47,9 +47,10 @@
             var pctStr = percentage.ToString(CultureInfo.InvariantCulture);
             if (Context?.Orientation == SliderOrientation.Vertical)
             {
-                return $"bottom: {pctStr}%";
+                return $"bottom: var(--bb-slider-position, {pctStr}%)";
             }
-            return $"left: {pctStr}%";
+            // Logical, so the percentage measures from the reading edge and mirrors with dir.
+            return $"inset-inline-start: var(--bb-slider-position, {pctStr}%)";
         }
     }
 

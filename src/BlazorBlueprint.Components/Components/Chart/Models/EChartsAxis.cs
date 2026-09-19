@@ -138,4 +138,12 @@ internal sealed class EChartsLineStyleOption
     [JsonPropertyName("type")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Type { get; set; }
+
+    [JsonPropertyName("opacity")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public double? Opacity { get; set; }
+
+    [JsonPropertyName("curveness")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public double? Curveness { get; set; }
 }

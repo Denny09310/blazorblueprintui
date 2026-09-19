@@ -356,12 +356,27 @@ function setupEventListeners(instanceId, state) {
   state.handleKeyDown = (e) => onKeyDown(instanceId, state, e);
   state.handleFocusOut = (e) => onWidgetFocusOut(instanceId, state, e);
 
+  // Escape during a *pointer* drag. The grid's own keydown listener cannot see it: a pointer drag
+  // never moves focus into the grid, so the key event is delivered to whatever was focused before
+  // — usually <body> — and never reaches a listener on a descendant. Documented as "Escape cancels
+  // an active drag or resize", and with a mouse it did nothing at all.
+  //
+  // Deliberately narrow: Escape only, and only while this grid is the one dragging, so a second
+  // grid on the page cannot act on an interaction that is not its own.
+  state.handleDocumentKeyDown = (e) => {
+    if (e.key !== 'Escape') return;
+    if (!state.isDragging && !state.isResizing) return;
+    e.preventDefault();
+    cancelInteraction(state);
+  };
+
   state.gridEl.addEventListener('pointerdown', state.handlePointerDown);
   document.addEventListener('pointermove', state.handlePointerMove);
   document.addEventListener('pointerup', state.handlePointerUp);
   document.addEventListener('pointercancel', state.handlePointerCancel);
   state.gridEl.addEventListener('keydown', state.handleKeyDown);
   state.gridEl.addEventListener('focusout', state.handleFocusOut);
+  document.addEventListener('keydown', state.handleDocumentKeyDown);
 }
 
 function cleanupListeners(state) {
@@ -373,6 +388,7 @@ function cleanupListeners(state) {
   document.removeEventListener('pointermove', state.handlePointerMove);
   document.removeEventListener('pointerup', state.handlePointerUp);
   document.removeEventListener('pointercancel', state.handlePointerCancel);
+  document.removeEventListener('keydown', state.handleDocumentKeyDown);
 }
 
 // --- Pointer Down ---
@@ -503,9 +519,14 @@ function activateDrag(state) {
     state.originalPositions = getWidgetPositions(grid, null);
   }
 
-  // Capture grab offset (pointer position relative to widget's top-left corner)
+  // Capture grab offset (pointer position relative to the widget's leading top corner). The
+  // grid's first column is drawn at the right under dir="rtl", so the horizontal offset is
+  // measured from the widget's right edge there and every later sum stays in grid space.
   const widgetRect = state.originalWidget.getBoundingClientRect();
-  state.grabOffsetX = state.startX - widgetRect.left;
+  state.rtl = getComputedStyle(state.originalWidget).direction === 'rtl';
+  state.grabOffsetX = state.rtl
+    ? widgetRect.right - state.startX
+    : state.startX - widgetRect.left;
   state.grabOffsetY = state.startY - widgetRect.top;
 
   document.body.style.userSelect = 'none';
@@ -527,7 +548,9 @@ function updateDrag(state, e) {
   const rowHeight = state.options.rowHeight;
 
   // Calculate target column and row from pointer position, adjusted for grab offset
-  const relX = e.clientX - gridRect.left - (state.grabOffsetX || 0);
+  const relX = state.rtl
+    ? gridRect.right - e.clientX - (state.grabOffsetX || 0)
+    : e.clientX - gridRect.left - (state.grabOffsetX || 0);
   const relY = e.clientY - gridRect.top - (state.grabOffsetY || 0);
 
   let targetCol = Math.round(relX / (cellWidth + gap)) + 1;
@@ -633,7 +656,10 @@ function updateResize(state, e) {
   const cellWidth = (gridRect.width - (cols - 1) * gap) / cols;
   const rowHeight = state.options.rowHeight;
 
-  const dx = e.clientX - state.startX;
+  // A handle sits on the widget's logical edge, so dragging towards the trailing edge grows the
+  // span in both directions: the pointer's travel is read along the reading direction.
+  const rtl = getComputedStyle(state.originalWidget ?? state.dragGrid).direction === 'rtl';
+  const dx = (e.clientX - state.startX) * (rtl ? -1 : 1);
   const dy = e.clientY - state.startY;
 
   const handle = state.activeHandle;

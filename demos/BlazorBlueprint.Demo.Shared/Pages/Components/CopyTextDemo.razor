@@ -108,7 +108,47 @@
         <CodeBlock Source="Components/CopyText/value-func.txt" />
     </div>
 
+    <!-- Async value -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold">Asynchronous value <span class="text-xs font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded">New</span></h2>
+        <p class="text-sm text-muted-foreground">
+            <code class="bg-muted px-1 py-0.5 rounded">ValueFuncAsync</code> is for text that has to be fetched or
+            computed. The button below deliberately takes <strong>1.5 seconds</strong> to produce its value — long
+            enough that resolving it before the write would get the write refused.
+        </p>
+        <p class="text-sm text-muted-foreground">
+            It works because the function is invoked from JavaScript <em>inside</em> the
+            <code class="bg-muted px-1 py-0.5 rounded">ClipboardItem</code>, handing the browser the promise rather
+            than the result, so the user activation stays alive. Where a browser cannot take a promise there, the value
+            is resolved first and a refusal is reported through
+            <code class="bg-muted px-1 py-0.5 rounded">OnCopyFailed</code> instead of passing silently.
+        </p>
+
+        <div class="flex flex-wrap items-center gap-4">
+            <BbCopyText ValueFuncAsync="SlowValueAsync"
+                        OnCopied="HandleAsyncCopied"
+                        OnCopyFailed="HandleAsyncFailed">
+                Copy a slowly-fetched token
+            </BbCopyText>
+            <span class="text-sm" data-testid="async-copy-readout">@(_asyncReadout ?? "Not copied yet")</span>
+        </div>
+
+        <CodeBlock Source="Components/CopyText/async-value.txt" />
+    </div>
+
     <!-- API Reference -->
+
+        <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The copy target is focusable and exposes role="button" with a configurable AriaLabel.</AccessibilityItem>
+            <AccessibilityItem>The visible copy status and tooltip provide feedback; choose a label that describes what will be copied. Decorative icons are hidden from assistive technology.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Focus the copy target"><BbKbd>Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Copy the value"><BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">API Reference</h2>
@@ -142,25 +182,44 @@
                 <ApiParameter Name="AdditionalAttributes" Type="Dictionary<string, object>?" Default="null">
                     Additional HTML attributes applied to the container element.
                 </ApiParameter>
+                <ApiParameter Since="v4" Name="ValueFuncAsync" Type="Func&lt;Task&lt;string?&gt;&gt;?">
+                    An asynchronous function producing the value, evaluated at click time. Called from inside the clipboard write so a slow result does not spend the user activation. <code>Value</code> wins when non-empty, then <code>ValueFunc</code>, then this.
+                </ApiParameter>
+                <ApiParameter Since="v4" Name="OnCopyFailed" Type="EventCallback&lt;CopyTextFailure&gt;">
+                    Invoked when a copy did not happen. <code>Refused</code> means the browser rejected the write, most often an expired user activation; <code>NoValue</code> means there was nothing to copy.
+                </ApiParameter>
             </ApiReference>
         </div>
     </section>
 
-    <LocalizationSection
+<LocalizationSection
         Description="The copy text tooltip and aria label strings are configurable."
         Labels="@(new LocalizationSection.LabelInfo[]
         {
             new("ClickToCopy", "Click to copy", "Tooltip and aria label prompting the user to copy"),
             new("Copied", "Copied!", "Tooltip shown after the value has been copied"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.CopyText.ClickToCopy = ""Zum Kopieren klicken"";
-    opts.CopyText.Copied = ""Kopiert!"";
+    localizer.Set(""CopyText.ClickToCopy"", ""Zum Kopieren klicken"");
+    localizer.Set(""CopyText.Copied"", ""Kopiert!"");
 });")" />
 </div>
 
 @code {
+    private string? _asyncReadout;
+
+    private async Task<string?> SlowValueAsync()
+    {
+        // Deliberately slow. An immediately-resolved task passes everywhere and proves nothing.
+        await Task.Delay(1500);
+        return $"token-{Guid.NewGuid():N}";
+    }
+
+    private void HandleAsyncCopied(string? value) => _asyncReadout = $"Copied: {value}";
+
+    private void HandleAsyncFailed(CopyTextFailure reason) => _asyncReadout = $"Failed: {reason}";
+
     private static readonly string[] Environments = ["dev", "staging", "prod"];
 
     private string _environment = Environments[0];

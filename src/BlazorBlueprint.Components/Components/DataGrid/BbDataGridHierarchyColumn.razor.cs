@@ -14,7 +14,7 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 /// <typeparam name="TData">The type of data items in the grid.</typeparam>
 /// <typeparam name="TProp">The type of the property this column binds to.</typeparam>
-public partial class BbDataGridHierarchyColumn<TData, TProp> : ComponentBase, IDataGridColumn<TData>, IFilterableColumn
+public partial class BbDataGridHierarchyColumn<TData, TProp> : ComponentBase, IDataGridColumn<TData>, IFilterableColumn, IHierarchyIndentColumn
     where TData : class
 {
     private string? resolvedTitle;

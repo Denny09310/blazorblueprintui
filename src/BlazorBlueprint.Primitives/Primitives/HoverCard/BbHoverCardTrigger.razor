@@ -121,7 +121,7 @@ else
 
     private void HandleMouseEnterForContext()
     {
-        CancelCloseTimer();
+        Context.CancelPendingClose();
         if (!Context.IsOpen)
         {
             _openTimer?.Dispose();
@@ -147,7 +147,7 @@ else
 
     private void HandleFocusForContext()
     {
-        CancelCloseTimer();
+        Context.CancelPendingClose();
 
         // TriggerContext.OnFocus is an Action, and widening it to Func<Task> would break every
         // consumer implementing the AsChild pattern. Start the work and observe its faults here
@@ -177,6 +177,9 @@ else
         {
             throw new InvalidOperationException("HoverCardTrigger must be used within a HoverCard component.");
         }
+
+        // The content cancels through the same signal when the pointer moves onto the card.
+        Context.PendingCloseCancelled += CancelCloseTimer;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -185,8 +188,7 @@ else
         {
             try
             {
-                _elementUtils = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
+                _elementUtils = await PrimitiveModules.GetAsync(JSRuntime);
             }
             catch (Exception ex) when (ex is JSException or InvalidOperationException or TaskCanceledException)
             {
@@ -254,7 +256,7 @@ else
 
     private void HandleMouseEnter()
     {
-        CancelCloseTimer();
+        Context.CancelPendingClose();
 
         if (!Context.IsOpen)
         {
@@ -299,7 +301,7 @@ else
 
         try
         {
-            return await _elementUtils.InvokeAsync<bool>("isKeyboardFocus", element);
+            return await _elementUtils.InvokeAsync<bool>("elementUtils.isKeyboardFocus", element);
         }
         catch (Exception ex) when (ex is JSException or JSDisconnectedException or ObjectDisposedException or TaskCanceledException)
         {
@@ -327,7 +329,7 @@ else
 
     private async Task HandleFocus()
     {
-        CancelCloseTimer();
+        Context.CancelPendingClose();
         await OpenOnVisibleFocusAsync(_triggerRef);
     }
 
@@ -396,25 +398,16 @@ else
         }
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
+        if (Context is not null)
+        {
+            Context.PendingCloseCancelled -= CancelCloseTimer;
+        }
+
         _disposed = true;
         CancelOpenTimer();
         CancelCloseTimer();
-
-        if (_elementUtils != null)
-        {
-            try
-            {
-                await _elementUtils.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or ObjectDisposedException or TaskCanceledException)
-            {
-                // Circuit already gone; nothing to release.
-                Logger.LogDebug(ex, "HoverCardTrigger could not dispose element-utils.");
-            }
-
-            _elementUtils = null;
-        }
+        return ValueTask.CompletedTask;
     }
 }

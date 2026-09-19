@@ -37,7 +37,7 @@
                     <BbNavigationMenu Class="hidden md:flex">
                         <BbNavigationMenuList>
                             <BbNavigationMenuItem>
-                                <BbNavigationMenuLink Href="/docs">Documentation</BbNavigationMenuLink>
+                                <BbNavigationMenuLink Href="#">Documentation</BbNavigationMenuLink>
                             </BbNavigationMenuItem>
                             <BbNavigationMenuItem Value="components">
                                 <BbNavigationMenuTrigger>Components</BbNavigationMenuTrigger>
@@ -61,14 +61,14 @@
                     </BbNavigationMenu>
 
                     <div class="hidden md:block">
-                        <a href="/login" class="text-sm text-muted-foreground hover:text-foreground">Sign In</a>
+                        <a href="#" class="text-sm text-muted-foreground hover:text-foreground">Sign In</a>
                     </div>
                 </header>
 
                 <!-- Mobile navigation in Sheet -->
                 <BbResponsiveNavContent>
                     <nav class="flex flex-col space-y-4">
-                        <a href="/docs" class="text-lg font-medium hover:text-primary">Documentation</a>
+                        <a href="#" class="text-lg font-medium hover:text-primary">Documentation</a>
                         <div class="space-y-2">
                             <span class="text-sm font-medium text-muted-foreground">Components</span>
                             <div class="pl-4 space-y-2 border-l">
@@ -78,7 +78,7 @@
                         </div>
                         <a href="/primitives" class="text-lg font-medium hover:text-primary">Primitives</a>
                         <BbSeparator />
-                        <a href="/login" class="text-sm text-muted-foreground hover:text-primary">Sign In</a>
+                        <a href="#" class="text-sm text-muted-foreground hover:text-primary">Sign In</a>
                     </nav>
                 </BbResponsiveNavContent>
             </BbResponsiveNavProvider>
@@ -311,9 +311,9 @@
         {
             new("ToggleMenu", "Toggle Menu", "Aria label for the mobile menu toggle button"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.ResponsiveNav.ToggleMenu = ""Menü umschalten"";
+    localizer.Set(""ResponsiveNav.ToggleMenu"", ""Menü umschalten"");
 });")" />
 </div>
 

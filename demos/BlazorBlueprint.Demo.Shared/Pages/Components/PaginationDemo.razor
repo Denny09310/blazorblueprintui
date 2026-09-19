@@ -459,11 +459,11 @@
             new("PageFormat", "Page {0} of {1}", "Format string for the page number display"),
             new("NoItems", "No items", "Shown when there are no items"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.Pagination.Previous = ""Zurück"";
-    opts.Pagination.Next = ""Weiter"";
-    opts.Pagination.RowsPerPage = ""Zeilen pro Seite"";
+    localizer.Set(""Pagination.Previous"", ""Zurück"");
+    localizer.Set(""Pagination.Next"", ""Weiter"");
+    localizer.Set(""Pagination.RowsPerPage"", ""Zeilen pro Seite"");
 });")" />
 </div>
 

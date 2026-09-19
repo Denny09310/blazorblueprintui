@@ -9,6 +9,8 @@ obj/
 *.exe
 *.pdb
 TestResults/
+test-results/
+playwright-report/
 *.csproj.user
 .dotnet/
 packages/
@@ -55,4 +57,5 @@ devkit/
 pro/
 /.vscode-ai-images/
 
-docs/notes/checkpoint.md
+# Internal documentation belongs in the private development toolkit
+/docs/

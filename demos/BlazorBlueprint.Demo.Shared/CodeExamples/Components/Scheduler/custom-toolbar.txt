@@ -1,0 +1,40 @@
+@* Keep the built-in toolbar and add around it. *@
+<BbScheduler @bind-Events="events">
+    <ToolbarContent>
+        <div class="flex items-center justify-between gap-2">
+            @context.DefaultContent
+            <BbButton OnClick="Export">Export</BbButton>
+        </div>
+    </ToolbarContent>
+</BbScheduler>
+
+@* Or replace it entirely. Leave DefaultContent out. *@
+<BbScheduler @bind-Events="events" @bind-Date="date" @bind-View="view">
+    <ToolbarContent>
+        <div class="flex items-center justify-between gap-2 rounded-md bg-muted/50 p-2">
+            <div class="flex items-center gap-2">
+                @* Navigate knows the step size for the current view: one day, seven
+                   days, or one calendar month. GoToToday resolves "today" in the
+                   schedule's TimeZoneId, not the server's local zone. *@
+                <BbButton OnClick="@(() => context.Navigate.InvokeAsync(-1))">&#8249;</BbButton>
+                <BbButton OnClick="@(() => context.GoToToday.InvokeAsync())">Today</BbButton>
+                <BbButton OnClick="@(() => context.Navigate.InvokeAsync(1))">&#8250;</BbButton>
+            </div>
+
+            <strong>@context.Heading</strong>
+
+            <BbButton OnClick="@(() => context.SetView.InvokeAsync(SchedulerView.Month))">Month</BbButton>
+        </div>
+    </ToolbarContent>
+</BbScheduler>
+
+@code {
+    // Date, View, FirstDayOfWeek and VisibleResourceIds are ordinary bindable
+    // parameters, so a custom toolbar can drive them from its own state instead
+    // of through the context.
+    private DateOnly date = new(2026, 9, 14);
+    private SchedulerView view = SchedulerView.Week;
+    private IReadOnlyList<SchedulerEvent> events = [];
+
+    private void Export() { }
+}

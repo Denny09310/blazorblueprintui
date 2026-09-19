@@ -5,7 +5,7 @@
      style="@MergedSeparatorStyle"
      role="separator"
      aria-orientation="horizontal"
-     @attributes="AdditionalAttributes">
+     @attributes="@InlineStyleMerge.WithoutStyle(AdditionalAttributes)">
 </div>
 
 @code {
@@ -24,20 +24,7 @@
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
-    private string? MergedSeparatorStyle
-    {
-        get
-        {
-            var computed = _isVisible ? null : "display: none";
-            var consumerStyle = AdditionalAttributes?.TryGetValue("style", out var s) == true ? s?.ToString() : null;
-            if (string.IsNullOrEmpty(consumerStyle))
-            {
-                return computed;
-            }
-
-            return string.IsNullOrEmpty(computed) ? consumerStyle : $"{computed}; {consumerStyle}";
-        }
-    }
+    private string? MergedSeparatorStyle => InlineStyleMerge.Merge(_isVisible ? null : "display: none", AdditionalAttributes);
 
     private bool _isVisible = true;
 
@@ -45,7 +32,7 @@
     /// Gets the computed CSS classes for the separator.
     /// </summary>
     private string CssClass => ClassNames.cn(
-        "-mx-1 h-px bg-border",
+        "bb:-mx-1 bb:h-px bb:bg-border",
         Class
     );
 

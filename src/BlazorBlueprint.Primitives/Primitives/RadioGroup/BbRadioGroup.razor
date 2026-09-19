@@ -7,7 +7,8 @@
          aria-required="@(Required ? "true" : null)"
          aria-disabled="@Disabled.ToString().ToLower()"
          @onkeydown="HandleKeyDown"
-         @onkeydown:preventDefault="true"
+         @onkeydown:preventDefault="shouldPreventDefault"
+         @onkeyup="HandleKeyUp"
          @attributes="AdditionalAttributes">
         @ChildContent
     </div>

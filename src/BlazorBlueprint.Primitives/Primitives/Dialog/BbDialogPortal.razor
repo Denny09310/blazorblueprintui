@@ -1,26 +1,49 @@
 @namespace BlazorBlueprint.Primitives.Dialog
+@using BlazorBlueprint.Primitives.Services
+@using Microsoft.Extensions.Logging
 @inject IPortalService PortalService
+@inject INativeOverlayService NativeOverlayService
+@inject ILogger<BbDialogPortal> Logger
 @implements IDisposable
 
 @*
     DialogPortal renders its content at the document body level using PortalService.
     This ensures proper z-index stacking for overlays.
     When Container is set, renders inline instead (for contained scenarios).
+    When the effective rendering strategy is Native, renders inline too: the native
+    <dialog> element lives in the browser's top layer regardless of DOM position, so no
+    portal relocation or shared scoped service is needed. This is what makes dialogs work
+    across Blazor render-mode boundaries (e.g. InteractiveWebAssembly).
 *@
 
-@if (!string.IsNullOrEmpty(Container))
+@if (!_useNative && string.IsNullOrEmpty(Container))
 {
-    @if (Context.IsOpen || ForceMount)
-    {
-        <CascadingValue Value="Context" IsFixed="false">
-            @ChildContent
-        </CascadingValue>
-    }
+    @* Default: render through the PortalService (JS strategy). *@
+}
+else if (Context.IsOpen || ForceMount)
+{
+    <CascadingValue Value="Context" IsFixed="false">
+        @ChildContent
+    </CascadingValue>
 }
 
 @code {
     [CascadingParameter]
     private DialogContext Context { get; set; } = null!;
+
+    [CascadingParameter(Name = "DialogRenderingStrategy")]
+    private OverlayRenderingStrategy? RenderingStrategy { get; set; }
+
+    /// <summary>
+    /// Accepted so that a styled wrapper can splat its own attributes onto this portal, but it has
+    /// no effect: BbDialogPortal renders no element of its own — it only relocates its children.
+    /// Put extra attributes on BbDialogContent or BbDialogOverlay instead.
+    /// Supplying attributes here logs a warning once per component instance.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool rootAttributesWarningLogged;
 
     /// <summary>
     /// The content to render in the portal (typically DialogOverlay and DialogContent).
@@ -48,6 +71,7 @@
 
     private string _portalId = string.Empty;
     private bool _isRegistered = false;
+    private bool _useNative;
 
     protected override void OnInitialized()
     {
@@ -60,11 +84,15 @@
 
         _portalId = $"{Context.Id}-portal";
 
+        // Resolve the effective rendering strategy synchronously for this render.
+        _useNative = NativeOverlayService.ResolveStrategy(RenderingStrategy) == OverlayRenderingStrategy.Native;
+
         // Subscribe to context changes to update portal content
         Context.OnStateChanged += HandleStateChanged;
 
-        // When Container is set, content renders inline — skip portal registration
-        if (string.IsNullOrEmpty(Container))
+        // When Container is set or the native strategy is active, content renders inline —
+        // skip portal registration.
+        if (string.IsNullOrEmpty(Container) && !_useNative)
         {
             // Register initial portal if dialog is open or force mount
             if (Context.IsOpen || ForceMount)
@@ -76,8 +104,20 @@
 
     protected override void OnParametersSet()
     {
-        // When Container is set, content renders inline — skip portal registration
-        if (!string.IsNullOrEmpty(Container))
+        rootAttributesWarningLogged = ContextRootAttributes.WarnOnce(
+            Logger,
+            rootAttributesWarningLogged,
+            "BbDialogPortal",
+            "Put extra attributes on BbDialogContent or BbDialogOverlay instead.",
+            AdditionalAttributes);
+
+        // Re-resolve every time: a browser without <dialog>.showModal() makes the service fall back
+        // to the JavaScript strategy after the first render, and this portal has to start doing its
+        // job when that happens.
+        _useNative = NativeOverlayService.ResolveStrategy(RenderingStrategy) == OverlayRenderingStrategy.Native;
+
+        // When Container is set or native strategy is active, content renders inline — skip portal registration
+        if (!string.IsNullOrEmpty(Container) || _useNative)
         {
             UnregisterPortal();
             return;

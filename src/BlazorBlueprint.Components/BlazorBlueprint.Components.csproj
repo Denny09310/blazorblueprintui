@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
@@ -19,7 +19,18 @@
     <RepositoryUrl>https://github.com/blazorblueprintui/ui</RepositoryUrl>
     <Authors>Mathew Taylor</Authors>
     <Copyright>Copyright (c) 2025-present Mathew Taylor</Copyright>
-    <PackageReleaseNotes Condition="Exists('$(MSBuildThisFileDirectory)RELEASE_NOTES.md')">$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)RELEASE_NOTES.md'))</PackageReleaseNotes>
+    <!-- NuGet rejects a package whose release notes run past 35,000 characters, and the push is
+         the first step that says so - after the tag is cut, the build has run and the package has
+         been packed. Truncating here turns that into a shorter set of notes rather than a failed
+         release. -->
+    <_ReleaseNotesFile>$(MSBuildThisFileDirectory)RELEASE_NOTES.md</_ReleaseNotesFile>
+    <_ReleaseNotesText Condition="Exists('$(_ReleaseNotesFile)')">$([System.IO.File]::ReadAllText('$(_ReleaseNotesFile)'))</_ReleaseNotesText>
+    <_ReleaseNotesLimit>34500</_ReleaseNotesLimit>
+    <PackageReleaseNotes Condition="'$(_ReleaseNotesText)' != '' And $(_ReleaseNotesText.Length) &lt;= $(_ReleaseNotesLimit)">$(_ReleaseNotesText)</PackageReleaseNotes>
+    <PackageReleaseNotes Condition="'$(_ReleaseNotesText)' != '' And $(_ReleaseNotesText.Length) &gt; $(_ReleaseNotesLimit)">$(_ReleaseNotesText.Substring(0, $(_ReleaseNotesLimit)))
+
+Truncated to fit NuGet's release-note limit. The full list is in the changelog:
+https://github.com/blazorblueprintui/ui/blob/main/CHANGELOG.md</PackageReleaseNotes>
 
     <!-- MinVer Configuration - Version from git tags -->
     <MinVerTagPrefix>components/v</MinVerTagPrefix>
@@ -37,7 +48,8 @@
     <PackageReference Include="HtmlSanitizer" Version="9.1.982" />
     <PackageReference Include="TailwindMerge.NET" Version="1.3.0" />
     <PackageReference Include="Markdig" Version="0.37.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.14" />
+    <PackageReference Include="Ical.Net" Version="5.2.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.12" />
     <PackageReference Include="MinVer" Version="5.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -45,9 +57,9 @@
   </ItemGroup>
 
   <!-- Use ProjectReference for local development, PackageReference for packing.
-       The release script passes -p:UsePackageReferences=true so the nupkg always
-       references stable published versions rather than MinVer-computed prerelease
-       versions from ProjectReference. NU5104 is suppressed because
+       The release scripts update the Primitives PackageReference below to the selected
+       published version, then pass -p:UsePackageReferences=true.
+       Otherwise ProjectReference keeps the package dependency aligned with the source build. NU5104 is suppressed because
        TreatWarningsAsErrors promotes it to an error when packing with ProjectReference
        during development; the release script handles this correctly via UsePackageReferences. -->
   <PropertyGroup>
@@ -61,11 +73,13 @@
 
   <ItemGroup Condition="'$(UsePackageReferences)' == 'true'">
     <PackageReference Include="BlazorBlueprint.Icons.Lucide" Version="2.0.0" />
-    <PackageReference Include="BlazorBlueprint.Primitives" Version="3.17.0" />
+    <PackageReference Include="BlazorBlueprint.Primitives" Version="4.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="/" />
+    <None Include="..\..\NOTICE" Pack="true" PackagePath="/" />
   </ItemGroup>
 
   <!-- Prevent wwwroot files from being packed as NuGet contentFiles.

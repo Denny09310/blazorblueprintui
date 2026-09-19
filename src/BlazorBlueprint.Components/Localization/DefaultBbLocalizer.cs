@@ -22,6 +22,12 @@ public class DefaultBbLocalizer : IBbLocalizer
         // Alert
         ["Alert.Dismiss"] = "Dismiss",
 
+        // AppBar
+        ["AppBar.Back"] = "Go back",
+
+        // BottomNav
+        ["BottomNav.Label"] = "Primary navigation",
+
         // Breadcrumb
         ["Breadcrumb.Breadcrumb"] = "breadcrumb",
         ["Breadcrumb.More"] = "More",
@@ -31,8 +37,23 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Calendar.GoToNextMonth"] = "Go to next month",
 
         // Carousel
+        ["Carousel.ChooseSlide"] = "Choose a slide",
+        ["Carousel.Slide"] = "Slide",
+        ["Carousel.StartRotation"] = "Start automatic rotation",
+        ["Carousel.StopRotation"] = "Stop automatic rotation",
         ["Carousel.NextSlide"] = "Next slide",
         ["Carousel.PreviousSlide"] = "Previous slide",
+
+        // Cascader
+        ["Cascader.Label"] = "Select a category",
+        ["Cascader.Placeholder"] = "Select a category…",
+        ["Cascader.Search"] = "Search paths…",
+        ["Cascader.Empty"] = "No matching paths",
+        ["Cascader.Clear"] = "Clear selection",
+        ["Cascader.Level"] = "Level {0}",
+
+        // Chip
+        ["Chip.Dismiss"] = "Remove",
 
         // Combobox
         ["Combobox.EmptyMessage"] = "No results found.",
@@ -76,6 +97,10 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataGrid.ExpandGroup"] = "Expand group",
         ["DataGrid.CollapseGroup"] = "Collapse group",
         ["DataGrid.FilterPlaceholder"] = "Filter {0}",
+        ["DataGrid.FilterColumn"] = "Filter {0}",
+        ["DataGrid.Columns"] = "Columns",
+        ["DataGrid.ToggleColumns"] = "Toggle columns",
+        ["DataGrid.PinnedColumn"] = "Pinned",
         ["DataGrid.ColumnMenu"] = "{0} column options",
         ["DataGrid.GroupByColumn"] = "Group by {0}",
         ["DataGrid.AddGroupByColumn"] = "Then group by {0}",
@@ -108,6 +133,15 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataGrid.SearchPlaceholder"] = "Search...",
         ["DataGrid.Export"] = "Export",
         ["DataGrid.EditRow"] = "Edit row",
+        ["DataGrid.BatchEditing"] = "Batch editing",
+        ["DataGrid.SaveChanges"] = "Save changes",
+        ["DataGrid.DiscardChanges"] = "Discard changes",
+        ["DataGrid.PendingRows"] = "{0} pending rows",
+        ["DataGrid.EditCell"] = "Edit {0}",
+        ["DataGrid.ImmutableKey"] = "The row key cannot be changed.",
+        ["DataGrid.SaveRejected"] = "The save was rejected. Your changes have been retained.",
+        ["DataGrid.SaveFailed"] = "Unable to save. Your changes have been retained; please try again.",
+        ["DataGrid.InvalidBatch"] = "Correct invalid values before saving the batch.",
         ["DataGrid.SaveRow"] = "Save",
         ["DataGrid.CancelRowEdit"] = "Cancel",
         ["DataGrid.ExportAriaLabel"] = "Export rows to CSV",
@@ -126,6 +160,8 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataTable.ToggleColumns"] = "Toggle columns",
 
         // DataView
+        ["DataView.SelectItem"] = "Select item",
+        ["DataView.OtherGroup"] = "Other",
         ["DataView.SearchPlaceholder"] = "Search...",
         ["DataView.NoResultsFound"] = "No results found",
         ["DataView.Loading"] = "Loading...",
@@ -134,6 +170,16 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataView.ListView"] = "List view",
         ["DataView.GridView"] = "Grid view",
         ["DataView.Sort"] = "Sort",
+        ["DataView.SortAndFilter"] = "Sort and filter",
+        ["DataView.SortAndFilterDescription"] = "Changes update the results immediately. Select a sort field again to change direction.",
+        ["DataView.Done"] = "Done",
+
+        // DateInput
+        ["DateInput.Label"] = "Date",
+        ["DateInput.Year"] = "Year",
+        ["DateInput.Month"] = "Month",
+        ["DateInput.Day"] = "Day",
+        ["DateInput.Invalid"] = "Enter a complete, valid date within the allowed range.",
 
         // DatePicker
         ["DatePicker.Placeholder"] = "Pick a date",
@@ -185,6 +231,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Dock.RestorePanelGroup"] = "Restore panel group",
         ["Dock.NoPanelsOpen"] = "No panels are open.",
 
+        // Drawer
+        ["Drawer.Resize"] = "Resize drawer",
+
         // EventCalendar
         ["EventCalendar.Today"] = "Today",
         ["EventCalendar.Month"] = "Month",
@@ -197,8 +246,24 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["EventCalendar.NoEvents"] = "No events to display.",
         ["EventCalendar.AllDay"] = "All day",
 
+        // FileUpload
+        ["FileUpload.Progress"] = "Upload progress for {0}",
+        ["FileUpload.Selected"] = "Ready to upload",
+        ["FileUpload.Queued"] = "Waiting to upload",
+        ["FileUpload.Uploading"] = "Uploading…",
+        ["FileUpload.Succeeded"] = "Uploaded",
+        ["FileUpload.Canceled"] = "Upload canceled",
+        ["FileUpload.Failed"] = "Upload failed. You can retry.",
+        ["FileUpload.Cancel"] = "Cancel",
+        ["FileUpload.Upload"] = "Upload",
+        ["FileUpload.Retry"] = "Retry",
+
         // FilterBuilder
         ["FilterBuilder.FilterBuilderAriaLabel"] = "Filter builder",
+        ["FilterBuilder.Apply"] = "Apply Filter",
+        ["FilterBuilder.Clear"] = "Clear",
+        ["FilterBuilder.RootGroup"] = "Root filter group",
+        ["FilterBuilder.NestedGroup"] = "Nested filter group at depth {0}",
         ["FilterBuilder.SelectField"] = "Select field...",
         ["FilterBuilder.RemoveCondition"] = "Remove condition",
         ["FilterBuilder.RemoveGroup"] = "Remove group",
@@ -232,11 +297,10 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["FilterBuilder.Hours"] = "hours",
         ["FilterBuilder.Minutes"] = "minutes",
         ["FilterBuilder.Seconds"] = "seconds",
+        ["FilterBuilder.Presets"] = "Filter presets",
         ["FilterBuilder.Where"] = "Where",
         ["FilterBuilder.OperatorAnd"] = "AND",
         ["FilterBuilder.OperatorOr"] = "OR",
-        // Operator labels — keys are FilterBuilder.Operator{FilterOperator}, resolved via
-        // FilterOperatorHelper. The two *Date keys are date/datetime-field overrides.
         ["FilterBuilder.OperatorEquals"] = "equals",
         ["FilterBuilder.OperatorNotEquals"] = "not equals",
         ["FilterBuilder.OperatorIsEmpty"] = "is empty",
@@ -268,6 +332,26 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["FormWizard.Skip"] = "Skip",
         ["FormWizard.Complete"] = "Complete",
 
+        // Link
+        ["Link.OpensInNewTab"] = "(opens in a new tab)",
+
+        // Scroll to top
+        ["ScrollToTop.Label"] = "Scroll back to top",
+
+        // Exit prompt
+        ["ExitPrompt.Title"] = "Leave without saving?",
+        ["ExitPrompt.Message"] = "Your changes have not been saved. If you leave now, they are lost.",
+        ["ExitPrompt.Stay"] = "Stay on this page",
+        ["ExitPrompt.Leave"] = "Leave and discard",
+
+        // Stepper
+        ["Stepper.Progress"] = "Progress",
+        ["Stepper.Optional"] = "Optional",
+        ["Stepper.StepPosition"] = "Step {0} of {1}",
+        ["Stepper.Completed"] = "Completed",
+        ["Stepper.Error"] = "Error",
+        ["Stepper.Skipped"] = "Skipped",
+
         // MarkdownEditor
         ["MarkdownEditor.SelectHeadingLevel"] = "Select heading level",
         ["MarkdownEditor.Bold"] = "Bold (Ctrl+B)",
@@ -283,6 +367,10 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["MultiSelect.SelectAll"] = "Select All",
         ["MultiSelect.Clear"] = "Clear",
         ["MultiSelect.Close"] = "Close",
+
+        // NotificationBadge
+        ["NotificationBadge.Unread"] = "Unread notifications",
+        ["NotificationBadge.Count"] = "{0} notifications",
 
         // NumericInput
         ["NumericInput.IncreaseValue"] = "Increase value",
@@ -300,11 +388,20 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Pagination.PageFormat"] = "Page {0} of {1}",
         ["Pagination.NoItems"] = "No items",
 
+        // QuantityStepper
+        ["QuantityStepper.Label"] = "Quantity",
+        ["QuantityStepper.Remove"] = "Remove item",
+        ["QuantityStepper.Increase"] = "Increase quantity",
+        ["QuantityStepper.Decrease"] = "Decrease quantity",
+
         // Rating
         ["Rating.Rating"] = "Rating",
 
         // ResponsiveNav
         ["ResponsiveNav.ToggleMenu"] = "Toggle Menu",
+
+        // Resizable
+        ["Resizable.ResizeHandle"] = "Resize panels",
 
         // RichTextEditor
         ["RichTextEditor.Normal"] = "Normal",
@@ -328,12 +425,125 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["RichTextEditor.Cancel"] = "Cancel",
         ["RichTextEditor.Update"] = "Update",
         ["RichTextEditor.Insert"] = "Insert",
+        ["RichTextEditor.Undo"] = "Undo (Ctrl+Z)",
+        ["RichTextEditor.Redo"] = "Redo (Ctrl+Shift+Z)",
+        ["RichTextEditor.InlineCode"] = "Inline Code",
+        ["RichTextEditor.CheckList"] = "Checklist",
+        ["RichTextEditor.Align"] = "Text Alignment",
+        ["RichTextEditor.AlignLeft"] = "Align Left",
+        ["RichTextEditor.AlignCenter"] = "Align Center",
+        ["RichTextEditor.AlignRight"] = "Align Right",
+        ["RichTextEditor.AlignJustify"] = "Justify",
+        ["RichTextEditor.TextColor"] = "Text Color",
+        ["RichTextEditor.Highlight"] = "Highlight",
+        ["RichTextEditor.RemoveColor"] = "Remove Color",
+        ["RichTextEditor.InsertImage"] = "Insert Image",
+        ["RichTextEditor.Table"] = "Table",
+        ["RichTextEditor.InsertTable"] = "Insert Table",
+        ["RichTextEditor.TableSize"] = "{0} \u00d7 {1}",
+        ["RichTextEditor.InsertRowAbove"] = "Insert Row Above",
+        ["RichTextEditor.InsertRowBelow"] = "Insert Row Below",
+        ["RichTextEditor.InsertColumnLeft"] = "Insert Column Left",
+        ["RichTextEditor.InsertColumnRight"] = "Insert Column Right",
+        ["RichTextEditor.DeleteRow"] = "Delete Row",
+        ["RichTextEditor.DeleteColumn"] = "Delete Column",
+        ["RichTextEditor.DeleteTable"] = "Delete Table",
+
+        // Scheduler
+        ["Scheduler.Repeat"] = "Repeat",
+        ["Scheduler.Repeat.NONE"] = "Does not repeat",
+        ["Scheduler.Repeat.DAILY"] = "Daily",
+        ["Scheduler.Repeat.WEEKLY"] = "Weekly",
+        ["Scheduler.Repeat.MONTHLY"] = "Monthly",
+        ["Scheduler.Repeat.YEARLY"] = "Yearly",
+        ["Scheduler.Repeat.EXISTING"] = "Existing repeat schedule",
+        ["Scheduler.ExistingRepeatHelp"] = "The existing repeat schedule will be kept. Choose another repeat option to replace it.",
+        ["Scheduler.RepeatOn"] = "Repeat on",
+        ["Scheduler.ChooseRepeatDay"] = "Choose at least one day for a weekly event.",
+        ["Scheduler.MonthlyOn"] = "Repeats on day {0} of each month. Months without this date are skipped.",
+        ["Scheduler.YearlyOn"] = "Repeats every year on {0}. Years without this date are skipped.",
+        ["Scheduler.LimitOccurrences"] = "End after a number of occurrences",
+        ["Scheduler.Count"] = "Number of occurrences",
+        ["Scheduler.Label"] = "Schedule",
+        ["Scheduler.TimeSlots"] = "Schedule time slots",
+        ["Scheduler.Previous"] = "Previous period",
+        ["Scheduler.Next"] = "Next period",
+        ["Scheduler.Today"] = "Today",
+        ["Scheduler.Day"] = "Day",
+        ["Scheduler.Week"] = "Week",
+        ["Scheduler.WorkWeek"] = "Work week",
+        ["Scheduler.Month"] = "Month",
+        ["Scheduler.MoreEvents"] = "+{0} more",
+        ["Scheduler.DayCell"] = "{0}. Press Enter to create an event.",
+        ["Scheduler.WeekStartsOn"] = "Week starts on",
+        ["Scheduler.WeekStartDay"] = "{0} start",
+        ["Scheduler.Unassigned"] = "Unassigned",
+        ["Scheduler.AllDay"] = "All day",
+        ["Scheduler.AllDayRegion"] = "All-day events",
+        ["Scheduler.AllDayLabel"] = "{0}, all day on {1}",
+        ["Scheduler.AllDayRangeLabel"] = "{0}, all day from {1} to {2}",
+        ["Scheduler.MoreAllDay"] = "+{0} more",
+        ["Scheduler.Resources.Filter"] = "Resources shown",
+        ["Scheduler.Resources.FilterPlaceholder"] = "All resources",
+        ["Scheduler.Resources.FilterSearch"] = "Search resources...",
+        ["Scheduler.Resources.FilterEmpty"] = "No resource found.",
+        ["Scheduler.NoResourcesSelected"] = "No resources are selected. Choose at least one resource to see the schedule.",
+        ["Scheduler.CreateAt"] = "Create an event at {0} for {1}",
+        ["Scheduler.SlotLabel"] = "{0}. Press Enter to create an event.",
+        ["Scheduler.SlotLabelForResource"] = "{0} for {1}. Press Enter to create an event.",
+        ["Scheduler.OutsideActiveHours"] = "Outside the usual hours.",
+        ["Scheduler.Create"] = "New event",
+        ["Scheduler.Edit"] = "Edit event",
+        ["Scheduler.EditorDescription"] = "Times use the event time zone. Changes are saved when you choose Save.",
+        ["Scheduler.SingleZoneDescription"] = "Times use the schedule's time zone. Changes are saved when you choose Save.",
+        ["Scheduler.ResizeStart"] = "Drag to change the start time",
+        ["Scheduler.ResizeEnd"] = "Drag to change the end time",
+        ["Scheduler.ConfirmDelete"] = "Delete event?",
+        ["Scheduler.DeleteDescription"] = "Delete “{0}”? This cannot be undone.",
+        ["Scheduler.DeleteOccurrenceDescription"] = "Delete this occurrence of “{0}”? Other occurrences will be kept.",
+        ["Scheduler.DeleteSeriesDescription"] = "Delete the entire “{0}” series, including edited occurrences? This cannot be undone.",
+        ["Scheduler.Scope"] = "Apply changes to",
+        ["Scheduler.Occurrence"] = "This occurrence",
+        ["Scheduler.Series"] = "Entire series",
+        ["Scheduler.Title"] = "Title",
+        ["Scheduler.Start"] = "Start",
+        ["Scheduler.End"] = "End",
+        ["Scheduler.LastDay"] = "Last day",
+        ["Scheduler.TimeZone"] = "Event time zone",
+        ["Scheduler.StartRepeatedTime"] = "If the clocks repeat the start time",
+        ["Scheduler.EndRepeatedTime"] = "If the clocks repeat the end time",
+        ["Scheduler.EarlierOffset"] = "Use the first occurrence",
+        ["Scheduler.LaterOffset"] = "Use the second occurrence",
+        ["Scheduler.Resources"] = "Resources",
+        ["Scheduler.Delete"] = "Delete",
+        ["Scheduler.Menu.NewEvent"] = "New event",
+        ["Scheduler.Menu.EditEvent"] = "Edit event",
+        ["Scheduler.Menu.DeleteEvent"] = "Delete event",
+        ["Scheduler.Cancel"] = "Cancel",
+        ["Scheduler.Save"] = "Save",
+        ["Scheduler.InvalidEvents"] = "The schedule contains invalid events, time zones or recurrence rules.",
+        ["Scheduler.InvalidEdit"] = "Check the title, recurrence, time zone, and end time. Times skipped by daylight saving cannot be selected.",
+        ["Scheduler.SaveRejected"] = "These changes were rejected. Your edits have been retained.",
+        ["Scheduler.SaveFailed"] = "Unable to save. Your edits have been retained; please try again.",
+
+        // Select
+        ["Select.ChooseOption"] = "Choose an option",
 
         // Sheet
         ["Sheet.Close"] = "Close",
 
         // Sidebar
+        ["Sidebar.PillNavigation"] = "Primary navigation",
+        ["Sidebar.ExpandNavigation"] = "Expand navigation",
         ["Sidebar.ToggleSidebar"] = "Toggle Sidebar",
+
+        // Sortable
+        ["Sortable.KeyboardInstructions"] = "Press Space or Enter to pick up. Use arrows to reorder, Control plus Left or Right to transfer to a connected list, Space or Enter to drop, or Escape to cancel.",
+        ["Sortable.MoveRejected"] = "The move was not allowed.",
+        ["Sortable.DropRejected"] = "The drop was not allowed.",
+        ["Sortable.Moved"] = "Item moved from position {0} to position {1}.",
+        ["Sortable.Removed"] = "Item removed from position {0} and placed at position {1} in another list.",
+        ["Sortable.Received"] = "Item received at position {0}.",
 
         // TagInput
         ["TagInput.Placeholder"] = "Add tag...",
@@ -349,6 +559,11 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Theme.BaseColor"] = "Base color",
         ["Theme.PrimaryColor"] = "Primary color",
         ["Theme.Default"] = "Default",
+        ["Theme.Density"] = "Density",
+        ["Theme.Font"] = "Font",
+        ["Theme.Surface"] = "Surfaces",
+        ["Theme.MenuColor"] = "Menu color",
+        ["Theme.MenuAccent"] = "Menu accent",
         ["Theme.Radius"] = "Radius",
         ["Theme.Mode"] = "Mode",
         ["Theme.Light"] = "Light",
@@ -356,8 +571,23 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Theme.SwitchToLight"] = "Switch to light mode",
         ["Theme.SwitchToDark"] = "Switch to dark mode",
 
+        // TimeInput
+        ["TimeInput.Label"] = "Time",
+        ["TimeInput.Hour"] = "Hour",
+        ["TimeInput.Minute"] = "Minute",
+        ["TimeInput.Second"] = "Second",
+        ["TimeInput.Period"] = "AM or PM",
+        ["TimeInput.OpenPicker"] = "Open time picker",
+        ["TimeInput.Invalid"] = "Enter a complete, valid time within the allowed range.",
+
         // Timeline
         ["Timeline.Timeline"] = "Timeline",
+
+        // TreeSelect
+        ["TreeSelect.Label"] = "Select from tree",
+        ["TreeSelect.Placeholder"] = "Select an item…",
+        ["TreeSelect.Clear"] = "Clear selection",
+        ["TreeSelect.Search"] = "Search…",
     };
 
     /// <inheritdoc />

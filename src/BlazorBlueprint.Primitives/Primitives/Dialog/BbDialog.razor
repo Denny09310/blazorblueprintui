@@ -1,8 +1,14 @@
 @namespace BlazorBlueprint.Primitives.Dialog
+@using BlazorBlueprint.Primitives.Services
+@using Microsoft.Extensions.Logging
+@inject ILogger<BbDialog> Logger
+@implements IDisposable
 
 @* Dialog primitive root component - headless, unstyled behavior only *@
 <CascadingValue Value="@_context" IsFixed="false">
-    @ChildContent
+    <CascadingValue TValue="OverlayRenderingStrategy?" Name="DialogRenderingStrategy" Value="@RenderingStrategy" IsFixed="false">
+        @ChildContent
+    </CascadingValue>
 </CascadingValue>
 
 @code {
@@ -23,11 +29,34 @@
     private bool lastNotifiedOpen;
 
     /// <summary>
+    /// Accepted so that a styled wrapper can splat its own attributes onto this root, but it has
+    /// no effect: BbDialog renders no element of its own — it only supplies context to its children.
+    /// Put extra attributes on BbDialogContent, BbDialogOverlay or BbDialogTrigger instead.
+    /// Supplying attributes here logs a warning once per component instance.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool rootAttributesWarningLogged;
+
+    /// <summary>
     /// The child content to render within the dialog context.
     /// Typically includes DialogTrigger, DialogPortal, and other dialog parts.
     /// </summary>
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Overrides how this dialog renders. When null, the global default configured via
+    /// <c>AddBlazorBlueprintPrimitives(configureOverlays)</c> applies.
+    /// <see cref="OverlayRenderingStrategy.Native"/> renders through the browser's built-in
+    /// <c>&lt;dialog&gt;</c> element (top layer, native focus trap, Escape and backdrop),
+    /// which works across Blazor render-mode boundaries and needs no portal host.
+    /// Defaults to null (use global default, which is <see cref="OverlayRenderingStrategy.JavaScript"/>).
+    /// The strategy is resolved once on the first render; changing it afterwards has no effect.
+    /// </summary>
+    [Parameter]
+    public OverlayRenderingStrategy? RenderingStrategy { get; set; }
 
     /// <summary>
     /// Controls whether the dialog is open (controlled mode).
@@ -83,6 +112,13 @@
 
     protected override void OnParametersSet()
     {
+        rootAttributesWarningLogged = ContextRootAttributes.WarnOnce(
+            Logger,
+            rootAttributesWarningLogged,
+            "BbDialog",
+            "Put extra attributes on BbDialogContent, BbDialogOverlay or BbDialogTrigger instead.",
+            AdditionalAttributes);
+
         // Update controlled value if it changed
         if (_state.IsControlled && Open.HasValue)
         {
@@ -120,8 +156,17 @@
         StateHasChanged();
     }
 
+    /// <summary>
+    /// Unsubscribes from the context.
+    /// </summary>
+    /// <remarks>
+    /// The method was here all along, but the component never declared <c>IDisposable</c>, so
+    /// Blazor never called it: every root left a handler attached to a context it no longer
+    /// rendered, and the closure kept the disposed component alive with it.
+    /// </remarks>
     public void Dispose()
     {
         _context.OnStateChanged -= HandleContextStateChanged;
+        GC.SuppressFinalize(this);
     }
 }

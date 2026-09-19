@@ -1,0 +1,122 @@
+@page "/components/highlighter"
+
+<PageTitle>Highlighter - Blazor Blueprint</PageTitle>
+
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Highlighter</h1>
+        <p class="text-xl text-muted-foreground">
+            Marks the parts of a string that match a search term, so a result list can show why
+            each row matched.
+        </p>
+    </div>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Live search</h2>
+            <p class="text-sm text-muted-foreground">
+                Type to see the matches move. Matching is case-insensitive by default.
+            </p>
+        </div>
+        <div class="space-y-4 rounded-lg border p-6">
+            <BbInput @bind-Value="search" Placeholder="Search the rows..." Class="max-w-sm" />
+            <ul class="space-y-2 text-sm">
+                @foreach (var row in rows)
+                {
+                    <li class="rounded-md border px-3 py-2">
+                        <BbHighlighter Text="@row" Query="@search" />
+                    </li>
+                }
+            </ul>
+        </div>
+        <CodeBlock Source="Components/Highlighter/basic.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Several terms</h2>
+            <p class="text-sm text-muted-foreground">
+                Pass <code class="rounded bg-muted px-1 py-0.5 text-xs">Queries</code> to mark more
+                than one term. Overlapping matches merge into one mark rather than nesting.
+            </p>
+        </div>
+        <div class="space-y-2 rounded-lg border p-6 text-sm">
+            <p><BbHighlighter Text="@paragraph" Queries="@(new[] { "grid", "column" })" /></p>
+            <p class="text-muted-foreground">
+                Overlapping: <BbHighlighter Text="Data grid columns" Queries="@(new[] { "grid col", "columns" })" />
+            </p>
+        </div>
+        <CodeBlock Source="Components/Highlighter/queries.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Options</h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">WholeWord</code> stops a short
+                term marking a fragment inside every other word.
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">MarkClass</code> replaces the
+                mark styling.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-6 text-sm">
+            <p>Default: <BbHighlighter Text="A grid of gridlines in the grid" Query="grid" /></p>
+            <p>Whole word: <BbHighlighter Text="A grid of gridlines in the grid" Query="grid" WholeWord="true" /></p>
+            <p>Case-sensitive: <BbHighlighter Text="Grid, grid and GRID" Query="Grid" CaseSensitive="true" /></p>
+            <p>Custom mark: <BbHighlighter Text="A grid of gridlines" Query="grid" MarkClass="bb:bg-amber-200 bb:text-amber-950" /></p>
+        </div>
+        <CodeBlock Source="Components/Highlighter/options.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">The text is never markup</h2>
+            <p class="text-sm text-muted-foreground">
+                Both the text and the term render as text, so a term typed into a search box
+                cannot inject an element.
+            </p>
+        </div>
+        <div class="rounded-lg border p-6 text-sm">
+            <BbHighlighter Text="Angle brackets like <b>this</b> stay literal" Query="<b>" />
+        </div>
+    </section>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Matches render as <code>&lt;mark&gt;</code>, which browsers and screen readers already treat as "relevant to a search", so the highlight is not colour alone.</AccessibilityItem>
+            <AccessibilityItem>The mark's default styling keeps the inherited text colour, so contrast follows the surrounding text rather than being overridden.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="The component renders text only and takes no focus"><BbKbd>None</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+        <ApiReference Since="v4" ComponentName="BbHighlighter">
+            <ApiParameter Name="Text" Type="string?">The text to render. Required.</ApiParameter>
+            <ApiParameter Name="Query" Type="string?">The term to mark. Ignored when Queries is set.</ApiParameter>
+            <ApiParameter Name="Queries" Type="IReadOnlyList&lt;string&gt;?">Several terms. Overlapping matches merge into one mark.</ApiParameter>
+            <ApiParameter Name="CaseSensitive" Type="bool" Default="false">Ordinal case-sensitive matching.</ApiParameter>
+            <ApiParameter Name="WholeWord" Type="bool" Default="false">Only match at the start of a word.</ApiParameter>
+            <ApiParameter Name="MarkClass" Type="string?">Additional CSS classes for the <code>&lt;mark&gt;</code> elements.</ApiParameter>
+        </ApiReference>
+    </section>
+</div>
+
+@code {
+    private string search = "grid";
+
+    private readonly string[] rows =
+    [
+        "Data Grid with virtual columns",
+        "Grid guide: layout and gaps",
+        "Dashboard Grid widgets",
+        "Scheduler lanes and resources",
+        "Event Calendar month view",
+    ];
+
+    private const string paragraph =
+        "The data grid renders a column per field, and the dashboard grid places widgets on a "
+        + "twelve column layout.";
+}

@@ -1,0 +1,4 @@
+<BbLink Href="#">Default</BbLink>
+<BbLink Href="#" Variant="LinkVariant.Inherit">Inherit</BbLink>
+<BbLink Href="#" Variant="LinkVariant.Muted">Muted</BbLink>
+<BbLink Href="#" Variant="LinkVariant.Destructive">Destructive</BbLink>

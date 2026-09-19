@@ -63,6 +63,8 @@ Chart/
 │   ├── Pie.razor/.razor.cs
 │   ├── Radar.razor/.razor.cs
 │   ├── RadialBar.razor/.razor.cs
+│   ├── Rose.cs                # derives from Pie, adds Mode
+│   ├── Sankey.razor/.razor.cs
 │   └── CenterLabel.razor/.razor.cs
 └── Types/
     ├── LineChart.cs
@@ -70,7 +72,9 @@ Chart/
     ├── AreaChart.cs
     ├── PieChart.cs
     ├── RadarChart.cs
-    └── RadialBarChart.cs
+    ├── RadialBarChart.cs
+    ├── RoseChart.cs
+    └── SankeyChart.cs
 ```
 
 ### How It Works
@@ -185,6 +189,46 @@ Circular progress bars and radial visualizations.
     <RadialBar DataKey="visitors" NameKey="browser" RoundCap="true" />
 </RadialBarChart>
 ```
+
+### RoseChart
+
+A pie whose sectors also vary in radius, so categories rank by length rather than by angle.
+
+```razor
+<BbRoseChart Data="@data" Height="300px">
+    <BbChartTooltip />
+    <BbRose DataKey="visitors" NameKey="browser" Mode="RoseMode.Radius" />
+</BbRoseChart>
+```
+
+`BbRose` derives from `BbPie`, so every Pie parameter — `InnerRadius`, `OuterRadius`, the labels, a
+child `BbCenterLabel` — applies here too. `Mode` maps to the ECharts `roseType` option:
+`RoseMode.Radius` keeps the pie's proportional angles and adds radius on top, `RoseMode.Area` gives
+every sector the same angle and varies the radius alone.
+
+### SankeyChart
+
+Shows how a quantity splits and recombines as it moves between stages.
+
+```razor
+<BbSankeyChart Data="@flows" Height="400px">
+    <BbChartTooltip />
+    <BbSankey SourceKey="from" TargetKey="to" DataKey="value" />
+</BbSankeyChart>
+```
+
+Bind a collection of **links**, not of nodes: each row gives a source name, a target name and a
+value, and the node list is derived from the names in the order they are first seen — which is also
+the order they take their colours from the chart palette.
+
+A sankey is a directed acyclic graph. ECharts throws rather than drawing when the links form a
+cycle, which leaves the whole chart blank, so a link that would close a cycle — including a link
+from a node to itself — is dropped and the rest of the diagram is drawn. A row missing either name,
+or carrying a value that is not a number, is dropped for the same reason.
+
+A node in the outermost column points its label at the edge of the canvas, where ECharts draws it
+and lets it overflow, so those nodes are given the opposite `LabelPosition` and the text turns
+inwards instead.
 
 ## Usage
 
@@ -314,6 +358,8 @@ Use `ChartContainer` for a Card-like wrapper with consistent styling:
 - `InnerRadius` (`string`, default: `"30%"`) — Inner radius
 - `OuterRadius` (`string`, default: `"80%"`) — Outer radius
 
+`RoseChart` and `SankeyChart` take no parameters of their own; everything is set on the series.
+
 ## Composable Components
 
 ### XAxis / YAxis
@@ -441,6 +487,38 @@ XAxis also has: `LabelInside` (`bool`), `BoundaryGap` (`bool?`).
 | `RoundCap` | `bool` | `true` | Round bar ends |
 | `ShowLabels` | `bool` | `false` | Show value labels |
 | `ShowBackground` | `bool` | `false` | Show background track |
+
+### Rose
+
+Everything `Pie` takes, plus:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Mode` | `RoseMode` | `Radius` | How a value maps onto a sector (`Radius`, `Area`) |
+
+### Sankey
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `SourceKey` | `string?` | `null` | Property holding the name of the node each link leaves |
+| `TargetKey` | `string?` | `null` | Property holding the name of the node each link enters |
+| `Orientation` | `SankeyOrientation` | `Horizontal` | Direction the diagram flows in |
+| `NodeAlign` | `SankeyNodeAlign` | `Justify` | Where nodes with no outgoing link sit (`Justify`, `Left`, `Right`) |
+| `NodeWidth` | `int` | `20` | Node thickness in px |
+| `NodeGap` | `int` | `8` | Gap between two nodes in the same column, in px |
+| `Draggable` | `bool` | `false` | Whether a node can be dragged to a new position |
+| `LinkColor` | `SankeyLinkColor` | `Gradient` | Ribbon colour (`Gradient`, `Source`, `Target`) |
+| `LinkOpacity` | `double` | `0.4` | Ribbon opacity (0–1) |
+| `Curveness` | `double` | `0.5` | How much the ribbons bow (0–1) |
+| `FocusAdjacent` | `bool` | `true` | Hovering a node dims everything it is not connected to |
+| `ShowLabels` | `bool` | `true` | Label each node with its name |
+| `LabelPosition` | `LabelPosition` | `Right` | Label position relative to its node |
+| `LabelFormatter` | `string?` | `null` | ECharts formatter string |
+| `LabelColor` | `string?` | `null` | Label text color |
+| `LabelFontSize` | `int?` | `null` | Label font size |
+
+`NodeAlign` names a physical side rather than a reading-order one, because ECharts computes the
+layout and does not mirror it under `dir="rtl"`.
 
 ### CenterLabel
 

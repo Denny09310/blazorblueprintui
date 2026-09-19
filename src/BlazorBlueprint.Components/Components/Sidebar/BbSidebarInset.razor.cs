@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -59,8 +60,7 @@ public partial class BbSidebarInset : IAsyncDisposable
         {
             try
             {
-                module = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/sidebar-inset.js");
+                module = await ComponentModules.GetCoreAsync(JSRuntime);
                 jsReady = true;
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
@@ -87,11 +87,17 @@ public partial class BbSidebarInset : IAsyncDisposable
             {
                 try
                 {
-                    await module!.InvokeVoidAsync("scrollToTop", mainRef);
+                    // Namespaced, because this module is the bb-components-core bundle rather
+                    // than sidebar-inset.js on its own. The bundle re-exports each module under
+                    // its file name in camelCase, so the bare identifier resolves to nothing.
+                    await module!.InvokeVoidAsync("sidebarInset.scrollToTop", mainRef);
                 }
-                catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+                catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
                 {
-                    // Circuit disconnected
+                    // Circuit disconnected, or the function is not there. Scrolling to the top of
+                    // a new page is a courtesy; JSException is caught alongside the rest because
+                    // letting it escape an async void handler takes the whole circuit down, and
+                    // no failure of this call is worth that.
                 }
                 catch (InvalidOperationException)
                 {
@@ -99,27 +105,29 @@ public partial class BbSidebarInset : IAsyncDisposable
                 }
             });
         }
-        catch (ObjectDisposedException)
+        catch (Exception)
         {
-            // Component disposed during async operation
+            // async void: nothing awaits this, so an exception that escapes has no caller to reach and
+            // Blazor Server treats it as fatal — the circuit closes and the user sees the reconnect
+            // overlay. Everything this method does is best-effort, and none of it is worth that.
         }
     }
 
     private string GetClasses()
     {
-        var baseClasses = "relative flex h-full flex-1 flex-col bg-background focus:outline-none";
+        var baseClasses = "bb:relative bb:flex bb:h-full bb:flex-1 bb:flex-col bb:bg-background bb:focus:outline-none";
 
         // Floating variant margins - push content when sidebar is visible
         // When sidebar is closed (hidden), remove margins
         var floatingClasses = Context?.Side == SidebarSide.Right
-            ? "md:peer-data-[variant=floating]:mr-2 md:peer-data-[variant=floating]:peer-data-[state=collapsed]:mr-[calc(var(--sidebar-width-icon)+0.5rem+0.5rem)] md:peer-data-[variant=floating]:peer-data-[state=expanded]:mr-[calc(var(--sidebar-width)+0.5rem+0.5rem)] md:peer-data-[variant=floating]:peer-data-[state=closed]:mr-0"
-            : "md:peer-data-[variant=floating]:ml-2 md:peer-data-[variant=floating]:peer-data-[state=collapsed]:ml-[calc(var(--sidebar-width-icon)+0.5rem+0.5rem)] md:peer-data-[variant=floating]:peer-data-[state=expanded]:ml-[calc(var(--sidebar-width)+0.5rem+0.5rem)] md:peer-data-[variant=floating]:peer-data-[state=closed]:ml-0";
+            ? "bb:md:peer-data-[variant=floating]:mr-2 bb:md:peer-data-[variant=floating]:peer-data-[state=collapsed]:mr-[calc(var(--sidebar-width-icon)+0.5rem+0.5rem)] bb:md:peer-data-[variant=floating]:peer-data-[state=expanded]:mr-[calc(var(--sidebar-width)+0.5rem+0.5rem)] bb:md:peer-data-[variant=floating]:peer-data-[state=closed]:mr-0"
+            : "bb:md:peer-data-[variant=floating]:ml-2 bb:md:peer-data-[variant=floating]:peer-data-[state=collapsed]:ml-[calc(var(--sidebar-width-icon)+0.5rem+0.5rem)] bb:md:peer-data-[variant=floating]:peer-data-[state=expanded]:ml-[calc(var(--sidebar-width)+0.5rem+0.5rem)] bb:md:peer-data-[variant=floating]:peer-data-[state=closed]:ml-0";
 
         // Add margin transitions
-        var transitionClasses = "transition-[margin] duration-200 ease-linear";
+        var transitionClasses = "bb:transition-[margin] bb:duration-200 bb:ease-linear";
 
         // Inset variant specific styling - margin on all sides, rounded corners, shadow, and calculated height for margins
-        var insetRoundingClasses = "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:h-[calc(100%-1rem)] md:peer-data-[variant=inset]:min-h-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow md:peer-data-[variant=inset]:bg-background";
+        var insetRoundingClasses = "bb:md:peer-data-[variant=inset]:m-2 bb:md:peer-data-[variant=inset]:h-[calc(100%-1rem)] bb:md:peer-data-[variant=inset]:min-h-0 bb:md:peer-data-[variant=inset]:rounded-xl bb:md:peer-data-[variant=inset]:shadow bb:md:peer-data-[variant=inset]:bg-background";
 
         return ClassNames.cn(
             baseClasses,
@@ -130,11 +138,11 @@ public partial class BbSidebarInset : IAsyncDisposable
         );
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         if (disposed)
         {
-            return;
+            return ValueTask.CompletedTask;
         }
         disposed = true;
 
@@ -143,22 +151,7 @@ public partial class BbSidebarInset : IAsyncDisposable
             NavigationManager.LocationChanged -= OnLocationChanged;
         }
 
-        if (module != null)
-        {
-            try
-            {
-                await module.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Circuit disconnected
-            }
-            catch (InvalidOperationException)
-            {
-                // JS interop not available
-            }
-        }
-
         GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
     }
 }

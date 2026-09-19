@@ -1,0 +1,3 @@
+<BbLink Href="#" Underline="LinkUnderline.Hover">On hover (default)</BbLink>
+<BbLink Href="#" Underline="LinkUnderline.Always">Always</BbLink>
+<BbLink Href="#" Underline="LinkUnderline.None">Never</BbLink>

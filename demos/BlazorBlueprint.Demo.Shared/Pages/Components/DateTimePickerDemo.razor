@@ -267,9 +267,9 @@
         })"
         CultureAware="true"
         CultureDescription="The internal calendar uses CultureInfo.CurrentCulture for month/day names. The DateTimeFormat parameter accepts standard .NET format strings that respect the current culture."
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.Set(""DateTimePicker.Placeholder"", ""Datum und Uhrzeit auswählen"");
+    localizer.Set(""DateTimePicker.Placeholder"", ""Datum und Uhrzeit auswählen"");
 });")" />
 </div>
 

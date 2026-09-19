@@ -1,0 +1,201 @@
+@namespace BlazorBlueprint.Primitives
+@using Microsoft.JSInterop
+@implements IAsyncDisposable
+@inject IPortalService PortalService
+@inject IJSRuntime JSRuntime
+
+@* Renders portals for a specific category at the document body level.
+   Only re-renders when its own category's portals change. *@
+@{
+    // Open the render cycle. While _isRendering is set, RefreshPortal notifications are not
+    // acted on immediately (see HandleCategoryChanged) — a nested FloatingPortal inside our
+    // content (e.g. a Select in a Dialog or Popover) raises RefreshPortal from its
+    // OnParametersSet during this render, and re-rendering in response would loop. The guard
+    // stays set until OnAfterRenderAsync, which recovers any notification deferred in the
+    // meantime (including content-only updates that land in the Blazor Server ACK-wait window).
+    _isRendering = true;
+    // Track which portals are being rendered in this cycle
+    _renderedThisCycle.Clear();
+}
+@foreach (var portal in PortalService.GetPortals(Category))
+{
+    _renderedThisCycle.Add(portal.Key);
+    <div @key="portal.Key" data-portal-id="@portal.Key" data-portal-category="@Category" class="blazorblueprint-portal" style="display: contents;">
+        @portal.Value
+    </div>
+}
+
+@code {
+    /// <summary>
+    /// The portal category this host renders.
+    /// </summary>
+    [Parameter]
+    public PortalCategory Category { get; set; }
+
+    private HashSet<string> _renderedThisCycle = new();
+    private IJSObjectReference? _portalModule;
+    private bool _isRendering;
+    private bool _pendingRerender;
+    private bool _isFlushing;
+    private bool _flushScheduled;
+    private bool _disposed;
+
+    protected override void OnInitialized()
+    {
+        // Every category host registers, and the service counts them. The old "only the first one
+        // registers" rule paired a registration with a dispose that could belong to a different
+        // host: BbPortalHost is two category hosts, and a layout swap overlaps an outgoing host
+        // with an incoming one. Whichever host disposed first cleared the flag for the host still
+        // rendering, which then reported itself missing (#545).
+        PortalService.RegisterHost();
+
+        PortalService.OnPortalsCategoryChanged += HandleCategoryChanged;
+    }
+
+    /// <summary>
+    /// Handles portal changes scoped to a specific category.
+    /// Ignores notifications for other categories and during own render cycle.
+    /// </summary>
+    private void HandleCategoryChanged(PortalCategory category)
+    {
+        if (category != Category)
+        {
+            return;
+        }
+
+        if (_isRendering)
+        {
+            // A notification arrived while our render cycle is still open. The cycle stays
+            // open from BuildRenderTree until OnAfterRenderAsync, and on Blazor Server that
+            // span includes the wait for the client to acknowledge the render batch — a full
+            // network round-trip. Two very different notifications land in this window:
+            //
+            //   1. Reentrant RefreshPortal calls from nested portals' OnParametersSet, raised
+            //      synchronously while we render their content (e.g. a Select inside a Dialog
+            //      or Popover). These are redundant — we are already drawing current content.
+            //   2. Genuine content-only updates from an owner component whose fast async
+            //      handler completed inside the ACK-wait window (issue #418). These must be
+            //      re-rendered or the portaled DOM freezes on stale content.
+            //
+            // We cannot render immediately (that would re-enter the current render), so we mark
+            // a deferred re-render and reconcile it in OnAfterRenderAsync, which recovers case 2.
+            // To keep case 1 from looping, we do NOT arm the flag while a flush re-render is in
+            // progress: a nested same-category portal re-raises RefreshPortal on every render, so
+            // a flush-provoked notification must not schedule yet another flush.
+            if (!_isFlushing)
+            {
+                _pendingRerender = true;
+            }
+            return;
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Clear the rendering guard now that the render cycle is complete.
+        _isRendering = false;
+
+        if (firstRender)
+        {
+            // Load portal.js to initialize the auto-focus observer.
+            // This ensures elements with data-autofocus are automatically focused when rendered.
+            try
+            {
+                _portalModule = await PrimitiveModules.GetAsync(JSRuntime);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect in Blazor Server
+            }
+            catch (InvalidOperationException)
+            {
+                // JS interop not available during prerendering — safe to ignore
+            }
+        }
+
+        // Notify all portals that were rendered this cycle BEFORE checking for structural changes.
+        // This signals to content components that their ElementRef is now valid.
+        // Must happen first because nested FloatingPortal components wait for this notification
+        // (with a 500ms timeout) before setting up positioning.
+        foreach (var portalId in _renderedThisCycle)
+        {
+            PortalService.NotifyPortalRendered(portalId);
+        }
+
+        // Detect structural changes (register/unregister) that occurred during the render
+        // cycle. Nested FloatingPortal components call RegisterPortal in their
+        // OnAfterRenderAsync (which runs before ours, depth-first), so the portal set
+        // reflects any additions/removals by this point.
+        var currentPortalKeys = PortalService.GetPortals(Category)
+            .Select(kvp => kvp.Key)
+            .ToHashSet();
+
+        // Structural changes (register/unregister) are flushed synchronously here, exactly as
+        // before — this path is bounded because the portal set converges quickly.
+        if (!_renderedThisCycle.SetEquals(currentPortalKeys))
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+
+        // Content-only recovery for the Server ACK-wait drop (issue #418) is flushed via a
+        // deferred, single-flight re-render — never a synchronous one. On WebAssembly
+        // OnAfterRender runs inline at the end of the render, so re-rendering synchronously here
+        // would recurse until the stack overflows whenever a nested portal (e.g. a Select in a
+        // Popover) re-raises RefreshPortal on every render. Yielding first breaks that chain.
+        if (_pendingRerender)
+        {
+            _pendingRerender = false;
+            ScheduleContentFlush();
+        }
+    }
+
+    /// <summary>
+    /// Schedules a single deferred re-render to pick up a content-only portal update that was
+    /// dropped during the render cycle (see <see cref="HandleCategoryChanged"/>). Coalesced via
+    /// <see cref="_flushScheduled"/> so concurrent notifications collapse into one re-render, and
+    /// gated by <see cref="_isFlushing"/> so the re-render's own reentrant RefreshPortal calls do
+    /// not schedule another flush.
+    /// </summary>
+    private void ScheduleContentFlush()
+    {
+        if (_flushScheduled)
+        {
+            return;
+        }
+
+        _flushScheduled = true;
+        _ = InvokeAsync(async () =>
+        {
+            // Run as a fresh dispatcher work item rather than nested in the render that
+            // scheduled us.
+            await Task.Yield();
+            if (_disposed)
+            {
+                return;
+            }
+
+            _isFlushing = true;
+            try
+            {
+                StateHasChanged();
+            }
+            finally
+            {
+                _isFlushing = false;
+                _flushScheduled = false;
+            }
+        });
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _disposed = true;
+
+        PortalService.UnregisterHost();
+
+        PortalService.OnPortalsCategoryChanged -= HandleCategoryChanged;
+        return ValueTask.CompletedTask;
+    }
+}

@@ -24,7 +24,7 @@ namespace BlazorBlueprint.Components;
 /// &lt;/BarChart&gt;
 /// </code>
 /// </example>
-public partial class BbBar : SeriesBase
+public partial class BbBar : StackableSeriesBase
 {
     /// <summary>
     /// Gets or sets the border radius for bar corners in pixels.

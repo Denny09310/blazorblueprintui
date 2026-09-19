@@ -29,6 +29,15 @@ namespace BlazorBlueprint.Components;
 /// ClassNames.cn("text-red-500", "text-primary-foreground") // "text-primary-foreground" (semantic colors supported)
 /// </code>
 ///
+/// Library prefix. Every utility BlazorBlueprint ships is prefixed <c>bb:</c> so it can never
+/// collide with a consumer's own Tailwind build. A consumer's unprefixed class still replaces
+/// the library's prefixed one for the same property — the prefix is stripped for the merge and
+/// put back on whatever survives:
+/// <code>
+/// ClassNames.cn("bb:p-4 bb:rounded-md", "p-6") // "p-6 bb:rounded-md"
+/// ClassNames.cn("bb:p-4", "bb:p-8") // "bb:p-8"
+/// </code>
+///
 /// Array support:
 /// <code>
 /// ClassNames.cn(new[] { "a", "b" }) // "a b"
@@ -42,6 +51,12 @@ namespace BlazorBlueprint.Components;
 /// </example>
 public static class ClassNames
 {
+    /// <summary>
+    /// The variant prefix every utility class in <c>blazorblueprint.css</c> carries, so the
+    /// library's Tailwind output can never collide with a consumer's own build (#496).
+    /// </summary>
+    internal const string UtilityPrefix = "bb:";
+
     private static readonly char[] WhitespaceSeparators = [' ', '\t', '\n', '\r'];
     private static readonly TwMerge twMerge = new();
 
@@ -109,8 +124,108 @@ public static class ClassNames
             return string.Empty;
         }
 
-        // Use TailwindMerge.NET to resolve conflicts
-        return twMerge.Merge(string.Join(" ", classes)) ?? string.Empty;
+        return WithBareMarkers(MergeWithPrefix(classes));
+    }
+
+    /// <summary>
+    /// Carries a bare <c>group</c>/<c>peer</c> marker alongside every prefixed one the merge kept.
+    /// </summary>
+    /// <remarks>
+    /// Tailwind resolves <c>group-*</c> and <c>peer-*</c> against a literal marker class, so a
+    /// consumer's own build emits <c>:where(.group)</c> and <c>:where(.peer\/menu-button)</c> — it
+    /// never sees the <c>bb</c> prefix, and never emits <c>:where(.bb\:group)</c>. Shipping only the
+    /// prefixed marker means a consumer's <c>group-data-[state=open]:rotate-180</c> on library
+    /// markup silently matches nothing, which is how the demo's own chevrons stopped rotating.
+    /// <para>
+    /// This sits here rather than in each component's class string because a bare token in a
+    /// <c>cn(…)</c> literal is exactly what the <c>TailwindPrefixTests</c> convention forbids, and
+    /// because the merge would rewrite it back to the prefixed form. Markers are not utilities —
+    /// they carry no declarations and never conflict — so emitting both forms is free.
+    /// </para>
+    /// </remarks>
+    private static string WithBareMarkers(string merged)
+    {
+        if (merged.Length == 0 || !merged.Contains(UtilityPrefix, StringComparison.Ordinal))
+        {
+            return merged;
+        }
+
+        List<string>? extra = null;
+        foreach (var token in merged.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (!token.StartsWith(UtilityPrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var bare = token[UtilityPrefix.Length..];
+            var name = bare.Split('/')[0];
+            if (name is not ("group" or "peer"))
+            {
+                continue;
+            }
+
+            (extra ??= []).Add(bare);
+        }
+
+        return extra is null ? merged : string.Join(' ', extra) + " " + merged;
+    }
+
+    /// <summary>
+    /// Resolves Tailwind conflicts across the library's <c>bb:</c>-prefixed tokens and a
+    /// consumer's unprefixed ones as if they were one vocabulary. TailwindMerge treats the
+    /// prefix as an ordinary variant, so without this <c>bb:p-4 p-6</c> would keep both and
+    /// a consumer <c>Class="p-6"</c> could no longer replace the library's padding. The prefix
+    /// is stripped, the bare tokens are merged, and each survivor gets its prefix back if the
+    /// last occurrence of that token in the input carried one.
+    /// </summary>
+    private static string MergeWithPrefix(List<string> classes)
+    {
+        var anyPrefixed = false;
+        foreach (var c in classes)
+        {
+            if (c.StartsWith(UtilityPrefix, StringComparison.Ordinal))
+            {
+                anyPrefixed = true;
+                break;
+            }
+        }
+
+        if (!anyPrefixed)
+        {
+            return twMerge.Merge(string.Join(" ", classes)) ?? string.Empty;
+        }
+
+        var bare = new string[classes.Count];
+        for (var i = 0; i < classes.Count; i++)
+        {
+            var c = classes[i];
+            bare[i] = c.StartsWith(UtilityPrefix, StringComparison.Ordinal) ? c[UtilityPrefix.Length..] : c;
+        }
+
+        var merged = twMerge.Merge(string.Join(" ", bare));
+        if (string.IsNullOrEmpty(merged))
+        {
+            return string.Empty;
+        }
+
+        // TailwindMerge keeps the later of two conflicting tokens, so the last occurrence of a
+        // bare token decides whether the survivor was the library's or the consumer's.
+        var survivors = merged.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        for (var i = 0; i < survivors.Length; i++)
+        {
+            var token = survivors[i];
+            for (var j = bare.Length - 1; j >= 0; j--)
+            {
+                if (bare[j] == token)
+                {
+                    survivors[i] = classes[j];
+                    break;
+                }
+            }
+        }
+
+        return string.Join(" ", survivors);
     }
 
     /// <summary>

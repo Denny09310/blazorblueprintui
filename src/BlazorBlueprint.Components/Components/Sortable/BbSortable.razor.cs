@@ -29,6 +29,9 @@ public partial class BbSortable<TItem> : ComponentBase
     [Parameter]
     public RenderFragment<TItem>? ItemTemplate { get; set; }
 
+    /// <summary>Optional decorative pointer-drag preview. Rendered inert per item and cloned during drag; enables the fallback renderer.</summary>
+    [Parameter] public RenderFragment<TItem>? DragOverlayTemplate { get; set; }
+
     /// <summary>
     /// Gets or sets the list of items to render and sort.
     /// </summary>
@@ -101,6 +104,22 @@ public partial class BbSortable<TItem> : ComponentBase
     [Parameter]
     public bool Sort { get; set; } = true;
 
+    /// <summary>Enables keyboard pickup, movement, drop and cancellation within this list.</summary>
+    [Parameter]
+    public bool KeyboardSorting { get; set; } = true;
+
+    /// <summary>Accessible instructions for keyboard sorting handles.</summary>
+    [Parameter]
+    public string KeyboardInstructions { get; set; } = "Press Space or Enter to pick up. Use arrows to reorder, Control plus Left or Right to transfer to a connected list, Space or Enter to drop, or Escape to cancel.";
+
+    /// <summary>Optional predicate evaluated before an in-list move is accepted.</summary>
+    [Parameter]
+    public Func<BlazorBlueprint.Primitives.Sortable.SortableMoveContext<TItem>, bool>? CanMove { get; set; }
+
+    /// <summary>Source-side permission for a cross-list drop, before either list callback runs.</summary>
+    [Parameter]
+    public Func<BlazorBlueprint.Primitives.Sortable.SortableDropContext<TItem>, bool>? CanDrop { get; set; }
+
     /// <summary>
     /// Gets or sets a CSS selector used as the drag-handle element inside each item.
     /// When set, only the matched child element initiates a drag.
@@ -150,8 +169,8 @@ public partial class BbSortable<TItem> : ComponentBase
     private string CssClass => ClassNames.cn(
         Layout switch
         {
-            SortableLayout.Grid => "grid grid-cols-2 gap-2",
-            _ => "flex flex-col gap-2"
+            SortableLayout.Grid => "bb:grid bb:grid-cols-2 bb:gap-2",
+            _ => "bb:flex bb:flex-col bb:gap-2"
         },
         Class
     );

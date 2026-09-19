@@ -13,6 +13,32 @@ Blazor Blueprint uses CSS custom properties (variables) for theming, following t
 <link href="_content/BlazorBlueprint.Components/blazorblueprint.css" rel="stylesheet" />
 ```
 
+If you also run your own Tailwind build, its output can go before or after `blazorblueprint.css`.
+Every utility the library emits is prefixed `bb:` and kept in its own cascade layer, so the two
+stylesheets never define the same class and load order does not affect them. Do not `@source` the
+library's package or sources from your Tailwind input — it emits nothing useful and is not needed.
+
+One rule does belong in your stylesheet rather than ours — the default border colour:
+
+```css
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--border);
+  }
+}
+```
+
+Tailwind's preflight sets `border: 0 solid`, and that shorthand resets `border-color` to
+`currentColor`. Both stylesheets write their preflight into the shared `base` layer at the same
+specificity, so whichever loads last wins — and that is yours. Without this rule your own `border`,
+`border-b` and so on render in the text colour instead of the theme's grey. Library components are
+unaffected; they carry their own colour. It only sets a default: your own `border-*` utilities,
+component-layer rules and inline styles all still win.
+
 ## Avoiding the theme flash on first load
 
 The saved theme lives in `localStorage`, so a prerendered or statically rendered page has no way
@@ -335,6 +361,28 @@ Components use this as a base:
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 ```
+
+> **`--font-sans` and `ThemeFont` are the same setting, and `:root` wins.**
+>
+> `ThemeFont` works by putting `data-bb-font="inter"` (and so on) on `<html>`, and the stylesheet
+> turns that into `--font-sans`. Those rules live in a cascade layer; a `:root` block in your own
+> stylesheet is unlayered, and unlayered styles beat layered ones whatever their specificity. So a
+> `:root { --font-sans: … }` silently pins the font and every `ThemeFont` value — including one the
+> user picks in `BbThemeSwitcher` — stops having any effect.
+>
+> Pick one:
+>
+> - **Your font, always.** Set `--font-sans` on `:root` as above, and leave `ThemeFont` alone. Hide
+>   the font selector by leaving `ShowDesignOptions` off on `BbThemeSwitcher`.
+> - **Let `ThemeFont` choose.** Do not set `--font-sans` on `:root`. To add your own face to the
+>   list, write it against the attribute the theme sets, so the switcher still drives it:
+>
+>   ```css
+>   [data-bb-font="system"] { --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+>   ```
+>
+> `--font-serif` and `--font-mono` are not touched by `ThemeFont`, so `:root` is the right place for
+> those either way.
 
 ---
 

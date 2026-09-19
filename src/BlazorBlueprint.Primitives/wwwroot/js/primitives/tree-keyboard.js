@@ -16,8 +16,9 @@ function getVisibleTreeItems(container) {
   const items = Array.from(container.querySelectorAll('[role="treeitem"]'));
   return items.filter(item => {
     // Check that all ancestor groups are visible (parent treeitem is expanded)
-    let el = item.parentElement;
+    let el = item;
     while (el && el !== container) {
+      if (el.hidden) return false;
       if (el.getAttribute('role') === 'group') {
         const parentItem = el.parentElement;
         if (parentItem && parentItem.getAttribute('role') === 'treeitem') {
@@ -117,7 +118,14 @@ export function initialize(containerElement, dotNetRef, instanceId) {
     const items = getVisibleTreeItems(containerElement);
     const currentIndex = items.indexOf(currentItem);
 
-    switch (e.key) {
+    // Expanding follows the reading direction: in a right-to-left tree it is ArrowLeft that
+    // opens a node and ArrowRight that closes it.
+    const rtl = getComputedStyle(containerElement).direction === 'rtl';
+    const key = rtl && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')
+      ? (e.key === 'ArrowLeft' ? 'ArrowRight' : 'ArrowLeft')
+      : e.key;
+
+    switch (key) {
       case 'ArrowDown': {
         e.preventDefault();
         // Move focus to next visible node
@@ -186,8 +194,14 @@ export function initialize(containerElement, dotNetRef, instanceId) {
       case 'Enter': {
         e.preventDefault();
         if (!isDisabled(currentItem)) {
-          const hasChildren = currentItem.getAttribute('data-has-children') === 'true';
-          dotNetRef.invokeMethodAsync('JsOnNodeActivate', value, hasChildren).catch(() => {});
+          const isPicker = containerElement.getAttribute('data-tree-select') === 'true';
+          const isCheckable = currentItem.getAttribute('aria-checked') !== null;
+          if (isPicker && isCheckable) {
+            dotNetRef.invokeMethodAsync('JsOnNodeCheck', value).catch(() => {});
+          } else {
+            const hasChildren = currentItem.getAttribute('data-has-children') === 'true';
+            dotNetRef.invokeMethodAsync('JsOnNodeActivate', value, hasChildren).catch(() => {});
+          }
         }
         break;
       }
@@ -195,6 +209,16 @@ export function initialize(containerElement, dotNetRef, instanceId) {
       case ' ': {
         e.preventDefault();
         if (!isDisabled(currentItem)) {
+          // In a TreeSelect, Space navigates branches without changing the value.
+          // Enter commits a selection (or toggles a checkbox) instead.
+          if (containerElement.getAttribute('data-tree-select') === 'true') {
+            if (currentItem.getAttribute('data-has-children') === 'true') {
+              const action = currentItem.getAttribute('aria-expanded') === 'true'
+                ? 'JsOnNodeCollapse' : 'JsOnNodeExpand';
+              dotNetRef.invokeMethodAsync(action, value).catch(() => {});
+            }
+            break;
+          }
           // If checkable, toggle checkbox; otherwise, activate/select
           const isCheckable = currentItem.getAttribute('aria-checked') !== null;
           if (isCheckable) {
@@ -289,6 +313,17 @@ export function initialize(containerElement, dotNetRef, instanceId) {
 
   state.handleKeyDown = handleKeyDown;
   state.handleClick = handleClick;
+  // Cascade-check trees retain filtered nodes for their selection relationships.
+  // Keep a visible entry point when filtering hides the previous tabbable root.
+  const syncTabStop = () => {
+    const visible = getVisibleTreeItems(containerElement).filter(item => !isDisabled(item));
+    if (visible.length && !visible.some(item => item.getAttribute('tabindex') === '0')) {
+      updateRovingTabindex(containerElement, visible[0]);
+    }
+  };
+  state.observer = new MutationObserver(syncTabStop);
+  state.observer.observe(containerElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'aria-expanded'] });
+  syncTabStop();
   instances.set(instanceId, state);
 }
 
@@ -299,6 +334,8 @@ export function initialize(containerElement, dotNetRef, instanceId) {
 export function dispose(instanceId) {
   const state = instances.get(instanceId);
   if (!state) return;
+
+  state.observer?.disconnect();
 
   if (state.containerElement) {
     state.containerElement.removeEventListener('keydown', state.handleKeyDown);

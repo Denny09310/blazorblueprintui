@@ -425,11 +425,11 @@
             new("SelectThisRow", "Select this row", "Aria label for row checkboxes"),
             new("ClearSelection", "Clear selection", "Label for the clear selection action"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.DataTable.Search = ""Suchen..."";
-    opts.DataTable.NoResultsFound = ""Keine Ergebnisse gefunden"";
-    opts.DataTable.Columns = ""Spalten"";
+    localizer.Set(""DataTable.Search"", ""Suchen..."");
+    localizer.Set(""DataTable.NoResultsFound"", ""Keine Ergebnisse gefunden"");
+    localizer.Set(""DataTable.Columns"", ""Spalten"");
 });")" />
 </div>
 

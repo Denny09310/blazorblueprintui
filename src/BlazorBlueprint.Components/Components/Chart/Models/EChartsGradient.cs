@@ -53,14 +53,6 @@ internal sealed class EChartsTitleOption
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Top { get; set; }
 
-    [JsonPropertyName("textAlign")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? TextAlign { get; set; }
-
-    [JsonPropertyName("textVerticalAlign")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? TextVerticalAlign { get; set; }
-
     [JsonPropertyName("textStyle")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public EChartsTextStyleOption? TextStyle { get; set; }

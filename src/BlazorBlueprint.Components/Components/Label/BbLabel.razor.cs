@@ -84,7 +84,7 @@ public partial class BbLabel : ComponentBase
     /// <item>Text size: <c>text-lg</c>, <c>text-sm</c></item>
     /// <item>Font weight: <c>font-bold</c>, <c>font-normal</c></item>
     /// <item>Color: <c>text-muted-foreground</c>, <c>text-destructive</c></item>
-    /// <item>Spacing: <c>mb-2</c>, <c>mr-2</c></item>
+    /// <item>Spacing: <c>mb-2</c>, <c>me-2</c></item>
     /// </list>
     /// </remarks>
     [Parameter]
@@ -134,7 +134,7 @@ public partial class BbLabel : ComponentBase
     /// </para>
     /// </remarks>
     private string CssClass => ClassNames.cn(
-        "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+        "bb:text-sm bb:font-medium bb:leading-none bb:peer-disabled:cursor-not-allowed bb:peer-disabled:opacity-70",
         Class
     );
 }

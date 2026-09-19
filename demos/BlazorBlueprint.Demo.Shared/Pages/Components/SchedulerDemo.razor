@@ -1,0 +1,572 @@
+@page "/components/scheduler"
+
+<PageTitle>Scheduler Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-6xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Scheduler Component</h1>
+        <p class="text-xl text-muted-foreground">Schedule appointments with time slots, recurring events, resource lanes and time zones.</p>
+    </div>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Example</h2>
+            <p class="text-sm text-muted-foreground">Scroll vertically through the full 24-hour day; the initial view starts at 8 AM. Day headings remain visible while scrolling. Click a time slot to highlight it; double-click it, or press Enter while it is focused, to create an appointment. Space highlights without creating. Select an event to edit it. Previous, Today and Next sit together beside the centered date heading. Today uses the schedule's time zone and keeps the current view. Clicking outside the editor leaves your draft open; use Save, Cancel, the close button or Escape to finish.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <BbScheduler @bind-Events="simpleEvents" @bind-Date="simpleDate" @bind-View="simpleView"
+                         TimeZoneId="UTC" StartHour="0" EndHour="24" InitialScrollHour="8" AriaLabel="Daily appointments" />
+        </div>
+        <CodeBlock Source="Components/Scheduler/basic.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Week Start and Work Week</h2>
+            <p class="text-sm text-muted-foreground">In Week view, choose Monday or Sunday as the first day. Work week always shows Monday through Friday and hides weekend appointments. Previous and Next move by one full week; returning to Week preserves your week-start choice.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <BbScheduler @bind-Events="weekEvents" @bind-Date="weekDate" @bind-View="weekView"
+                         @bind-FirstDayOfWeek="weekStart" EnableTimeZones="false" TimeZoneId="UTC"
+                         StartHour="0" EndHour="24" InitialScrollHour="8" AriaLabel="Week and work-week appointments" />
+        </div>
+        <CodeBlock Source="Components/Scheduler/week-views.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Dragging, Resizing and Slot Sizes</h2>
+            <p class="text-sm text-muted-foreground">Drag an appointment to move it, or drag its top or bottom edge to change its start or end. Changes snap to the selected slot size. This single-zone schedule hides time-zone controls and uses UTC for display and editing. Select an event to make the same changes with the keyboard; deletion asks for confirmation. A drag that finishes over an empty slot does not create anything. Every completed gesture runs <code>OnEventChange</code> before the events are replaced, and the banner below shows exactly what it received. Note <code>@@bind-Date</code> and <code>@@bind-View</code>: bind them one-way and the parent's re-render after a save snaps the schedule back to its original day and view.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <div class="flex flex-wrap items-end gap-4">
+                <div class="space-y-2 w-44">
+                    <BbLabel For="scheduler-slot-size">Slot size</BbLabel>
+                    <BbSelect TValue="int" @bind-Value="slotMinutes" DisplayTextSelector="SlotLabel">
+                        <BbSelectTrigger id="scheduler-slot-size"><BbSelectValue /></BbSelectTrigger>
+                        <BbSelectContent>
+                            <BbSelectItem Value="15" Text="15 minutes" />
+                            <BbSelectItem Value="30" Text="30 minutes" />
+                            <BbSelectItem Value="60" Text="1 hour" />
+                        </BbSelectContent>
+                    </BbSelect>
+                </div>
+                <div class="flex items-center gap-2 pb-2">
+                    <BbCheckbox Id="scheduler-allow-drag" @bind-Checked="allowDrag" />
+                    <BbLabel For="scheduler-allow-drag">Allow moving</BbLabel>
+                </div>
+                <div class="flex items-center gap-2 pb-2">
+                    <BbCheckbox Id="scheduler-allow-resize" @bind-Checked="allowResize" />
+                    <BbLabel For="scheduler-allow-resize">Allow resizing</BbLabel>
+                </div>
+            </div>
+            <BbScheduler @bind-Events="interactiveEvents" @bind-Date="interactiveDate" @bind-View="interactiveView"
+                         SlotMinutes="@slotMinutes" AllowDrag="@allowDrag" AllowResize="@allowResize"
+                         OnEventChange="RecordChangeAsync"
+                         EnableTimeZones="false" TimeZoneId="UTC" StartHour="0" EndHour="24" InitialScrollHour="8" AriaLabel="Drag and resize appointments" />
+            @if (lastChange is null)
+            {
+                <p class="rounded-md border border-dashed p-3 text-sm text-muted-foreground" data-demo-change-banner>Move or resize an appointment to see what <code>OnEventChange</code> receives.</p>
+            }
+            else
+            {
+                <div class="rounded-md border border-primary/40 bg-primary/5 p-3 text-sm space-y-1" data-demo-change-banner>
+                    <p class="font-medium">OnEventChange fired</p>
+                    <dl class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 font-mono text-xs">
+                        <dt class="text-muted-foreground">Kind</dt><dd>@lastChange.Kind</dd>
+                        <dt class="text-muted-foreground">Scope</dt><dd>@lastChange.Scope</dd>
+                        <dt class="text-muted-foreground">Id</dt><dd>@lastChange.Id</dd>
+                        <dt class="text-muted-foreground">Title</dt><dd>@lastChange.Title</dd>
+                        <dt class="text-muted-foreground">Start</dt><dd>@lastChange.Start.ToString("yyyy-MM-dd HH:mm 'UTC'")</dd>
+                        <dt class="text-muted-foreground">End</dt><dd>@lastChange.End.ToString("yyyy-MM-dd HH:mm 'UTC'")</dd>
+                        <dt class="text-muted-foreground">OccurrenceStart</dt><dd>@(lastChange.OccurrenceStart?.ToString("yyyy-MM-dd HH:mm 'UTC'") ?? "null")</dd>
+                        <dt class="text-muted-foreground">Events after</dt><dd>@lastChange.Count</dd>
+                    </dl>
+                </div>
+            }
+        </div>
+        <CodeBlock Source="Components/Scheduler/drag-resize.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Resources, Recurrence and Time Zones</h2>
+            <p class="text-sm text-muted-foreground">Room lanes separate resources and overlapping events share the available width. The recurring planning session stays at 9:00 AM in New York; changing the display zone shows the same appointments in local time. Edit one occurrence or the whole series. In the editor, Daily means every day, Weekly offers weekday checkboxes, and Monthly/Yearly repeat on the start date. The occurrence limit is optional. Dragging or resizing changes only that occurrence; moving between rooms changes its resource assignment.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <div class="space-y-2 max-w-sm">
+                <BbLabel For="scheduler-display-zone">Display time zone</BbLabel>
+                <BbSelect TValue="string" @bind-Value="displayZone" DisplayTextSelector="@(value => value.Replace('_', ' '))">
+                    <BbSelectTrigger id="scheduler-display-zone"><BbSelectValue /></BbSelectTrigger>
+                    <BbSelectContent>
+                        <BbSelectItem Value='@("America/New_York")' Text="America/New York" />
+                        <BbSelectItem Value='@("UTC")' Text="UTC" />
+                        <BbSelectItem Value='@("Europe/London")' Text="Europe/London" />
+                    </BbSelectContent>
+                </BbSelect>
+            </div>
+            <div class="flex items-center gap-2">
+                <BbCheckbox Id="scheduler-reject-save" @bind-Checked="rejectSaves" />
+                <BbLabel For="scheduler-reject-save">Simulate a failed save</BbLabel>
+            </div>
+            <BbScheduler @bind-Events="events" Resources="resources" @bind-Date="date" @bind-View="view" TimeZoneId="@displayZone"
+                         StartHour="0" EndHour="24" InitialScrollHour="8" OnEventChange="SaveAsync" />
+        </div>
+        <CodeBlock Source="Components/Scheduler/resources.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Choosing Which Resources to Show</h2>
+            <p class="text-sm text-muted-foreground">Set <code>ShowResourceFilter</code> to draw a picker in the toolbar. Unassigned is listed alongside the rooms, so you can show it on its own. Leaving the picker untouched shows everything; clearing it shows nothing and says so. The same state is a bindable parameter, so your own UI can drive it instead — the buttons below write to <code>VisibleResourceIds</code> directly and the toolbar picker follows.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <div class="flex flex-wrap items-center gap-2">
+                <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => filteredVisibleResources = null)">Show all</BbButton>
+                <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => filteredVisibleResources = ["room-a"])">Room A only</BbButton>
+                <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => filteredVisibleResources = ["room-b"])">Room B only</BbButton>
+                <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => filteredVisibleResources = [])">Clear</BbButton>
+            </div>
+            <p class="text-sm text-muted-foreground">
+                <span class="font-medium">VisibleResourceIds:</span>
+                <span class="font-mono">@(filteredVisibleResources is null ? "null (all)" : filteredVisibleResources.Count == 0 ? "[] (none)" : string.Join(", ", filteredVisibleResources.Select(id => id.Length == 0 ? "(unassigned)" : id)))</span>
+            </p>
+            <BbScheduler @bind-Events="filteredEvents" Resources="resources" @bind-Date="filteredDate" @bind-View="filteredView"
+                         @bind-VisibleResourceIds="filteredVisibleResources" ShowResourceFilter="true"
+                         EnableTimeZones="false" TimeZoneId="UTC" StartHour="0" EndHour="24" InitialScrollHour="8"
+                         AriaLabel="Appointments filtered by resource" />
+        </div>
+        <CodeBlock Source="Components/Scheduler/resource-filter.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Context Menus</h2>
+            <p class="text-sm text-muted-foreground">Right-click an empty slot for New event; right-click an appointment for Edit and Delete. Delete asks for confirmation without opening the editor first. Both menus are replaceable: render <code>@@context.DefaultItems</code> to keep the built-in entries and add your own around them, or leave it out to replace the menu entirely. The event menu below adds Duplicate; the slot menu adds a one-hour block.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <p class="text-sm text-muted-foreground"><span class="font-medium">Last custom action:</span> <span class="font-mono">@(menuAction ?? "(none)")</span></p>
+            <BbScheduler @bind-Events="menuEvents" @bind-Date="menuDate" @bind-View="menuView"
+                         EnableTimeZones="false" TimeZoneId="UTC" StartHour="0" EndHour="24" InitialScrollHour="8"
+                         AriaLabel="Appointments with context menus">
+                <SlotContextMenuContent>
+                    @context.DefaultItems
+                    <BbContextMenuSeparator />
+                    <BbContextMenuItem OnClick="@(() => BlockHour(context.Start))">Block one hour</BbContextMenuItem>
+                </SlotContextMenuContent>
+                <EventContextMenuContent>
+                    @context.DefaultItems
+                    <BbContextMenuSeparator />
+                    <BbContextMenuItem OnClick="@(() => Duplicate(context.Occurrence))">Duplicate</BbContextMenuItem>
+                </EventContextMenuContent>
+            </BbScheduler>
+        </div>
+        <CodeBlock Source="Components/Scheduler/context-menu.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">All-Day Events</h2>
+            <p class="text-sm text-muted-foreground">Set <code>IsAllDay</code> and the event draws as a bar in a band above the time grid, which does not scroll with the day. An event covering several days is one bar, not a chip per day; overlapping runs stack into rows, and runs that never touch share a row. <code>End</code> is exclusive — a single all-day event on the 16th runs from the 16th to the 17th — while the editor asks for the last day it covers. Switch to Week to see the bars span.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <BbScheduler @bind-Events="allDayEvents" @bind-Date="allDayDate" @bind-View="allDayView"
+                         EnableTimeZones="false" TimeZoneId="UTC" StartHour="0" EndHour="24" InitialScrollHour="8"
+                         MaxAllDayRows="3" AriaLabel="All-day and timed appointments" />
+        </div>
+        <CodeBlock Source="Components/Scheduler/all-day.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">All-Day Events with Resources</h2>
+            <p class="text-sm text-muted-foreground">With two or more resources visible, the band gets a row per resource instead of copying the day-major lane order below it. Lanes run Mon/Room A, Mon/Room B, Tue/Room A, so one room's two-day event would land in non-adjacent columns and could not be drawn as one bar. The band therefore stops lining up column-for-column with the grid. Narrow the picker to a single room and the alignment comes back.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <BbScheduler @bind-Events="allDayResourceEvents" Resources="resources" @bind-Date="allDayResourceDate"
+                         @bind-View="allDayResourceView" @bind-VisibleResourceIds="allDayVisibleResources" ShowResourceFilter="true"
+                         EnableTimeZones="false" TimeZoneId="UTC" StartHour="0" EndHour="24" InitialScrollHour="8"
+                         AriaLabel="All-day appointments per room" />
+        </div>
+        <CodeBlock Source="Components/Scheduler/all-day-resources.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Month View</h2>
+            <p class="text-sm text-muted-foreground">Six week rows, always, so the grid height does not jump between months. Multi-day events — all-day or timed — are one bar across the days they cover; single-day events are chips. <code>MaxEventsPerDay</code> caps each cell, and a bar spends that budget in every day it covers, so a day under a bar shows fewer chips and counts the difference into its own "+x more". Previous and Next step a calendar month. Dragging and resizing are off here: the pointer code reads times from the time grid's geometry, which a month cell does not have.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <BbScheduler @bind-Events="monthEvents" @bind-Date="monthDate" @bind-View="monthView"
+                         EnableTimeZones="false" TimeZoneId="UTC" MaxEventsPerDay="3"
+                         AriaLabel="Month view appointments" />
+        </div>
+        <CodeBlock Source="Components/Scheduler/month-view.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Active Hours</h2>
+            <p class="text-sm text-muted-foreground">Name the part of each weekday the schedule is about and everything outside it is muted. A day with no range at all is muted end to end, so weekends need no entry, and two ranges for one day mute the gap between them — Wednesday below has a lunch break. Times are wall times in the display zone, so a daylight-saving day keeps the same clock boundaries. Muting is visual only until you set <code>BlockOutsideActiveHours</code>, which then refuses clicks, Enter, the context menu, and any drag or resize that lands outside.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <div class="flex items-center gap-2">
+                <BbCheckbox Id="scheduler-block-hours" @bind-Checked="blockOutsideHours" />
+                <BbLabel For="scheduler-block-hours">Block events outside the active hours</BbLabel>
+            </div>
+            <BbScheduler @bind-Events="hoursEvents" @bind-Date="hoursDate" @bind-View="hoursView"
+                         ActiveHours="activeHours" BlockOutsideActiveHours="@blockOutsideHours"
+                         EnableTimeZones="false" TimeZoneId="UTC" StartHour="0" EndHour="24" InitialScrollHour="7"
+                         AriaLabel="Appointments with active hours" />
+        </div>
+        <CodeBlock Source="Components/Scheduler/active-hours.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Your Own Time Zones</h2>
+            <p class="text-sm text-muted-foreground">Left alone, the editor lists every IANA zone the host supports — around 600 of them, labelled by identifier. Pass <code>TimeZones</code> to cut that to the ones you care about and name them yourself. The identifiers are validated, so you cannot rename your way into a zone that does not exist. An event already using a zone you did not list still shows it, so opening that event cannot quietly move it.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <BbScheduler @bind-Events="zoneEvents" @bind-Date="zoneDate" @bind-View="zoneView"
+                         TimeZones="namedZones" TimeZoneId="Australia/Sydney"
+                         StartHour="0" EndHour="24" InitialScrollHour="8" AriaLabel="Appointments with named time zones" />
+        </div>
+        <CodeBlock Source="Components/Scheduler/time-zones.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Your Own Editor Fields</h2>
+            <p class="text-sm text-muted-foreground">Derive from <code>SchedulerEvent</code> to carry your own data, then use <code>EditorContent</code> to collect it. Render <code>@@context.DefaultContent</code> to keep the built-in fields and add around them. Override <code>Clone</code> and supply a <code>NewEventFactory</code>, or your fields are dropped the moment somebody edits or drags the event. Double-click a slot to create one, or an event to edit it — the description survives both, and a drag too.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <BbScheduler @bind-Events="describedEvents" @bind-Date="describedDate" @bind-View="describedView"
+                         NewEventFactory="@(() => new AgendaEvent())"
+                         EnableTimeZones="false" TimeZoneId="UTC" StartHour="0" EndHour="24" InitialScrollHour="8"
+                         AriaLabel="Appointments with a description">
+                <EditorContent>
+                    @context.DefaultContent
+                    @if (context.Draft is AgendaEvent agenda)
+                    {
+                        <div class="space-y-2">
+                            <BbLabel For="scheduler-agenda">Agenda</BbLabel>
+                            <BbTextarea id="scheduler-agenda" @bind-Value="agenda.Agenda" Rows="3" Placeholder="What are we covering?" />
+                        </div>
+                    }
+                </EditorContent>
+                <EventTemplate>
+                    <span class="font-medium">@context.Event.Title</span>
+                    @if (context.Event is AgendaEvent { Agenda.Length: > 0 } withAgenda)
+                    {
+                        <span class="block truncate opacity-70">@withAgenda.Agenda</span>
+                    }
+                </EventTemplate>
+            </BbScheduler>
+        </div>
+        <CodeBlock Source="Components/Scheduler/editor-fields.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Replacing the Toolbar</h2>
+            <p class="text-sm text-muted-foreground">The toolbar is rendered inside the component, so <code>ToolbarContent</code> is how you restyle or rearrange it. Render <code>@@context.DefaultContent</code> to keep the built-in toolbar and add around it, or leave it out to replace it entirely. The context carries read state plus the three commands you cannot express from outside: <code>Navigate</code> knows the step size for the current view, and <code>GoToToday</code> resolves today in the schedule's time zone. Everything else — Date, View, FirstDayOfWeek, VisibleResourceIds — is already bindable.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <BbScheduler @bind-Events="toolbarEvents" @bind-Date="toolbarDate" @bind-View="toolbarView"
+                         EnableTimeZones="false" TimeZoneId="UTC" StartHour="0" EndHour="24" InitialScrollHour="8"
+                         AriaLabel="Appointments with a custom toolbar">
+                <ToolbarContent>
+                    <div class="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted/50 p-2">
+                        <div class="flex items-center gap-2">
+                            <BbButton Variant="ButtonVariant.Ghost" OnClick="@(() => context.Navigate.InvokeAsync(-1))" AriaLabel="Previous">&#8249;</BbButton>
+                            <BbButton Variant="ButtonVariant.Ghost" OnClick="@(() => context.GoToToday.InvokeAsync())">Today</BbButton>
+                            <BbButton Variant="ButtonVariant.Ghost" OnClick="@(() => context.Navigate.InvokeAsync(1))" AriaLabel="Next">&#8250;</BbButton>
+                        </div>
+                        <strong class="text-sm">@context.Heading</strong>
+                        <div class="flex items-center gap-2">
+                            <BbButton Variant="@(context.View == SchedulerView.Day ? ButtonVariant.Default : ButtonVariant.Ghost)" OnClick="@(() => context.SetView.InvokeAsync(SchedulerView.Day))">D</BbButton>
+                            <BbButton Variant="@(context.View == SchedulerView.Week ? ButtonVariant.Default : ButtonVariant.Ghost)" OnClick="@(() => context.SetView.InvokeAsync(SchedulerView.Week))">W</BbButton>
+                            <BbButton Variant="@(context.View == SchedulerView.Month ? ButtonVariant.Default : ButtonVariant.Ghost)" OnClick="@(() => context.SetView.InvokeAsync(SchedulerView.Month))">M</BbButton>
+                        </div>
+                    </div>
+                </ToolbarContent>
+            </BbScheduler>
+        </div>
+        <CodeBlock Source="Components/Scheduler/custom-toolbar.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Read-Only Schedule</h2>
+            <p class="text-sm text-muted-foreground">Display the same appointments without allowing creation, editing or deletion. Date navigation and view changes remain available.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <BbScheduler Events="simpleEvents" @bind-Date="readOnlyDate" @bind-View="readOnlyView"
+                         TimeZoneId="UTC" StartHour="0" EndHour="24" InitialScrollHour="8" ReadOnly="true" AriaLabel="Read-only weekly appointments" />
+        </div>
+        <CodeBlock Source="Components/Scheduler/read-only.txt" />
+    </section>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The scheduler region, time slots and event buttons have accessible labels. View buttons announce their pressed state and the week-start selector is labelled.</AccessibilityItem>
+            <AccessibilityItem>The weekly repeat choices use labelled checkboxes within a fieldset. The event editor uses labelled Bb form controls and reports invalid times or rejected saves without discarding the draft.</AccessibilityItem>
+            <AccessibilityItem>Read-only schedules disable changes while preserving date navigation. Delete confirmation identifies whether one event, an occurrence or a series will be removed.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Scroll the focused time-slot region vertically"><BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd> / <BbKbd>PageUp</BbKbd> / <BbKbd>PageDown</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move between the toolbar, time slots and appointments"><BbKbd>Tab</BbKbd> / <BbKbd>Shift</BbKbd> + <BbKbd>Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Open an appointment or create one in the focused time slot"><BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Cancel an active drag, or close the active picker or event editor"><BbKbd>Escape</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties, event data and recurrence helpers.</p>
+        </div>
+        <ApiReference Since="v4" ComponentName="Scheduler">
+            <ApiParameter Name="Events / EventsChanged" Type="IReadOnlyList&lt;SchedulerEvent&gt;">Bind appointment data. Updates use independent copies. Persist Events from OnEventChange before accepting a change.</ApiParameter>
+            <ApiParameter Name="Resources" Type="IReadOnlyList&lt;SchedulerResource&gt;">Unique resource IDs and titles. Each event can have multiple ResourceIds. Unassigned events get a separate lane.</ApiParameter>
+            <ApiParameter Name="VisibleResourceIds / VisibleResourceIdsChanged" Type="IReadOnlyList&lt;string&gt;?" Default="null" Since="v4">Which resources to show. Null shows every resource; an empty list shows none and renders an empty-state message. The empty string selects the Unassigned lane. Use <code>@@bind-VisibleResourceIds</code> to drive it from your own UI — the built-in picker writes the same property, so the two cannot disagree.</ApiParameter>
+            <ApiParameter Name="ShowResourceFilter" Type="bool" Default="false" Since="v4">Draws a resource picker in the toolbar, bound to VisibleResourceIds. Has no effect when Resources is empty. Off by default, so existing schedules are unchanged.</ApiParameter>
+            <ApiParameter Name="Date / DateChanged" Type="DateOnly">The date whose day or week is displayed. Today sets this to the current date in TimeZoneId and raises DateChanged while preserving View and FirstDayOfWeek. WorkWeek uses its Monday-start week. Week and WorkWeek navigation advance seven days.</ApiParameter>
+            <ApiParameter Name="View / ViewChanged" Type="SchedulerView" Default="Week">Day, Week, WorkWeek or Month. WorkWeek displays Monday through Friday regardless of FirstDayOfWeek. Month renders six week rows and steps a calendar month; it has no time axis, so AllowDrag and AllowResize are ignored there and resources act as a filter rather than lanes.</ApiParameter>
+            <ApiParameter Name="FirstDayOfWeek / FirstDayOfWeekChanged" Type="DayOfWeek / EventCallback&lt;DayOfWeek&gt;" Default="Monday">First day in Week view. The toolbar offers Monday and Sunday. Use <code>@@bind-FirstDayOfWeek</code> to retain changes in the parent. WorkWeek always starts on Monday without changing this preference.</ApiParameter>
+            <ApiParameter Name="TimeZoneId" Type="string" Default="UTC">IANA display zone. SchedulerEvent.TimeZoneId independently determines recurrence wall time.</ApiParameter>
+            <ApiParameter Name="EnableTimeZones" Type="bool" Default="true">When false, hide the time-zone selector and toolbar label, and use TimeZoneId for both display and editing. Existing instants and recurrence zones are preserved. Use UTC for a fixed-offset schedule. When enabled, the built-in selector lists IANA IDs from Noda Time's TZDB that .NET supports on the host, including aliases.</ApiParameter>
+            <ApiParameter Name="SlotMinutes" Type="int" Default="30">Slot size and drag/resize snapping interval. Supports 15, 30, 60 and other divisors of 1440 between 5 and 120. Resizing keeps at least one slot of duration.</ApiParameter>
+            <ApiParameter Name="StartHour / EndHour" Type="int" Default="8 / 18">The rendered hour range; hours outside it are not available by scrolling. Use StartHour=0 and EndHour=24 for a full day. DST days use their actual elapsed duration. The viewport scrolls within a maximum height of 700px or 65vh, whichever is smaller.</ApiParameter>
+            <ApiParameter Name="InitialScrollHour" Type="int?" Default="null" Since="v4">Display-zone hour (0–23) shown after the first interactive render, clamped to the rendered range. Null starts at StartHour. This does not remove earlier hours; later renders preserve the user's scroll position.</ApiParameter>
+            <ApiParameter Name="AllowDrag" Type="bool" Default="true">Move appointments between visible time slots, days and resource lanes. Duration is preserved. Recurring moves create an occurrence exception. Other resource assignments are retained; moving to Unassigned clears assignments.</ApiParameter>
+            <ApiParameter Name="AllowResize" Type="bool" Default="true">Resize visible top and bottom appointment edges. Changes use OnEventChange; rejected saves keep the original event and open the proposed edit for correction or retry.</ApiParameter>
+            <ApiParameter Name="ReadOnly" Type="bool" Default="false">Disables creation, editing, deletion, moving and resizing.</ApiParameter>
+            <ApiParameter Name="EventTemplate" Type="RenderFragment&lt;SchedulerOccurrence&gt;">Custom event content inside the accessible event button.</ApiParameter>
+            <ApiParameter Name="ActiveHours" Type="IReadOnlyList&lt;SchedulerDayHours&gt;" Default="empty" Since="v4">Weekday ranges the schedule emphasises; slots outside every range for their day are muted. Empty mutes nothing. A day with no range is muted end to end, so weekends need no entry, and two ranges for one day mute the gap between them. Times are wall times in the display zone. Start is inclusive, End exclusive; use <code>TimeOnly.MinValue</code> as End for the end of the day. Month has no time axis to mute.</ApiParameter>
+            <ApiParameter Name="BlockOutsideActiveHours" Type="bool" Default="false" Since="v4">Refuses to create, move or resize into a muted slot: the slot is disabled, its context menu is suppressed, and any drag or resize landing outside is rejected. In Month it closes only the days with no range at all. It does not validate the Events you supply, and <code>CreateEvent</code> stays open as the programmatic escape hatch.</ApiParameter>
+            <ApiParameter Name="TimeZones" Type="IReadOnlyList&lt;SchedulerTimeZone&gt;" Default="empty" Since="v4">The zones the editor offers, under your own names. Empty lists every IANA zone the host supports — roughly 600. IDs are validated when the parameter is set. An event already using a zone you did not list is still offered, so opening it cannot quietly move it.</ApiParameter>
+            <ApiParameter Name="EditorContent" Type="RenderFragment&lt;SchedulerEditorContext&gt;" Since="v4">Renders your own fields in the editor. Render <code>@@context.DefaultContent</code> to keep the built-in ones. The context carries Draft, IsNew, Scope and DefaultContent. Cast Draft to your derived type to bind your fields.</ApiParameter>
+            <ApiParameter Name="NewEventFactory" Type="Func&lt;SchedulerEvent&gt;" Since="v4">Creates the blank event the editor starts from. Supply this when you derive from SchedulerEvent, or a newly created event is the base type and your fields are lost.</ApiParameter>
+            <ApiParameter Name="MaxEventsPerDay" Type="int" Default="3" Since="v4">Month only. Event chips drawn in a cell before the rest collapse into "+x more". A multi-day bar spends the budget in every day it covers, so a day under a bar shows fewer chips and counts the difference into its own overflow.</ApiParameter>
+            <ApiParameter Name="ToolbarContent" Type="RenderFragment&lt;SchedulerToolbarContext&gt;" Since="v4">Replaces the built-in toolbar. Render <code>@@context.DefaultContent</code> to keep it and add around it. The context carries Date, RangeStart, Heading, View, FirstDayOfWeek, TimeZoneId, Resources and VisibleResourceIds, plus Navigate, GoToToday, SetView and SetVisibleResources. Navigate knows the step size for the current view; GoToToday resolves today in TimeZoneId.</ApiParameter>
+            <ApiParameter Name="MaxAllDayRows" Type="int" Default="2" Since="v4">All-day rows drawn before the rest collapse into a "+x more" count. A bar spends the budget in every day it covers.</ApiParameter>
+            <ApiParameter Name="SlotContextMenuContent" Type="RenderFragment&lt;SchedulerSlotMenuContext&gt;" Since="v4">Replaces the menu shown when an empty slot is right-clicked. The context carries Start, End, Resource and DefaultItems. Render <code>@@context.DefaultItems</code> to keep the built-in New event entry and add your own around it; leave it out to replace the menu entirely.</ApiParameter>
+            <ApiParameter Name="EventContextMenuContent" Type="RenderFragment&lt;SchedulerEventMenuContext&gt;" Since="v4">Replaces the menu shown when an event is right-clicked. The context carries the SchedulerOccurrence and DefaultItems (Edit event, Delete event). Delete confirms without opening the editor.</ApiParameter>
+            <ApiParameter Name="OnEventChange" Type="EventCallback&lt;SchedulerChangeContext&gt;">Receives Kind, Scope, Event, OccurrenceStart and proposed Events. Set Cancel to reject. Used by editor saves, confirmed deletes, moves and resizes. Failures preserve the original events and retain the proposed edit.</ApiParameter>
+            <ApiParameter Name="Slot interaction" Type="behaviour" Since="v4">Clicking an empty slot highlights it; the highlight is one slot tall and clears on navigation, a view change or a resource-filter change. Double-click, or press Enter while a slot is focused, to open the editor. Space highlights without creating. A drag that ends over a slot creates nothing.</ApiParameter>
+            <ApiParameter Name="CreateEvent(start, resourceId) / EditEvent(occurrence, scope)" Type="void">Open the built-in editor programmatically.</ApiParameter>
+            <ApiParameter Name="Class / AriaLabel / AdditionalAttributes" Type="presentation parameters">Style and label the scheduler region.</ApiParameter>
+        </ApiReference>
+        <ApiReference Since="v4" ComponentName="Scheduler data and recurrence">
+            <ApiParameter Name="SchedulerEvent.IsAllDay" Type="bool" Default="false" Since="v4">Draws the event as a bar in the band above the time grid instead of a timed block. Start and End are then read as dates in the event's TimeZoneId and their time components are ignored. <strong>End is exclusive</strong> — a single all-day event on the 14th runs from the 14th to the 15th. Recurrence is measured in whole local days, so a daily all-day series stays on midnight across a 23- or 25-hour daylight-saving day. With two or more resources visible, the band groups by resource so multi-day bars stay contiguous; it then no longer lines up column-for-column with the grid below.</ApiParameter>
+            <ApiParameter Name="SchedulerDayHours" Type="record" Since="v4">Day, Start and End for one emphasised weekday range.</ApiParameter>
+            <ApiParameter Name="SchedulerTimeZone" Type="record" Since="v4">An IANA Id and the Title you want shown for it.</ApiParameter>
+            <ApiParameter Name="SchedulerEditorContext" Type="record" Since="v4">Draft, IsNew, Scope and DefaultContent for the editor.</ApiParameter>
+            <ApiParameter Name="SchedulerToolbarContext" Type="class" Since="v4">Read state plus the commands a replacement toolbar cannot express from outside. Date, View, FirstDayOfWeek and VisibleResourceIds are ordinary bindable parameters, so drive those with <code>@@bind-</code> instead.</ApiParameter>
+            <ApiParameter Name="SchedulerSlotMenuContext" Type="record" Since="v4">Start, End, Resource and DefaultItems for a right-clicked empty slot. End is Start plus SlotMinutes.</ApiParameter>
+            <ApiParameter Name="SchedulerEventMenuContext" Type="record" Since="v4">Occurrence and DefaultItems for a right-clicked event.</ApiParameter>
+            <ApiParameter Name="SchedulerEvent" Type="class">Id, Title, Start, End, TimeZoneId, IsAllDay, ResourceIds, RecurrenceRule, ExcludedStarts, SeriesId and RecurrenceId. <strong>Derivable</strong> — subclass it to carry your own fields, override the virtual <code>Clone()</code> and call the protected <code>CopyTo()</code> so you only write your own, and supply <code>NewEventFactory</code>. Forgetting the override drops your fields on the first edit, drag or resize.</ApiParameter>
+            <ApiParameter Name="RecurrenceRule" Type="string?">RFC 5545 daily, weekly, monthly or yearly RRULE; supports BYDAY, BYMONTHDAY, COUNT and UNTIL. The editor offers daily, weekly (with weekday checkboxes), monthly and yearly presets. Monthly and yearly repeats use the start date. More complex application-supplied rules are preserved until the user chooses a replacement; the editor does not expose raw rule syntax. Missing month days follow RFC rules and are skipped.</ApiParameter>
+            <ApiParameter Name="SchedulerEngine.Expand" Type="IReadOnlyList&lt;SchedulerOccurrence&gt;">Expand a half-open range, including events crossing its start. Default limit 10,000; exceeding the limit throws.</ApiParameter>
+            <ApiParameter Name="SchedulerEngine.ToInstant" Type="DateTimeOffset">Convert wall time with Earlier or Later resolution for a repeated DST time. Missing times are rejected. Timed occurrences retain their original elapsed duration.</ApiParameter>
+            <ApiParameter Name="SchedulerEngine.ApplyChange / Validate" Type="static methods">Validate data and prepare independent create/update/delete collections, including series exceptions.</ApiParameter>
+        </ApiReference>
+    </section>
+</div>
+
+@code {
+    private DateOnly date = new(2026, 9, 14);
+    private SchedulerView view = SchedulerView.Day;
+    private string displayZone = "America/New_York";
+    private bool rejectSaves;
+    private readonly IReadOnlyList<SchedulerResource> resources = [new("room-a", "Room A"), new("room-b", "Room B")];
+    private IReadOnlyList<SchedulerEvent> events =
+    [
+        new() { Id = "planning", Title = "Planning", Start = new(2026, 9, 14, 9, 0, 0, TimeSpan.FromHours(-4)), End = new(2026, 9, 14, 10, 0, 0, TimeSpan.FromHours(-4)), TimeZoneId = "America/New_York", ResourceIds = ["room-a"], RecurrenceRule = "FREQ=WEEKLY;BYDAY=MO,WE;COUNT=24" },
+        new() { Id = "review", Title = "Design review", Start = new(2026, 9, 14, 9, 30, 0, TimeSpan.FromHours(-4)), End = new(2026, 9, 14, 11, 0, 0, TimeSpan.FromHours(-4)), TimeZoneId = "America/New_York", ResourceIds = ["room-a", "room-b"] }
+    ];
+    private async Task SaveAsync(SchedulerChangeContext context)
+    {
+        await Task.Delay(250);
+        context.Cancel = rejectSaves;
+    }
+
+    private DateOnly weekDate = new(2026, 9, 16);
+    private SchedulerView weekView = SchedulerView.Week;
+    private DayOfWeek weekStart = DayOfWeek.Monday;
+    private IReadOnlyList<SchedulerEvent> weekEvents =
+    [
+        new() { Id = "team-sync", Title = "Team sync", Start = new(2026, 9, 14, 9, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 9, 30, 0, TimeSpan.Zero), RecurrenceRule = "FREQ=WEEKLY;BYDAY=MO,WE,FR;COUNT=12" },
+        new() { Id = "sunday-support", Title = "Sunday support", Start = new(2026, 9, 13, 10, 0, 0, TimeSpan.Zero), End = new(2026, 9, 13, 11, 0, 0, TimeSpan.Zero) },
+        new() { Id = "maintenance", Title = "Saturday maintenance", Start = new(2026, 9, 19, 10, 0, 0, TimeSpan.Zero), End = new(2026, 9, 19, 11, 0, 0, TimeSpan.Zero) }
+    ];
+
+    private DateOnly interactiveDate = new(2026, 9, 14);
+    private SchedulerView interactiveView = SchedulerView.Day;
+    private DateOnly menuDate = new(2026, 9, 14);
+    private SchedulerView menuView = SchedulerView.Day;
+    private DateOnly readOnlyDate = new(2026, 9, 14);
+    private SchedulerView readOnlyView = SchedulerView.Week;
+
+    private sealed record ChangeBanner(SchedulerChangeKind Kind, SchedulerEditScope Scope, string Id, string Title,
+        DateTimeOffset Start, DateTimeOffset End, DateTimeOffset? OccurrenceStart, int Count);
+
+    private ChangeBanner? lastChange;
+
+    private Task RecordChangeAsync(SchedulerChangeContext context)
+    {
+        lastChange = new ChangeBanner(context.Kind, context.Scope, context.Event.Id, context.Event.Title,
+            context.Event.Start, context.Event.End, context.OccurrenceStart, context.Events.Count);
+        return Task.CompletedTask;
+    }
+
+    private int slotMinutes = 30;
+    private bool allowDrag = true;
+    private bool allowResize = true;
+    private static string SlotLabel(int value) => value == 60 ? "1 hour" : $"{value} minutes";
+    private IReadOnlyList<SchedulerEvent> interactiveEvents =
+    [
+        new() { Id = "workshop", Title = "Workshop", Start = new(2026, 9, 14, 9, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 10, 0, 0, TimeSpan.Zero) },
+        new() { Id = "review", Title = "Review", Start = new(2026, 9, 14, 11, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 12, 0, 0, TimeSpan.Zero) }
+    ];
+
+    private DateOnly toolbarDate = new(2026, 9, 14);
+    private SchedulerView toolbarView = SchedulerView.Day;
+    private IReadOnlyList<SchedulerEvent> toolbarEvents =
+    [
+        new() { Id = "tb-standup", Title = "Stand-up", Start = new(2026, 9, 14, 9, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 9, 30, 0, TimeSpan.Zero) }
+    ];
+
+    private DateOnly zoneDate = new(2026, 9, 14);
+    private SchedulerView zoneView = SchedulerView.Day;
+    private readonly IReadOnlyList<SchedulerTimeZone> namedZones =
+    [
+        new("Australia/Sydney", "Sydney"),
+        new("Asia/Singapore", "Singapore"),
+        new("Europe/London", "London"),
+        new("America/New_York", "New York"),
+        new("UTC", "Coordinated Universal Time")
+    ];
+    private IReadOnlyList<SchedulerEvent> zoneEvents =
+    [
+        new() { Id = "z-handover", Title = "Handover", Start = new(2026, 9, 14, 9, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 10, 0, 0, TimeSpan.Zero), TimeZoneId = "Australia/Sydney" },
+        new() { Id = "z-legacy", Title = "Legacy booking", Start = new(2026, 9, 14, 12, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 13, 0, 0, TimeSpan.Zero), TimeZoneId = "Africa/Cairo" }
+    ];
+
+    public sealed class AgendaEvent : SchedulerEvent
+    {
+        public string? Agenda { get; set; }
+
+        public override SchedulerEvent Clone()
+        {
+            var copy = new AgendaEvent { Agenda = Agenda };
+            CopyTo(copy);
+            return copy;
+        }
+    }
+
+    private DateOnly describedDate = new(2026, 9, 14);
+    private SchedulerView describedView = SchedulerView.Day;
+    private IReadOnlyList<SchedulerEvent> describedEvents =
+    [
+        new AgendaEvent { Id = "d-kickoff", Title = "Kick-off", Agenda = "Scope, owners, first milestone", Start = new(2026, 9, 14, 9, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 10, 0, 0, TimeSpan.Zero) },
+        new AgendaEvent { Id = "d-review", Title = "Review", Start = new(2026, 9, 14, 14, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 15, 0, 0, TimeSpan.Zero) }
+    ];
+
+    private DateOnly hoursDate = new(2026, 9, 14);
+    private SchedulerView hoursView = SchedulerView.Week;
+    private bool blockOutsideHours;
+    private readonly IReadOnlyList<SchedulerDayHours> activeHours =
+    [
+        new(DayOfWeek.Monday, new(8, 30), new(17, 0)),
+        new(DayOfWeek.Tuesday, new(8, 30), new(17, 0)),
+        new(DayOfWeek.Wednesday, new(8, 30), new(12, 0)),
+        new(DayOfWeek.Wednesday, new(13, 0), new(17, 0)),
+        new(DayOfWeek.Thursday, new(8, 30), new(17, 0)),
+        new(DayOfWeek.Friday, new(8, 30), new(15, 0))
+    ];
+    private IReadOnlyList<SchedulerEvent> hoursEvents =
+    [
+        new() { Id = "h-standup", Title = "Stand-up", Start = new(2026, 9, 14, 9, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 9, 30, 0, TimeSpan.Zero) },
+        new() { Id = "h-oncall", Title = "On-call handover", Start = new(2026, 9, 16, 19, 0, 0, TimeSpan.Zero), End = new(2026, 9, 16, 19, 30, 0, TimeSpan.Zero) }
+    ];
+
+    private DateOnly monthDate = new(2026, 9, 14);
+    private SchedulerView monthView = SchedulerView.Month;
+    private IReadOnlyList<SchedulerEvent> monthEvents =
+    [
+        new() { Id = "mo-conf", Title = "Conference", IsAllDay = true, Start = new(2026, 9, 16, 0, 0, 0, TimeSpan.Zero), End = new(2026, 9, 19, 0, 0, 0, TimeSpan.Zero) },
+        new() { Id = "mo-sprint", Title = "Sprint", IsAllDay = true, Start = new(2026, 9, 21, 0, 0, 0, TimeSpan.Zero), End = new(2026, 10, 3, 0, 0, 0, TimeSpan.Zero) },
+        new() { Id = "mo-standup", Title = "Stand-up", Start = new(2026, 9, 14, 9, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 9, 30, 0, TimeSpan.Zero), RecurrenceRule = "FREQ=WEEKLY;BYDAY=MO,WE,FR;COUNT=12" },
+        new() { Id = "mo-review", Title = "Design review", Start = new(2026, 9, 14, 11, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 12, 0, 0, TimeSpan.Zero) },
+        new() { Id = "mo-1to1", Title = "1:1", Start = new(2026, 9, 14, 14, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 14, 30, 0, TimeSpan.Zero) },
+        new() { Id = "mo-retro", Title = "Retro", Start = new(2026, 9, 14, 16, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 17, 0, 0, TimeSpan.Zero) }
+    ];
+
+    private DateOnly allDayDate = new(2026, 9, 14);
+    private SchedulerView allDayView = SchedulerView.Week;
+    private IReadOnlyList<SchedulerEvent> allDayEvents =
+    [
+        new() { Id = "a-conf", Title = "Conference", IsAllDay = true, Start = new(2026, 9, 16, 0, 0, 0, TimeSpan.Zero), End = new(2026, 9, 19, 0, 0, 0, TimeSpan.Zero) },
+        new() { Id = "a-holiday", Title = "Public holiday", IsAllDay = true, Start = new(2026, 9, 14, 0, 0, 0, TimeSpan.Zero), End = new(2026, 9, 15, 0, 0, 0, TimeSpan.Zero) },
+        new() { Id = "a-launch", Title = "Launch week", IsAllDay = true, Start = new(2026, 9, 17, 0, 0, 0, TimeSpan.Zero), End = new(2026, 9, 21, 0, 0, 0, TimeSpan.Zero) },
+        new() { Id = "a-standup", Title = "Stand-up", Start = new(2026, 9, 16, 9, 0, 0, TimeSpan.Zero), End = new(2026, 9, 16, 9, 30, 0, TimeSpan.Zero) }
+    ];
+
+    private DateOnly allDayResourceDate = new(2026, 9, 14);
+    private SchedulerView allDayResourceView = SchedulerView.Week;
+    private IReadOnlyList<string>? allDayVisibleResources;
+    private IReadOnlyList<SchedulerEvent> allDayResourceEvents =
+    [
+        new() { Id = "ar-setup", Title = "Room A setup", IsAllDay = true, Start = new(2026, 9, 15, 0, 0, 0, TimeSpan.Zero), End = new(2026, 9, 18, 0, 0, 0, TimeSpan.Zero), ResourceIds = ["room-a"] },
+        new() { Id = "ar-maint", Title = "Room B maintenance", IsAllDay = true, Start = new(2026, 9, 16, 0, 0, 0, TimeSpan.Zero), End = new(2026, 9, 17, 0, 0, 0, TimeSpan.Zero), ResourceIds = ["room-b"] },
+        new() { Id = "ar-audit", Title = "Site audit", IsAllDay = true, Start = new(2026, 9, 17, 0, 0, 0, TimeSpan.Zero), End = new(2026, 9, 19, 0, 0, 0, TimeSpan.Zero) }
+    ];
+
+    private string? menuAction;
+    private IReadOnlyList<SchedulerEvent> menuEvents =
+    [
+        new() { Id = "m-standup", Title = "Stand-up", Start = new(2026, 9, 14, 9, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 9, 30, 0, TimeSpan.Zero) },
+        new() { Id = "m-review", Title = "Design review", Start = new(2026, 9, 14, 11, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 12, 0, 0, TimeSpan.Zero) }
+    ];
+
+    private void BlockHour(DateTimeOffset start)
+    {
+        menuAction = $"Blocked one hour at {start:t}";
+        menuEvents = [.. menuEvents, new SchedulerEvent { Title = "Blocked", Start = start, End = start.AddHours(1) }];
+    }
+
+    private void Duplicate(SchedulerOccurrence occurrence)
+    {
+        menuAction = $"Duplicated \"{occurrence.Event.Title}\"";
+        var copy = occurrence.Event.Clone();
+        copy.Id = Guid.NewGuid().ToString("N");
+        copy.Title = occurrence.Event.Title + " (copy)";
+        copy.Start = occurrence.Start.AddHours(1);
+        copy.End = occurrence.End.AddHours(1);
+        copy.RecurrenceRule = null;
+        copy.ExcludedStarts = [];
+        menuEvents = [.. menuEvents, copy];
+    }
+
+    private DateOnly filteredDate = new(2026, 9, 14);
+    private SchedulerView filteredView = SchedulerView.Day;
+    private IReadOnlyList<string>? filteredVisibleResources;
+    private IReadOnlyList<SchedulerEvent> filteredEvents =
+    [
+        new() { Id = "f-standup", Title = "Stand-up", Start = new(2026, 9, 14, 9, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 9, 30, 0, TimeSpan.Zero), ResourceIds = ["room-a"] },
+        new() { Id = "f-interview", Title = "Interview", Start = new(2026, 9, 14, 10, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 11, 0, 0, TimeSpan.Zero), ResourceIds = ["room-b"] },
+        new() { Id = "f-allhands", Title = "All hands", Start = new(2026, 9, 14, 14, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 15, 0, 0, TimeSpan.Zero), ResourceIds = ["room-a", "room-b"] },
+        new() { Id = "f-offsite", Title = "Offsite planning", Start = new(2026, 9, 14, 13, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 13, 30, 0, TimeSpan.Zero) }
+    ];
+
+    private DateOnly simpleDate = new(2026, 9, 14);
+    private SchedulerView simpleView = SchedulerView.Day;
+    private IReadOnlyList<SchedulerEvent> simpleEvents =
+    [
+        new() { Id = "standup", Title = "Team stand-up", Start = new(2026, 9, 14, 9, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 9, 30, 0, TimeSpan.Zero) },
+        new() { Id = "lunch", Title = "Lunch", Start = new(2026, 9, 14, 12, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 13, 0, 0, TimeSpan.Zero) }
+    ];
+}

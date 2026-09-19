@@ -1539,8 +1539,8 @@
         {
             new("Timeline", "Timeline", "Aria label for the timeline container"),
         })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.Timeline.Timeline = ""Zeitleiste"";
+    localizer.Set(""Timeline.Timeline"", ""Zeitleiste"");
 });")" />
 </div>

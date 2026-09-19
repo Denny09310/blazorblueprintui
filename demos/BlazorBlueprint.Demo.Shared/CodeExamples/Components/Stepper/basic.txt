@@ -1,0 +1,13 @@
+@* A progress indicator. Your own controls move it. *@
+<BbStepper @bind-ActiveStep="step">
+    <BbStep Title="Cart" />
+    <BbStep Title="Address" />
+    <BbStep Title="Payment" />
+    <BbStep Title="Done" />
+</BbStepper>
+
+<BbButton OnClick="@(() => step++)" Disabled="@(step == 3)">Next</BbButton>
+
+@code {
+    private int step;
+}

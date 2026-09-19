@@ -41,8 +41,14 @@ public sealed record ChartClickEventArgs
     public double? Value { get; init; }
 
     /// <summary>
-    /// The point's values when it is an array, which covers scatter (x, y) and candlestick
-    /// (open, close, low, high).
+    /// The point's values when it is an array, which covers scatter and candlestick.
     /// </summary>
+    /// <remarks>
+    /// Scatter arrives as <c>[x, y]</c>. Candlestick arrives as
+    /// <c>[index, open, close, low, high]</c> — five entries, not four: ECharts prepends the
+    /// point's index to the four values the series was given, so <c>Values[0]</c> is the index and
+    /// the open price is <c>Values[1]</c>. This was documented as <c>[open, close, low, high]</c>,
+    /// which reads every price one position too early.
+    /// </remarks>
     public IReadOnlyList<double>? Values { get; init; }
 }

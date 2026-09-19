@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using System.Linq.Expressions;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -219,17 +220,15 @@ public partial class BbMaskedInput : ComponentBase, IAsyncDisposable
         {
             try
             {
-                _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/masked-input.js");
+                _jsModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/masked-input.js");
                 _jsModuleLoaded = true;
 
                 // Applying the mask means rewriting the element's value, which resets an
                 // in-progress IME composition. Suppressing input while composing defers the
                 // whole HandleInput pass — masking included — until the IME commits.
-                _guardModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/composition-guard.js");
+                _guardModule = await ComponentModules.GetCoreAsync(JSRuntime);
                 await _guardModule.InvokeVoidAsync(
-                    "attach", _inputRef, _guardId, new { suppress = GuardSuppressedEvents });
+"compositionGuard.attach", _inputRef, _guardId, new { suppress = GuardSuppressedEvents });
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
@@ -450,19 +449,7 @@ public partial class BbMaskedInput : ComponentBase, IAsyncDisposable
         {
             try
             {
-                await _guardModule.InvokeVoidAsync("detach", _guardId);
-                await _guardModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
-        if (_jsModule != null)
-        {
-            try
-            {
-                await _jsModule.DisposeAsync();
+                await _guardModule.InvokeVoidAsync("compositionGuard.detach", _guardId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
@@ -472,14 +459,14 @@ public partial class BbMaskedInput : ComponentBase, IAsyncDisposable
     }
 
     private string CssClass => ClassNames.cn(
-        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base",
-        "placeholder:text-muted-foreground",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        "aria-[invalid=true]:border-destructive",
-        "transition-colors",
-        "md:text-sm",
-        "font-mono tracking-wider",
+        "bb:flex bb:h-10 bb:w-full bb:rounded-md bb:border bb:border-input bb:bg-background bb:px-3 bb:py-2 bb:text-base",
+        "bb:placeholder:text-muted-foreground",
+        "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
+        "bb:aria-[invalid=true]:border-destructive",
+        "bb:transition-colors",
+        "bb:md:text-sm",
+        "bb:font-mono bb:tracking-wider",
         Class
     );
 }

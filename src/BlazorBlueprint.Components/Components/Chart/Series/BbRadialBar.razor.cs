@@ -25,7 +25,7 @@ namespace BlazorBlueprint.Components;
 /// &lt;/RadialBarChart&gt;
 /// </code>
 /// </example>
-public partial class BbRadialBar : SeriesBase
+public partial class BbRadialBar : StackableSeriesBase
 {
     /// <summary>
     /// Gets or sets the property name used to extract category names from the chart data.
@@ -93,10 +93,15 @@ public partial class BbRadialBar : SeriesBase
 
         if (ShowLabels)
         {
+            // "middle" puts each label at the angular midpoint of its own bar. Bars that carry
+            // similar values have their midpoints at similar angles, so the labels pile into the
+            // same wedge and overwrite one another however large the chart is drawn. "insideStart"
+            // anchors each label to the start of its own ring instead, where the rings are always
+            // one bar-width apart, so they stack rather than collide.
             series.Label = new EChartsLabelOption
             {
                 Show = true,
-                Position = "middle",
+                Position = "insideStart",
                 Rotate = "tangential",
                 Formatter = "{b}",
                 Color = "#fff",
@@ -204,20 +209,25 @@ public partial class BbRadialBar : SeriesBase
     {
         if (!string.IsNullOrEmpty(centerLabel!.Text))
         {
-            option.Title = new EChartsTitleOption
+            option.AddTitle(new EChartsTitleOption
             {
                 Text = centerLabel.Text,
+
+                // left/top already centre the whole title block on the polar centre.
+                // Adding textAlign/textVerticalAlign makes ECharts treat left/top as the
+                // text anchor and centre the text on it a second time, which shifts the
+                // block up and to the left by half its own size. Line alignment inside
+                // the block belongs on textStyle.align instead.
                 Left = "center",
                 Top = "middle",
-                TextAlign = "center",
-                TextVerticalAlign = "middle",
                 TextStyle = new EChartsTextStyleOption
                 {
+                    Align = "center",
                     FontSize = centerLabel.FontSize,
                     FontWeight = centerLabel.FontWeight,
                     Color = "var(--foreground)"
                 }
-            };
+            });
         }
         else
         {
@@ -227,15 +237,17 @@ public partial class BbRadialBar : SeriesBase
             var titleText = centerLabel.Title ?? "";
             var text = $"{{value|{valueText}}}\n{{title|{titleText}}}";
 
-            option.Title = new EChartsTitleOption
+            option.AddTitle(new EChartsTitleOption
             {
                 Text = text,
+
+                // See the note above: left/top place the block, textStyle.align centres
+                // the two lines within it. textAlign/textVerticalAlign would centre it twice.
                 Left = "center",
                 Top = "middle",
-                TextAlign = "center",
-                TextVerticalAlign = "middle",
                 TextStyle = new EChartsTextStyleOption
                 {
+                    Align = "center",
                     Rich = new Dictionary<string, EChartsRichStyleOption>
                     {
                         ["value"] = new EChartsRichStyleOption
@@ -253,7 +265,7 @@ public partial class BbRadialBar : SeriesBase
                         }
                     }
                 }
-            };
+            });
         }
     }
 }

@@ -20,7 +20,7 @@
             </p>
         </div>
         <BbDrawer>
-            <BbDrawerTrigger>
+            <BbDrawerTrigger AsChild="true">
                 <BbButton Variant="ButtonVariant.Outline">Open Drawer</BbButton>
             </BbDrawerTrigger>
             <BbDrawerContent>
@@ -35,7 +35,7 @@
                 </div>
                 <BbDrawerFooter>
                     <BbButton>Save changes</BbButton>
-                    <BbDrawerClose>
+                    <BbDrawerClose AsChild="true">
                         <BbButton Variant="ButtonVariant.Outline">Cancel</BbButton>
                     </BbDrawerClose>
                 </BbDrawerFooter>
@@ -55,7 +55,7 @@
         </div>
         <div class="flex flex-wrap gap-4">
             <BbDrawer Direction="DrawerDirection.Top">
-                <BbDrawerTrigger>
+                <BbDrawerTrigger AsChild="true">
                     <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon">
                         <LucideIcon Name="arrow-up" Size="16" />
                     </BbButton>
@@ -66,7 +66,7 @@
                         <BbDrawerDescription>This slides from the top.</BbDrawerDescription>
                     </BbDrawerHeader>
                     <BbDrawerFooter>
-                        <BbDrawerClose>
+                        <BbDrawerClose AsChild="true">
                             <BbButton Variant="ButtonVariant.Outline">Close</BbButton>
                         </BbDrawerClose>
                     </BbDrawerFooter>
@@ -74,7 +74,7 @@
             </BbDrawer>
 
             <BbDrawer Direction="DrawerDirection.Right">
-                <BbDrawerTrigger>
+                <BbDrawerTrigger AsChild="true">
                     <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon">
                         <LucideIcon Name="arrow-right" Size="16" />
                     </BbButton>
@@ -85,7 +85,7 @@
                         <BbDrawerDescription>This slides from the right.</BbDrawerDescription>
                     </BbDrawerHeader>
                     <BbDrawerFooter>
-                        <BbDrawerClose>
+                        <BbDrawerClose AsChild="true">
                             <BbButton Variant="ButtonVariant.Outline">Close</BbButton>
                         </BbDrawerClose>
                     </BbDrawerFooter>
@@ -93,7 +93,7 @@
             </BbDrawer>
 
             <BbDrawer Direction="DrawerDirection.Bottom">
-                <BbDrawerTrigger>
+                <BbDrawerTrigger AsChild="true">
                     <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon">
                         <LucideIcon Name="arrow-down" Size="16" />
                     </BbButton>
@@ -104,7 +104,7 @@
                         <BbDrawerDescription>This slides from the bottom (default).</BbDrawerDescription>
                     </BbDrawerHeader>
                     <BbDrawerFooter>
-                        <BbDrawerClose>
+                        <BbDrawerClose AsChild="true">
                             <BbButton Variant="ButtonVariant.Outline">Close</BbButton>
                         </BbDrawerClose>
                     </BbDrawerFooter>
@@ -112,7 +112,7 @@
             </BbDrawer>
 
             <BbDrawer Direction="DrawerDirection.Left">
-                <BbDrawerTrigger>
+                <BbDrawerTrigger AsChild="true">
                     <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon">
                         <LucideIcon Name="arrow-left" Size="16" />
                     </BbButton>
@@ -123,7 +123,7 @@
                         <BbDrawerDescription>This slides from the left.</BbDrawerDescription>
                     </BbDrawerHeader>
                     <BbDrawerFooter>
-                        <BbDrawerClose>
+                        <BbDrawerClose AsChild="true">
                             <BbButton Variant="ButtonVariant.Outline">Close</BbButton>
                         </BbDrawerClose>
                     </BbDrawerFooter>
@@ -143,7 +143,7 @@
             </p>
         </div>
         <BbDrawer>
-            <BbDrawerTrigger>
+            <BbDrawerTrigger AsChild="true">
                 <BbButton Variant="ButtonVariant.Outline">Open Action Sheet</BbButton>
             </BbDrawerTrigger>
             <BbDrawerContent>
@@ -184,13 +184,85 @@
     </div>
 
     <!-- Accessibility Notes -->
+    <!-- AsChild -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold">Trigger content and <code class="text-lg">AsChild</code> <span class="text-xs font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded">Changed</span></h2>
+        <p class="text-sm text-muted-foreground">
+            <code class="bg-muted px-1 py-0.5 rounded">BbDrawerTrigger</code> and
+            <code class="bg-muted px-1 py-0.5 rounded">BbDrawerClose</code> now render a real
+            <code class="bg-muted px-1 py-0.5 rounded">&lt;button&gt;</code>, so plain content is reachable by
+            keyboard and announced as a control. Set
+            <code class="bg-muted px-1 py-0.5 rounded">AsChild="true"</code> when the child is already a control,
+            otherwise you nest a button inside a button.
+        </p>
+
+        <div class="flex flex-wrap gap-4 items-center">
+            <BbDrawer>
+                <BbDrawerTrigger Class="underline underline-offset-4 text-primary">Plain text trigger</BbDrawerTrigger>
+                <BbDrawerContent>
+                    <BbDrawerHeader>
+                        <BbDrawerTitle>Opened from plain text</BbDrawerTitle>
+                        <BbDrawerDescription>Tab to the trigger and press Enter — it is a real button now.</BbDrawerDescription>
+                    </BbDrawerHeader>
+                    <BbDrawerFooter>
+                        <BbDrawerClose AsChild="true">
+                            <BbButton Variant="ButtonVariant.Outline">Close</BbButton>
+                        </BbDrawerClose>
+                    </BbDrawerFooter>
+                </BbDrawerContent>
+            </BbDrawer>
+
+            <BbDrawer>
+                <BbDrawerTrigger AsChild="true">
+                    <BbButton Variant="ButtonVariant.Outline">AsChild trigger</BbButton>
+                </BbDrawerTrigger>
+                <BbDrawerContent>
+                    <BbDrawerHeader>
+                        <BbDrawerTitle>Opened from a BbButton</BbDrawerTitle>
+                        <BbDrawerDescription>One button in the DOM, not two.</BbDrawerDescription>
+                    </BbDrawerHeader>
+                    <BbDrawerFooter>
+                        <BbDrawerClose AsChild="true">
+                            <BbButton Variant="ButtonVariant.Outline">Close</BbButton>
+                        </BbDrawerClose>
+                    </BbDrawerFooter>
+                </BbDrawerContent>
+            </BbDrawer>
+        </div>
+
+        <CodeBlock Source="Components/Drawer/as-child.txt" />
+    </div>
+
+    <!-- API Reference -->
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Snap points</h2>
+        <p class="text-sm text-muted-foreground">Snap points are ascending fractions of viewport height, or width for side drawers. The handle supports pointer dragging, arrows, Home and End. Escape during a drag cancels it; normal Escape closes the drawer.</p>
+<BbDrawer SnapPoints="@(new double[] { 0.3, 0.55, 0.9 })" @bind-SnapIndex="snapIndex" DismissOnDrag="true">
+    <BbDrawerTrigger AsChild="true"><BbButton Variant="ButtonVariant.Outline">Open snapping drawer</BbButton></BbDrawerTrigger>
+    <BbDrawerContent aria-label="Delivery details">
+        <BbDrawerHeader><BbDrawerTitle>Delivery details</BbDrawerTitle><BbDrawerDescription>Drag the handle or use its arrow keys to resize.</BbDrawerDescription></BbDrawerHeader>
+        <div class="space-y-4 p-4">
+            <p>Current size: @(snapIndex + 1) of 3</p>
+            @foreach (var step in Enumerable.Range(1, 12))
+            {
+                <p class="rounded-md border p-3">Delivery information @step</p>
+            }
+        </div>
+        <BbDrawerFooter><BbDrawerClose AsChild="true"><BbButton Variant="ButtonVariant.Outline">Close</BbButton></BbDrawerClose></BbDrawerFooter>
+    </BbDrawerContent>
+</BbDrawer>
+        <CodeBlock Source="Components/Drawer/snap-points.txt" />
+
+    </section>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>
                 <code class="text-xs bg-muted px-1 py-0.5 rounded">role="dialog"</code> and <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-modal="true"</code> on the drawer content
             </AccessibilityItem>
             <AccessibilityItem>
-                Focus is automatically trapped within the drawer when open
+                Focus is automatically trapped within the drawer when open. Closing returns focus to the trigger that opened it.
             </AccessibilityItem>
             <AccessibilityItem>
                 Scroll lock on body when drawer is open
@@ -209,7 +281,6 @@
         </KeyboardNavigation>
     </AccessibilityList>
 
-    <!-- API Reference -->
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">API Reference</h2>
@@ -227,7 +298,12 @@
                 <ApiParameter Name="DefaultOpen" Type="bool" Default="false">
                     Initial open state.
                 </ApiParameter>
-            </ApiReference>
+
+            <ApiParameter Since="v4" Name="SnapPoints" Type="IReadOnlyList&lt;double&gt;" Default="[]">Ascending fractions greater than 0 and at most 1. Empty preserves natural content size.</ApiParameter>
+            <ApiParameter Since="v4" Name="SnapIndex / SnapIndexChanged" Type="int / EventCallback&lt;int&gt;" Default="0">Active zero-based point; supports @@bind-SnapIndex.</ApiParameter>
+            <ApiParameter Since="v4" Name="DismissOnDrag" Type="bool" Default="true">Dragging below half the smallest point dismisses. False always snaps to a configured size.</ApiParameter>
+
+        </ApiReference>
 
             <ApiReference ComponentName="DrawerContent">
                 <ApiParameter Name="ShowHandle" Type="bool" Default="true">
@@ -243,11 +319,45 @@
                     An explicit element to focus on open, beating both <code>InitialFocus</code> and <code>data-autofocus</code>. Ignored when it is not inside the drawer.
                 </ApiParameter>
             </ApiReference>
+
+            <ApiReference ComponentName="DrawerTrigger">
+                <ApiParameter Since="v4" Name="AsChild" Type="bool" Default="false">
+                    When true, renders no button of its own and cascades a <code>TriggerContext</code> to the child instead. Use it whenever the child is already a control, such as a <code>BbButton</code> — leaving it false around a control nests a button inside a button.
+                </ApiParameter>
+                <ApiParameter Name="ChildContent" Type="RenderFragment?">
+                    The trigger content. Rendered inside a <code>&lt;button type="button"&gt;</code> unless <code>AsChild</code> is set.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?">
+                    Additional CSS classes for the trigger button.
+                </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes applied to the root <code>&lt;button&gt;</code> element (e.g. <code>data-testid</code>, <code>aria-label</code>).
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="DrawerClose">
+                <ApiParameter Since="v4" Name="AsChild" Type="bool" Default="false">
+                    When true, renders no button of its own and cascades a <code>TriggerContext</code> to the child instead.
+                </ApiParameter>
+                <ApiParameter Name="ChildContent" Type="RenderFragment?">
+                    The close content. Rendered inside a <code>&lt;button type="button"&gt;</code> unless <code>AsChild</code> is set.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?">
+                    Additional CSS classes for the close button.
+                </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes applied to the root <code>&lt;button&gt;</code> element (e.g. <code>data-testid</code>, <code>aria-label</code>).
+                </ApiParameter>
+            </ApiReference>
         </div>
+
+
     </section>
+
 </div>
 
 @code {
+    private int snapIndex = 1;
     private void HandleShare() { }
     private void HandleEdit() { }
     private void HandleDuplicate() { }

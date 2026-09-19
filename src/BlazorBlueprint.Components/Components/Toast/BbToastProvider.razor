@@ -49,9 +49,13 @@
     public ToastPosition Position { get; set; } = ToastPosition.BottomRight;
 
     /// <summary>
-    /// Maximum number of toasts to display at once.
-    /// Older toasts are removed when limit is reached.
+    /// Maximum number of toasts to display at once, per position. Set to zero for no limit.
     /// </summary>
+    /// <remarks>
+    /// Toasts past the limit are not discarded: they stay queued in the service and appear as the
+    /// ones in front of them dismiss. The value was previously declared and never read, so every
+    /// toast was shown however many there were.
+    /// </remarks>
     [Parameter]
     public int MaxToasts { get; set; } = 5;
 
@@ -218,28 +222,28 @@
 
     private IEnumerable<ToastData> GetToastsForPosition(ToastPosition? position)
     {
-        if (position.HasValue)
-        {
-            return ToastService.Toasts.Where(t => t.Position == position);
-        }
+        var forPosition = position.HasValue
+            ? ToastService.Toasts.Where(t => t.Position == position)
+            : ToastService.Toasts.Where(t => !t.Position.HasValue);
 
-        return ToastService.Toasts.Where(t => !t.Position.HasValue);
+        // The service appends, so the newest are at the end — those are the ones to show.
+        return MaxToasts > 0 ? forPosition.TakeLast(MaxToasts) : forPosition;
     }
 
     private string GetContainerCssClass(ToastPosition position) => ClassNames.cn(
         // pointer-events-none lets clicks pass through the fixed-position container
         // (which always renders, even with zero toasts) so it doesn't block the UI
         // behind it. Each BbToast re-enables pointer-events-auto on its own root.
-        "pointer-events-none fixed z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:flex-col md:max-w-[420px]",
+        "bb:pointer-events-none bb:fixed bb:z-[100] bb:flex bb:max-h-screen bb:w-full bb:flex-col-reverse bb:gap-2 bb:p-4 bb:sm:flex-col bb:md:max-w-[420px]",
         position switch
         {
-            ToastPosition.TopRight => "top-0 right-0",
-            ToastPosition.TopLeft => "top-0 left-0",
-            ToastPosition.TopCenter => "top-0 left-1/2 -translate-x-1/2",
-            ToastPosition.BottomRight => "bottom-0 right-0",
-            ToastPosition.BottomLeft => "bottom-0 left-0",
-            ToastPosition.BottomCenter => "bottom-0 left-1/2 -translate-x-1/2",
-            _ => "bottom-0 right-0"
+            ToastPosition.TopRight => "bb:top-0 bb:right-0",
+            ToastPosition.TopLeft => "bb:top-0 bb:left-0",
+            ToastPosition.TopCenter => "bb:top-0 bb:left-1/2 bb:-translate-x-1/2",
+            ToastPosition.BottomRight => "bb:bottom-0 bb:right-0",
+            ToastPosition.BottomLeft => "bb:bottom-0 bb:left-0",
+            ToastPosition.BottomCenter => "bb:bottom-0 bb:left-1/2 bb:-translate-x-1/2",
+            _ => "bb:bottom-0 bb:right-0"
         },
         Class
     );

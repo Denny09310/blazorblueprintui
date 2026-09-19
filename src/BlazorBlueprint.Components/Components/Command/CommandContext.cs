@@ -49,6 +49,13 @@ public interface IVirtualizedGroupHandler
     public int FocusedIndex { get; set; }
 
     /// <summary>
+    /// Focuses the item with this element id if it belongs to this group.
+    /// </summary>
+    /// <param name="elementId">The <c>id</c> of the hovered element.</param>
+    /// <returns><c>true</c> if the id was one of this group's items.</returns>
+    public bool TryHoverItem(string elementId);
+
+    /// <summary>
     /// Selects the currently focused item.
     /// </summary>
     public Task SelectFocusedItemAsync();
@@ -78,10 +85,11 @@ public class CommandContext
     private int _focusedIndex = -1;
     private int _focusedVirtualizedGroupIndex = -1; // Which virtualized group has focus (-1 = regular items)
     private Func<CommandItemMetadata, string, bool>? _filterFunction;
-    private bool _closeOnSelect = true;
     private bool _disabled;
     private bool _hasRegisteredItems;
     private bool _isKeyboardNavigating; // Flag to suppress hover during keyboard nav
+    private List<CommandItemMetadata>? filteredItems;
+    private readonly Dictionary<CommandItemMetadata, int> filteredIndices = new();
 
     /// <summary>
     /// Event that is raised when the state changes.
@@ -134,21 +142,23 @@ public class CommandContext
     public Func<CommandItemMetadata, string, bool>? FilterFunction
     {
         get => _filterFunction;
-        set => _filterFunction = value;
-    }
-
-    /// <summary>
-    /// Gets or sets whether to close the dropdown after selection.
-    /// </summary>
-    public bool CloseOnSelect
-    {
-        get => _closeOnSelect;
-        set => _closeOnSelect = value;
+        set
+        {
+            // A stable delegate can close over mutable state. The parent reapplies this
+            // parameter once per render, which is also the refresh boundary for that state.
+            _filterFunction = value;
+            InvalidateFilter();
+        }
     }
 
     /// <summary>
     /// Gets or sets whether the command is disabled.
     /// </summary>
+    /// <remarks>
+    /// While disabled the list neither moves its focus nor selects anything, so the value was
+    /// stored and never read: a disabled command still answered the arrow keys and still raised
+    /// <c>OnValueChange</c> on Enter or on a click.
+    /// </remarks>
     public bool Disabled
     {
         get => _disabled;
@@ -246,6 +256,7 @@ public class CommandContext
         if (_searchQuery != query)
         {
             _searchQuery = query;
+            InvalidateFilter();
             _focusedIndex = -1; // Reset focus when search changes
             _focusedVirtualizedGroupIndex = -1; // Reset virtualized group focus
 
@@ -275,6 +286,7 @@ public class CommandContext
             GroupId = groupId
         };
         _items.Add(metadata);
+        InvalidateFilter();
         _hasRegisteredItems = true;
         NotifyStateChanged(); // Notify so CommandEmpty can update
         return _items.Count - 1;
@@ -287,11 +299,22 @@ public class CommandContext
     {
         if (index >= 0 && index < _items.Count)
         {
-            _items[index].Value = value;
-            _items[index].SearchText = searchText ?? value;
-            _items[index].Disabled = disabled;
-            _items[index].OnSelect = onSelect;
-            _items[index].GroupId = groupId;
+            var item = _items[index];
+            if (item == null)
+            {
+                return;
+            }
+
+            if (item.Value != value || item.SearchText != (searchText ?? value)
+                || item.Disabled != disabled || item.GroupId != groupId)
+            {
+                InvalidateFilter();
+            }
+            item.Value = value;
+            item.SearchText = searchText ?? value;
+            item.Disabled = disabled;
+            item.OnSelect = onSelect;
+            item.GroupId = groupId;
         }
     }
 
@@ -303,6 +326,7 @@ public class CommandContext
         if (index >= 0 && index < _items.Count)
         {
             _items[index] = null!; // Mark as null, don't remove to preserve indices
+            InvalidateFilter();
             NotifyStateChanged(); // Notify so CommandEmpty can update
         }
     }
@@ -312,19 +336,45 @@ public class CommandContext
     /// </summary>
     public List<CommandItemMetadata> GetFilteredItems()
     {
-        if (string.IsNullOrWhiteSpace(_searchQuery))
+        // Metadata is public and mutable. An explicit snapshot request still observes edits
+        // made through GetItemByIndex, while component render paths use the cached lookup.
+        InvalidateFilter();
+        return new(GetFilteredItemsCore());
+    }
+
+    // Keep the public list a caller-owned snapshot. Internal consumers share the result and
+    // index map, so refreshing N item components doesn't run the predicate N times per item.
+    private List<CommandItemMetadata> GetFilteredItemsCore()
+    {
+        if (filteredItems != null)
         {
-            return _items.Where(i => i != null).ToList();
+            return filteredItems;
         }
 
-        if (_filterFunction != null)
+        filteredItems = new List<CommandItemMetadata>();
+        filteredIndices.Clear();
+        var showAll = string.IsNullOrWhiteSpace(_searchQuery);
+        foreach (var item in _items)
         {
-            return _items.Where(i => i != null && _filterFunction(i, _searchQuery)).ToList();
+            if (item != null && (showAll || (_filterFunction != null
+                ? _filterFunction(item, _searchQuery)
+                : item.SearchText?.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) == true)))
+            {
+                filteredIndices[item] = filteredItems.Count;
+                filteredItems.Add(item);
+            }
         }
 
-        return _items
-            .Where(i => i != null && (i.SearchText?.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ?? false))
-            .ToList();
+        return filteredItems;
+    }
+
+    private void InvalidateFilter() => filteredItems = null;
+
+    internal int GetFilteredIndex(int registrationIndex)
+    {
+        GetFilteredItemsCore();
+        var item = GetItemByIndex(registrationIndex);
+        return item != null && filteredIndices.TryGetValue(item, out var index) ? index : -1;
     }
 
     /// <summary>
@@ -360,7 +410,7 @@ public class CommandContext
             return true;
         }
 
-        return GetFilteredItems().Any(i => !i.Disabled);
+        return GetFilteredItemsCore().Any(i => !i.Disabled);
     }
 
     /// <summary>
@@ -370,8 +420,70 @@ public class CommandContext
     /// <returns>True if the group has visible items, false otherwise.</returns>
     public bool GroupHasVisibleItems(string groupId)
     {
-        var filteredItems = GetFilteredItems();
+        var filteredItems = GetFilteredItemsCore();
         return filteredItems.Any(i => i.GroupId == groupId);
+    }
+
+    /// <summary>
+    /// Moves the highlight to the item under the pointer, given the hovered element's id.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Called from JavaScript, once per item the pointer genuinely moves onto. Items used to bind
+    /// <c>@onmouseenter</c> and <c>@onmousemove</c> themselves, which on Blazor Server made every
+    /// pixel of pointer travel a circuit message. The mousemove existed only to tell a real hover
+    /// from the list scrolling under a stationary pointer during keyboard navigation — a question
+    /// the browser now answers on its own (<c>elementUtils.observeHover</c>), so what arrives here
+    /// is always a real hover, and it ends keyboard mode as a real mouse move always did.
+    /// </para>
+    /// </remarks>
+    /// <param name="elementId">The <c>id</c> of the hovered <c>role="option"</c> element.</param>
+    public void HoverItemById(string elementId)
+    {
+        if (_disabled)
+        {
+            return;
+        }
+
+        if (string.IsNullOrEmpty(elementId))
+        {
+            return;
+        }
+
+        var prefix = $"{Id}-item-";
+        if (elementId.StartsWith(prefix, StringComparison.Ordinal)
+            && int.TryParse(elementId.AsSpan(prefix.Length), out var rawIndex))
+        {
+            if (rawIndex < 0 || rawIndex >= _items.Count)
+            {
+                return;
+            }
+
+            var item = _items[rawIndex];
+            if (item == null || item.Disabled)
+            {
+                return;
+            }
+
+            var filteredIndex = GetFilteredIndex(rawIndex);
+            if (filteredIndex < 0)
+            {
+                return;
+            }
+
+            OnMouseMove();
+            SetFocusedIndex(filteredIndex);
+            return;
+        }
+
+        foreach (var group in _virtualizedGroups)
+        {
+            if (group.TryHoverItem(elementId))
+            {
+                OnMouseMove();
+                return;
+            }
+        }
     }
 
     /// <summary>
@@ -409,6 +521,11 @@ public class CommandContext
     /// <param name="direction">1 for next, -1 for previous.</param>
     public async Task MoveFocusAsync(int direction)
     {
+        if (_disabled)
+        {
+            return;
+        }
+
         // Suppress mouse hover while keyboard navigating
         if (!_isKeyboardNavigating)
         {
@@ -416,7 +533,7 @@ public class CommandContext
             OnKeyboardNavigationChanged?.Invoke(true);
         }
 
-        var allFiltered = GetFilteredItems();
+        var allFiltered = GetFilteredItemsCore();
         var enabledFilteredItems = allFiltered.Where(i => !i.Disabled).ToList();
 
         // Get virtualized groups that have visible items
@@ -641,7 +758,7 @@ public class CommandContext
 
     private void FocusFirstRegularItem()
     {
-        var allFiltered = GetFilteredItems();
+        var allFiltered = GetFilteredItemsCore();
         for (var i = 0; i < allFiltered.Count; i++)
         {
             if (!allFiltered[i].Disabled)
@@ -654,7 +771,7 @@ public class CommandContext
 
     private void FocusLastRegularItem()
     {
-        var allFiltered = GetFilteredItems();
+        var allFiltered = GetFilteredItemsCore();
         for (var i = allFiltered.Count - 1; i >= 0; i--)
         {
             if (!allFiltered[i].Disabled)
@@ -670,6 +787,11 @@ public class CommandContext
     /// </summary>
     public async Task FocusFirstAsync()
     {
+        if (_disabled)
+        {
+            return;
+        }
+
         // Suppress mouse hover while keyboard navigating
         if (!_isKeyboardNavigating)
         {
@@ -678,7 +800,7 @@ public class CommandContext
         }
 
         // First try regular items
-        var filteredItems = GetFilteredItems();
+        var filteredItems = GetFilteredItemsCore();
         for (var i = 0; i < filteredItems.Count; i++)
         {
             if (!filteredItems[i].Disabled)
@@ -705,6 +827,11 @@ public class CommandContext
     /// </summary>
     public async Task FocusLastAsync()
     {
+        if (_disabled)
+        {
+            return;
+        }
+
         // Suppress mouse hover while keyboard navigating
         if (!_isKeyboardNavigating)
         {
@@ -724,7 +851,7 @@ public class CommandContext
         }
 
         // Then try regular items
-        var filteredItems = GetFilteredItems();
+        var filteredItems = GetFilteredItemsCore();
         for (var i = filteredItems.Count - 1; i >= 0; i--)
         {
             if (!filteredItems[i].Disabled)
@@ -755,6 +882,11 @@ public class CommandContext
     /// </summary>
     public async Task SelectFocusedItemAsync()
     {
+        if (_disabled)
+        {
+            return;
+        }
+
         // Check if focus is in a virtualized group
         if (_focusedVirtualizedGroupIndex >= 0)
         {
@@ -767,7 +899,7 @@ public class CommandContext
         }
 
         // Regular item selection
-        var filteredItems = GetFilteredItems();
+        var filteredItems = GetFilteredItemsCore();
         if (_focusedIndex >= 0 && _focusedIndex < filteredItems.Count)
         {
             var item = filteredItems[_focusedIndex];
@@ -783,6 +915,11 @@ public class CommandContext
     /// </summary>
     public async Task SelectItemByValueAsync(string value)
     {
+        if (_disabled)
+        {
+            return;
+        }
+
         var item = _items.FirstOrDefault(i => i != null && i.Value == value);
         if (item != null && !item.Disabled)
         {
@@ -795,6 +932,11 @@ public class CommandContext
     /// </summary>
     private async Task SelectItemAsync(CommandItemMetadata item)
     {
+        if (_disabled)
+        {
+            return;
+        }
+
         if (item.OnSelect.HasDelegate)
         {
             await item.OnSelect.InvokeAsync();

@@ -1,30 +1,23 @@
 // Positioning service using Floating UI (bundled locally)
 
-let floatingUI = null;
+// Floating UI is a static import on purpose. It used to be an `await import(...)` inside
+// loadFloatingUI(), which meant the first computePosition call paid a second module load that
+// nothing on the C# side could see: in Blazor Server the C# `import` of this file is already a
+// circuit round trip, and the nested import added another wait on top of it. A static import
+// makes the browser resolve the whole graph while it fetches this file, so the pair costs one
+// round trip instead of two.
+import * as floatingUIBundled from '../vendor/floating-ui-dom.esm.min.js';
+
 // Store cleanup functions with unique IDs to avoid passing functions through JS interop
 const cleanupRegistry = new Map();
 
 /**
- * Loads Floating UI from preloaded global or bundled local file.
+ * Returns Floating UI, preferring a preloaded global if the host page supplies one.
  * No external CDN dependency — the library ships with the package.
  */
-async function loadFloatingUI() {
-    if (floatingUI) return floatingUI;
-
-    // Check for preloaded global first (from App.razor script)
-    if (window.FloatingUIDOM) {
-        floatingUI = window.FloatingUIDOM;
-        return floatingUI;
-    }
-
-    try {
-        // Import bundled local copy (ships with the package)
-        floatingUI = await import('../vendor/floating-ui-dom.esm.min.js');
-        return floatingUI;
-    } catch (error) {
-        console.error('Failed to load bundled Floating UI:', error);
-        throw new Error('Floating UI library could not be loaded. Ensure the BlazorBlueprint.Primitives static assets are included.');
-    }
+function loadFloatingUI() {
+    // Check for a preloaded global first (from an App.razor script)
+    return window.FloatingUIDOM || floatingUIBundled;
 }
 
 /**
@@ -76,7 +69,7 @@ export async function computePosition(reference, floating, options = {}) {
     }
 
     try {
-        const lib = await loadFloatingUI();
+        const lib = loadFloatingUI();
 
     const {
         placement = 'bottom',
@@ -235,8 +228,17 @@ async function waitForExitAnimation(el) {
 
     if (typeof el.getAnimations !== 'function') return;
 
-    // subtree: the animated element is the component's own content div, a child of this wrapper.
-    const running = el.getAnimations({ subtree: true }).filter(a => a.playState === 'running');
+    // The exit animation belongs to the wrapper or its direct content element. Descendant
+    // transitions (tree chevrons, hovered rows, checkboxes) can outlast the exit fade just as a
+    // loading spinner can. Waiting for them lets the completed fade revert to full opacity,
+    // briefly revealing the popup again before we hide it.
+    const running = el.getAnimations({ subtree: true }).filter(a => {
+        if (a.playState !== 'running') return false;
+        const target = a.effect?.target;
+        if (target !== el && !(target?.parentElement === el && target.dataset.state === 'closed')) return false;
+        const iterations = a.effect?.getTiming?.().iterations;
+        return iterations !== Infinity;
+    });
     if (running.length === 0) return;
 
     // allSettled, not all: a cancelled animation rejects, and a cancelled exit animation still
@@ -250,7 +252,9 @@ async function waitForExitAnimation(el) {
 
 export async function autoUpdate(reference, floating, options = {}) {
     try {
-        const lib = await loadFloatingUI();
+        const lib = loadFloatingUI();
+
+    let lastPlacement = null;
 
     const update = async () => {
         // Guard against stale elements — autoUpdate listeners (scroll, resize,
@@ -261,6 +265,15 @@ export async function autoUpdate(reference, floating, options = {}) {
         }
         const position = await computePosition(reference, floating, options);
         applyPosition(floating, position);
+
+        // A scroll can flip the overlay to the other side, and the side drives its styling. The
+        // caller keeps whatever it writes in sync without another interop call.
+        if (position.placement !== lastPlacement) {
+            lastPlacement = position.placement;
+            if (typeof options.onPlacement === 'function') {
+                options.onPlacement(position.placement);
+            }
+        }
     };
 
     // Initial position
