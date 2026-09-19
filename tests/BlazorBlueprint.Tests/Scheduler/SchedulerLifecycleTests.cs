@@ -1582,6 +1582,55 @@ public class SchedulerLifecycleTests
         scheduler.SetParametersAsync(ParameterView.FromDictionary(
             new Dictionary<string, object?> { [nameof(BbScheduler.TimeZones)] = zones }));
 
+    [Fact]
+    public async Task TheEditorRendersNoStrayRazorBraces()
+    {
+        // Extracting the editor fields into a RenderFragment once left a duplicated `@if` guard and
+        // an orphaned `}` at the call site. That is valid Razor — it compiled, and every other test
+        // passed — but the brace rendered as literal text in the dialog. Nothing else catches it.
+        await RunAsync(async (renderer, scheduler, original) =>
+        {
+            scheduler.CreateEvent(At(11));
+            await Task.Yield();
+
+            var markup = StripRazorSafeBraces(renderer.Markup());
+
+            Assert.DoesNotContain('{', markup);
+            Assert.DoesNotContain('}', markup);
+        });
+    }
+
+    [Fact]
+    public async Task TheEditorRendersNoStrayRazorBracesWhenEditingARecurringOccurrence()
+    {
+        await RunAsync(async (renderer, scheduler, original) =>
+        {
+            original.RecurrenceRule = "FREQ=WEEKLY;BYDAY=MO;COUNT=4";
+            await scheduler.SetParametersAsync(ParameterView.FromDictionary(new Dictionary<string, object?>
+            {
+                [nameof(BbScheduler.Resources)] = new SchedulerResource[] { new("room-a", "Room A") }
+            }));
+            scheduler.EditEvent(new(original, original.Start, original.End), SchedulerEditScope.Series);
+            await Task.Yield();
+
+            var markup = StripRazorSafeBraces(renderer.Markup());
+
+            Assert.DoesNotContain('{', markup);
+            Assert.DoesNotContain('}', markup);
+        });
+    }
+
+    /// <summary>
+    /// Removes the braces that legitimately appear in rendered output — inline styles and any
+    /// script or JSON payload — so only a brace that leaked out of Razor is left.
+    /// </summary>
+    private static string StripRazorSafeBraces(string markup)
+    {
+        var withoutAttributes = System.Text.RegularExpressions.Regex.Replace(markup, "<[^>]*>", "<>");
+        return System.Text.RegularExpressions.Regex.Replace(withoutAttributes, "<script.*?</script>", string.Empty,
+            System.Text.RegularExpressions.RegexOptions.Singleline);
+    }
+
     private static readonly int[] MutedProbeHours = [0, 9, 13, 23];
 
     private static Task WithActiveHoursAsync(BbScheduler scheduler, params SchedulerDayHours[] hours) =>
