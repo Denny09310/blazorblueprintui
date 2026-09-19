@@ -60,13 +60,47 @@
                     </BbDataGridPropertyColumn>
                     <BbDataGridPropertyColumn TData="WorkItem" TProp="bool" Property="@(r => r.Approved)" Sortable Width="150px">
                         <CellTemplate>@(context.Approved ? "Yes" : "No")</CellTemplate>
-                        <EditTemplate><div class="flex items-center px-3 h-10"><BbCheckbox @bind-Checked="context.Approved" AriaLabel="Approved" /></div></EditTemplate>
+                        @* No wrapper div: a checkbox editor is a plain button and the grid must leave it alone. *@
+                        <EditTemplate><BbCheckbox @bind-Checked="context.Approved" AriaLabel="Approved" /></EditTemplate>
                     </BbDataGridPropertyColumn>
                 </Columns>
             </BbDataGrid>
             @* end example *@
         </div>
         <CodeBlock Source="Components/DataGrid/input-editors.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Editors in Narrow Columns</h2>
+            <p class="text-sm text-muted-foreground">Every column here is narrower than a popup trigger's own default width, which is where cell editing used to come apart. A combobox and a multi select wrap their trigger in a container, so they kept their fixed 200px and 300px widths and painted straight over Save and Cancel — both buttons were still in the DOM and still clickable by keyboard, but nothing showed them. A checkbox is a plain button, and the grid's reset stretched it full width and stripped its border, so an unchecked cell looked empty. Open any editor below: the trigger fits its cell, the checkbox stays a checkbox, and Save and Cancel are always on top.</p>
+        </div>
+        <div class="rounded-lg border p-4">
+            @* example: narrow-editors *@
+            <BbDataGrid Items="narrowRows" TData="WorkItem" ItemKey="@(r => r.Id)" EditMode="DataGridEditMode.Cell"
+                        EditItemFactory="CloneTask" ShowPagination="false" AriaLabel="Editors in narrow columns">
+                <Columns>
+                    <BbDataGridPropertyColumn TData="WorkItem" TProp="string" Property="@(r => r.Title)" Title="Task" Width="140px" />
+                    <BbDataGridPropertyColumn TData="WorkItem" TProp="string" Property="@(r => r.Status)" Title="Status" Width="150px">
+                        <EditTemplate>
+                            <BbCombobox TValue="string" @bind-Value="context.Status" Options="statusOptions" aria-label="Status" />
+                        </EditTemplate>
+                    </BbDataGridPropertyColumn>
+                    <BbDataGridPropertyColumn TData="WorkItem" TProp="string" Property="@(r => r.SkillSummary)" Title="Skills" Width="160px">
+                        <EditTemplate>
+                            <BbMultiSelect TValue="string" Options="skillOptions" Values="context.Skills"
+                                           ValuesChanged="@(values => context.Skills = values?.ToList() ?? [])" aria-label="Skills" />
+                        </EditTemplate>
+                    </BbDataGridPropertyColumn>
+                    <BbDataGridPropertyColumn TData="WorkItem" TProp="bool" Property="@(r => r.Approved)" Title="Approved" Width="110px">
+                        <CellTemplate>@(context.Approved ? "Yes" : "No")</CellTemplate>
+                        <EditTemplate><BbCheckbox @bind-Checked="context.Approved" AriaLabel="Approved" /></EditTemplate>
+                    </BbDataGridPropertyColumn>
+                </Columns>
+            </BbDataGrid>
+            @* end example *@
+        </div>
+        <CodeBlock Source="Components/DataGrid/narrow-editors.txt" />
     </section>
 
     <section class="space-y-4">
@@ -185,6 +219,21 @@
     private readonly List<Employee> validationRows = [new() { Id = 1, Name = "Alex", Hours = 32 }];
     private readonly BlazorBlueprint.Primitives.DataGrid.DataGridState<Employee> sortingState = new();
     private readonly BlazorBlueprint.Primitives.DataGrid.DataGridState<Employee> batchState = new();
+    private static readonly IReadOnlyList<SelectOption<string>> statusOptions =
+    [
+        new("Planned", "Planned"), new("In progress", "In progress"), new("Done", "Done")
+    ];
+    private static readonly IReadOnlyList<SelectOption<string>> skillOptions =
+    [
+        new("C#", "C#"), new("Blazor", "Blazor"), new("SQL", "SQL"), new("Azure", "Azure")
+    ];
+    private readonly List<WorkItem> narrowRows =
+    [
+        new() { Id = 1, Title = "Design review", Status = "In progress", Skills = ["C#", "Blazor"], Approved = false },
+        new() { Id = 2, Title = "Release notes", Status = "Planned", Skills = ["SQL"], Approved = true },
+        new() { Id = 3, Title = "Accessibility audit", Status = "Done", Skills = [], Approved = false }
+    ];
+
     private readonly List<WorkItem> tasks =
     [
         new() { Id = 1, Title = "Design review", DueDate = new(2026, 9, 18), Status = "In progress", Approved = false },
@@ -206,7 +255,7 @@
         new() { Id = 4, Name = "Jamie", Hours = 16 }
     ];
     private static Employee Clone(Employee source) => new() { Id = source.Id, Name = source.Name, Hours = source.Hours };
-    private static WorkItem CloneTask(WorkItem source) => new() { Id = source.Id, Title = source.Title, DueDate = source.DueDate, Status = source.Status, Approved = source.Approved };
+    private static WorkItem CloneTask(WorkItem source) => new() { Id = source.Id, Title = source.Title, DueDate = source.DueDate, Status = source.Status, Approved = source.Approved, Skills = [.. source.Skills] };
     private async Task SaveCellAsync(DataGridRowCommitContext<Employee> context)
     {
         await Task.Delay(300);
@@ -230,5 +279,7 @@
         public DateTime? DueDate { get; set; }
         public string Status { get; set; } = "Planned";
         public bool Approved { get; set; }
+        public List<string> Skills { get; set; } = [];
+        public string SkillSummary => Skills.Count == 0 ? "—" : string.Join(", ", Skills);
     }
 }
