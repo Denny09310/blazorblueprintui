@@ -1,0 +1,18 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<a href="@(Disabled ? null : Href)"
+   target="@Target"
+   rel="@EffectiveRel"
+   class="@CssClass"
+   tabindex="@(Disabled ? -1 : 0)"
+   aria-disabled="@(Disabled ? "true" : null)"
+   @onclick="HandleClickAsync"
+   @attributes="AdditionalAttributes">
+    @ChildContent
+    @if (ShowExternalIcon)
+    {
+        <LucideIcon Name="external-link" Class="bb:inline-block bb:h-3 bb:w-3 bb:shrink-0 bb:align-baseline" />
+        <span class="bb:sr-only">@Localizer["Link.OpensInNewTab"]</span>
+    }
+</a>
