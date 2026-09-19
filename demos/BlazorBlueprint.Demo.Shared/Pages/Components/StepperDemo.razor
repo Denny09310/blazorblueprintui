@@ -1,0 +1,220 @@
+@page "/components/stepper"
+
+<PageTitle>Stepper - Blazor Blueprint</PageTitle>
+
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Stepper</h1>
+        <p class="text-xl text-muted-foreground">
+            Shows where a person is in a sequence of steps, and optionally the content of the
+            active step.
+        </p>
+    </div>
+
+    <div class="rounded-r-lg border-l-4 border-primary bg-primary/5 p-4">
+        <p class="text-sm text-muted-foreground">
+            <strong>Stepper or Form Wizard?</strong> The stepper is a plain indicator: it holds no
+            form, validates nothing, and renders no navigation buttons. For a multi-step form with
+            per-step validation and built-in Back and Next buttons, use
+            <a href="/components/form-wizard" class="text-primary underline hover:no-underline">Form Wizard</a>.
+        </p>
+    </div>
+
+    <!-- Basic -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic</h2>
+            <p class="text-sm text-muted-foreground">
+                Bind <code class="rounded bg-muted px-1 py-0.5 text-xs">ActiveStep</code> and move
+                it from your own controls.
+            </p>
+        </div>
+        <div class="space-y-6 rounded-lg border p-6">
+            <BbStepper @bind-ActiveStep="basicStep">
+                <BbStep Title="Cart" />
+                <BbStep Title="Address" />
+                <BbStep Title="Payment" />
+                <BbStep Title="Done" />
+            </BbStepper>
+            <div class="flex items-center gap-2">
+                <BbButton Variant="ButtonVariant.Outline"
+                          Disabled="@(basicStep == 0)"
+                          OnClick="@(() => basicStep--)">
+                    Back
+                </BbButton>
+                <BbButton Disabled="@(basicStep == 3)" OnClick="@(() => basicStep++)">
+                    Next
+                </BbButton>
+            </div>
+        </div>
+        <CodeBlock Source="Components/Stepper/basic.txt" />
+    </section>
+
+    <!-- Clickable with descriptions and icons -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Clickable, with icons</h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">Clickable="true"</code> turns
+                each marker into a button. An icon replaces the step number.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-6">
+            <BbStepper @bind-ActiveStep="clickableStep" Clickable="true">
+                <BbStep Title="Account" Description="Name and email" Icon="user" />
+                <BbStep Title="Plan" Description="Pick a tier" Icon="credit-card" />
+                <BbStep Title="Review" Description="Check and confirm" Icon="check-check" />
+            </BbStepper>
+            <p role="status" class="text-sm text-muted-foreground">
+                Step @(clickableStep + 1) of 3.
+            </p>
+        </div>
+        <CodeBlock Source="Components/Stepper/clickable.txt" />
+    </section>
+
+    <!-- With content -->
+    <section class="space-y-4">
+        <span id="step" class="block scroll-mt-20" aria-hidden="true"></span>
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Step content</h2>
+            <p class="text-sm text-muted-foreground">
+                A step with child content renders it while the step is active. A step without any
+                contributes only its label.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-6">
+            <BbStepper @bind-ActiveStep="contentStep" Clickable="true">
+                <BbStep Title="Address">
+                    <div class="space-y-2">
+                        <p class="text-sm font-medium">Where should the order go?</p>
+                        <p class="text-sm text-muted-foreground">
+                            This panel only renders while the first step is active.
+                        </p>
+                    </div>
+                </BbStep>
+                <BbStep Title="Payment">
+                    <div class="space-y-2">
+                        <p class="text-sm font-medium">How would you like to pay?</p>
+                        <p class="text-sm text-muted-foreground">
+                            Each step owns its own content.
+                        </p>
+                    </div>
+                </BbStep>
+                <BbStep Title="Done">
+                    <p class="text-sm font-medium">That is everything.</p>
+                </BbStep>
+            </BbStepper>
+        </div>
+        <CodeBlock Source="Components/Stepper/with-content.txt" />
+    </section>
+
+    <!-- Vertical -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Vertical</h2>
+            <p class="text-sm text-muted-foreground">
+                The indicator runs down the leading side, with the content beside it. This suits a
+                narrow column or a long run of steps.
+            </p>
+        </div>
+        <div class="rounded-lg border p-6">
+            <BbStepper @bind-ActiveStep="verticalStep"
+                       Orientation="StepperOrientation.Vertical"
+                       Clickable="true">
+                <BbStep Title="Upload" Description="Add the source file">
+                    <p class="text-sm text-muted-foreground">Drop a CSV file to start.</p>
+                </BbStep>
+                <BbStep Title="Map columns" Description="Match the fields">
+                    <p class="text-sm text-muted-foreground">Match each column to a field.</p>
+                </BbStep>
+                <BbStep Title="Import" Description="Write the rows">
+                    <p class="text-sm text-muted-foreground">Everything is ready to import.</p>
+                </BbStep>
+            </BbStepper>
+        </div>
+        <CodeBlock Source="Components/Stepper/vertical.txt" />
+    </section>
+
+    <!-- States -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">States</h2>
+            <p class="text-sm text-muted-foreground">
+                A step behind the active one counts as completed. Set
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">State</code> to override that,
+                which is how an error or a skipped step is shown. A disabled step cannot be clicked.
+            </p>
+        </div>
+        <div class="rounded-lg border p-6">
+            <BbStepper ActiveStep="2" Clickable="true">
+                <BbStep Title="Collected" />
+                <BbStep Title="Rejected" State="StepState.Error" />
+                <BbStep Title="In review" />
+                <BbStep Title="Extra checks" Optional="true" State="StepState.Skipped" />
+                <BbStep Title="Archived" Disabled="true" />
+            </BbStepper>
+        </div>
+        <CodeBlock Source="Components/Stepper/states.txt" />
+    </section>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The indicator is an ordered list, so a screen reader announces how many steps there are and which one this is.</AccessibilityItem>
+            <AccessibilityItem>The active step carries <code>aria-current="step"</code>.</AccessibilityItem>
+            <AccessibilityItem>Each step adds hidden text with its position, and its state when that state is completed, error or skipped. State is never colour alone.</AccessibilityItem>
+            <AccessibilityItem>Connectors are <code>aria-hidden</code>, because they carry no information of their own.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between step markers, when Clickable is set"><BbKbd>Tab / Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate the focused step"><BbKbd>Enter / Space</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <LocalizationSection
+        Description="The indicator's name and the text announced for each step are configurable."
+        Labels="@(new LocalizationSection.LabelInfo[]
+        {
+            new("Stepper.Progress", "Progress", "Accessible name for the step list"),
+            new("Stepper.StepPosition", "Step {0} of {1}", "Hidden position text on each step"),
+            new("Stepper.Optional", "Optional", "Hint under an optional step's title"),
+            new("Stepper.Completed", "Completed", "Hidden state text on a completed step"),
+            new("Stepper.Error", "Error", "Hidden state text on a step in error"),
+            new("Stepper.Skipped", "Skipped", "Hidden state text on a skipped step"),
+        })"
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
+{
+    localizer.Set(""Stepper.Progress"", ""Fortschritt"");
+    localizer.Set(""Stepper.StepPosition"", ""Schritt {0} von {1}"");
+});")" />
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+
+        <ApiReference Since="v4" ComponentName="BbStepper">
+            <ApiParameter Name="ActiveStep / ActiveStepChanged" Type="int / EventCallback&lt;int&gt;" Default="0">The zero-based active step. Supports <code>@@bind-ActiveStep</code>. Without a binding this is the initial step.</ApiParameter>
+            <ApiParameter Name="Orientation" Type="StepperOrientation" Default="Horizontal">Horizontal or Vertical.</ApiParameter>
+            <ApiParameter Name="Clickable" Type="bool" Default="false">Makes each step marker a button.</ApiParameter>
+            <ApiParameter Name="ChildContent" Type="RenderFragment?">The <code>BbStep</code> children.</ApiParameter>
+            <ApiParameter Name="Class / IndicatorClass / ContentClass" Type="string?">Additional CSS classes for the root, the step list and the content area.</ApiParameter>
+            <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">Additional HTML attributes for the root element.</ApiParameter>
+        </ApiReference>
+
+        <ApiReference Since="v4" ComponentName="BbStep">
+            <ApiParameter Name="Title" Type="string">The label in the indicator. Required.</ApiParameter>
+            <ApiParameter Name="Description" Type="string?">Secondary text under the title.</ApiParameter>
+            <ApiParameter Name="Icon" Type="string?">A Lucide icon name for the marker, in place of the step number.</ApiParameter>
+            <ApiParameter Name="State" Type="StepState?">Overrides the state derived from position. Pending, Active, Completed, Error or Skipped.</ApiParameter>
+            <ApiParameter Name="Disabled" Type="bool" Default="false">Blocks activation by click.</ApiParameter>
+            <ApiParameter Name="Optional" Type="bool" Default="false">Adds a hint under the title.</ApiParameter>
+            <ApiParameter Name="ChildContent" Type="RenderFragment?">Content rendered while this step is active.</ApiParameter>
+            <ApiParameter Name="Class / AdditionalAttributes" Type="string? / Dictionary&lt;string, object&gt;?">Additional CSS classes and HTML attributes for the content wrapper.</ApiParameter>
+        </ApiReference>
+    </section>
+</div>
+
+@code {
+    private int basicStep;
+    private int clickableStep;
+    private int contentStep;
+    private int verticalStep;
+}

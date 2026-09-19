@@ -616,6 +616,43 @@
   - Values : IReadOnlyCollection<TValue>
   - ValuesChanged : EventCallback<IReadOnlyCollection<TValue>>
 
+### BbChip (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Class : String
+  - Disabled : Boolean
+  - DismissLabel : String
+  - Dismissible : Boolean?
+  - Icon : RenderFragment
+  - OnClick : EventCallback<MouseEventArgs>
+  - OnDismiss : EventCallback<MouseEventArgs>
+  - Selectable : Boolean
+  - Selected : Boolean
+  - SelectedChanged : EventCallback<Boolean>
+  - ShowCheckMark : Boolean?
+  - Size : ChipSize?
+  - Value : Object
+  - Variant : ChipVariant?
+  - SetContext : ChipSetContext [CascadingParameter]
+
+### BbChipSet`1 (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Class : String
+  - Disabled : Boolean
+  - Dismissible : Boolean
+  - OnDismiss : EventCallback<TValue>
+  - Required : Boolean
+  - SelectionMode : ChipSelectionMode
+  - ShowCheckMark : Boolean
+  - Size : ChipSize
+  - Value : TValue
+  - ValueChanged : EventCallback<TValue>
+  - Values : List<TValue>
+  - ValuesChanged : EventCallback<List<TValue>>
+  - Variant : ChipVariant
+  - Wrap : Boolean
+
 ### BbCollapsible (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
@@ -1730,6 +1767,21 @@
   - OnViewRangeChanged : EventCallback<EventCalendarRange>
   - View : EventCalendarView
   - ViewChanged : EventCallback<EventCalendarView>
+
+### BbFab (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
+  - ChildContent : RenderFragment
+  - Class : String
+  - Disabled : Boolean
+  - Fixed : Boolean
+  - Icon : RenderFragment
+  - OnClick : EventCallback<MouseEventArgs>
+  - Placement : FabPlacement
+  - SafeArea : Boolean
+  - Shape : FabShape
+  - Size : FabSize
+  - Variant : FabVariant
 
 ### BbField (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -4070,6 +4122,29 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - Class : String
 
+### BbStep (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Class : String
+  - Description : String
+  - Disabled : Boolean
+  - Icon : String
+  - Optional : Boolean
+  - State : StepState?
+  - Title : String [EditorRequired]
+  - Stepper : BbStepper [CascadingParameter]
+
+### BbStepper (BlazorBlueprint.Components)
+  - ActiveStep : Int32
+  - ActiveStepChanged : EventCallback<Int32>
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Class : String
+  - Clickable : Boolean
+  - ContentClass : String
+  - IndicatorClass : String
+  - Orientation : StepperOrientation
+
 ### BbSwitch (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaDescribedBy : String
@@ -4769,6 +4844,23 @@
   - Horizontal = 0
   - Vertical = 1
 
+### ChipSelectionMode (BlazorBlueprint.Components)
+  - None = 0
+  - Single = 1
+  - Multiple = 2
+
+### ChipSize (BlazorBlueprint.Components)
+  - Small = 0
+  - Default = 1
+  - Large = 2
+
+### ChipVariant (BlazorBlueprint.Components)
+  - Default = 0
+  - Secondary = 1
+  - Outline = 2
+  - Destructive = 3
+  - Soft = 4
+
 ### ColorFormat (BlazorBlueprint.Components)
   - Hex = 0
   - RGB = 1
@@ -4863,6 +4955,29 @@
   - Month = 0
   - Week = 1
   - Agenda = 2
+
+### FabPlacement (BlazorBlueprint.Components)
+  - BottomEnd = 0
+  - BottomStart = 1
+  - BottomCenter = 2
+  - TopEnd = 3
+  - TopStart = 4
+  - Inline = 5
+
+### FabShape (BlazorBlueprint.Components)
+  - Rounded = 0
+  - Circle = 1
+
+### FabSize (BlazorBlueprint.Components)
+  - Small = 0
+  - Default = 1
+  - Large = 2
+
+### FabVariant (BlazorBlueprint.Components)
+  - Primary = 0
+  - Secondary = 1
+  - Surface = 2
+  - Destructive = 3
 
 ### FieldGroupOrientation (BlazorBlueprint.Components)
   - Vertical = 0
@@ -5231,6 +5346,17 @@
   - Small = 0
   - Default = 1
   - Large = 2
+
+### StepState (BlazorBlueprint.Components)
+  - Pending = 0
+  - Active = 1
+  - Completed = 2
+  - Error = 3
+  - Skipped = 4
+
+### StepperOrientation (BlazorBlueprint.Components)
+  - Horizontal = 0
+  - Vertical = 1
 
 ### SwitchSize (BlazorBlueprint.Components)
   - Small = 0

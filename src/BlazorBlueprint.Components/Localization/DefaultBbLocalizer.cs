@@ -52,6 +52,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Cascader.Clear"] = "Clear selection",
         ["Cascader.Level"] = "Level {0}",
 
+        // Chip
+        ["Chip.Dismiss"] = "Remove",
+
         // Combobox
         ["Combobox.EmptyMessage"] = "No results found.",
         ["Combobox.Placeholder"] = "Select an option...",
@@ -328,6 +331,14 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["FormWizard.Next"] = "Next",
         ["FormWizard.Skip"] = "Skip",
         ["FormWizard.Complete"] = "Complete",
+
+        // Stepper
+        ["Stepper.Progress"] = "Progress",
+        ["Stepper.Optional"] = "Optional",
+        ["Stepper.StepPosition"] = "Step {0} of {1}",
+        ["Stepper.Completed"] = "Completed",
+        ["Stepper.Error"] = "Error",
+        ["Stepper.Skipped"] = "Skipped",
 
         // MarkdownEditor
         ["MarkdownEditor.SelectHeadingLevel"] = "Select heading level",

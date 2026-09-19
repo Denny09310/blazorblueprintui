@@ -1,0 +1,10 @@
+@* Clickable="true" turns each step marker into a button. *@
+<BbStepper @bind-ActiveStep="step" Clickable="true">
+    <BbStep Title="Account" Description="Name and email" Icon="user" />
+    <BbStep Title="Plan" Description="Pick a tier" Icon="credit-card" />
+    <BbStep Title="Review" Description="Check and confirm" Icon="check-check" />
+</BbStepper>
+
+@code {
+    private int step;
+}

@@ -1,0 +1,261 @@
+@page "/components/fab"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Floating Action Button - Blazor Blueprint</PageTitle>
+
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Floating Action Button</h1>
+        <p class="text-xl text-muted-foreground">
+            A raised button that pins to a corner of the screen and carries the one main action
+            of that screen.
+        </p>
+    </div>
+
+    <div class="rounded-r-lg border-l-4 border-primary bg-primary/5 p-4">
+        <p class="text-sm text-muted-foreground">
+            <strong>One per screen.</strong> A second floating button competes with the first, and
+            neither reads as the main action. Every other action belongs in a regular
+            <code class="rounded bg-muted px-1 py-0.5 text-xs">BbButton</code>.
+        </p>
+    </div>
+
+    <!-- In a container -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Placement</h2>
+            <p class="text-sm text-muted-foreground">
+                The button pins to the viewport by default.
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">Fixed="false"</code> pins it to
+                the nearest positioned ancestor instead, which is what the panel below does.
+                Placement is logical, so <code class="rounded bg-muted px-1 py-0.5 text-xs">BottomEnd</code>
+                follows the reading direction.
+            </p>
+        </div>
+        <div class="space-y-3">
+            <div class="flex flex-wrap items-center gap-3">
+                <BbChipSet TValue="FabPlacement" @bind-Value="placement" Variant="ChipVariant.Outline" Required="true">
+                    <BbChip Value="@(FabPlacement.BottomEnd)">BottomEnd</BbChip>
+                    <BbChip Value="@(FabPlacement.BottomStart)">BottomStart</BbChip>
+                    <BbChip Value="@(FabPlacement.BottomCenter)">BottomCenter</BbChip>
+                    <BbChip Value="@(FabPlacement.TopEnd)">TopEnd</BbChip>
+                    <BbChip Value="@(FabPlacement.TopStart)">TopStart</BbChip>
+                </BbChipSet>
+            </div>
+            <div class="relative h-64 overflow-hidden rounded-lg border bg-muted/30">
+                <BbFab Fixed="false"
+                       Placement="@placement"
+                       AriaLabel="Add item"
+                       OnClick="@(() => status = "The floating button was pressed.")">
+                    <Icon><LucideIcon Name="plus" Size="24" /></Icon>
+                </BbFab>
+            </div>
+            <p role="status" class="text-sm text-muted-foreground">@status</p>
+        </div>
+        <CodeBlock Source="Components/Fab/in-container.txt" />
+    </section>
+
+    <!-- Variants -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Variants</h2>
+            <p class="text-sm text-muted-foreground">
+                Four variants. <code class="rounded bg-muted px-1 py-0.5 text-xs">Inline</code>
+                placement drops the positioning, so the buttons sit in the normal flow.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-4 rounded-lg border p-6">
+            <BbFab Placement="FabPlacement.Inline" AriaLabel="Add" Variant="FabVariant.Primary">
+                <Icon><LucideIcon Name="plus" Size="24" /></Icon>
+            </BbFab>
+            <BbFab Placement="FabPlacement.Inline" AriaLabel="Edit" Variant="FabVariant.Secondary">
+                <Icon><LucideIcon Name="pencil" Size="24" /></Icon>
+            </BbFab>
+            <BbFab Placement="FabPlacement.Inline" AriaLabel="Filter" Variant="FabVariant.Surface">
+                <Icon><LucideIcon Name="filter" Size="24" /></Icon>
+            </BbFab>
+            <BbFab Placement="FabPlacement.Inline" AriaLabel="Delete" Variant="FabVariant.Destructive">
+                <Icon><LucideIcon Name="trash-2" Size="24" /></Icon>
+            </BbFab>
+        </div>
+        <CodeBlock Source="Components/Fab/variants.txt" />
+    </section>
+
+    <!-- Sizes -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Sizes</h2>
+            <p class="text-sm text-muted-foreground">40px, 56px and 64px across.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-4 rounded-lg border p-6">
+            <BbFab Placement="FabPlacement.Inline" Size="FabSize.Small" AriaLabel="Add, small">
+                <Icon><LucideIcon Name="plus" Size="20" /></Icon>
+            </BbFab>
+            <BbFab Placement="FabPlacement.Inline" Size="FabSize.Default" AriaLabel="Add, default">
+                <Icon><LucideIcon Name="plus" Size="24" /></Icon>
+            </BbFab>
+            <BbFab Placement="FabPlacement.Inline" Size="FabSize.Large" AriaLabel="Add, large">
+                <Icon><LucideIcon Name="plus" Size="28" /></Icon>
+            </BbFab>
+        </div>
+    </section>
+
+    <!-- Shape -->
+    <section class="space-y-4">
+        <div class="space-y-4">
+            <h2 class="text-2xl font-semibold">Shape</h2>
+            <p class="text-sm text-muted-foreground">
+                The button uses the theme's corner radius by default, the same one
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">BbButton</code> uses, so it stays
+                in step with the rest of the theme.
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">Shape="FabShape.Circle"</code>
+                makes it a full circle instead, or a pill once it carries a label.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-4 rounded-lg border p-6">
+            <BbFab Placement="FabPlacement.Inline" AriaLabel="Add, rounded">
+                <Icon><LucideIcon Name="plus" Size="24" /></Icon>
+            </BbFab>
+            <BbFab Placement="FabPlacement.Inline" Shape="FabShape.Circle" AriaLabel="Add, circle">
+                <Icon><LucideIcon Name="plus" Size="24" /></Icon>
+            </BbFab>
+            <BbFab Placement="FabPlacement.Inline" Variant="FabVariant.Surface">
+                <Icon><LucideIcon Name="plus" Size="20" /></Icon>
+                <ChildContent>New task</ChildContent>
+            </BbFab>
+            <BbFab Placement="FabPlacement.Inline" Shape="FabShape.Circle" Variant="FabVariant.Surface">
+                <Icon><LucideIcon Name="plus" Size="20" /></Icon>
+                <ChildContent>New task</ChildContent>
+            </BbFab>
+        </div>
+        <CodeBlock Source="Components/Fab/shape.txt" />
+    </section>
+
+    <!-- Extended -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Extended</h2>
+            <p class="text-sm text-muted-foreground">
+                A label widens the button, so the action names itself. A labelled button needs no
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">AriaLabel</code>, because the
+                label is already its accessible name.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-4 rounded-lg border p-6">
+            <BbFab Placement="FabPlacement.Inline" Size="FabSize.Small">
+                <Icon><LucideIcon Name="plus" Size="16" /></Icon>
+                <ChildContent>New</ChildContent>
+            </BbFab>
+            <BbFab Placement="FabPlacement.Inline">
+                <Icon><LucideIcon Name="plus" Size="20" /></Icon>
+                <ChildContent>New task</ChildContent>
+            </BbFab>
+            <BbFab Placement="FabPlacement.Inline" Variant="FabVariant.Surface">
+                <Icon><LucideIcon Name="upload" Size="20" /></Icon>
+                <ChildContent>Upload files</ChildContent>
+            </BbFab>
+        </div>
+        <CodeBlock Source="Components/Fab/extended.txt" />
+    </section>
+
+    <!-- Speed dial -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Speed dial</h2>
+            <p class="text-sm text-muted-foreground">
+                The button is built on <code class="rounded bg-muted px-1 py-0.5 text-xs">BbButton</code>,
+                so it works as an <code class="rounded bg-muted px-1 py-0.5 text-xs">AsChild</code>
+                trigger. That is how it opens a menu instead of running one action.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-6">
+            <BbDropdownMenu>
+                <BbDropdownMenuTrigger AsChild="true">
+                    <BbFab Placement="FabPlacement.Inline" AriaLabel="Create">
+                        <Icon><LucideIcon Name="plus" Size="24" /></Icon>
+                    </BbFab>
+                </BbDropdownMenuTrigger>
+                <BbDropdownMenuContent Side="PopoverSide.Top" Align="PopoverAlign.Start">
+                    <BbDropdownMenuItem OnClick="@(() => status = "New task created.")">New task</BbDropdownMenuItem>
+                    <BbDropdownMenuItem OnClick="@(() => status = "New note created.")">New note</BbDropdownMenuItem>
+                    <BbDropdownMenuItem OnClick="@(() => status = "New list created.")">New list</BbDropdownMenuItem>
+                </BbDropdownMenuContent>
+            </BbDropdownMenu>
+        </div>
+        <CodeBlock Source="Components/Fab/speed-dial.txt" />
+    </section>
+
+    <!-- Pinned to the viewport -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Pinned to the viewport</h2>
+            <p class="text-sm text-muted-foreground">
+                The real thing. The button stays put while the page scrolls, and clears the device
+                safe area so a home indicator cannot cover it.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-6">
+            <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => showFixed = !showFixed)">
+                @(showFixed ? "Hide the pinned button" : "Show the pinned button")
+            </BbButton>
+            @if (showFixed)
+            {
+                <BbFab AriaLabel="Compose" OnClick="@(() => status = "Compose opened.")">
+                    <Icon><LucideIcon Name="pencil" Size="24" /></Icon>
+                </BbFab>
+            }
+        </div>
+        <CodeBlock Source="Components/Fab/basic.txt" />
+    </section>
+
+    <!-- Disabled -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">A disabled button ignores clicks and dims.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-4 rounded-lg border p-6">
+            <BbFab Placement="FabPlacement.Inline" AriaLabel="Add" Disabled="true">
+                <Icon><LucideIcon Name="plus" Size="24" /></Icon>
+            </BbFab>
+            <BbFab Placement="FabPlacement.Inline" Disabled="true">
+                <Icon><LucideIcon Name="plus" Size="20" /></Icon>
+                <ChildContent>New task</ChildContent>
+            </BbFab>
+        </div>
+    </section>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>An icon-only button carries no text, so it needs <code>AriaLabel</code> to have an accessible name. An extended button already has one.</AccessibilityItem>
+            <AccessibilityItem>The button sits above a bottom navigation bar but below the overlay layer, so a dialog still covers it.</AccessibilityItem>
+            <AccessibilityItem>Placement uses logical properties, so the corner follows the reading direction in a right-to-left layout.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move focus to the button"><BbKbd>Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate the button"><BbKbd>Enter / Space</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+        <ApiReference Since="v4" ComponentName="BbFab">
+            <ApiParameter Name="Icon / ChildContent" Type="RenderFragment?">The icon, and an optional label that widens the button.</ApiParameter>
+            <ApiParameter Name="Variant" Type="FabVariant" Default="Primary">Primary, Secondary, Surface or Destructive.</ApiParameter>
+            <ApiParameter Name="Size" Type="FabSize" Default="Default">Small (40px), Default (56px) or Large (64px).</ApiParameter>
+            <ApiParameter Name="Placement" Type="FabPlacement" Default="BottomEnd">BottomEnd, BottomStart, BottomCenter, TopEnd, TopStart, or Inline for no positioning.</ApiParameter>
+            <ApiParameter Name="Shape" Type="FabShape" Default="Rounded">Rounded follows the theme's corner radius. Circle is a full circle, or a pill with a label.</ApiParameter>
+            <ApiParameter Name="Fixed" Type="bool" Default="true">Pins to the viewport. When false, pins to the nearest positioned ancestor.</ApiParameter>
+            <ApiParameter Name="SafeArea" Type="bool" Default="true">Keeps clear of a home indicator or a notch.</ApiParameter>
+            <ApiParameter Name="AriaLabel" Type="string?">The accessible name. Required for an icon-only button.</ApiParameter>
+            <ApiParameter Name="Disabled / OnClick" Type="bool / EventCallback&lt;MouseEventArgs&gt;" Default="false">Disabled state and click callback.</ApiParameter>
+            <ApiParameter Name="Class / AdditionalAttributes" Type="string? / Dictionary&lt;string, object&gt;?">Additional CSS classes and HTML attributes. Classes win over the component's own, so this is how the offset from the edge changes.</ApiParameter>
+        </ApiReference>
+    </section>
+</div>
+
+@code {
+    private FabPlacement placement = FabPlacement.BottomEnd;
+    private bool showFixed;
+    private string status = "Press the floating button.";
+}

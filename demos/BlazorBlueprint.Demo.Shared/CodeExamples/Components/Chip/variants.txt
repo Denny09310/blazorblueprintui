@@ -1,0 +1,5 @@
+<BbChip>Default</BbChip>
+<BbChip Variant="ChipVariant.Secondary">Secondary</BbChip>
+<BbChip Variant="ChipVariant.Outline">Outline</BbChip>
+<BbChip Variant="ChipVariant.Destructive">Destructive</BbChip>
+<BbChip Variant="ChipVariant.Soft">Soft</BbChip>
