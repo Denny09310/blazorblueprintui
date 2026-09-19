@@ -98,9 +98,12 @@ export function initialize(root, dotNet) {
         const from = Math.max(range.start, g.change.start);
         const to = Math.min(range.end, g.change.end);
         const gutter = 4.5 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+        // The time gutter sits on the reading side, so in a right-to-left schedule the lane's
+        // content starts at the lane's left edge and the gutter is taken off the right instead.
+        const rtl = getComputedStyle(root).direction === 'rtl';
         Object.assign(g.preview.style, {
             display: '', position: 'fixed', pointerEvents: 'none', zIndex: '100', margin: '0',
-            left: `${rect.left + gutter + 4}px`, width: `${Math.max(20, rect.width - gutter - 8)}px`,
+            left: `${rect.left + (rtl ? 4 : gutter + 4)}px`, width: `${Math.max(20, rect.width - gutter - 8)}px`,
             top: `${rect.top + (from - range.start) * scale + 2}px`, height: `${Math.max(16, (to - from) * scale - 4)}px`,
             opacity: '0.85', backgroundColor: getComputedStyle(root).backgroundColor === 'rgba(0, 0, 0, 0)' ? 'var(--background)' : getComputedStyle(root).backgroundColor
         });

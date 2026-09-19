@@ -8,7 +8,7 @@
         @onclick="HandleClick"
         aria-label="@Localizer["Carousel.PreviousSlide"]"
         @attributes="AdditionalAttributes">
-    <LucideIcon Name="arrow-left" Class="bb:h-4 bb:w-4" />
+    <LucideIcon Name="arrow-left" Class="bb:h-4 bb:w-4 bb:rtl:rotate-180" />
     <span class="bb:sr-only">@Localizer["Carousel.PreviousSlide"]</span>
 </button>
 
@@ -28,7 +28,7 @@
     private Task HandleClick() => Context?.Previous() ?? Task.CompletedTask;
 
     private string PositionClass => Context?.Orientation == CarouselOrientation.Horizontal
-        ? "bb:-left-12 bb:top-1/2 bb:-translate-y-1/2"
+        ? "bb:-start-12 bb:top-1/2 bb:-translate-y-1/2"
         : "bb:-top-12 bb:left-1/2 bb:-translate-x-1/2 bb:rotate-90";
 
     private string CssClass => ClassNames.cn(

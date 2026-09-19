@@ -58,10 +58,10 @@ public class EventCalendarMultiDayBarTests
         var bars = Bars(markup, "Conference");
 
         // The first half keeps its left corners and loses its right; the second half is the mirror.
-        Assert.Contains("bb:rounded-r-none", bars[0].Classes);
-        Assert.DoesNotContain("bb:rounded-l-none", bars[0].Classes);
-        Assert.Contains("bb:rounded-l-none", bars[1].Classes);
-        Assert.DoesNotContain("bb:rounded-r-none", bars[1].Classes);
+        Assert.Contains("bb:rounded-e-none", bars[0].Classes);
+        Assert.DoesNotContain("bb:rounded-s-none", bars[0].Classes);
+        Assert.Contains("bb:rounded-s-none", bars[1].Classes);
+        Assert.DoesNotContain("bb:rounded-e-none", bars[1].Classes);
     }
 
     [Fact]
@@ -212,12 +212,13 @@ public class EventCalendarMultiDayBarTests
 
     /// <summary>
     /// Reads the bars for one title out of the markup. A bar is the only element carrying the
-    /// absolute <c>left:calc(...)</c> the month layout emits, so the pattern cannot match a chip.
+    /// absolute <c>inset-inline-start:calc(...)</c> the month layout emits, so the pattern cannot
+    /// match a chip.
     /// </summary>
     private static List<Bar> Bars(string markup, string title)
     {
         var pattern = new Regex(
-            @"class=""(?<cls>[^""]*)"" style=""left:calc\(\(100% - 6px\) \* (?<col>\d+) / 7 [-+] \d+px\);"
+            @"class=""(?<cls>[^""]*)"" style=""inset-inline-start:calc\(\(100% - 6px\) \* (?<col>\d+) / 7 [-+] \d+px\);"
             + @"width:calc\(\(100% - 6px\) \* (?<span>\d+) / 7 [-+] \d+px\);top:(?<top>\d+)px;[^""]*""",
             RegexOptions.Compiled);
 

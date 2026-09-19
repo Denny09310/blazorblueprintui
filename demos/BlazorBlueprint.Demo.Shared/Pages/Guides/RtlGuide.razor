@@ -78,20 +78,23 @@
     </section>
 
     <section class="space-y-4">
-        <h2 class="text-2xl font-semibold">Not mirrored yet</h2>
+        <h2 class="text-2xl font-semibold">Geometry mirrors too</h2>
+        <p class="text-sm text-muted-foreground">
+            The components that place their content with pixel or percentage maths read the
+            direction themselves, so the maths agrees with the paint.
+        </p>
+        <ul class="ms-4 list-disc space-y-1 text-sm text-muted-foreground">
+            <li><strong class="text-foreground">Slider</strong> and <strong class="text-foreground">RangeSlider</strong> fill from the reading edge, and a click at that edge is the minimum. The horizontal arrows swap; Up and Down do not.</li>
+            <li><strong class="text-foreground">Carousel</strong> slides, drags and steps the other way, and its arrows sit outside the leading and trailing edges.</li>
+            <li><strong class="text-foreground">Scheduler</strong> and <strong class="text-foreground">EventCalendar</strong> place events past the time gutter on the reading side, and multi-day bars run the other way.</li>
+            <li><strong class="text-foreground">DashboardGrid</strong> drags and resizes along the reading direction, with the handles on each widget's logical edges.</li>
+            <li><strong class="text-foreground">Dock</strong> mirrors its drop zones, tab order and drop indicator together, so a drop lands where the indicator says.</li>
+            <li><strong class="text-foreground">Resizable</strong> grows the leading panel when the handle is dragged towards the leading edge.</li>
+        </ul>
         <div class="rounded-r-lg border-s-4 border-primary bg-primary/5 p-4">
             <p class="text-sm text-muted-foreground">
-                A few components place their content with pixel or percentage maths measured from
-                the left edge, so mirroring the paint alone would put them out of step with the
-                maths behind it. These stay left-to-right inside a right-to-left page:
-                <strong class="text-foreground">Slider</strong>,
-                <strong class="text-foreground">RangeSlider</strong>,
-                <strong class="text-foreground">Carousel</strong>,
-                <strong class="text-foreground">Scheduler</strong>,
-                <strong class="text-foreground">EventCalendar</strong> day bands,
-                <strong class="text-foreground">DashboardGrid</strong>,
-                <strong class="text-foreground">Dock</strong> and
-                <strong class="text-foreground">Resizable</strong>. Everything else mirrors.
+                Each one reads the direction from the DOM at the moment of the gesture, so a page
+                that changes direction while open needs no reinitialisation.
             </p>
         </div>
     </section>

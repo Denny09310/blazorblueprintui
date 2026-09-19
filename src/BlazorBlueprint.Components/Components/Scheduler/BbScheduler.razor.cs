@@ -687,7 +687,7 @@ public partial class BbScheduler
         var height = Math.Max(20, (to - from).TotalMinutes / SlotMinutes * 40) - 4;
         var left = 100.0 * placement.Column / placement.Columns;
         var width = 100.0 / placement.Columns;
-        return FormattableString.Invariant($"top:{top}px;height:{height}px;left:calc(4.5rem + (100% - 4.5rem) * {left / 100} + 4px);width:calc((100% - 4.5rem) * {width / 100} - 8px);");
+        return FormattableString.Invariant($"top:{top}px;height:{height}px;inset-inline-start:calc(4.5rem + (100% - 4.5rem) * {left / 100} + 4px);width:calc((100% - 4.5rem) * {width / 100} - 8px);");
     }
 
     /// <summary>Whether a slot is both outside the active hours and closed to interaction.</summary>

@@ -23,10 +23,10 @@ namespace BlazorBlueprint.Tests.Conventions;
 /// physical side, so honouring it is the contract.
 /// </item>
 /// <item>
-/// Geometry a script computes in pixels or percentages from <c>left</c> — the sliders, the day
-/// bands in the scheduler and event calendar, the dashboard grid's drag and resize, the dock's
-/// splitters. A logical class there would mirror the paint but not the maths behind it, which is
-/// worse than not mirroring at all.
+/// Geometry that is measured in pixels rather than laid out. What remains is small: a thumb
+/// centred over its own offset, a lane width, a corner grip that matches a physical resize
+/// cursor. The drag and resize maths in these components now reads the direction itself, so the
+/// two agree.
 /// </item>
 /// </list>
 /// </summary>
@@ -51,13 +51,8 @@ public partial class LogicalPropertyTests
         ["BbNavigationMenuIndicator.razor"] = "a rotated arrow's rounded corner is physical",
 
         // Geometry computed in pixels or percentages from left.
-        ["BbRangeSlider.razor"] = "thumbs and track are positioned by percentage from left",
-        ["DayBandLayout.cs"] = "bars are placed with an inline left:calc()",
-        ["BbScheduler.razor.cs"] = "the time grid is placed by pixel maths",
-        ["BbDashboardWidget.razor"] = "resize handles map to physical cursors and pixel maths",
-        ["BbDock.razor"] = "the splitter is dragged in pixels",
-        ["BbCarouselNext.razor"] = "sits opposite the physical slide translation",
-        ["BbCarouselPrevious.razor"] = "sits opposite the physical slide translation",
+        ["BbScheduler.razor.cs"] = "lane widths are measured in pixels",
+        ["BbDock.razor"] = "the corner grip matches a physical resize cursor",
         ["BbSelectionIndicator.razor"] = "the indicator is positioned by measurement",
     };
 

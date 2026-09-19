@@ -49,7 +49,8 @@
             {
                 return $"bottom: var(--bb-slider-position, {pctStr}%)";
             }
-            return $"left: var(--bb-slider-position, {pctStr}%)";
+            // Logical, so the percentage measures from the reading edge and mirrors with dir.
+            return $"inset-inline-start: var(--bb-slider-position, {pctStr}%)";
         }
     }
 

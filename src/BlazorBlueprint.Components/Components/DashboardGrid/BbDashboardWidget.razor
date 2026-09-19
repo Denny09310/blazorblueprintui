@@ -75,16 +75,16 @@
     @if (_showResizeHandle)
     {
         @* Corner handles *@
-        <div class="bb:absolute bb:top-0 bb:left-0 bb:w-4 bb:h-4 bb:cursor-nw-resize bb:z-10"
+        <div class="bb:absolute bb:top-0 bb:start-0 bb:w-4 bb:h-4 bb:cursor-nw-resize bb:rtl:cursor-ne-resize bb:z-10"
              data-dashboard-resize-handle="nw"
              data-widget-id="@Id"></div>
-        <div class="bb:absolute bb:top-0 bb:right-0 bb:w-4 bb:h-4 bb:cursor-ne-resize bb:z-10"
+        <div class="bb:absolute bb:top-0 bb:end-0 bb:w-4 bb:h-4 bb:cursor-ne-resize bb:rtl:cursor-nw-resize bb:z-10"
              data-dashboard-resize-handle="ne"
              data-widget-id="@Id"></div>
-        <div class="bb:absolute bb:bottom-0 bb:left-0 bb:w-4 bb:h-4 bb:cursor-sw-resize bb:z-10"
+        <div class="bb:absolute bb:bottom-0 bb:start-0 bb:w-4 bb:h-4 bb:cursor-sw-resize bb:rtl:cursor-se-resize bb:z-10"
              data-dashboard-resize-handle="sw"
              data-widget-id="@Id"></div>
-        <div class="bb:absolute bb:bottom-0 bb:right-0 bb:w-4 bb:h-4 bb:cursor-se-resize bb:z-10 bb:opacity-0 bb:group-hover:opacity-100 bb:focus:opacity-100 bb:transition-opacity"
+        <div class="bb:absolute bb:bottom-0 bb:end-0 bb:w-4 bb:h-4 bb:cursor-se-resize bb:rtl:cursor-sw-resize bb:z-10 bb:opacity-0 bb:group-hover:opacity-100 bb:focus:opacity-100 bb:transition-opacity"
              data-dashboard-resize-handle="se"
              data-widget-id="@Id"
              role="separator"
@@ -97,16 +97,16 @@
             </svg>
         </div>
         @* Edge handles *@
-        <div class="bb:absolute bb:top-0 bb:left-4 bb:right-4 bb:h-2 bb:cursor-n-resize"
+        <div class="bb:absolute bb:top-0 bb:inset-x-4 bb:h-2 bb:cursor-n-resize"
              data-dashboard-resize-handle="n"
              data-widget-id="@Id"></div>
-        <div class="bb:absolute bb:bottom-0 bb:left-4 bb:right-4 bb:h-2 bb:cursor-s-resize"
+        <div class="bb:absolute bb:bottom-0 bb:inset-x-4 bb:h-2 bb:cursor-s-resize"
              data-dashboard-resize-handle="s"
              data-widget-id="@Id"></div>
-        <div class="bb:absolute bb:top-4 bb:right-0 bb:bottom-4 bb:w-2 bb:cursor-e-resize"
+        <div class="bb:absolute bb:top-4 bb:end-0 bb:bottom-4 bb:w-2 bb:cursor-ew-resize"
              data-dashboard-resize-handle="e"
              data-widget-id="@Id"></div>
-        <div class="bb:absolute bb:top-4 bb:left-0 bb:bottom-4 bb:w-2 bb:cursor-w-resize"
+        <div class="bb:absolute bb:top-4 bb:start-0 bb:bottom-4 bb:w-2 bb:cursor-ew-resize"
              data-dashboard-resize-handle="w"
              data-widget-id="@Id"></div>
     }
