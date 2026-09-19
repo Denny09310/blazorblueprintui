@@ -1,6 +1,4 @@
-## What's New in v4.0.0-beta.10
-
-**This is a prerelease.** The API may still change before the stable v4.0.0 release.
+## What's New in v4.0.0
 
 ### Breaking Changes
 
@@ -19,12 +17,17 @@
 
 ### New Components
 
+- **BbDirectionProvider**: sets the writing direction for its content, so the library's layout mirrors for a right-to-left language. It renders no box of its own (`display: contents`), writes a `dir` attribute and cascades a `DirectionContext`.
 - **BbMenuSub**, **BbMenuSubTrigger** and **BbMenuSubContent**: nested submenus for dropdown menus, context menus and menubars. The trigger opens on hover or click, and the arrow keys move into and back out of the submenu, including in right-to-left layouts.
 - **BbMenuRadioGroup** and **BbMenuRadioItem**: generic single-choice items inside any menu, with `Value`, `ValueChanged` and `CloseOnSelect`.
 - **BbContextMenuCheckboxItem**: a checkbox item for context menus, with `Checked`, `CheckedChanged` and `CloseOnSelect`.
 
 ### New Features
 
+- **TextDirection** and **DirectionContext**: `TextDirection.Auto`, the default, follows `CultureInfo.CurrentCulture`, and `DirectionContext.Resolve` falls back to the culture when no provider is present, so a component used without one behaves as before.
+- **Right-to-left keyboard navigation**: in **BbTabsList**, **BbToggleGroup**, **BbRadioGroup** and the tree, the horizontal arrow keys follow the reading direction while Up and Down keep their meaning. In a right-to-left tree, ArrowLeft opens a node.
+- **BbSlider** mirrors in a right-to-left layout: the thumb is placed with `inset-inline-start`, the pointer's distance is measured from the reading edge, and ArrowLeft and ArrowRight swap.
+- **Floating elements** copy the direction from their trigger as they open, through the same path that already carried a local theme across the portal boundary, so a provider works even when **BbPortalHost** sits outside it.
 - **Native dialog rendering**: **BbDialog** gains a `RenderingStrategy` parameter. Set it to `OverlayRenderingStrategy.Native` to render a browser `<dialog>` element driven by `showModal()`, which works across Blazor render-mode boundaries and does not need a portal host.
 - **OverlayRenderingOptions**: `AddBlazorBlueprintPrimitives` now accepts a configure callback to set a global `DefaultStrategy` for all overlays.
 - **INativeOverlayService**: new scoped service that resolves the effective rendering strategy and drives the native `<dialog>` element (show, close, focus, and lifecycle events).
