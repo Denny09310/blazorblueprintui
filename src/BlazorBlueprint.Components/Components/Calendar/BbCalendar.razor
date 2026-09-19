@@ -73,7 +73,11 @@
                    @onkeydown="HandleKeyDown"
                    @onkeydown:preventDefault="@ShouldPreventKeyDefault">
                 <thead>
-                    <tr class="bb:flex">
+                    @* Centred, not left-aligned. The seven day cells are a fixed 9 units each
+                       (252px); the table is as wide as the month/year selects above it, which is
+                       wider. Left-aligning left the difference as dead space on the right of the
+                       grid — visible since the year select was widened in b39be911. *@
+                    <tr class="bb:flex bb:w-full bb:justify-center">
                         @foreach (var dayName in DayNames)
                         {
                             <th scope="col" class="bb:text-muted-foreground bb:rounded-md bb:w-9 bb:font-normal bb:text-[0.8rem]">
@@ -85,7 +89,7 @@
                 <tbody>
                     @foreach (var week in GetWeeksInMonth())
                     {
-                        <tr class="bb:flex bb:w-full bb:mt-2">
+                        <tr class="bb:flex bb:w-full bb:justify-center bb:mt-2">
                             @foreach (var day in week)
                             {
                                 var isSelected = day.HasValue && Selected.HasValue && day.Value.Date == Selected.Value.Date;
