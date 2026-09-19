@@ -118,7 +118,7 @@ internal static class DayBandLayout
 
         return string.Create(
             CultureInfo.InvariantCulture,
-            $"left:calc((100% - {gaps}px) * {startColumn} / {columns} {left});width:calc((100% - {gaps}px) * {span} / {columns} {width});top:{top}px;height:{BarHeightPx}px;");
+            $"inset-inline-start:calc((100% - {gaps}px) * {startColumn} / {columns} {left});width:calc((100% - {gaps}px) * {span} / {columns} {width});top:{top}px;height:{BarHeightPx}px;");
     }
 
     /// <summary>
@@ -136,8 +136,8 @@ internal static class DayBandLayout
         (continuesBefore, continuesAfter) switch
         {
             (true, true) => "bb:rounded-none",
-            (true, false) => "bb:rounded-l-none",
-            (false, true) => "bb:rounded-r-none",
+            (true, false) => "bb:rounded-s-none",
+            (false, true) => "bb:rounded-e-none",
             _ => null,
         };
 

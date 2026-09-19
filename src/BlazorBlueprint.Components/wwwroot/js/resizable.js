@@ -176,7 +176,11 @@ function applyDrag(state) {
     const upperBound = Math.min(max1 - start1, start2 - min2);
     if (lowerBound > upperBound) return; // Constraints cannot be satisfied together
 
-    const deltaPixels = state.pendingPosition - state.startPosition;
+    // A horizontal group lays its panels out along the reading direction, so dragging the
+    // handle towards the leading edge must grow the leading panel either way.
+    const rtl = state.isHorizontal
+        && getComputedStyle(state.groupElement).direction === 'rtl';
+    const deltaPixels = (state.pendingPosition - state.startPosition) * (rtl ? -1 : 1);
     const deltaPercent = clamp((deltaPixels / totalSize) * 100, lowerBound, upperBound);
 
     // Round here rather than at render time so the value C# ends up formatting ("F2") is exactly

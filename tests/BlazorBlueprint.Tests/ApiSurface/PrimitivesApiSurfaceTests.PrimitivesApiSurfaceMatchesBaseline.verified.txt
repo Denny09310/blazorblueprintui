@@ -751,6 +751,7 @@
   - Step : Double
   - Value : Double?
   - ValueChanged : EventCallback<Double>
+  - Direction : DirectionContext [CascadingParameter]
 
 ### BbSliderRange (BlazorBlueprint.Primitives.Slider)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]

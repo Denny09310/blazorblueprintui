@@ -3508,6 +3508,7 @@
   - TickValues : Double[]
   - Value : ValueTuple<Double, Double>
   - ValueChanged : EventCallback<ValueTuple<Double, Double>>
+  - Direction : DirectionContext [CascadingParameter]
 
 ### BbRating (BlazorBlueprint.Components)
   - ActiveColor : String

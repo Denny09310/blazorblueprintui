@@ -27,7 +27,12 @@ export function initializeRangeSlider(trackElement, dotNetRef, sliderId) {
     if (vertical()) {
       return rect.height > 0 ? Math.max(0, Math.min(1, (rect.bottom - e.clientY) / rect.height)) : 0;
     }
-    return rect.width > 0 ? Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) : 0;
+    if (rect.width <= 0) return 0;
+    // A horizontal track fills from its reading edge, so a right-to-left slider measures the
+    // distance from the right: the left end of the track is the maximum.
+    const rtl = getComputedStyle(trackElement).direction === 'rtl';
+    const distance = rtl ? rect.right - e.clientX : e.clientX - rect.left;
+    return Math.max(0, Math.min(1, distance / rect.width));
   };
   const update = e => {
     if (disabled()) return;
