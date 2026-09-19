@@ -19,7 +19,18 @@
     <RepositoryUrl>https://github.com/blazorblueprintui/ui</RepositoryUrl>
     <Authors>Mathew Taylor</Authors>
     <Copyright>Copyright (c) 2025-present Mathew Taylor</Copyright>
-    <PackageReleaseNotes Condition="Exists('$(MSBuildThisFileDirectory)RELEASE_NOTES.md')">$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)RELEASE_NOTES.md'))</PackageReleaseNotes>
+    <!-- NuGet rejects a package whose release notes run past 35,000 characters, and the push is
+         the first step that says so - after the tag is cut, the build has run and the package has
+         been packed. Truncating here turns that into a shorter set of notes rather than a failed
+         release. -->
+    <_ReleaseNotesFile>$(MSBuildThisFileDirectory)RELEASE_NOTES.md</_ReleaseNotesFile>
+    <_ReleaseNotesText Condition="Exists('$(_ReleaseNotesFile)')">$([System.IO.File]::ReadAllText('$(_ReleaseNotesFile)'))</_ReleaseNotesText>
+    <_ReleaseNotesLimit>34500</_ReleaseNotesLimit>
+    <PackageReleaseNotes Condition="'$(_ReleaseNotesText)' != '' And $(_ReleaseNotesText.Length) &lt;= $(_ReleaseNotesLimit)">$(_ReleaseNotesText)</PackageReleaseNotes>
+    <PackageReleaseNotes Condition="'$(_ReleaseNotesText)' != '' And $(_ReleaseNotesText.Length) &gt; $(_ReleaseNotesLimit)">$(_ReleaseNotesText.Substring(0, $(_ReleaseNotesLimit)))
+
+Truncated to fit NuGet's release-note limit. The full list is in the changelog:
+https://github.com/blazorblueprintui/ui/blob/main/CHANGELOG.md</PackageReleaseNotes>
 
     <!-- MinVer Configuration - Version from git tags -->
     <MinVerTagPrefix>components/v</MinVerTagPrefix>
