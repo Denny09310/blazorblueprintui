@@ -105,7 +105,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Clicking an empty scheduler slot highlights it instead of opening the editor.** Double-click it, or press Enter while it is focused, to create an event; Space highlights without creating. Enter created an event before this change and still does, so keyboard users lose nothing. The highlight is exactly one slot tall, is keyed to the lane as well as the time so the same hour in two resource lanes stays distinct, and clears on navigation, a view change or a resource-filter change. A drag that finishes over an empty slot creates nothing.
 
+### Added
+
+- **A themed reconnection dialog for Blazor Server.** Give the host page an element with
+  `id="components-reconnect-modal"` and the framework drives it rather than building its own overlay
+  and injecting its own stylesheet — the plain white box most Server applications ship with. The
+  styling is in `blazorblueprint.css` and every colour is a theme variable, so the dialog matches the
+  application in light and dark with nothing to configure, including a customised theme.
+
+  It cannot be a Blazor component: the dialog exists because the circuit is down, so nothing can
+  render. What ships is CSS plus a block of markup to paste, covering all seven states the framework
+  sets — reconnecting, counting down to the next attempt, paused, reconnected, failed, resume-failed
+  and rejected — with the attempt counter, a spinner while it is still trying, and Try again and
+  Reload buttons only where they can actually help. One block of markup serves every state through
+  `data-when`.
+
+  The rules sit in the `components` cascade layer rather than `bb`, deliberately: the markup belongs
+  to the consumer's host page, so their own utilities are above it and win without `!important`.
+  Writing different markup, or pointing Blazor at another element through
+  `reconnectionOptions.dialogId`, both work as well. See the Reconnection guide.
+
 ### Fixed
+
+- **`dark:` utilities followed the operating system instead of the dark-mode toggle.** Dark mode is
+  switched by putting `.dark` on `<html>` — `theme-init.js` before first paint, `theme.js` on every
+  later change — but the library's Tailwind build never declared a dark variant, so v4's default
+  applied and every `bb:dark:` utility compiled into `@media (prefers-color-scheme: dark)`. Nine
+  utilities across `BbBadge`, `BbTextarea`, `BbBubble` and `BbTreeView` therefore ignored the toggle:
+  on a machine set to light, a dark-themed application kept light badges and input backgrounds.
+  Components that colour themselves from CSS custom properties were never affected, which is why it
+  went unnoticed. `@custom-variant dark (&:where(.dark, .dark *))` settles it against the class.
+
+  The same trap catches an application running its own Tailwind build, and that is where it was
+  reported from ([#348](https://github.com/blazorblueprintui/ui/discussions/348)): your `dark:`
+  classes need the same one-line variant or they key off the operating system too. Documented in
+  [THEMING.md](THEMING.md) and the [v4 migration guide](V4-MIGRATION-GUIDE.md), beside the default
+  border-colour rule — it is the same shape of problem ([#559](https://github.com/blazorblueprintui/ui/issues/559)).
 
 - **The radial chart's centre label sat off-centre, and its chart title vanished.** The label in the
   middle of the donut was drawn half its own size up and to the left. The title carried

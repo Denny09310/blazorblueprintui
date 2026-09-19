@@ -206,6 +206,16 @@ Three things to check:
   near-black in light mode — instead of the theme's grey. Library components are unaffected: they
   use `bb:`-prefixed utilities that carry their own colour.
 
+  **And declare the dark variant** in the same file:
+
+  ```css
+  @custom-variant dark (&:where(.dark, .dark *));
+  ```
+
+  The library switches dark mode by putting `.dark` on `<html>`, but Tailwind v4 defaults `dark:` to
+  `@media (prefers-color-scheme: dark)`. Without this your own `dark:` classes follow the operating
+  system rather than the toggle, so they apply at the wrong times whenever the two disagree.
+
   **Why your stylesheet and not ours.** Tailwind's preflight sets `border: 0 solid`, and because
   that is a shorthand it resets `border-color` to `currentColor`. Both stylesheets write their
   preflight into the shared `base` layer at the same specificity, so the one that loads last wins —

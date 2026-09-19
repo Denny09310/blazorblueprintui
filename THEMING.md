@@ -39,6 +39,17 @@ specificity, so whichever loads last wins — and that is yours. Without this ru
 unaffected; they carry their own colour. It only sets a default: your own `border-*` utilities,
 component-layer rules and inline styles all still win.
 
+A second rule belongs there for the same reason — the dark variant:
+
+```css
+@custom-variant dark (&:where(.dark, .dark *));
+```
+
+Blazor Blueprint switches dark mode by putting `.dark` on `<html>`. Tailwind v4's `dark:` defaults
+to `@media (prefers-color-scheme: dark)`, so without this line your own `dark:` classes follow the
+*operating system* rather than the toggle — `dark:bg-none` applies in light mode on a machine set to
+dark, and does nothing in dark mode on a machine set to light.
+
 ## Avoiding the theme flash on first load
 
 The saved theme lives in `localStorage`, so a prerendered or statically rendered page has no way
@@ -464,6 +475,16 @@ Blazor Blueprint uses class-based dark mode. Add the `dark` class to the `<html>
 ```html
 <html class="dark">
 ```
+
+**Running your own Tailwind build?** Declare the variant so your `dark:` classes follow the class
+rather than the operating system:
+
+```css
+@custom-variant dark (&:where(.dark, .dark *));
+```
+
+Tailwind v4 defaults `dark:` to `@media (prefers-color-scheme: dark)`. Without the line above, your
+`dark:` utilities and this library's dark mode disagree whenever the two do not happen to match.
 
 Toggle with JavaScript:
 ```javascript

@@ -29,6 +29,13 @@
 @import './tw-animate.css';
 @import './theme-design.css';
 
+/* Dark mode is switched by putting `.dark` on <html> -- theme-init.js does it before
+   first paint, theme.js on every later change. Tailwind v4's `dark:` defaults to
+   `@media (prefers-color-scheme: dark)`, so without this every `bb:dark:` utility
+   would follow the operating system and ignore the toggle entirely: on a light-mode
+   machine a dark-themed app kept light badges and inputs (#559). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Configure source paths for scanning Razor files. Primitives carry a handful
    of literal utilities of their own (Menubar backdrop, Sortable live region,
    Table focus ring) and the icon packages one (the missing-icon fallback);
@@ -1045,5 +1052,195 @@
     border: 2px solid transparent;
     border-radius: 9999px;
     background-clip: padding-box;
+  }
+}
+
+/* ---------------------------------------------------------------------------------------------
+   Blazor Server reconnection dialog
+   ---------------------------------------------------------------------------------------------
+   Blazor drives this from static HTML in the host page: give the page an element with
+   id="components-reconnect-modal" and it toggles state classes on it. With no such element the
+   framework builds its own overlay and injects its own stylesheet, which is the unstyled white box
+   most Server apps ship with.
+
+   The dialog cannot be a Blazor component -- the circuit is down, so nothing can render. What the
+   library can do is style the markup, and because every colour here is a theme variable the dialog
+   follows the application's theme in both light and dark with nothing to configure.
+
+   Deliberately in `components`, not `bb`. The markup belongs to the consumer's host page, so their
+   own utilities -- which sit in a higher layer -- have to win without !important. Do not promote
+   these rules; that would take the override away from them.
+
+   States the framework sets, all on the modal element:
+     components-reconnect-show           attempting to reconnect
+     components-reconnect-retrying       added on top of `show` while counting down to a retry
+     components-reconnect-paused         circuit paused
+     components-reconnect-hide           reconnected
+     components-reconnect-failed         gave up reconnecting
+     components-reconnect-resume-failed  gave up resuming
+     components-reconnect-rejected       server refused; the page has to reload
+   ------------------------------------------------------------------------------------------- */
+@layer components {
+  #components-reconnect-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background-color: color-mix(in oklab, var(--background) 72%, transparent);
+    backdrop-filter: blur(4px);
+    color: var(--foreground);
+    font-family: inherit;
+  }
+
+  #components-reconnect-modal.components-reconnect-show,
+  #components-reconnect-modal.components-reconnect-retrying,
+  #components-reconnect-modal.components-reconnect-paused,
+  #components-reconnect-modal.components-reconnect-failed,
+  #components-reconnect-modal.components-reconnect-resume-failed,
+  #components-reconnect-modal.components-reconnect-rejected {
+    display: flex;
+  }
+
+  #components-reconnect-modal.components-reconnect-hide {
+    display: none;
+  }
+
+  #components-reconnect-modal .bb-reconnect-dialog {
+    width: 100%;
+    max-width: 24rem;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius, 0.5rem);
+    background-color: var(--popover, var(--card, var(--background)));
+    color: var(--popover-foreground, var(--card-foreground, var(--foreground)));
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    text-align: center;
+    animation: bb-reconnect-in 150ms ease-out;
+  }
+
+  #components-reconnect-modal .bb-reconnect-heading {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  #components-reconnect-modal .bb-reconnect-text,
+  #components-reconnect-modal .bb-reconnect-attempt {
+    margin: 0.5rem 0 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--muted-foreground, var(--foreground));
+  }
+
+  #components-reconnect-modal .bb-reconnect-attempt {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The spinner belongs to the states that are still trying. */
+  #components-reconnect-modal .bb-reconnect-spinner {
+    display: none;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin: 0 auto 0.75rem;
+    border: 2px solid color-mix(in oklab, var(--foreground) 20%, transparent);
+    border-top-color: var(--primary, var(--foreground));
+    border-radius: 9999px;
+    animation: bb-reconnect-spin 700ms linear infinite;
+  }
+
+  #components-reconnect-modal.components-reconnect-show .bb-reconnect-spinner,
+  #components-reconnect-modal.components-reconnect-retrying .bb-reconnect-spinner {
+    display: block;
+  }
+
+  #components-reconnect-modal .bb-reconnect-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 1.25rem;
+  }
+
+  #components-reconnect-modal .bb-reconnect-actions:empty,
+  #components-reconnect-modal.components-reconnect-show .bb-reconnect-actions,
+  #components-reconnect-modal.components-reconnect-retrying .bb-reconnect-actions {
+    display: none;
+  }
+
+  #components-reconnect-modal .bb-reconnect-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 2.25rem;
+    padding: 0 1rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius, 0.5rem);
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  #components-reconnect-modal .bb-reconnect-button:hover {
+    background-color: color-mix(in oklab, var(--primary) 90%, black);
+  }
+
+  #components-reconnect-modal .bb-reconnect-button:focus-visible {
+    outline: 2px solid var(--ring, var(--primary));
+    outline-offset: 2px;
+  }
+
+  #components-reconnect-modal .bb-reconnect-button[data-variant='secondary'] {
+    border-color: var(--border);
+    background-color: transparent;
+    color: var(--foreground);
+  }
+
+  #components-reconnect-modal .bb-reconnect-button[data-variant='secondary']:hover {
+    background-color: var(--accent, color-mix(in oklab, var(--foreground) 8%, transparent));
+  }
+
+  /* One block of markup serves every state. `data-when` lists the states an element belongs to;
+     everything else stays hidden. `retrying` is added on top of `show`, so the `show`-only copy has
+     to bow out once the countdown starts or both messages would render at once. */
+  #components-reconnect-modal [data-when] {
+    display: none;
+  }
+
+  #components-reconnect-modal.components-reconnect-show:not(.components-reconnect-retrying) [data-when~='show'],
+  #components-reconnect-modal.components-reconnect-retrying [data-when~='retrying'],
+  #components-reconnect-modal.components-reconnect-paused [data-when~='paused'],
+  #components-reconnect-modal.components-reconnect-failed [data-when~='failed'],
+  #components-reconnect-modal.components-reconnect-resume-failed [data-when~='resume-failed'],
+  #components-reconnect-modal.components-reconnect-rejected [data-when~='rejected'] {
+    display: revert;
+  }
+
+  @keyframes bb-reconnect-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes bb-reconnect-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #components-reconnect-modal .bb-reconnect-dialog {
+      animation: none;
+    }
+
+    #components-reconnect-modal .bb-reconnect-spinner {
+      animation-duration: 2s;
+    }
   }
 }
