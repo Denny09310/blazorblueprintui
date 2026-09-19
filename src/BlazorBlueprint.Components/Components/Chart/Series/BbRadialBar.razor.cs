@@ -204,7 +204,7 @@ public partial class BbRadialBar : StackableSeriesBase
     {
         if (!string.IsNullOrEmpty(centerLabel!.Text))
         {
-            option.Title = new EChartsTitleOption
+            option.AddTitle(new EChartsTitleOption
             {
                 Text = centerLabel.Text,
 
@@ -222,7 +222,7 @@ public partial class BbRadialBar : StackableSeriesBase
                     FontWeight = centerLabel.FontWeight,
                     Color = "var(--foreground)"
                 }
-            };
+            });
         }
         else
         {
@@ -232,7 +232,7 @@ public partial class BbRadialBar : StackableSeriesBase
             var titleText = centerLabel.Title ?? "";
             var text = $"{{value|{valueText}}}\n{{title|{titleText}}}";
 
-            option.Title = new EChartsTitleOption
+            option.AddTitle(new EChartsTitleOption
             {
                 Text = text,
 
@@ -260,7 +260,7 @@ public partial class BbRadialBar : StackableSeriesBase
                         }
                     }
                 }
-            };
+            });
         }
     }
 }

@@ -104,10 +104,10 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
 
         if (!string.IsNullOrEmpty(Title))
         {
-            option.Title = new EChartsTitleOption
+            option.AddTitle(new EChartsTitleOption
             {
                 Text = Title
-            };
+            });
         }
 
         ApplyChartDefaults(option);

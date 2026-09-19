@@ -39,9 +39,18 @@ internal sealed class EChartsOption
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public EChartsRadarOption? Radar { get; set; }
 
+    /// <summary>
+    /// The chart's titles. ECharts accepts an array here, which is what lets a chart keep its own
+    /// heading while a series borrows a second title to label something the series type has no
+    /// label of its own for — the text in the middle of a radial bar, for instance.
+    /// </summary>
+    /// <remarks>
+    /// Left null rather than empty when nothing has been added, so a chart with no title emits no
+    /// <c>title</c> key at all.
+    /// </remarks>
     [JsonPropertyName("title")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public EChartsTitleOption? Title { get; set; }
+    public List<EChartsTitleOption>? Titles { get; set; }
 
     [JsonPropertyName("polar")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -58,4 +67,8 @@ internal sealed class EChartsOption
     [JsonPropertyName("visualMap")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public EChartsVisualMapOption? VisualMap { get; set; }
+
+    /// <summary>Adds a title, creating the list on first use.</summary>
+    internal void AddTitle(EChartsTitleOption title) =>
+        (Titles ??= []).Add(title);
 }
