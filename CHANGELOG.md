@@ -107,6 +107,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **`dark:` utilities followed the operating system instead of the dark-mode toggle.** Dark mode is
+  switched by putting `.dark` on `<html>` — `theme-init.js` before first paint, `theme.js` on every
+  later change — but the library's Tailwind build never declared a dark variant, so v4's default
+  applied and every `bb:dark:` utility compiled into `@media (prefers-color-scheme: dark)`. Nine
+  utilities across `BbBadge`, `BbTextarea`, `BbBubble` and `BbTreeView` therefore ignored the toggle:
+  on a machine set to light, a dark-themed application kept light badges and input backgrounds.
+  Components that colour themselves from CSS custom properties were never affected, which is why it
+  went unnoticed. `@custom-variant dark (&:where(.dark, .dark *))` settles it against the class.
+
+  The same trap catches an application running its own Tailwind build, and that is where it was
+  reported from ([#348](https://github.com/blazorblueprintui/ui/discussions/348)): your `dark:`
+  classes need the same one-line variant or they key off the operating system too. Documented in
+  [THEMING.md](THEMING.md) and the [v4 migration guide](V4-MIGRATION-GUIDE.md), beside the default
+  border-colour rule — it is the same shape of problem ([#559](https://github.com/blazorblueprintui/ui/issues/559)).
+
 - **The radial chart's centre label sat off-centre, and its chart title vanished.** The label in the
   middle of the donut was drawn half its own size up and to the left. The title carried
   `left: "center"` and `top: "middle"` to place the block, and `textAlign`/`textVerticalAlign` as

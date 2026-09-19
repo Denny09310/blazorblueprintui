@@ -29,6 +29,13 @@
 @import './tw-animate.css';
 @import './theme-design.css';
 
+/* Dark mode is switched by putting `.dark` on <html> -- theme-init.js does it before
+   first paint, theme.js on every later change. Tailwind v4's `dark:` defaults to
+   `@media (prefers-color-scheme: dark)`, so without this every `bb:dark:` utility
+   would follow the operating system and ignore the toggle entirely: on a light-mode
+   machine a dark-themed app kept light badges and inputs (#559). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Configure source paths for scanning Razor files. Primitives carry a handful
    of literal utilities of their own (Menubar backdrop, Sortable live region,
    Table focus ring) and the icon packages one (the missing-icon fallback);

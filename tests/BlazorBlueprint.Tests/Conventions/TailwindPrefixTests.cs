@@ -416,9 +416,9 @@ public class TailwindPrefixTests
                 var prelude = body[start..i].Trim();
                 if (prelude.Length > 0 && prelude[0] != '@')
                 {
-                    foreach (var part in prelude.Split(','))
+                    foreach (var part in SplitSelectorList(prelude))
                     {
-                        yield return part.Trim();
+                        yield return part;
                     }
                 }
 
@@ -429,6 +429,49 @@ public class TailwindPrefixTests
                 start = i + 1;
             }
         }
+    }
+
+    /// <summary>
+    /// Splits a selector list on its top-level commas only.
+    /// </summary>
+    /// <remarks>
+    /// A plain <c>Split(',')</c> tears apart the argument list of a functional pseudo-class:
+    /// <c>.bb\:dark\:bg-input:where(.dark, .dark *)</c> becomes two fragments, and the second one
+    /// reads as a bare unprefixed <c>.dark *)</c> selector that no rule actually declares. Tailwind
+    /// emits exactly that shape for a custom <c>dark</c> variant, so the naive split reported the
+    /// whole dark-mode fix as a prefix violation.
+    /// </remarks>
+    private static IEnumerable<string> SplitSelectorList(string prelude)
+    {
+        var depth = 0;
+        var start = 0;
+
+        for (var i = 0; i < prelude.Length; i++)
+        {
+            var c = prelude[i];
+
+            if (c == '\\')
+            {
+                i++;
+                continue;
+            }
+
+            if (c is '(' or '[')
+            {
+                depth++;
+            }
+            else if (c is ')' or ']')
+            {
+                depth--;
+            }
+            else if (c == ',' && depth == 0)
+            {
+                yield return prelude[start..i].Trim();
+                start = i + 1;
+            }
+        }
+
+        yield return prelude[start..].Trim();
     }
 
     private static int SkipQuoted(string text, int openIndex)
