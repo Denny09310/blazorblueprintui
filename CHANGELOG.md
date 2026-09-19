@@ -9,6 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## 2026-09-19
 
+### Added
+
+- **`TagInputTrigger.Blur`.** `BbTagInput` could only commit a tag on a keystroke — Enter, comma, space, tab or semicolon — so text the user had typed but not confirmed was thrown away when they clicked elsewhere. Add `Blur` to `AddTrigger` and leaving the input commits it. It is the only trigger that is not a key, and it is off by default, so nothing changes unless you ask for it.
+
+  It commits the text that was typed, not a highlighted suggestion: leaving the field is not a way to accept a suggestion nobody confirmed. The commit rides the delay that already defers closing the suggestion list, so clicking a suggestion adds that suggestion and cancels the blur, and returning focus cancels it too — neither path can add a tag twice. Tab needs no special case: when Tab is also a trigger it commits on the keystroke and clears the text, so the blur behind it finds nothing. Text that fails `Validate`, `MaxTags`, `MaxTagLength` or the duplicate check stays in the input and is reported through `OnTagRejected`, exactly as on Enter.
+
 ### Changed
 
 - **A multi-day event in `BbEventCalendar` is one bar, not a chip in every day it covers.** An event running Thursday to Saturday drew three identical chips, so it read as three separate events that happened to share a title — the other half of [#544](https://github.com/blazorblueprintui/ui/issues/544). It is now a single bar across the days it covers, in both the month and the week view. Runs that overlap stack into lanes, longest at the top; runs that never touch share a line. An event crossing a week boundary becomes one bar per row, squared off at the join so the two halves read as one event, and both halves carry the whole event's dates in their `aria-label` rather than their own segment's. Bars are positioned with a `calc()` over the seven-column grid, so they stay on the column boundaries at any width with no measuring and no JavaScript.

@@ -50,6 +50,29 @@
         <CodeBlock Source="Components/TagInput/custom-triggers.txt" />
     </section>
 
+    <!-- Commit on Blur -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Commit on Blur</h2>
+        <p class="text-sm text-muted-foreground">
+            <code class="bg-muted px-1 py-0.5 rounded">TagInputTrigger.Blur</code> is the only trigger that is not a key.
+            Add it and half-typed text is committed when the user clicks or tabs away, rather than thrown away. It commits
+            what was typed, not a highlighted suggestion — clicking a suggestion adds that suggestion and cancels the blur,
+            so a tag is never added twice. Rejected text stays in the input and is reported through
+            <code class="bg-muted px-1 py-0.5 rounded">OnTagRejected</code>, exactly as on Enter.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbTagInput @bind-Tags="blurTags"
+                        AddTrigger="TagInputTrigger.Enter | TagInputTrigger.Comma | TagInputTrigger.Blur"
+                        Placeholder="Type a tag, then click somewhere else..." />
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Tags:</span> <span class="font-mono">@FormatTags(blurTags)</span></p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/TagInput/commit-on-blur.txt" />
+    </section>
+
     <!-- Validation & Limits -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Validation &amp; Limits</h2>
@@ -258,7 +281,10 @@
                     Whether duplicate tag values are allowed.
                 </ApiParameter>
                 <ApiParameter Name="AddTrigger" Type="TagInputTrigger" Default="Enter | Comma">
-                    Which keys trigger tag creation. Combine flags with bitwise OR.
+                    What commits the typed text as a tag. Combine flags with bitwise OR:
+                    <code>Enter</code>, <code>Comma</code>, <code>Space</code>, <code>Tab</code>, <code>Semicolon</code>
+                    and <code>Blur</code>. Every value except <code>Blur</code> is a key; <code>Blur</code> commits when
+                    the user clicks or tabs away, so a half-typed entry is not lost.
                 </ApiParameter>
                 <ApiParameter Name="Validate" Type="Func&lt;string, bool&gt;?" Default="null">
                     Optional validation function. Return false to reject a tag.
@@ -322,6 +348,7 @@
 @code {
     private IReadOnlyList<string>? basicTags;
     private IReadOnlyList<string>? triggerTags;
+    private IReadOnlyList<string>? blurTags;
     private IReadOnlyList<string>? limitedTags;
     private IReadOnlyList<string>? emailTags;
     private IReadOnlyList<string>? clearableTags;

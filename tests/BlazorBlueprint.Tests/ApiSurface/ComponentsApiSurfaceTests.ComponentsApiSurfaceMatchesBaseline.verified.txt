@@ -5229,6 +5229,7 @@
   - Space = 4
   - Tab = 8
   - Semicolon = 16
+  - Blur = 32
 
 ### TagInputVariant (BlazorBlueprint.Components)
   - Default = 0

@@ -95,8 +95,13 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
     public bool AllowDuplicates { get; set; }
 
     /// <summary>
-    /// Which keys trigger tag creation. Combine flags with bitwise OR.
+    /// What commits the typed text as a tag. Combine flags with bitwise OR.
+    /// Defaults to <see cref="TagInputTrigger.Enter"/> and <see cref="TagInputTrigger.Comma"/>.
     /// </summary>
+    /// <remarks>
+    /// Every value except <see cref="TagInputTrigger.Blur"/> is a key. Add <c>Blur</c> to also
+    /// commit when the user clicks or tabs away, so a half-typed entry is not lost.
+    /// </remarks>
     [Parameter]
     public TagInputTrigger AddTrigger { get; set; } = TagInputTrigger.Enter | TagInputTrigger.Comma;
 
@@ -517,6 +522,17 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Closes the suggestion list when focus really has left, and commits any typed text when
+    /// <see cref="TagInputTrigger.Blur"/> is set.
+    /// </summary>
+    /// <remarks>
+    /// The commit rides the same delay that already defers closing the suggestions, which is what
+    /// makes it safe. Clicking a suggestion cancels the token before the delay elapses, so the
+    /// suggestion is added and the typed fragment behind it is not. Focus returning to the input
+    /// cancels it too. Tab needs no special case: when Tab is also a trigger it commits on the
+    /// keystroke and clears the text, so the blur that follows finds nothing to add.
+    /// </remarks>
     private async Task HandleBlur()
     {
         // Delay closing to allow mousedown on suggestions to fire first
@@ -528,12 +544,21 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
         try
         {
             await Task.Delay(150, token);
-            if (!token.IsCancellationRequested)
+            if (token.IsCancellationRequested)
             {
-                _suggestionsOpen = false;
-                _suggestionIndex = -1;
-                StateHasChanged();
+                return;
             }
+
+            if (AddTrigger.HasFlag(TagInputTrigger.Blur))
+            {
+                // The typed text, not the highlighted suggestion: leaving the field is not a way
+                // to accept a suggestion the user never confirmed.
+                await TryAddTag(_inputText);
+            }
+
+            _suggestionsOpen = false;
+            _suggestionIndex = -1;
+            StateHasChanged();
         }
         catch (OperationCanceledException)
         {
