@@ -18,6 +18,27 @@ Every utility the library emits is prefixed `bb:` and kept in its own cascade la
 stylesheets never define the same class and load order does not affect them. Do not `@source` the
 library's package or sources from your Tailwind input — it emits nothing useful and is not needed.
 
+One rule does belong in your stylesheet rather than ours — the default border colour:
+
+```css
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--border);
+  }
+}
+```
+
+Tailwind's preflight sets `border: 0 solid`, and that shorthand resets `border-color` to
+`currentColor`. Both stylesheets write their preflight into the shared `base` layer at the same
+specificity, so whichever loads last wins — and that is yours. Without this rule your own `border`,
+`border-b` and so on render in the text colour instead of the theme's grey. Library components are
+unaffected; they carry their own colour. It only sets a default: your own `border-*` utilities,
+component-layer rules and inline styles all still win.
+
 ## Avoiding the theme flash on first load
 
 The saved theme lives in `localStorage`, so a prerendered or statically rendered page has no way
