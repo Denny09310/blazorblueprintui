@@ -45,6 +45,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **DataGrid cell editors no longer cover Save and Cancel, or wreck a checkbox.** The editor slot reset every direct-child `button`, which was wrong in both directions. A combobox and a multi select wrap their trigger in a container, so the reset never reached it and the trigger kept its own default width — 200px and 300px — inside a narrower cell, overflowing the slot and painting straight over the addon holding Save and Cancel. Both buttons stayed in the DOM, visible and reachable by keyboard, so nothing short of a hit test showed the problem. Meanwhile a checkbox, switch or toggle editor *is* a plain button, so the same reset stretched it to the full cell and stripped its border, leaving an unchecked cell looking empty.
+
+  The reset now targets popup triggers by `aria-haspopup`, which reaches a wrapped trigger and never touches a checkbox or a multi select's tag chips. The slot clips its overflow and the addon owns its own stacking context, so no editor can cover the buttons that commit or cancel the edit whatever it renders. Reported against `4.0.0-beta.9` with measurements.
+
 - **Month view no longer claims no resources are selected when one is.** The empty state inferred emptiness from the lane count, and Month builds no lanes at all, so filtering to a single resource and switching to Month replaced the grid with "No resources are selected". It now asks the filter directly.
 
 - **The scheduler's date heading no longer jumps above the navigation on a narrow container.** The heading carried an ungated `row-start-1` while its neighbouring `col-start-2` was gated at the `@4xl` container breakpoint (896px). Below that width the toolbar grid collapses to one column, and grid places explicitly positioned items first, so the heading claimed row 1 and pushed the previous/today/next buttons and the view controls into rows 2 and 3. Reported from the documentation site.
