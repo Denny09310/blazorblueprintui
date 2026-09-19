@@ -1,0 +1,313 @@
+@page "/components/chip"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Chip - Blazor Blueprint</PageTitle>
+
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Chip</h1>
+        <p class="text-xl text-muted-foreground">
+            A compact pill that represents an attribute, a filter or a choice. Unlike a badge, a
+            chip is interactive: it can be selected, dismissed, or both.
+        </p>
+    </div>
+
+    <!-- Variants -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Variants</h2>
+            <p class="text-sm text-muted-foreground">
+                Five variants. Each one also carries a selected treatment, shown further down.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 rounded-lg border p-6">
+            <BbChip>Default</BbChip>
+            <BbChip Variant="ChipVariant.Secondary">Secondary</BbChip>
+            <BbChip Variant="ChipVariant.Outline">Outline</BbChip>
+            <BbChip Variant="ChipVariant.Destructive">Destructive</BbChip>
+            <BbChip Variant="ChipVariant.Soft">Soft</BbChip>
+        </div>
+        <CodeBlock Source="Components/Chip/variants.txt" />
+    </section>
+
+    <!-- Sizes -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Sizes</h2>
+            <p class="text-sm text-muted-foreground">Three sizes: 24px, 32px and 40px tall.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 rounded-lg border p-6">
+            <BbChip Size="ChipSize.Small">Small</BbChip>
+            <BbChip Size="ChipSize.Default">Default</BbChip>
+            <BbChip Size="ChipSize.Large">Large</BbChip>
+        </div>
+        <CodeBlock Source="Components/Chip/sizes.txt" />
+    </section>
+
+    <!-- Dismissible -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Dismissible</h2>
+            <p class="text-sm text-muted-foreground">
+                The dismiss button reports the click. Removing the chip from the markup stays your
+                job, so an undo step remains possible.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-6">
+            <div class="flex flex-wrap items-center gap-3">
+                @foreach (var label in labels)
+                {
+                    var current = label;
+                    <BbChip @key="current" Dismissible="true" OnDismiss="@(() => Remove(current))">
+                        @current
+                    </BbChip>
+                }
+                @if (labels.Count == 0)
+                {
+                    <p class="text-sm text-muted-foreground">Every chip is gone.</p>
+                }
+            </div>
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="ResetLabels">
+                Reset
+            </BbButton>
+        </div>
+        <CodeBlock Source="Components/Chip/dismissible.txt" />
+    </section>
+
+    <!-- Leading content -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Icons and avatars</h2>
+            <p class="text-sm text-muted-foreground">
+                The <code class="text-xs bg-muted px-1 py-0.5 rounded">Icon</code> fragment renders
+                before the label. It takes any content, so an avatar works as well as an icon.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 rounded-lg border p-6">
+            <BbChip Variant="ChipVariant.Soft">
+                <Icon><LucideIcon Name="tag" Class="bb:h-3.5 bb:w-3.5" /></Icon>
+                <ChildContent>Invoice</ChildContent>
+            </BbChip>
+            <BbChip>
+                <Icon>
+                    <BbAvatar Class="bb:h-5 bb:w-5">
+                        <BbAvatarFallback Class="bb:text-[10px]">MT</BbAvatarFallback>
+                    </BbAvatar>
+                </Icon>
+                <ChildContent>Mathew</ChildContent>
+            </BbChip>
+            <BbChip Variant="ChipVariant.Outline" Dismissible="true" OnDismiss="@(() => status = "Location cleared")">
+                <Icon><LucideIcon Name="map-pin" Class="bb:h-3.5 bb:w-3.5" /></Icon>
+                <ChildContent>Bangkok</ChildContent>
+            </BbChip>
+        </div>
+        <CodeBlock Source="Components/Chip/with-icon.txt" />
+    </section>
+
+    <!-- Own selected state -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Selectable on its own</h2>
+            <p class="text-sm text-muted-foreground">
+                A single chip can own its selected state through
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Selected</code>, with no
+                set around it.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-6">
+            <BbChip Selectable="true" @bind-Selected="showArchived" Variant="ChipVariant.Outline">
+                Archived
+            </BbChip>
+            <p role="status" class="text-sm text-muted-foreground">
+                Archived items are @(showArchived ? "shown" : "hidden").
+            </p>
+        </div>
+        <CodeBlock Source="Components/Chip/selectable.txt" />
+    </section>
+
+    <!-- Single selection set -->
+    <section class="space-y-4">
+        <span id="chip-set" class="block scroll-mt-20" aria-hidden="true"></span>
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Single choice</h2>
+            <p class="text-sm text-muted-foreground">
+                A <code class="text-xs bg-muted px-1 py-0.5 rounded">BbChipSet</code> owns the
+                selection for its chips. Each chip that takes part supplies a
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">Value</code>. Clicking the
+                selected chip clears it, unless the set is
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">Required</code>.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-6">
+            <BbChipSet TValue="string" @bind-Value="statusFilter" Variant="ChipVariant.Outline">
+                <BbChip Value="@("open")">Open</BbChip>
+                <BbChip Value="@("paused")">Paused</BbChip>
+                <BbChip Value="@("closed")">Closed</BbChip>
+                <BbChip Value="@("blocked")" Disabled="true">Blocked</BbChip>
+            </BbChipSet>
+            <p role="status" class="text-sm text-muted-foreground">
+                Status: @(statusFilter ?? "any")
+            </p>
+        </div>
+        <CodeBlock Source="Components/Chip/single-select.txt" />
+    </section>
+
+    <!-- Multiple selection set -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Multiple choice</h2>
+            <p class="text-sm text-muted-foreground">
+                Bind <code class="text-xs bg-muted px-1 py-0.5 rounded">Values</code> instead. The
+                check mark is optional; it widens the chip as it appears, so it suits a set that
+                does not need to hold its width.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-6">
+            <BbChipSet TValue="string"
+                       SelectionMode="ChipSelectionMode.Multiple"
+                       ShowCheckMark="true"
+                       @bind-Values="teams">
+                <BbChip Value="@("design")">Design</BbChip>
+                <BbChip Value="@("platform")">Platform</BbChip>
+                <BbChip Value="@("support")">Support</BbChip>
+                <BbChip Value="@("finance")">Finance</BbChip>
+            </BbChipSet>
+            <p role="status" class="text-sm text-muted-foreground">
+                Teams: @(teams.Count == 0 ? "none" : string.Join(", ", teams))
+            </p>
+        </div>
+        <CodeBlock Source="Components/Chip/multi-select.txt" />
+    </section>
+
+    <!-- Dismiss inside a set -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Dismiss inside a set</h2>
+            <p class="text-sm text-muted-foreground">
+                A dismissed value is dropped from the selection first, then reported through the
+                set's <code class="text-xs bg-muted px-1 py-0.5 rounded">OnDismiss</code>.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-6">
+            <BbChipSet TValue="string"
+                       SelectionMode="ChipSelectionMode.Multiple"
+                       Dismissible="true"
+                       @bind-Values="activeFilters"
+                       OnDismiss="RemoveFilter">
+                @foreach (var filter in filters)
+                {
+                    <BbChip @key="filter" Value="@filter">@filter</BbChip>
+                }
+            </BbChipSet>
+            <p role="status" class="text-sm text-muted-foreground">
+                Selected: @(activeFilters.Count == 0 ? "none" : string.Join(", ", activeFilters))
+            </p>
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="ResetFilters">
+                Reset
+            </BbButton>
+        </div>
+        <CodeBlock Source="Components/Chip/dismiss-in-set.txt" />
+    </section>
+
+    <!-- Disabled -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">
+                Disable one chip, or the whole set. A disabled chip cannot be selected or dismissed.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 rounded-lg border p-6">
+            <BbChip Disabled="true">Read only</BbChip>
+            <BbChip Disabled="true" Dismissible="true">Locked</BbChip>
+            <BbChipSet TValue="string" Disabled="true" Value="@("one")">
+                <BbChip Value="@("one")">One</BbChip>
+                <BbChip Value="@("two")">Two</BbChip>
+            </BbChipSet>
+        </div>
+    </section>
+
+    <p role="status" class="text-sm text-muted-foreground">@status</p>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>A chip renders as a plain span until it becomes interactive, so a static chip is not announced as a button.</AccessibilityItem>
+            <AccessibilityItem>A selectable chip carries <code>aria-pressed</code>, and the set is a <code>role="group"</code>. Give the set an <code>aria-label</code> to name what the chips filter.</AccessibilityItem>
+            <AccessibilityItem>The dismiss button has its own accessible name, from <code>DismissLabel</code> or the localized <code>Chip.Dismiss</code> string.</AccessibilityItem>
+            <AccessibilityItem>Selection is not colour alone when <code>ShowCheckMark</code> is set.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move to the chip, then to its dismiss button"><BbKbd>Tab / Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Select the focused chip, or dismiss it"><BbKbd>Enter / Space</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <LocalizationSection
+        Description="The dismiss button's accessible name is configurable."
+        Labels="@(new LocalizationSection.LabelInfo[]
+        {
+            new("Chip.Dismiss", "Remove", "Accessible name for the dismiss button"),
+        })"
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
+{
+    localizer.Set(""Chip.Dismiss"", ""Entfernen"");
+});")" />
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+
+        <ApiReference Since="v4" ComponentName="BbChip">
+            <ApiParameter Name="Variant / Size" Type="ChipVariant? / ChipSize?">Visual style and size. Falls back to the parent set, then to Default.</ApiParameter>
+            <ApiParameter Name="ChildContent / Icon" Type="RenderFragment?">The label, and leading content such as an icon or an avatar.</ApiParameter>
+            <ApiParameter Name="Value" Type="object?">The value this chip contributes to a parent set. Needed to take part in the selection.</ApiParameter>
+            <ApiParameter Name="Selectable / Selected / SelectedChanged" Type="bool / bool / EventCallback&lt;bool&gt;" Default="false / false">Own selected state, for a chip used outside a set. Supports <code>@@bind-Selected</code>.</ApiParameter>
+            <ApiParameter Name="ShowCheckMark" Type="bool?" Default="false">Shows a check mark while selected. Falls back to the parent set.</ApiParameter>
+            <ApiParameter Name="Dismissible / OnDismiss / DismissLabel" Type="bool? / EventCallback&lt;MouseEventArgs&gt; / string?" Default="false">Dismiss button, its callback, and its accessible name.</ApiParameter>
+            <ApiParameter Name="Disabled" Type="bool" Default="false">Blocks selection and dismissal.</ApiParameter>
+            <ApiParameter Name="OnClick" Type="EventCallback&lt;MouseEventArgs&gt;">Runs after any selection change, and makes the chip interactive on its own.</ApiParameter>
+            <ApiParameter Name="Class / AdditionalAttributes" Type="string? / Dictionary&lt;string, object&gt;?">Additional root CSS classes and HTML attributes.</ApiParameter>
+        </ApiReference>
+
+        <ApiReference Since="v4" ComponentName="BbChipSet&lt;TValue&gt;">
+            <ApiParameter Name="SelectionMode" Type="ChipSelectionMode" Default="Single">None, Single or Multiple.</ApiParameter>
+            <ApiParameter Name="Value / ValueChanged" Type="TValue? / EventCallback&lt;TValue?&gt;">The selected value in Single mode. Supports <code>@@bind-Value</code>.</ApiParameter>
+            <ApiParameter Name="Values / ValuesChanged" Type="List&lt;TValue&gt;? / EventCallback&lt;List&lt;TValue&gt;&gt;">The selected values in Multiple mode. Supports <code>@@bind-Values</code>.</ApiParameter>
+            <ApiParameter Name="Required" Type="bool" Default="false">Keeps at least one chip selected.</ApiParameter>
+            <ApiParameter Name="Variant / Size / Dismissible / ShowCheckMark" Type="ChipVariant / ChipSize / bool / bool">Defaults for the chips in the set. A chip that declares its own wins.</ApiParameter>
+            <ApiParameter Name="Disabled" Type="bool" Default="false">Disables every chip in the set.</ApiParameter>
+            <ApiParameter Name="Wrap" Type="bool" Default="true">Wraps chips onto more lines. When false the set scrolls horizontally.</ApiParameter>
+            <ApiParameter Name="OnDismiss" Type="EventCallback&lt;TValue&gt;">Runs when a chip in the set is dismissed, after the value leaves the selection.</ApiParameter>
+            <ApiParameter Name="Class / AdditionalAttributes" Type="string? / Dictionary&lt;string, object&gt;?">Additional root CSS classes and HTML attributes.</ApiParameter>
+        </ApiReference>
+    </section>
+</div>
+
+@code {
+    private List<string> labels = ["Design", "Build", "Ship"];
+    private bool showArchived;
+    private string? statusFilter = "open";
+    private List<string> teams = ["design"];
+    private List<string> filters = ["Overdue", "Mine", "High priority"];
+    private List<string> activeFilters = ["Mine"];
+    private string status = "Chips report every click.";
+
+    private void Remove(string label)
+    {
+        labels.Remove(label);
+        status = $"Removed {label}.";
+    }
+
+    private void ResetLabels() => labels = ["Design", "Build", "Ship"];
+
+    private void RemoveFilter(string filter)
+    {
+        filters.Remove(filter);
+        status = $"Removed the {filter} filter.";
+    }
+
+    private void ResetFilters()
+    {
+        filters = ["Overdue", "Mine", "High priority"];
+        activeFilters = ["Mine"];
+    }
+}

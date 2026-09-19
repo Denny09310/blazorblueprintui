@@ -1,0 +1,12 @@
+<BbChipSet TValue="string"
+           SelectionMode="ChipSelectionMode.Multiple"
+           ShowCheckMark="true"
+           @bind-Values="teams">
+    <BbChip Value="@("design")">Design</BbChip>
+    <BbChip Value="@("platform")">Platform</BbChip>
+    <BbChip Value="@("support")">Support</BbChip>
+</BbChipSet>
+
+@code {
+    private List<string> teams = ["design"];
+}

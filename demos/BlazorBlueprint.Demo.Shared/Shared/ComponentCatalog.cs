@@ -35,6 +35,8 @@ internal static class ComponentCatalog
             new("Cascader", "/components/cascader", "Select nested options through columns with full-path search and keyboard navigation", "git-branch", IsNew: true),
             new("Checkbox", "/components/checkbox", "Binary selection control with indeterminate state", "square-check"),
             new("Checkbox Group", "/components/checkbox-group", "Grouped checkboxes with shared state and select-all support", "component"),
+            new("Chip", "/components/chip", "Interactive pill for an attribute, a filter or a choice, selectable and dismissible", "tag", IsNew: true, Component: "BbChip"),
+            new("Chip Set", "/components/chip#chip-set", "Groups chips and owns their single or multiple selection.", "component", IsNew: true, Component: "BbChipSet"),
             new("Collapsible", "/components/collapsible", "Expandable content area with trigger control", "chevrons-up-down"),
             new("Color Picker", "/components/color-picker", "Visual color selection with hex/RGB input and presets", "component"),
             new("Combobox", "/components/combobox", "Autocomplete input with searchable dropdown", "text-cursor-input"),
@@ -74,6 +76,7 @@ internal static class ComponentCatalog
             new("Field", "/components/field", "Combine labels, controls, and help text for accessible forms", "pencil-line"),
             new("File Upload", "/components/file-upload", "Drag-and-drop uploads with previews, progress, cancellation and retry", "component"),
             new("Filter Builder", "/components/filterbuilder", "Visual query builder for data filter expressions with AND/OR logic and nested groups", "filter"),
+            new("Floating Action Button", "/components/fab", "Raised button pinned to a corner for the screen's main action", "circle-plus", IsNew: true, Component: "BbFab"),
             new("Form Field Cascader", "/components/form-field-cascader", "Cascader with built-in label, helper text, and error messages", "component", IsNew: true, Component: "BbFormFieldCascader"),
             new("Form Field Checkbox", "/components/form-field-checkbox", "Checkbox with built-in label, helper text, and error messages", "component"),
             new("Form Field Checkbox Group", "/components/form-field-checkbox-group", "Checkbox group with built-in label, helper text, and error messages", "component"),
@@ -156,6 +159,8 @@ internal static class ComponentCatalog
             new("Sortable Handle", "/components/sortable#sortable-handle", "A focusable handle for pointer and keyboard sorting.", "component", IsNew: true, Component: "BbSortableHandle"),
             new("Spinner", "/components/spinner", "Loading indicator for async operations", "loader"),
             new("Split Button", "/components/split-button", "Primary action button with a dropdown for secondary actions", "chevrons-down"),
+            new("Stepper", "/components/stepper", "Shows progress through a sequence of steps, with optional step content", "list-ordered", IsNew: true, Component: "BbStepper"),
+            new("Step", "/components/stepper#step", "One step of a stepper: its label, state and content.", "component", IsNew: true, Component: "BbStep"),
             new("Switch", "/components/switch", "Toggle control for on/off states", "toggle-left"),
             new("Tabs", "/components/tabs", "Tabbed interface for organizing related content", "folder"),
             new("Tag Input", "/components/tag-input", "Inline chip/tag input for managing free-form text lists", "component"),
@@ -201,7 +206,7 @@ internal static class ComponentCatalog
         var pages = Items.Where(entry => !entry.Url.Contains('#')).ToArray();
         var families = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
-            ["button"] = ["button-group", "split-button"],
+            ["button"] = ["button-group", "fab", "split-button"],
             ["checkbox"] = ["checkbox-group"],
             ["datagrid"] = ["datagrid-editing", "datagrid-hierarchy", "datagrid-styling"],
             ["date-picker"] = ["date-input", "date-range-picker", "date-time-picker"],
