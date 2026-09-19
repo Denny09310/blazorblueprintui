@@ -1,0 +1,5 @@
+<BbRoseChart Data="@data" Height="250px">
+    <BbChartTooltip />
+    <BbChartLegend />
+    <BbRose DataKey="visitors" NameKey="browser" />
+</BbRoseChart>

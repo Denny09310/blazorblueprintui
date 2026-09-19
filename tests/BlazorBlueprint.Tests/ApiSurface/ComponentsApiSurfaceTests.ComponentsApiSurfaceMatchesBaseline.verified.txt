@@ -3652,6 +3652,72 @@
   - Value : String
   - ValueChanged : EventCallback<String>
 
+### BbRose (BlazorBlueprint.Components)
+  - ActiveIndex : Int32?
+  - ChildContent : RenderFragment
+  - Color : String
+  - DataKey : String
+  - InnerRadius : Int32
+  - LabelColor : String
+  - LabelFontSize : Int32?
+  - LabelFormatter : String
+  - LabelPosition : LabelPosition
+  - Mode : RoseMode
+  - Name : String
+  - NameKey : String
+  - OuterRadius : Int32
+  - PaddingAngle : Int32
+  - ShowLabelLine : Boolean?
+  - ShowLabels : Boolean
+
+### BbRoseChart (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Class : String
+  - Config : ChartConfig
+  - Data : Object
+  - EnableAnimations : Boolean
+  - Height : String
+  - OnChartClick : EventCallback
+  - OnDataPointClick : EventCallback<ChartClickEventArgs>
+  - Title : String
+  - Width : String
+
+### BbSankey (BlazorBlueprint.Components)
+  - ChildContent : RenderFragment
+  - Color : String
+  - Curveness : Double
+  - DataKey : String
+  - Draggable : Boolean
+  - FocusAdjacent : Boolean
+  - LabelColor : String
+  - LabelFontSize : Int32?
+  - LabelFormatter : String
+  - LabelPosition : LabelPosition
+  - LinkColor : SankeyLinkColor
+  - LinkOpacity : Double
+  - Name : String
+  - NodeAlign : SankeyNodeAlign
+  - NodeGap : Int32
+  - NodeWidth : Int32
+  - Orientation : SankeyOrientation
+  - ShowLabels : Boolean
+  - SourceKey : String
+  - TargetKey : String
+
+### BbSankeyChart (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Class : String
+  - Config : ChartConfig
+  - Data : Object
+  - EnableAnimations : Boolean
+  - Height : String
+  - OnChartClick : EventCallback
+  - OnDataPointClick : EventCallback<ChartClickEventArgs>
+  - Title : String
+  - Width : String
+
 ### BbScatter (BlazorBlueprint.Components)
   - ChildContent : RenderFragment
   - Color : String
@@ -5322,6 +5388,24 @@
   - Large = 2
 
 ### ResizableDirection (BlazorBlueprint.Components)
+  - Horizontal = 0
+  - Vertical = 1
+
+### RoseMode (BlazorBlueprint.Components)
+  - Radius = 0
+  - Area = 1
+
+### SankeyLinkColor (BlazorBlueprint.Components)
+  - Gradient = 0
+  - Source = 1
+  - Target = 2
+
+### SankeyNodeAlign (BlazorBlueprint.Components)
+  - Justify = 0
+  - Left = 1
+  - Right = 2
+
+### SankeyOrientation (BlazorBlueprint.Components)
   - Horizontal = 0
   - Vertical = 1
 

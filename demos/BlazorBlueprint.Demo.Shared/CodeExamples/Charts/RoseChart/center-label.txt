@@ -1,0 +1,6 @@
+<BbRoseChart Data="@data" Height="250px">
+    <BbChartTooltip />
+    <BbRose DataKey="visitors" NameKey="browser" InnerRadius="30" OuterRadius="85">
+        <BbCenterLabel Title="Visitors" Value="3,040" />
+    </BbRose>
+</BbRoseChart>

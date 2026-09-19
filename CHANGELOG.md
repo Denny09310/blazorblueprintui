@@ -11,6 +11,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **The last two chart gaps: a rose and a sankey.**
+
+  `BbRoseChart` draws a pie whose sectors vary in radius as well as angle, so a set of categories
+  ranks by length instead of by an angle the eye is bad at judging. `BbRose` derives from `BbPie`
+  rather than repeating it, so the donut hole, the labels, the leader lines and a child
+  `BbCenterLabel` all work here unchanged — and a fix to the pie's label handling reaches the rose
+  as well. `Mode` is the one addition: `RoseMode.Radius` keeps the pie's proportional angles and
+  adds radius on top, so a sector carries the value twice and a small one stays visible;
+  `RoseMode.Area` gives every sector the same angle and varies the radius alone, which is the honest
+  choice for a fixed set of categories — twelve months, seven days — rather than parts of a whole.
+
+  `BbSankeyChart` shows how a quantity splits and recombines as it moves between stages. Bind a
+  collection of **links** rather than of nodes: `BbSankey` reads a source name, a target name and a
+  value from each row, and derives the node list from the names in the order they are first seen,
+  which is also the order they take their colours from the chart palette. Hovering a node dims
+  everything it is not connected to, which is the reason to draw a sankey rather than a bar chart.
+
+  **A sankey is a directed acyclic graph.** ECharts throws out of its layout when the links form a
+  cycle, and a thrown layout blanks the whole chart rather than dropping the one bad ribbon — so a
+  link that would close a cycle, including a link from a node to itself, is left out in C# and the
+  rest of the diagram is drawn. A row missing either name is dropped because a link needs both ends,
+  and a row whose value is not a number is dropped rather than coerced to zero, because a
+  zero-width ribbon reads as a real flow that happens to be tiny.
+
+  A node in the outermost column points its label at the edge of the canvas, where ECharts draws it
+  and lets it overflow — the reason a sankey so often ends in a clipped `B` where `Bounced` should
+  be. Those nodes are given the opposite `LabelPosition`, so the text turns inwards and stays
+  readable however long the name is. `SankeyNodeAlign` names a physical side, not a reading-order
+  one: ECharts computes the layout and does not mirror it under `dir="rtl"`. `Draggable` is off by
+  default, unlike ECharts itself, because a dragged node stays where it was dropped with no way back
+  short of a reload.
+
 - **Five small components that close the last of the MudBlazor gaps.**
 
   `BbLink` is the inline counterpart to `BbButton`. A button with `ButtonVariant.Link` looks like a link but keeps a button's height and padding, so it breaks the rhythm of a paragraph; this renders a bare anchor on the text baseline. Four colour treatments including one that inherits the surrounding text, underline always / on hover / never, and a focus ring that follows the text rather than a box, so a link that wraps mid-sentence reads as one link. `Target="_blank"` adds `rel="noopener noreferrer"` for you, and `ShowExternalIcon` appends an icon with a screen-reader note.

@@ -1,0 +1,213 @@
+@page "/charts/rose"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Rose Chart - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-6xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Rose Chart</h1>
+            <p class="text-xl text-muted-foreground">
+                A pie whose sectors vary in length as well as angle, so categories rank by eye.
+            </p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Rose Chart</h3>
+                    <p class="text-sm text-muted-foreground">Visitors by browser</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbRoseChart Data="@_browserData" Height="250px">
+                        <BbChartTooltip />
+                        <BbRose DataKey="visitors" NameKey="browser" />
+                    </BbRoseChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Radius mode, the default
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Angle shows the share, length shows the value
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/RoseChart/default.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Area</h3>
+                    <p class="text-sm text-muted-foreground">Equal angles</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbRoseChart Data="@_browserData" Height="250px">
+                        <BbChartTooltip />
+                        <BbRose DataKey="visitors" NameKey="browser" Mode="RoseMode.Area" />
+                    </BbRoseChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        RoseMode.Area
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Every sector takes the same angle, so only length carries the value
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/RoseChart/area.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Donut</h3>
+                    <p class="text-sm text-muted-foreground">With an inner radius</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbRoseChart Data="@_browserData" Height="250px">
+                        <BbChartTooltip />
+                        <BbRose DataKey="visitors" NameKey="browser" InnerRadius="25" OuterRadius="85" />
+                    </BbRoseChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        InnerRadius opens the centre
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        The same parameters a pie takes
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/RoseChart/donut.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">With Labels</h3>
+                    <p class="text-sm text-muted-foreground">A name per sector</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbRoseChart Data="@_browserData" Height="250px">
+                        <BbChartTooltip />
+                        <BbRose DataKey="visitors" NameKey="browser" OuterRadius="50"
+                                ShowLabels="true" LabelFormatter="{b}" LabelFontSize="11" />
+                    </BbRoseChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Formatted labels with leader lines
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        {b} for the name, {c} for the value, {d} for the share
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/RoseChart/labels.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">With Legend</h3>
+                    <p class="text-sm text-muted-foreground">Visitors by browser</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbRoseChart Data="@_browserData" Height="250px">
+                        <BbChartTooltip />
+                        <BbChartLegend />
+                        <BbRose DataKey="visitors" NameKey="browser" />
+                    </BbRoseChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Legend component included
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        The chart shifts up to clear it
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/RoseChart/legend.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Center Label</h3>
+                    <p class="text-sm text-muted-foreground">Total in the hole</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbRoseChart Data="@_browserData" Height="250px">
+                        <BbChartTooltip />
+                        <BbRose DataKey="visitors" NameKey="browser" InnerRadius="30" OuterRadius="85">
+                            <BbCenterLabel Title="Visitors" Value="@_totalVisitors" />
+                        </BbRose>
+                    </BbRoseChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        BbCenterLabel works here too
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Needs an InnerRadius greater than 0
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/RoseChart/center-label.txt" />
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">BbRose</code> derives from
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">BbPie</code>, so every Pie parameter —
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">NameKey</code>,
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">InnerRadius</code>,
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">OuterRadius</code>,
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">ShowLabels</code> and the rest — applies here.
+            </p>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Rose.Mode</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">RoseMode</code> (default: <code class="text-xs bg-muted px-1 py-0.5 rounded">Radius</code>)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    How a value maps onto a sector. <code class="text-xs bg-muted px-1 py-0.5 rounded">Radius</code>
+                    keeps the pie's proportional angles and adds radius on top, so the sector carries the value twice.
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Area</code> gives every sector the same angle
+                    and varies the radius alone, which is the honest choice for a fixed set of categories rather than
+                    parts of a whole. Maps to the ECharts <code class="text-xs bg-muted px-1 py-0.5 rounded">roseType</code> option.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public class BrowserData
+    {
+        public string Browser { get; set; } = "";
+        public int Visitors { get; set; }
+    }
+
+    private readonly List<BrowserData> _browserData =
+    [
+        new() { Browser = "Chrome", Visitors = 1120 },
+        new() { Browser = "Safari", Visitors = 780 },
+        new() { Browser = "Firefox", Visitors = 520 },
+        new() { Browser = "Edge", Visitors = 380 },
+        new() { Browser = "Other", Visitors = 240 }
+    ];
+
+    private string _totalVisitors => _browserData.Sum(b => b.Visitors).ToString("N0");
+}
