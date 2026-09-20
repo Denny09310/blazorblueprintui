@@ -1,0 +1,517 @@
+@page "/components/qr-code"
+@using System.Text
+@using BlazorBlueprint.Primitives.QrCode
+<PageTitle>QR Code - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">QR Code</h1>
+            <p class="text-xl text-muted-foreground">
+                A scannable code drawn as SVG. The encoder is written in C# — no JavaScript, no image
+                request and no dependency — so the code is part of the markup and scales, prints and
+                copies like any other vector.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Usage</h2>
+                <p class="text-muted-foreground">
+                    Set <code class="text-xs bg-muted px-1 py-0.5 rounded">Value</code> and you have a
+                    working code. Point a phone camera at it.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 flex flex-col items-center gap-4">
+                <BbQrCode Value="https://blazorblueprintui.com" ShowValue="true" />
+            </div>
+
+            <CodeBlock Source="Components/QrCode/basic.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Try It</h2>
+                <p class="text-muted-foreground">
+                    Type anything. The encoder picks the most compact mode it can — digits pack about
+                    three times tighter than text — and then the smallest symbol that holds the
+                    result.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbInput @bind-Value="liveValue"
+                         UpdateTiming="UpdateTiming.Debounced"
+                         DebounceInterval="250"
+                         Placeholder="Anything you like" />
+
+                <div class="flex flex-col items-center gap-3">
+                    <BbQrCode Value="@liveValue" OnEncoded="@(m => liveMatrix = m)" Size="14rem" />
+                    @if (liveMatrix is { } live)
+                    {
+                        <dl class="grid grid-cols-[6rem_1fr] gap-x-4 gap-y-1 text-sm">
+                            <dt class="text-muted-foreground">Mode</dt>
+                            <dd class="font-mono">@live.Mode</dd>
+                            <dt class="text-muted-foreground">Version</dt>
+                            <dd class="font-mono">@live.Version (@live.Size &times; @live.Size modules)</dd>
+                            <dt class="text-muted-foreground">Mask</dt>
+                            <dd class="font-mono">@live.Mask</dd>
+                        </dl>
+                    }
+                </div>
+            </div>
+
+            <CodeBlock Source="Components/QrCode/inspect.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Error Correction</h2>
+                <p class="text-muted-foreground">
+                    A QR code carries spare copies of its own data, so it still reads when part of it
+                    is torn, smudged or covered. More spare data means a bigger code for the same
+                    text — all four below hold the same string.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    @foreach (var level in levels)
+                    {
+                        <div class="flex flex-col items-center gap-2">
+                            <BbQrCode Value="@correctionSample" ErrorCorrection="level" Size="9rem" />
+                            <p class="text-sm font-medium">@level</p>
+                            <p class="text-xs text-muted-foreground">recovers @Recovery(level)</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <CodeBlock Source="Components/QrCode/error-correction.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Colour</h2>
+                <p class="text-muted-foreground">
+                    The default is dark on white, and it stays that way in a dark theme. A reader
+                    expects a dark code on a light field and enough of them refuse an inverted one
+                    that following the theme would trade a working code for a tidier page. Override
+                    it where that trade is worth making, and keep the contrast high.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <div class="grid gap-6 sm:grid-cols-3">
+                    <div class="flex flex-col items-center gap-2">
+                        <BbQrCode Value="https://blazorblueprintui.com" Size="9rem" />
+                        <p class="text-xs text-muted-foreground">Default</p>
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <BbQrCode Value="https://blazorblueprintui.com" Size="9rem"
+                                  Foreground="#1e3a8a" Background="#eff6ff" />
+                        <p class="text-xs text-muted-foreground">Brand colours</p>
+                    </div>
+                    <div class="flex flex-col items-center gap-2 rounded-md bg-white p-3">
+                        <BbQrCode Value="https://blazorblueprintui.com" Size="9rem" Background="transparent" />
+                        <p class="text-xs text-slate-500">Transparent, over white</p>
+                    </div>
+                </div>
+            </div>
+
+            <CodeBlock Source="Components/QrCode/colour.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Module Shape</h2>
+                <p class="text-muted-foreground">
+                    Rounded and dotted modules read as softer. Both cost a little scanning margin,
+                    which is why the three finder squares in the corners stay solid whichever shape
+                    is chosen — a reader looks for those before it reads anything else.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <div class="grid gap-6 sm:grid-cols-3">
+                    @foreach (var shape in shapes)
+                    {
+                        <div class="flex flex-col items-center gap-2">
+                            <BbQrCode Value="https://blazorblueprintui.com" ModuleShape="shape" Size="9rem" />
+                            <p class="text-sm font-medium">@shape</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <CodeBlock Source="Components/QrCode/module-shape.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">A Logo in the Middle</h2>
+                <p class="text-muted-foreground">
+                    A centre image covers modules, which is damage the error correction has to absorb.
+                    Setting <code class="text-xs bg-muted px-1 py-0.5 rounded">Image</code> therefore
+                    raises the level to <strong>Quartile</strong> on its own, and
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">ImageSize</code> is capped at
+                    30% of the width. Scan the real thing before you ship it.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <div class="grid gap-6 sm:grid-cols-3">
+                    @foreach (var fraction in new[] { 0.15, 0.2, 0.3 })
+                    {
+                        <div class="flex flex-col items-center gap-2">
+                            <BbQrCode Value="https://blazorblueprintui.com"
+                                      Image="@logoDataUrl"
+                                      ImageSize="fraction"
+                                      Size="9rem" />
+                            <p class="text-sm font-medium">ImageSize @fraction</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <CodeBlock Source="Components/QrCode/logo.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">What a Code Can Do</h2>
+                <p class="text-muted-foreground">
+                    A QR code only carries text. What makes one <em>do</em> something is the prefix
+                    the phone recognises.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbListBox TValue="string"
+                           Label="Pick a payload"
+                           Options="payloadOptions"
+                           @bind-Value="payloadKey"
+                           Height="10rem" />
+
+                <div class="flex flex-col items-center gap-3">
+                    <BbQrCode Value="@SelectedPayload" Size="11rem" AriaLabel="@SelectedPayloadLabel" />
+                    <pre class="w-full overflow-x-auto rounded-md bg-muted p-3 text-xs"><code>@SelectedPayload</code></pre>
+                </div>
+            </div>
+
+            <CodeBlock Source="Components/QrCode/payloads.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Reaching It Without a Camera</h2>
+                <p class="text-muted-foreground">
+                    A QR code is text that only a camera can read. Someone using a screen reader
+                    cannot point their phone at their own screen, so
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">ShowValue</code> writes the
+                    value out as selectable text, and
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">AriaLabel</code> says what
+                    scanning it does. Use one of them wherever the value is not already on the page.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="flex flex-col items-center gap-2">
+                        <BbQrCode Value="WIFI:T:WPA;S:Guest;P:welcome123;;"
+                                  Size="9rem"
+                                  AriaLabel="QR code to join the Guest wi-fi network" />
+                        <p class="text-xs text-muted-foreground text-center">
+                            A described code. The label says what it does.
+                        </p>
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <BbQrCode Value="https://blazorblueprintui.com/components/qr-code"
+                                  Size="9rem"
+                                  ShowValue="true" />
+                        <p class="text-xs text-muted-foreground text-center">
+                            The value written out, so it can be read or copied.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <CodeBlock Source="Components/QrCode/accessible.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Saving It</h2>
+                <p class="text-muted-foreground">
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">GetSvg()</code> returns the same
+                    markup the component rendered, as a standalone document with its colours baked in.
+                    That is all a download needs — no canvas and no JavaScript.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 flex flex-col items-center gap-4">
+                <BbQrCode @ref="downloadCode" Value="https://blazorblueprintui.com" Size="10rem" />
+                <a class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                   download="blazor-blueprint.svg"
+                   href="@DownloadHref">
+                    Download the SVG
+                </a>
+            </div>
+
+            <CodeBlock Source="Components/QrCode/download.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Too Long to Fit</h2>
+                <p class="text-muted-foreground">
+                    A version 40 code at High correction holds 1,273 bytes, and there is nothing above
+                    version 40. Past that the component says so in place of the code rather than
+                    throwing, which on Blazor Server would take the circuit down.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 flex flex-col items-center gap-3">
+                <BbQrCode Value="@overlongValue" ErrorCorrection="QrErrorCorrection.High" />
+            </div>
+
+            <CodeBlock Source="Components/QrCode/too-long.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Headless</h2>
+                <p class="text-muted-foreground">
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">QrEncoder</code> in
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">BlazorBlueprint.Primitives</code>
+                    returns the grid on its own — geometry, no colour and no size. Draw it however
+                    suits: to a canvas, to a bitmap, into a PDF, or as text.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-3">
+                @* Fixed dark-on-light, not the theme's colours: block characters take the text
+                   colour, and in a dark theme that would draw an inverted code. *@
+                <pre class="overflow-x-auto rounded-md bg-white text-black p-3 text-[0.5rem] leading-[0.55rem] font-mono"><code>@AsciiArt</code></pre>
+                <p class="text-sm text-muted-foreground">
+                    The same code as two characters per module, straight from
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">QrEncoder.Encode</code>.
+                </p>
+            </div>
+
+            <CodeBlock Source="Components/QrCode/headless.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">API Reference</h2>
+            </div>
+            <div class="space-y-4">
+                <ApiReference ComponentName="BbQrCode">
+                    <ApiParameter Name="Value" Type="string?">
+                        The text to encode. Nothing renders while this is empty.
+                    </ApiParameter>
+                    <ApiParameter Name="ErrorCorrection" Type="QrErrorCorrection" Default="Medium">
+                        How much of the code can be lost and still be read: <code class="text-xs bg-muted px-1 py-0.5 rounded">Low</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">Medium</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">Quartile</code> or <code class="text-xs bg-muted px-1 py-0.5 rounded">High</code>.
+                    </ApiParameter>
+                    <ApiParameter Name="MinVersion" Type="int" Default="1">
+                        The smallest QR version to use, 1 to 40. Raise it to keep a set of codes the same size as each other. The encoder still grows past it when the text needs more room.
+                    </ApiParameter>
+                    <ApiParameter Name="Size" Type="string" Default="12rem">
+                        The rendered width and height, as a CSS length.
+                    </ApiParameter>
+                    <ApiParameter Name="Foreground" Type="string" Default="#18181b">
+                        The colour of the dark modules, as a CSS colour.
+                    </ApiParameter>
+                    <ApiParameter Name="Background" Type="string" Default="#ffffff">
+                        The colour behind the code, including the quiet zone. <code class="text-xs bg-muted px-1 py-0.5 rounded">transparent</code> lets the page show through.
+                    </ApiParameter>
+                    <ApiParameter Name="QuietZone" Type="int" Default="4">
+                        The light margin around the code, in modules. Four is the specified minimum.
+                    </ApiParameter>
+                    <ApiParameter Name="ModuleShape" Type="QrCodeModuleShape" Default="Square">
+                        <code class="text-xs bg-muted px-1 py-0.5 rounded">Square</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">Rounded</code> or <code class="text-xs bg-muted px-1 py-0.5 rounded">Dot</code>. The finder squares stay solid either way.
+                    </ApiParameter>
+                    <ApiParameter Name="Image" Type="string?">
+                        An image for the centre of the code, as a URL or a data URL. Setting it raises the error correction level to at least Quartile.
+                    </ApiParameter>
+                    <ApiParameter Name="ImageSize" Type="double" Default="0.2">
+                        The width of the centre image as a fraction of the code, clamped to 0.05 – 0.3.
+                    </ApiParameter>
+                    <ApiParameter Name="ImageBackground" Type="string?">
+                        The colour of the patch behind the centre image. Defaults to <code class="text-xs bg-muted px-1 py-0.5 rounded">Background</code>.
+                    </ApiParameter>
+                    <ApiParameter Name="ShowValue" Type="bool" Default="false">
+                        Whether the value is also written as selectable text under the code.
+                    </ApiParameter>
+                    <ApiParameter Name="Label" Type="string?">
+                        A label shown above the code.
+                    </ApiParameter>
+                    <ApiParameter Name="AriaLabel" Type="string?">
+                        The accessible name. Defaults to the value where it is short, and to "QR code" where it is not.
+                    </ApiParameter>
+                    <ApiParameter Name="Matrix" Type="QrMatrix?">
+                        Read-only. The encoded grid, for reporting the version or drawing the code another way.
+                    </ApiParameter>
+                    <ApiParameter Name="GetSvg()" Type="string?">
+                        Method. The rendered SVG as a standalone document.
+                    </ApiParameter>
+                    <ApiParameter Name="Class" Type="string?">
+                        Additional CSS classes for the root element.
+                    </ApiParameter>
+                    <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                        Additional HTML attributes applied to the root element.
+                    </ApiParameter>
+                </ApiReference>
+
+                <ApiReference ComponentName="QrEncoder">
+                    <ApiParameter Name="Encode(value, errorCorrection, minVersion, mask)" Type="QrMatrix">
+                        Encodes text as a QR code. Throws <code class="text-xs bg-muted px-1 py-0.5 rounded">ArgumentException</code> when the value is empty or will not fit in a version 40 symbol.
+                    </ApiParameter>
+                    <ApiParameter Name="GetCapacity(version, errorCorrection, mode)" Type="int">
+                        The largest number of characters a version holds at a level, in a given mode.
+                    </ApiParameter>
+                </ApiReference>
+
+                <ApiReference ComponentName="QrMatrix">
+                    <ApiParameter Name="this[int x, int y]" Type="bool">
+                        Whether the module at that position is dark. Out-of-range reads as light, so a renderer can walk the quiet zone without bounds checks.
+                    </ApiParameter>
+                    <ApiParameter Name="Size" Type="int">
+                        The width and height in modules, excluding the quiet zone.
+                    </ApiParameter>
+                    <ApiParameter Name="Version" Type="int">
+                        The QR version, 1 to 40.
+                    </ApiParameter>
+                    <ApiParameter Name="ErrorCorrection" Type="QrErrorCorrection">
+                        The level the code was built with.
+                    </ApiParameter>
+                    <ApiParameter Name="Mask" Type="int">
+                        The mask pattern applied to the data region, 0 to 7.
+                    </ApiParameter>
+                    <ApiParameter Name="Mode" Type="QrEncodingMode">
+                        <code class="text-xs bg-muted px-1 py-0.5 rounded">Numeric</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">Alphanumeric</code> or <code class="text-xs bg-muted px-1 py-0.5 rounded">Byte</code>.
+                    </ApiParameter>
+                </ApiReference>
+            </div>
+        </section>
+    </div>
+</div>
+
+@code {
+    private const string LogoSvg = """
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#1e293b"/><path d="M14 34V14h9a6 6 0 0 1 0 12h-9m0 0h10a6 6 0 0 1 0 8H14" fill="none" stroke="#f8fafc" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        """;
+
+    private static readonly string logoDataUrl =
+        "data:image/svg+xml;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes(LogoSvg));
+
+    private readonly QrErrorCorrection[] levels =
+    [
+        QrErrorCorrection.Low,
+        QrErrorCorrection.Medium,
+        QrErrorCorrection.Quartile,
+        QrErrorCorrection.High,
+    ];
+
+    private readonly QrCodeModuleShape[] shapes =
+    [
+        QrCodeModuleShape.Square,
+        QrCodeModuleShape.Rounded,
+        QrCodeModuleShape.Dot,
+    ];
+
+    private readonly SelectOption<string>[] payloadOptions =
+    [
+        new("url", "Open a web page"),
+        new("wifi", "Join a wi-fi network"),
+        new("mailto", "Start an email"),
+        new("tel", "Dial a number"),
+        new("sms", "Start a text message"),
+        new("geo", "Drop a map pin"),
+        new("vcard", "Add a contact"),
+        new("otp", "Set up an authenticator app"),
+    ];
+
+    private const string OverlongSeed = "This string is deliberately longer than any QR code can hold. ";
+
+    private static readonly string overlongValue = string.Concat(Enumerable.Repeat(OverlongSeed, 40));
+
+    private static readonly string correctionSample = "https://blazorblueprintui.com/components/qr-code";
+
+    private string liveValue = "https://blazorblueprintui.com";
+    private string payloadKey = "url";
+
+    private QrMatrix? liveMatrix;
+    private BbQrCode? downloadCode;
+
+    private string SelectedPayload => payloadKey switch
+    {
+        "wifi" => "WIFI:T:WPA;S:Guest network;P:welcome123;;",
+        "mailto" => "mailto:hello@blazorblueprintui.com?subject=Hello&body=I%20scanned%20your%20code",
+        "tel" => "tel:+441234567890",
+        "sms" => "SMSTO:+441234567890:Send me the docs",
+        "geo" => "geo:51.5074,-0.1278?q=London",
+        "vcard" => "BEGIN:VCARD\nVERSION:3.0\nN:Taylor;Mathew\nORG:Blazor Blueprint\nURL:https://blazorblueprintui.com\nEND:VCARD",
+        "otp" => "otpauth://totp/Blazor%20Blueprint:demo?secret=JBSWY3DPEHPK3PXP&issuer=Blazor%20Blueprint",
+        _ => "https://blazorblueprintui.com",
+    };
+
+    private static string Recovery(QrErrorCorrection level) => level switch
+    {
+        QrErrorCorrection.Low => "about 7%",
+        QrErrorCorrection.Medium => "about 15%",
+        QrErrorCorrection.Quartile => "about 25%",
+        _ => "about 30%",
+    };
+
+    private string SelectedPayloadLabel =>
+        "QR code to " + (payloadOptions.FirstOrDefault(o => o.Value == payloadKey)?.Text?.ToLowerInvariant()
+            ?? "open a web page");
+
+    private string DownloadHref
+    {
+        get
+        {
+            var markup = downloadCode?.GetSvg();
+            return markup is null
+                ? "#"
+                : "data:image/svg+xml;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes(markup));
+        }
+    }
+
+    private static string AsciiArt
+    {
+        get
+        {
+            var code = QrEncoder.Encode("BLAZOR BLUEPRINT", QrErrorCorrection.Low);
+            var builder = new StringBuilder();
+
+            // Two rows of quiet zone above and below, four columns either side.
+            for (var y = -2; y < code.Size + 2; y++)
+            {
+                for (var x = -4; x < code.Size + 4; x++)
+                {
+                    builder.Append(code[x, y] ? "██" : "  ");
+                }
+
+                builder.Append('\n');
+            }
+
+            return builder.ToString();
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        // The @ref behind the download link is only populated after the first render, so the link
+        // needs one more pass before it has an SVG to point at.
+        if (firstRender)
+        {
+            StateHasChanged();
+        }
+    }
+}

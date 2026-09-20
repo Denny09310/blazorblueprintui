@@ -1160,6 +1160,17 @@
   - Absolute = 0
   - Fixed = 1
 
+### QrEncodingMode (BlazorBlueprint.Primitives.QrCode)
+  - Numeric = 0
+  - Alphanumeric = 1
+  - Byte = 2
+
+### QrErrorCorrection (BlazorBlueprint.Primitives.QrCode)
+  - Low = 0
+  - Medium = 1
+  - Quartile = 2
+  - High = 3
+
 ### ScrollAreaOrientation (BlazorBlueprint.Primitives.ScrollArea)
   - Vertical = 0
   - Horizontal = 1

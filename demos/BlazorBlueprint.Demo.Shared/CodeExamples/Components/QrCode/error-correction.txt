@@ -1,0 +1,9 @@
+@* Low is the smallest code; High survives the most damage. *@
+<BbQrCode Value="@value" ErrorCorrection="QrErrorCorrection.Low" />
+<BbQrCode Value="@value" ErrorCorrection="QrErrorCorrection.Medium" />
+<BbQrCode Value="@value" ErrorCorrection="QrErrorCorrection.Quartile" />
+<BbQrCode Value="@value" ErrorCorrection="QrErrorCorrection.High" />
+
+@code {
+    private const string value = "https://blazorblueprintui.com/components/qr-code";
+}

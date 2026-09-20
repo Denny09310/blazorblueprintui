@@ -11,6 +11,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **`BbQrCode`, a scannable code drawn as SVG, on a QR encoder written from scratch in C#.** No
+  JavaScript, no image request, no dependency: the code is part of the rendered markup, so it
+  scales, prints and copies like any other vector, and it works the same on Server, WASM and Auto.
+  `QrEncoder` in `BlazorBlueprint.Primitives` is the whole of ISO/IEC 18004 — every version from 1
+  to 40, all four error correction levels, numeric, alphanumeric and UTF-8 byte modes, Reed-Solomon
+  over GF(256), block interleaving, and the eight mask patterns scored by the specification's own
+  penalty rules.
+
+  **It was checked against an independent implementation and then against a real reader.** Every
+  module of every test vector matches matrices produced by segno — which turned out to pad a
+  spurious byte when the bit stream already ends on a codeword boundary, so the reference had that
+  one line corrected. Then 161 codes spanning versions 1 to 40 were rasterised and decoded back to
+  their original text, and the demo page is checked the same way in a browser: each rendered SVG is
+  drawn to a canvas and read back through `BarcodeDetector`. The tests carry the reference matrices
+  so a future change that breaks a corner of the spec fails loudly.
+
+  **The colours do not follow the theme, and that is the point.** A reader expects a dark code on a
+  light field, and enough of them refuse an inverted one that tracking a dark theme would trade a
+  working code for a tidier page. The default is therefore dark on white in both themes, with
+  `Foreground` and `Background` there for when that trade is worth making.
+
+  **A QR code is text only a camera can read, so there are two ways to reach it without one.**
+  `ShowValue` writes the value out as selectable text; `AriaLabel` says what scanning the code does
+  and defaults to the value where the value is short enough to read aloud. Someone using a screen
+  reader cannot point a phone at their own screen.
+
+  `ModuleShape` draws rounded or dotted modules, and keeps the three finder squares solid whichever
+  shape is chosen, because a reader finds those before it reads anything else. `Image` puts a logo
+  in the middle and raises the error correction level to Quartile on its own, since the image is
+  damage the code has to absorb; `ImageSize` is clamped to 30% of the width. `GetSvg()` hands back
+  the rendered markup as a standalone document with an intrinsic pixel size, which is all a
+  download needs. A value past the version 40 capacity renders a message rather than throwing,
+  which on Blazor Server would take the circuit down. `OnEncoded` reports the finished grid —
+  `Matrix` is also there, but a parent builds its markup before its children re-render, so reading
+  it from markup gives the previous grid.
+
 - **`BbPickList`, two lists and the buttons that move options between them.** Pick rows and press
   a button rather than dragging. On a list long enough to need a scrollbar that is the difference
   between a usable control and a frustrating one — and unlike a drag, it works from the keyboard.

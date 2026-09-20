@@ -394,6 +394,11 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["QuantityStepper.Increase"] = "Increase quantity",
         ["QuantityStepper.Decrease"] = "Decrease quantity",
 
+        // QrCode
+        ["QrCode.AriaLabel"] = "QR code",
+        ["QrCode.AriaLabelWithValue"] = "QR code for {0}",
+        ["QrCode.TooLong"] = "This value is too long to fit in a QR code.",
+
         // Rating
         ["Rating.Rating"] = "Rating",
 

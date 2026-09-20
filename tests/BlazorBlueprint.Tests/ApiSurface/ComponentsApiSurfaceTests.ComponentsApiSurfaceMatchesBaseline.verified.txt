@@ -3480,6 +3480,25 @@
   - ShowLabel : Boolean
   - Value : Double
 
+### BbQrCode (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
+  - Background : String
+  - Class : String
+  - ErrorCorrection : QrErrorCorrection
+  - Foreground : String
+  - Image : String
+  - ImageBackground : String
+  - ImageSize : Double
+  - Label : String
+  - MinVersion : Int32
+  - ModuleShape : QrCodeModuleShape
+  - OnEncoded : EventCallback<QrMatrix>
+  - QuietZone : Int32
+  - ShowValue : Boolean
+  - Size : String
+  - Value : String
+
 ### BbQuantityStepper (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaDescribedBy : String
@@ -5439,6 +5458,11 @@
   - Indigo = 15
   - Fuchsia = 16
   - Pink = 17
+
+### QrCodeModuleShape (BlazorBlueprint.Components)
+  - Square = 0
+  - Rounded = 1
+  - Dot = 2
 
 ### RadarShape (BlazorBlueprint.Components)
   - Polygon = 0

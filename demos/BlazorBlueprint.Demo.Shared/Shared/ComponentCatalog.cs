@@ -139,6 +139,7 @@ internal static class ComponentCatalog
             new("Popover", "/components/popover", "Floating panels for additional content and actions", "message-square"),
             new("Progress", "/components/progress", "Progress indicator for task completion", "loader"),
             new("Quantity Stepper", "/components/quantity-stepper", "Quantity controls with bounds, validation and remove-at-minimum actions.", "minus", IsNew: true, Component: "BbQuantityStepper"),
+            new("QR Code", "/components/qr-code", "Scannable QR code drawn as SVG, encoded in C# with no dependency", "qr-code", IsNew: true, Component: "BbQrCode"),
             new("Radio Group", "/components/radio-group", "Mutually exclusive options with keyboard navigation", "circle-dot"),
             new("Range Slider", "/components/range-slider", "Dual-handle slider for selecting value ranges", "component"),
             new("Rating", "/components/rating", "Star rating component with half-value and custom icons", "component"),
