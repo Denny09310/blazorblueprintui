@@ -105,6 +105,7 @@ internal static class ComponentCatalog
             new("Form Field Time Picker", "/components/form-field-time-picker", "Time picker with built-in label, helper text, and error messages", "component"),
             new("Form Field Tree Select", "/components/form-field-tree-select", "Tree select with built-in label, helper text, and error messages", "component", IsNew: true, Component: "BbFormFieldTreeSelect"),
             new("Form Wizard", "/components/form-wizard", "Multi-step form with progress tracking and validation", "component"),
+            new("Gantt", "/components/gantt", "A plan drawn against a timeline, with summaries, milestones and dependency arrows", "chart-gantt", IsNew: true, Component: "BbGantt"),
             new("Height Animation", "/components/height-animation", "Animate expansion and dynamic content resizing.", "move-vertical", IsNew: true, Component: "BbHeightAnimation"),
             new("Highlighter", "/components/highlighter", "Marks the parts of a string that match a search term", "highlighter", IsNew: true, Component: "BbHighlighter"),
             new("Hover Card", "/components/hovercard", "Rich preview cards on hover with delay control", "square-mouse-pointer"),

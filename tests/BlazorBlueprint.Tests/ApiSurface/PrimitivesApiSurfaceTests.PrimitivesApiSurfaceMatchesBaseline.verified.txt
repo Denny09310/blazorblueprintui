@@ -1143,6 +1143,29 @@
   - Container = 1
   - None = 2
 
+### GanttAnchor (BlazorBlueprint.Primitives.Gantt)
+  - Start = 0
+  - End = 1
+
+### GanttDependencyType (BlazorBlueprint.Primitives.Gantt)
+  - FinishToStart = 0
+  - StartToStart = 1
+  - FinishToFinish = 2
+  - StartToFinish = 3
+
+### GanttRangeSnap (BlazorBlueprint.Primitives.Gantt)
+  - None = 0
+  - Minor = 1
+  - Major = 2
+
+### GanttZoom (BlazorBlueprint.Primitives.Gantt)
+  - Hour = 0
+  - Day = 1
+  - Week = 2
+  - Month = 3
+  - Quarter = 4
+  - Year = 5
+
 ### PivotTotals (BlazorBlueprint.Primitives.Pivot)
   - None = 0
   - RowTotals = 1

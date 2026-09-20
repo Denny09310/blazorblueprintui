@@ -335,6 +335,32 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["FormWizard.Skip"] = "Skip",
         ["FormWizard.Complete"] = "Complete",
 
+        // Gantt
+        ["Gantt.Task"] = "Task",
+        ["Gantt.Today"] = "Today",
+        ["Gantt.ExpandAll"] = "Expand all",
+        ["Gantt.CollapseAll"] = "Collapse all",
+        ["Gantt.Expand"] = "Show the tasks under {0}",
+        ["Gantt.Collapse"] = "Hide the tasks under {0}",
+        ["Gantt.Zoom"] = "Zoom",
+        ["Gantt.ZoomHour"] = "Hour",
+        ["Gantt.ZoomDay"] = "Day",
+        ["Gantt.ZoomWeek"] = "Week",
+        ["Gantt.ZoomMonth"] = "Month",
+        ["Gantt.ZoomQuarter"] = "Quarter",
+        ["Gantt.ZoomYear"] = "Year",
+        ["Gantt.Week"] = "W{0}",
+        ["Gantt.Quarter"] = "Q{0}",
+        ["Gantt.Loading"] = "Loading...",
+        ["Gantt.Empty"] = "Nothing to schedule",
+        ["Gantt.Dependencies"] = "Task dependencies",
+        ["Gantt.FinishToStart"] = "{0} finishes before {1} starts",
+        ["Gantt.StartToStart"] = "{0} starts when {1} starts",
+        ["Gantt.FinishToFinish"] = "{0} finishes when {1} finishes",
+        ["Gantt.StartToFinish"] = "{0} starts before {1} finishes",
+        ["Gantt.BarLabel"] = "{0}, {1} to {2}, {3}% done",
+        ["Gantt.MilestoneLabel"] = "{0}, milestone on {1}",
+
         // Link
         ["Link.OpensInNewTab"] = "(opens in a new tab)",
 

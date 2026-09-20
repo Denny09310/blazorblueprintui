@@ -11,6 +11,56 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **`BbGantt`, a plan drawn against a timeline: a task list down the side, a bar for every task
+  across from it, and arrows for what has to happen first.** The task list and the timeline are one
+  table, not two panes kept in step. A Gantt is read across the row — this name, that bar — and two
+  scrolling panes can only ever agree about where a row is by measuring each other; sharing the row
+  means they cannot disagree. Every position is worked out in C# from the column widths and the slot
+  width, so the chart draws the same on Server, on WebAssembly and in print, and nothing has to be
+  measured in the browser.
+
+  **Positions are counted in slots, not in days.** Every minor slot is drawn the same width whatever
+  it holds, so February and March are the same size at month zoom and a bar's position is worked out
+  *inside* its slot. That is what lets one multiplication place a bar at any of the six zoom levels —
+  hours under days, days under months, weeks under months, months under years, quarters under years,
+  and years on their own — and what lets the grid lines be a repeating gradient rather than one
+  element per boundary, which an hour zoom over a quarter would turn into thousands of empty divs.
+
+  **A task with children is a summary and takes its dates and its progress from them.** Progress is
+  weighted by how long each child runs, so a fortnight half done outweighs an afternoon finished; a
+  summary of nothing but milestones has no length to weigh, so they count equally. It is drawn as a
+  bracket rather than a bar, because a summary is the span of what is under it and not a task in its
+  own right. A task with no length is a milestone, and so is one whose end is before its start —
+  which is a marker rather than a bar running backwards. `RollUpSummaries` turns the lot off where a
+  summary carries a baseline agreed separately from the work beneath it.
+
+  **A dependency is drawn, not enforced.** All four types are there — finish to start, start to
+  start, finish to finish and start to finish, each named for the two ends it ties — but moving a
+  task does not move what depends on it, because rescheduling a plan is a decision about float,
+  calendars and who is free rather than something a chart should do behind the reader's back. An
+  arrow reaching a task whose row has been folded away is re-tied to the summary now standing in for
+  it, and one whose two ends fold into the same row is dropped rather than drawn as a loop. Where the
+  two ends face each other the route is three segments; where they do not it goes around the row in
+  five, clear of the row's own border line, since drawing the long run on top of the border makes the
+  arrow read as going nowhere.
+
+  **`AllowDrag` and `AllowResize` hand back dates rather than writing them.** The drag itself stays
+  in the browser, because a pointermove per frame over a Blazor Server circuit is a bar that lags
+  behind the pointer; only the finished gesture crosses, and `OnTaskChange` carries the dates it is
+  asking for with a `Cancel` that snaps the bar straight back. `SnapToSlot` keeps a plan agreed in
+  days from coming back with a start at 09:47.
+
+  Columns carry a width in pixels rather than a share of the space, because the chart has to know how
+  wide the task list is before it can place the first bar. `Value` reads the task and is what a sort
+  compares — sorting reorders siblings and never moves a child out of its branch — while a column's
+  content reads the row, which is the task after roll-up, so a date in the list agrees with the bar
+  beside it. `CollapsedIds` names the closed set rather than the open one, unlike `BbDataGrid`'s
+  `ExpandedNodes`: a plan is read open, so empty is the state a reader wants first.
+
+  `GanttBuilder` in `BlazorBlueprint.Primitives` is the engine on its own — the tree, the roll-up,
+  the timeline and the resolved arrows, with no markup — for drawing a plan somewhere that is not a
+  screen.
+
 - **`BbPivotDataGrid`, a cross-tabulation: one field down the side, another across the top, and a
   worked-out value where they cross.** This is the one grid whose columns come from the data rather
   than from a declaration, which is the whole difference between it and grouping in `BbDataGrid` —
@@ -259,6 +309,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
   **A swipe is never reachable by keyboard.** Whatever the gesture does needs a second, visible
   route as well. The demo page says so where it cannot be missed.
+
+### Changed
+
+- **`datagrid-columns.js` is now `table-columns.js`, shared by `BbDataGrid` and `BbGantt`.** It was
+  already generic — it works off `data-column-id`, a `colgroup` and one callback — and only the name
+  said otherwise. Two things had to give for a second caller: columns are matched to their `<col>` by
+  identifier rather than by position, because a Gantt's `colgroup` also holds one entry per timeline
+  slot and those are not columns anyone can drag; and the table's locked width is seeded from what
+  the table actually measures rather than from the sum of the draggable columns, so a table with
+  columns this file does not manage is not squashed down to the ones it does. No public API changed.
+
+---
 
 ## 2026-09-19
 

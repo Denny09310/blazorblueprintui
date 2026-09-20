@@ -1,0 +1,379 @@
+@namespace BlazorBlueprint.Components
+@typeparam TItem
+@using BlazorBlueprint.Primitives.Gantt
+@using BlazorBlueprint.Icons.Lucide.Components
+@inject IBbLocalizer Localizer
+
+@*
+    Gantt — a task list and a timeline sharing one table.
+
+    The column declarations render into a hidden box first: a column has to run its lifecycle to
+    register itself, and only then is there a task list to measure the timeline against.
+*@
+
+<div class="@RootClass" data-slot="gantt" @attributes="AdditionalAttributes">
+
+    <div class="bb:hidden">
+        <CascadingValue Value="this" IsFixed="true">
+            @if (Columns is not null)
+            {
+                @Columns
+            }
+            else
+            {
+                <BbGanttColumn TItem="TItem" Title="@Localizer["Gantt.Task"]" Width="240" IsTree="true" />
+            }
+        </CascadingValue>
+    </div>
+
+    @if (ShowToolbar)
+    {
+        <div class="bb:flex bb:flex-wrap bb:items-center bb:gap-2">
+            <BbButton Variant="ButtonVariant.Outline"
+                      Size="ButtonSize.Small"
+                      OnClick="GoToTodayAsync"
+                      aria-label="@Localizer["Gantt.Today"]">
+                <LucideIcon Name="calendar-days" Size="16" Class="bb:me-2" />
+                @Localizer["Gantt.Today"]
+            </BbButton>
+
+            <BbButton Variant="ButtonVariant.Ghost"
+                      Size="ButtonSize.Small"
+                      OnClick="ExpandAllAsync"
+                      aria-label="@Localizer["Gantt.ExpandAll"]">
+                <LucideIcon Name="unfold-vertical" Size="16" Class="bb:me-2" />
+                @Localizer["Gantt.ExpandAll"]
+            </BbButton>
+
+            <BbButton Variant="ButtonVariant.Ghost"
+                      Size="ButtonSize.Small"
+                      OnClick="CollapseAllAsync"
+                      aria-label="@Localizer["Gantt.CollapseAll"]">
+                <LucideIcon Name="fold-vertical" Size="16" Class="bb:me-2" />
+                @Localizer["Gantt.CollapseAll"]
+            </BbButton>
+
+            @if (ShowZoomControls)
+            {
+                <div class="bb:ms-auto bb:flex bb:items-center bb:gap-1" role="group" aria-label="@Localizer["Gantt.Zoom"]">
+                    @foreach (var level in Enum.GetValues<GanttZoom>())
+                    {
+                        var isCurrent = level == Zoom;
+                        <BbButton Variant="@(isCurrent ? ButtonVariant.Default : ButtonVariant.Ghost)"
+                                  Size="ButtonSize.Small"
+                                  OnClick="@(() => SetZoomAsync(level))"
+                                  aria-pressed="@isCurrent.ToString().ToLowerInvariant()">
+                            @Localizer[$"Gantt.Zoom{level}"]
+                        </BbButton>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    @if (buildError is not null)
+    {
+        <p role="alert" class="bb:text-sm bb:text-destructive">@buildError</p>
+    }
+    else if (Loading)
+    {
+        <div class="bb:flex bb:items-center bb:gap-2 bb:py-8 bb:text-sm bb:text-muted-foreground">
+            <BbSpinner Size="SpinnerSize.Small" />
+            <span>@Localizer["Gantt.Loading"]</span>
+        </div>
+    }
+    else if (chart is null || chart.IsEmpty)
+    {
+        <p class="bb:py-8 bb:text-center bb:text-sm bb:text-muted-foreground">
+            @(EmptyMessage ?? Localizer["Gantt.Empty"])
+        </p>
+    }
+    else
+    {
+        var axis = chart.Axis;
+        var slotWidth = EffectiveSlotWidth;
+        var treeWidth = TreeWidth;
+        var timelineWidth = TimelineWidth;
+        var today = TodayLine();
+        var treeColumn = TreeColumn;
+
+        <div @ref="rootElement"
+             id="@chartId"
+             data-gantt-root
+             data-slot-width="@slotWidth"
+             data-snap="@(SnapToSlot ? "true" : "false")"
+             data-allow-drag="@(AllowDrag ? "true" : "false")"
+             data-allow-resize="@(AllowResize ? "true" : "false")"
+             class="bb:overflow-auto bb:rounded-md bb:border bb:border-border"
+             style="@(Height is { Length: > 0 } height ? $"height:{height};" : string.Empty)">
+
+            @*
+                A content box the size of the whole chart. The drawing layer is positioned against
+                this rather than against the scroller, so it travels with the bars instead of
+                staying pinned to the window.
+            *@
+            <div class="bb:relative" style="@ContentStyle()">
+            <table class="bb:border-separate bb:border-spacing-0 bb:text-sm"
+                   style="@TableStyle()"
+                   aria-label="@AriaLabel">
+                <colgroup>
+                    @foreach (var column in DeclaredColumns)
+                    {
+                        <col data-column-id="@column.EffectiveKey" style="@ColumnWidthStyle(column)" />
+                    }
+                    @for (var slot = 0; slot < axis.SlotCount; slot++)
+                    {
+                        <col style="@SlotWidthStyle()" />
+                    }
+                </colgroup>
+
+                <thead>
+                    <tr>
+                        @{
+                            var headerOffset = 0;
+                        }
+                        @foreach (var column in DeclaredColumns)
+                        {
+                            var offset = headerOffset;
+                            var isSorted = string.Equals(sortKey, column.EffectiveKey, StringComparison.Ordinal);
+                            headerOffset += column.EffectiveWidth;
+
+                            <th rowspan="@HeaderTiers"
+                                scope="col"
+                                data-column-id="@column.EffectiveKey"
+                                class="bb:sticky bb:top-0 bb:z-40 bb:border-b bb:border-border bb:bg-background bb:px-3 bb:text-start bb:font-medium bb:text-muted-foreground @(headerOffset >= treeWidth ? "bb:border-e" : string.Empty)"
+                                style="@HeaderCellStyle(offset)"
+                                aria-sort="@(isSorted ? (sortDescending ? "descending" : "ascending") : "none")">
+                                <div class="bb:relative bb:flex bb:h-full bb:items-center">
+                                    @if (column.Sortable)
+                                    {
+                                        <button type="button"
+                                                class="bb:flex bb:items-center bb:gap-1 bb:truncate bb:hover:text-foreground"
+                                                @onclick="@(() => SortByAsync(column))">
+                                            <span class="bb:truncate">@column.Title</span>
+                                            @if (isSorted)
+                                            {
+                                                <LucideIcon Name="@(sortDescending ? "arrow-down" : "arrow-up")" Size="13" />
+                                            }
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="bb:truncate">@column.Title</span>
+                                    }
+
+                                    @if (Resizable)
+                                    {
+                                        <div class="bb:absolute bb:end-0 bb:top-0 bb:bottom-0 bb:w-2 bb:cursor-col-resize bb:hover:bg-primary/20 bb:active:bg-primary/40"
+                                             data-resize-handle="@column.EffectiveKey"></div>
+                                    }
+                                </div>
+                            </th>
+                        }
+
+                        @if (axis.Major.Count > 0)
+                        {
+                            @foreach (var slot in axis.Major)
+                            {
+                                <th colspan="@slot.Span"
+                                    scope="col"
+                                    class="bb:sticky bb:top-0 bb:z-30 bb:border-b bb:border-e bb:border-border bb:bg-background bb:px-2 bb:text-start bb:text-xs bb:font-medium bb:text-muted-foreground"
+                                    style="@TierStyle()">
+                                    <span class="bb:sticky bb:inline-block bb:truncate" style="@MajorLabelStyle()">@slot.Label</span>
+                                </th>
+                            }
+                        }
+                        else
+                        {
+                            @foreach (var slot in axis.Minor)
+                            {
+                                <th scope="col"
+                                    class="bb:sticky bb:top-0 bb:z-30 bb:border-b bb:border-border bb:bg-background bb:text-center bb:text-xs bb:font-normal bb:text-muted-foreground"
+                                    style="@SingleTierStyle()"
+                                    title="@slot.Start.ToString("D")">
+                                    @slot.Label
+                                </th>
+                            }
+                        }
+                    </tr>
+
+                    @if (axis.Major.Count > 0)
+                    {
+                        <tr>
+                            @foreach (var slot in axis.Minor)
+                            {
+                                <th scope="col"
+                                    class="bb:sticky bb:z-30 bb:border-b bb:border-border bb:bg-background bb:text-center bb:text-xs bb:font-normal @(slot.IsNonWorking && ShowNonWorkingDays ? "bb:text-muted-foreground/50" : "bb:text-muted-foreground")"
+                                    style="@LowerTierStyle()"
+                                    title="@slot.Start.ToString("D")">
+                                    @slot.Label
+                                </th>
+                            }
+                        </tr>
+                    }
+                </thead>
+
+                <tbody>
+                    @foreach (var row in chart.Rows)
+                    {
+                        <tr class="@ClassNames.cn("bb:group/row")" style="@RowStyle()">
+                            @{
+                                var cellOffset = 0;
+                            }
+                            @foreach (var column in DeclaredColumns)
+                            {
+                                var offset = cellOffset;
+                                cellOffset += column.EffectiveWidth;
+                                var isTree = ReferenceEquals(column, treeColumn);
+
+                                <td class="bb:sticky bb:z-20 bb:border-b bb:border-border bb:bg-background bb:px-3 bb:group-hover/row:bg-muted/50 @(cellOffset >= treeWidth ? "bb:border-e" : string.Empty) @AlignClass(column)"
+                                    style="@BodyCellStyle(offset)">
+                                    @if (isTree)
+                                    {
+                                        <div class="bb:flex bb:items-center bb:gap-1" style="@IndentStyle(row)">
+                                            @if (row.IsSummary)
+                                            {
+                                                <button type="button"
+                                                        class="bb:flex bb:size-5 bb:shrink-0 bb:items-center bb:justify-center bb:rounded bb:text-muted-foreground bb:hover:bg-muted bb:hover:text-foreground"
+                                                        aria-expanded="@row.IsExpanded.ToString().ToLowerInvariant()"
+                                                        aria-label="@string.Format(System.Globalization.CultureInfo.CurrentCulture, Localizer[row.IsExpanded ? "Gantt.Collapse" : "Gantt.Expand"], row.Text)"
+                                                        @onclick="@(() => ToggleAsync(row.Id))">
+                                                    <LucideIcon Name="@(row.IsExpanded ? "chevron-down" : "chevron-right")" Size="14" />
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <span class="bb:size-5 bb:shrink-0"></span>
+                                            }
+                                            <span class="bb:truncate @(row.IsSummary ? "bb:font-medium" : string.Empty)" title="@row.Text">
+                                                @(column.ChildContent is not null ? column.ChildContent(row) : (RenderFragment)(@<text>@column.Text(row)</text>))
+                                            </span>
+                                        </div>
+                                    }
+                                    else if (column.ChildContent is not null)
+                                    {
+                                        @column.ChildContent(row)
+                                    }
+                                    else
+                                    {
+                                        <span class="bb:truncate">@column.Text(row)</span>
+                                    }
+                                </td>
+                            }
+
+                            @*
+                                The timeline cell is structure only. Everything drawn against the
+                                axis lives in one layer after the table, because a table paints its
+                                cells in document order and no z-index on a later cell's child will
+                                lift a dependency arrow over an earlier cell's bar.
+                            *@
+                            <td colspan="@axis.SlotCount" class="bb:border-b bb:border-border bb:p-0" style="@RowStyle()"></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div class="bb:pointer-events-none bb:absolute bb:top-0" style="@DrawingLayerStyle()">
+                @foreach (var band in NonWorkingBands())
+                {
+                    <div class="bb:absolute bb:top-0 bb:bottom-0 bb:bg-muted/50"
+                         style="@BandStyle(band.X, band.Width)"></div>
+                }
+                @foreach (var line in MajorLines())
+                {
+                    <div class="bb:absolute bb:top-0 bb:bottom-0 bb:w-px bb:bg-border"
+                         style="@LineStyle(line)"></div>
+                }
+                @if (today is { } marker)
+                {
+                    <div class="bb:absolute bb:top-0 bb:bottom-0 bb:w-px bb:bg-primary"
+                         style="@LineStyle(marker)"></div>
+                }
+
+                @foreach (var row in chart.Rows)
+                {
+                    @if (row.IsMilestone)
+                    {
+                        <div class="bb:pointer-events-auto bb:absolute bb:rotate-45 bb:rounded-[2px] @(AllowDrag ? "bb:cursor-grab bb:touch-none" : string.Empty)"
+                             style="@(MilestoneStyle(row) + MilestonePaint(row))"
+                             data-gantt-bar="@row.Id"
+                             role="img"
+                             aria-label="@BarLabel(row)"
+                             @onclick="@(() => ClickAsync(row))"></div>
+                    }
+                    else if (row.IsSummary)
+                    {
+                        <div class="bb:pointer-events-auto bb:absolute"
+                             style="@(BarStyle(row) + BarPaint(row))"
+                             data-gantt-bar="@row.Id"
+                             role="img"
+                             aria-label="@BarLabel(row)"
+                             @onclick="@(() => ClickAsync(row))">
+                            @if (row.Progress > 0)
+                            {
+                                <div class="bb:absolute bb:inset-y-0 bb:start-0"
+                                     style="@ProgressStyle(row)"></div>
+                            }
+                            <div class="bb:absolute bb:top-0 bb:start-0 bb:w-0.5" style="@SummaryCapStyle()"></div>
+                            <div class="bb:absolute bb:top-0 bb:end-0 bb:w-0.5" style="@SummaryCapStyle()"></div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="@ClassNames.cn("bb:group/bar bb:pointer-events-auto bb:absolute bb:rounded-[3px]", AllowDrag || AllowResize ? "bb:cursor-grab bb:touch-none" : null)"
+                             style="@(BarStyle(row) + BarPaint(row) + ";" + BarOutline())"
+                             data-gantt-bar="@row.Id"
+                             role="img"
+                             aria-label="@BarLabel(row)"
+                             @onclick="@(() => ClickAsync(row))">
+                            @if (BarTemplate is not null)
+                            {
+                                @BarTemplate(row)
+                            }
+                            else if (row.Progress > 0)
+                            {
+                                <div class="bb:absolute bb:inset-y-0 bb:start-0 bb:rounded-s-[3px]"
+                                     style="@ProgressStyle(row)"></div>
+                            }
+
+                            @if (AllowResize)
+                            {
+                                <div class="bb:absolute bb:inset-y-0 bb:start-0 bb:w-1.5 bb:cursor-ew-resize bb:rounded-s-[3px] bb:bg-foreground/40 bb:opacity-0 bb:group-hover/bar:opacity-100"
+                                     data-gantt-resize="start"></div>
+                                <div class="bb:absolute bb:inset-y-0 bb:end-0 bb:w-1.5 bb:cursor-ew-resize bb:rounded-e-[3px] bb:bg-foreground/40 bb:opacity-0 bb:group-hover/bar:opacity-100"
+                                     data-gantt-resize="end"></div>
+                            }
+                        </div>
+                    }
+
+                    @if (ShowTaskLabels)
+                    {
+                        <span class="bb:absolute bb:flex bb:items-center bb:whitespace-nowrap bb:text-xs bb:text-muted-foreground"
+                              style="@LabelStyle(row)">
+                            @row.Text
+                        </span>
+                    }
+                }
+
+                @if (ShowDependencies && chart.Links.Count > 0)
+                {
+                    <svg class="bb:absolute bb:top-0 bb:start-0 bb:text-muted-foreground"
+                         width="@timelineWidth"
+                         height="@BodyHeight"
+                         role="list"
+                         aria-label="@Localizer["Gantt.Dependencies"]">
+                        @foreach (var link in chart.Links)
+                        {
+                            <g role="listitem">
+                                <title>@LinkLabel(link)</title>
+                                <path d="@LinkPath(link)" fill="none" stroke="currentColor" stroke-width="1.5" />
+                                <polygon points="@LinkArrow(link)" fill="currentColor" />
+                            </g>
+                        }
+                    </svg>
+                }
+            </div>
+            </div>
+        </div>
+    }
+</div>

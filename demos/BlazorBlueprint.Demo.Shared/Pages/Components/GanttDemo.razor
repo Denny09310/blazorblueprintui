@@ -1,0 +1,824 @@
+@page "/components/gantt"
+@using BlazorBlueprint.Primitives.Gantt
+<PageTitle>Gantt - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-5xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Gantt</h1>
+            <p class="text-xl text-muted-foreground">
+                A plan drawn against a timeline: a task list down the side, a bar for every task
+                across from it, and arrows for what has to happen first.
+            </p>
+            <p class="text-muted-foreground">
+                Every chart on this page draws the same @plan.Count tasks &mdash; a product launch,
+                four phases deep in places. Open <strong>Show the data</strong> under any chart to
+                read the rows it was built from, including the dates a summary bar worked out for
+                itself.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Usage</h2>
+                <p class="text-muted-foreground">
+                    Hand it the tasks and say how to read one. A task that names another as its
+                    parent nests under it, and a task with children becomes a
+                    <strong>summary</strong>: it takes its dates and its progress from the work
+                    underneath rather than carrying its own.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BbGantt TItem="PlanTask"
+                         Data="@plan"
+                         IdSelector="@(t => t.Id)"
+                         ParentIdSelector="@(t => t.Parent)"
+                         TextSelector="@(t => t.Name)"
+                         StartSelector="@(t => t.Start)"
+                         EndSelector="@(t => t.End)"
+                         ProgressSelector="@(t => t.Progress)"
+                         Height="26rem"
+                         AriaLabel="Product launch plan" />
+            </div>
+
+            @DataPanel("basic")
+
+            <CodeBlock Source="Components/Gantt/basic.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Columns</h2>
+                <p class="text-muted-foreground">
+                    Declare columns and the task list grows. Widths are in pixels rather than a
+                    share of the space, because the chart has to know how wide the task list is
+                    before it can place the first bar. Drag a column's edge to change it, and click
+                    a sortable heading to reorder tasks <em>within</em> their branch &mdash; a child
+                    never leaves its parent.
+                </p>
+                <p class="text-muted-foreground">
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Value</code> reads your task
+                    and is what a sort compares. A column's content reads the
+                    <strong>row</strong> instead, which is the task after roll-up &mdash; so the
+                    dates below agree with the bars beside them rather than with what a summary was
+                    declared with.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BbGantt TItem="PlanTask"
+                         Data="@plan"
+                         IdSelector="@(t => t.Id)"
+                         ParentIdSelector="@(t => t.Parent)"
+                         TextSelector="@(t => t.Name)"
+                         StartSelector="@(t => t.Start)"
+                         EndSelector="@(t => t.End)"
+                         ProgressSelector="@(t => t.Progress)"
+                         Height="26rem"
+                         AriaLabel="Plan with columns">
+                    <Columns>
+                        <BbGanttColumn TItem="PlanTask" Title="Task" Width="230" IsTree="true" Sortable="true" />
+                        <BbGanttColumn TItem="PlanTask" Title="Owner" Width="110"
+                                       Value="@(t => t.Owner)" Sortable="true" />
+                        <BbGanttColumn TItem="PlanTask" Title="Start" Width="100"
+                                       Value="@(t => t.Start)" Sortable="true">
+                            @context.Start.ToString("d MMM")
+                        </BbGanttColumn>
+                        <BbGanttColumn TItem="PlanTask" Title="Days" Width="70"
+                                       Align="GanttColumnAlign.End">
+                            @((context.End - context.Start).TotalDays.ToString("0"))
+                        </BbGanttColumn>
+                        <BbGanttColumn TItem="PlanTask" Title="Done" Width="70"
+                                       Align="GanttColumnAlign.End">
+                            @context.Progress.ToString("P0")
+                        </BbGanttColumn>
+                    </Columns>
+                </BbGantt>
+            </div>
+
+            <CodeBlock Source="Components/Gantt/columns.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Zoom</h2>
+                <p class="text-muted-foreground">
+                    Six zoom levels, each picking both tiers of the header at once. Every slot is
+                    drawn the same width whatever it holds, so February and March are the same size
+                    at month zoom &mdash; a bar's position is worked out inside its slot rather than
+                    against a flat count of days.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-sm text-muted-foreground">Zoom:</span>
+                    @foreach (var level in Enum.GetValues<GanttZoom>())
+                    {
+                        <BbButton Variant="@(zoom == level ? ButtonVariant.Default : ButtonVariant.Outline)"
+                                  Size="ButtonSize.Small"
+                                  OnClick="@(() => zoom = level)">
+                            @level
+                        </BbButton>
+                    }
+                </div>
+
+                <BbGantt TItem="PlanTask"
+                         Data="@plan"
+                         IdSelector="@(t => t.Id)"
+                         ParentIdSelector="@(t => t.Parent)"
+                         TextSelector="@(t => t.Name)"
+                         StartSelector="@(t => t.Start)"
+                         EndSelector="@(t => t.End)"
+                         ProgressSelector="@(t => t.Progress)"
+                         Zoom="@zoom"
+                         ShowToolbar="false"
+                         Height="24rem"
+                         AriaLabel="Plan at the chosen zoom" />
+            </div>
+
+            <CodeBlock Source="Components/Gantt/zoom.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Dependencies</h2>
+                <p class="text-muted-foreground">
+                    Four types, named for the two ends they tie together. A dependency is
+                    <strong>drawn, not enforced</strong>: moving a task does not move what depends
+                    on it, because rescheduling a plan is a decision about float, calendars and who
+                    is free &mdash; not something a chart should do behind the reader's back.
+                </p>
+                <p class="text-muted-foreground">
+                    Fold a branch up and an arrow that crossed it is re-tied to the summary now
+                    standing in for it, rather than quietly disappearing.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BbGantt TItem="PlanTask"
+                         Data="@plan"
+                         IdSelector="@(t => t.Id)"
+                         ParentIdSelector="@(t => t.Parent)"
+                         TextSelector="@(t => t.Name)"
+                         StartSelector="@(t => t.Start)"
+                         EndSelector="@(t => t.End)"
+                         ProgressSelector="@(t => t.Progress)"
+                         Dependencies="@links"
+                         Height="26rem"
+                         AriaLabel="Plan with dependencies">
+                    <Columns>
+                        <BbGanttColumn TItem="PlanTask" Title="Task" Width="230" IsTree="true" />
+                    </Columns>
+                </BbGantt>
+            </div>
+
+            <div class="rounded-md border overflow-hidden">
+                <table class="w-full text-xs">
+                    <thead class="bg-muted">
+                        <tr class="border-b">
+                            <th class="px-2 py-1.5 text-left font-medium">From</th>
+                            <th class="px-2 py-1.5 text-left font-medium">To</th>
+                            <th class="px-2 py-1.5 text-left font-medium">Type</th>
+                            <th class="px-2 py-1.5 text-left font-medium">Reads as</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var link in links)
+                        {
+                            <tr class="border-b last:border-0">
+                                <td class="px-2 py-1">@Named(link.FromId)</td>
+                                <td class="px-2 py-1">@Named(link.ToId)</td>
+                                <td class="px-2 py-1 font-mono">@link.Type</td>
+                                <td class="px-2 py-1 text-muted-foreground">@Reads(link)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <CodeBlock Source="Components/Gantt/dependencies.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Milestones and Roll-up</h2>
+                <p class="text-muted-foreground">
+                    A task with no length is a milestone and is drawn as a marker rather than a bar
+                    nobody can see. A summary's progress is <strong>weighted by how long each child
+                    runs</strong>, so a fortnight half done outweighs an afternoon finished. Turn
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">RollUpSummaries</code> off
+                    where a summary carries a separately agreed baseline instead.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <label class="flex items-center gap-2 text-sm">
+                    <BbCheckbox Checked="@rollUp" CheckedChanged="@(v => rollUp = v)" aria-label="Roll up summaries" />
+                    <span>Roll up summaries from their children</span>
+                </label>
+
+                <BbGantt TItem="PlanTask"
+                         Data="@plan"
+                         IdSelector="@(t => t.Id)"
+                         ParentIdSelector="@(t => t.Parent)"
+                         TextSelector="@(t => t.Name)"
+                         StartSelector="@(t => t.Start)"
+                         EndSelector="@(t => t.End)"
+                         ProgressSelector="@(t => t.Progress)"
+                         RollUpSummaries="@rollUp"
+                         ShowToolbar="false"
+                         Height="26rem"
+                         AriaLabel="Plan with roll-up switched on or off">
+                    <Columns>
+                        <BbGanttColumn TItem="PlanTask" Title="Task" Width="230" IsTree="true" />
+                        <BbGanttColumn TItem="PlanTask" Title="Declared" Width="180"
+                                       Value="@(t => $"{t.Start:d MMM} - {t.End:d MMM} @ {t.Progress:P0}")" />
+                    </Columns>
+                </BbGantt>
+
+                <p class="text-xs text-muted-foreground">
+                    The <strong>Declared</strong> column reads the task as it was written down. With
+                    roll-up on, a summary's bar disagrees with it on purpose.
+                </p>
+            </div>
+
+            @DataPanel("rollup")
+
+            <CodeBlock Source="Components/Gantt/rollup.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Dragging</h2>
+                <p class="text-muted-foreground">
+                    Turn on <code class="text-xs bg-muted px-1 py-0.5 rounded">AllowDrag</code> to
+                    move a bar and
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">AllowResize</code> to pull its
+                    edges. The chart does not write to your task: it hands you the dates the drag is
+                    asking for and you store them, or set
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Cancel</code> and the bar
+                    snaps back. Drags land on whole slots unless you turn
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">SnapToSlot</code> off.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbGantt TItem="PlanTask"
+                         Data="@editable"
+                         IdSelector="@(t => t.Id)"
+                         ParentIdSelector="@(t => t.Parent)"
+                         TextSelector="@(t => t.Name)"
+                         StartSelector="@(t => t.Start)"
+                         EndSelector="@(t => t.End)"
+                         ProgressSelector="@(t => t.Progress)"
+                         AllowDrag="true"
+                         AllowResize="true"
+                         OnTaskChange="@Reschedule"
+                         ShowToolbar="false"
+                         Height="26rem"
+                         AriaLabel="Plan you can drag">
+                    <Columns>
+                        <BbGanttColumn TItem="PlanTask" Title="Task" Width="230" IsTree="true" />
+                        <BbGanttColumn TItem="PlanTask" Title="Start" Width="100"
+                                       Value="@(t => t.Start)" Format="d MMM" />
+                        <BbGanttColumn TItem="PlanTask" Title="End" Width="100"
+                                       Value="@(t => t.End)" Format="d MMM" />
+                    </Columns>
+                </BbGantt>
+
+                <div class="flex items-center gap-3">
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="ResetEditable">
+                        Put it back
+                    </BbButton>
+                    <p class="text-sm text-muted-foreground">
+                        @(lastChange ?? "Drag a bar, or pull one of its edges. A summary is worked out from its children, so drag a leaf.")
+                    </p>
+                </div>
+            </div>
+
+            <CodeBlock Source="Components/Gantt/dragging.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Working Days and Colour</h2>
+                <p class="text-muted-foreground">
+                    Saturday and Sunday are shaded by default; name your own with
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">NonWorkingDays</code>. A line
+                    marks now. <code class="text-xs bg-muted px-1 py-0.5 rounded">BarColorSelector</code>
+                    paints a bar by whatever the task means to you &mdash; here, who owns it.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BbGantt TItem="PlanTask"
+                         Data="@plan"
+                         IdSelector="@(t => t.Id)"
+                         ParentIdSelector="@(t => t.Parent)"
+                         TextSelector="@(t => t.Name)"
+                         StartSelector="@(t => t.Start)"
+                         EndSelector="@(t => t.End)"
+                         ProgressSelector="@(t => t.Progress)"
+                         BarColorSelector="@(t => OwnerColor(t.Owner))"
+                         ShowTaskLabels="true"
+                         NonWorkingDays="@(new[] { DayOfWeek.Friday, DayOfWeek.Saturday })"
+                         ShowToolbar="false"
+                         Height="26rem"
+                         AriaLabel="Plan coloured by owner">
+                    <Columns>
+                        <BbGanttColumn TItem="PlanTask" Title="Task" Width="230" IsTree="true" />
+                        <BbGanttColumn TItem="PlanTask" Title="Owner" Width="110" Value="@(t => t.Owner)" />
+                    </Columns>
+                </BbGantt>
+            </div>
+
+            <CodeBlock Source="Components/Gantt/working-days.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Folding Branches</h2>
+                <p class="text-muted-foreground">
+                    The chart names the <em>closed</em> set rather than the open one, unlike
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">BbDataGrid</code>'s
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">ExpandedNodes</code>: a plan
+                    is read open, so an empty set is the state a reader wants first. Bind
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">CollapsedIds</code> to drive
+                    it from outside.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <div class="flex flex-wrap items-center gap-2">
+                    @foreach (var phase in plan.Where(t => t.Parent is null))
+                    {
+                        var isClosed = closed.Contains(phase.Id);
+                        <BbButton Variant="@(isClosed ? ButtonVariant.Default : ButtonVariant.Outline)"
+                                  Size="ButtonSize.Small"
+                                  OnClick="@(() => Fold(phase.Id))">
+                            @(isClosed ? "Open" : "Close") @phase.Name
+                        </BbButton>
+                    }
+                </div>
+
+                <BbGantt TItem="PlanTask"
+                         Data="@plan"
+                         IdSelector="@(t => t.Id)"
+                         ParentIdSelector="@(t => t.Parent)"
+                         TextSelector="@(t => t.Name)"
+                         StartSelector="@(t => t.Start)"
+                         EndSelector="@(t => t.End)"
+                         ProgressSelector="@(t => t.Progress)"
+                         Dependencies="@links"
+                         CollapsedIds="@closed"
+                         CollapsedIdsChanged="@(ids => closed = ids)"
+                         ShowToolbar="false"
+                         Height="24rem"
+                         AriaLabel="Plan with branches folded" />
+            </div>
+
+            <CodeBlock Source="Components/Gantt/folding.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Headless</h2>
+                <p class="text-muted-foreground">
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">GanttBuilder</code> in
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">BlazorBlueprint.Primitives</code>
+                    is the engine on its own &mdash; the tree, the roll-up, the timeline and the
+                    resolved arrows, with no markup. Here it is drawing the same plan as text.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <pre class="overflow-auto text-xs leading-5 font-mono">@HeadlessDump</pre>
+            </div>
+
+            <CodeBlock Source="Components/Gantt/headless.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">API Reference</h2>
+            </div>
+            <div class="space-y-4">
+                <ApiReference ComponentName="BbGantt&lt;TItem&gt;">
+                    <ApiParameter Name="Data" Type="IEnumerable&lt;TItem&gt;?">
+                        The tasks, in any order. The tree is rebuilt from the parent identifiers.
+                    </ApiParameter>
+                    <ApiParameter Name="IdSelector" Type="Func&lt;TItem, string&gt;">
+                        Reads a task's identifier. Must be unique across the whole set.
+                    </ApiParameter>
+                    <ApiParameter Name="TextSelector" Type="Func&lt;TItem, string&gt;">
+                        Reads a task's name.
+                    </ApiParameter>
+                    <ApiParameter Name="StartSelector" Type="Func&lt;TItem, DateTimeOffset&gt;">
+                        Reads a task's start.
+                    </ApiParameter>
+                    <ApiParameter Name="EndSelector" Type="Func&lt;TItem, DateTimeOffset&gt;">
+                        Reads a task's end. Equal to the start makes a milestone.
+                    </ApiParameter>
+                    <ApiParameter Name="ParentIdSelector" Type="Func&lt;TItem, string?&gt;?">
+                        Reads the identifier of the task this one sits under. Leave unset for a flat plan. A parent that is not in the set is treated as no parent.
+                    </ApiParameter>
+                    <ApiParameter Name="ProgressSelector" Type="Func&lt;TItem, double&gt;?">
+                        Reads how far along a task is, from 0 to 1. Values outside are clamped.
+                    </ApiParameter>
+                    <ApiParameter Name="BarColorSelector" Type="Func&lt;TItem, string?&gt;?">
+                        Reads a bar's colour, as any CSS colour. Null uses the theme's.
+                    </ApiParameter>
+                    <ApiParameter Name="Columns" Type="RenderFragment?">
+                        The <code class="text-xs bg-muted px-1 py-0.5 rounded">BbGanttColumn</code> declarations of the task list. Unset shows one column of task names.
+                    </ApiParameter>
+                    <ApiParameter Name="Dependencies" Type="IEnumerable&lt;GanttDependency&gt;?">
+                        The arrows drawn between tasks.
+                    </ApiParameter>
+                    <ApiParameter Name="ShowDependencies" Type="bool" Default="true">
+                        Whether the arrows are drawn.
+                    </ApiParameter>
+                    <ApiParameter Name="Zoom" Type="GanttZoom" Default="Day">
+                        <code class="text-xs bg-muted px-1 py-0.5 rounded">Hour</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">Day</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">Week</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">Month</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">Quarter</code> or <code class="text-xs bg-muted px-1 py-0.5 rounded">Year</code>. Two-way bindable.
+                    </ApiParameter>
+                    <ApiParameter Name="SlotWidth" Type="int?">
+                        How wide one slot is drawn, in pixels. Null takes a width from the zoom.
+                    </ApiParameter>
+                    <ApiParameter Name="RangeStart" Type="DateTimeOffset?">
+                        An explicit left edge for the timeline. Null takes it from the earliest task.
+                    </ApiParameter>
+                    <ApiParameter Name="RangeEnd" Type="DateTimeOffset?">
+                        An explicit right edge. Null takes it from the latest task.
+                    </ApiParameter>
+                    <ApiParameter Name="RangeSnap" Type="GanttRangeSnap" Default="Major">
+                        How far past the tasks the timeline is widened: <code class="text-xs bg-muted px-1 py-0.5 rounded">None</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">Minor</code> or <code class="text-xs bg-muted px-1 py-0.5 rounded">Major</code>.
+                    </ApiParameter>
+                    <ApiParameter Name="NonWorkingDays" Type="IReadOnlyCollection&lt;DayOfWeek&gt;?">
+                        The days shaded as non-working. Null shades Saturday and Sunday.
+                    </ApiParameter>
+                    <ApiParameter Name="ShowNonWorkingDays" Type="bool" Default="true">
+                        Whether the shading is drawn at all.
+                    </ApiParameter>
+                    <ApiParameter Name="ShowToday" Type="bool" Default="true">
+                        Whether a line marks the current instant.
+                    </ApiParameter>
+                    <ApiParameter Name="ScrollToToday" Type="bool" Default="true">
+                        Whether the timeline scrolls to today the first time it is drawn.
+                    </ApiParameter>
+                    <ApiParameter Name="RowHeight" Type="int" Default="36">
+                        How tall one row is drawn, in pixels.
+                    </ApiParameter>
+                    <ApiParameter Name="HeaderRowHeight" Type="int" Default="30">
+                        How tall one tier of the header is drawn, in pixels.
+                    </ApiParameter>
+                    <ApiParameter Name="CollapsedIds" Type="HashSet&lt;string&gt;?">
+                        The identifiers of the tasks whose children are hidden. Two-way bindable. Empty shows everything.
+                    </ApiParameter>
+                    <ApiParameter Name="DefaultExpandAll" Type="bool" Default="true">
+                        Whether every branch starts open.
+                    </ApiParameter>
+                    <ApiParameter Name="RollUpSummaries" Type="bool" Default="true">
+                        Whether a summary takes its dates and progress from its children.
+                    </ApiParameter>
+                    <ApiParameter Name="AllowDrag" Type="bool" Default="false">
+                        Whether a bar can be dragged along the timeline.
+                    </ApiParameter>
+                    <ApiParameter Name="AllowResize" Type="bool" Default="false">
+                        Whether a bar's edges can be dragged to change its length.
+                    </ApiParameter>
+                    <ApiParameter Name="SnapToSlot" Type="bool" Default="true">
+                        Whether a drag lands on whole slots.
+                    </ApiParameter>
+                    <ApiParameter Name="OnTaskChange" Type="EventCallback&lt;GanttChangeContext&lt;TItem&gt;&gt;">
+                        Fired when a bar is dragged. Store the new dates, or set <code class="text-xs bg-muted px-1 py-0.5 rounded">Cancel</code>.
+                    </ApiParameter>
+                    <ApiParameter Name="OnTaskClick" Type="EventCallback&lt;TItem&gt;">
+                        Fired when a bar is clicked.
+                    </ApiParameter>
+                    <ApiParameter Name="OnBuilt" Type="EventCallback&lt;GanttChart&lt;TItem&gt;?&gt;">
+                        Fired after the chart is built. Use this rather than reading <code class="text-xs bg-muted px-1 py-0.5 rounded">Chart</code> through <code class="text-xs bg-muted px-1 py-0.5 rounded">@@ref</code>, which is always one render behind.
+                    </ApiParameter>
+                    <ApiParameter Name="BarTemplate" Type="RenderFragment&lt;GanttRow&lt;TItem&gt;&gt;?">
+                        What is drawn inside a bar, replacing the default fill.
+                    </ApiParameter>
+                    <ApiParameter Name="ShowTaskLabels" Type="bool" Default="false">
+                        Whether a task's name is written beside its bar. Off by default, because the task list is already pinned to the side.
+                    </ApiParameter>
+                    <ApiParameter Name="Resizable" Type="bool" Default="true">
+                        Whether a column's edge can be dragged to change its width.
+                    </ApiParameter>
+                    <ApiParameter Name="MinColumnWidth" Type="int" Default="60">
+                        How narrow a dragged column may get, in pixels.
+                    </ApiParameter>
+                    <ApiParameter Name="ShowToolbar" Type="bool" Default="true">
+                        Whether the toolbar with Today, expand, collapse and zoom is shown.
+                    </ApiParameter>
+                    <ApiParameter Name="ShowZoomControls" Type="bool" Default="true">
+                        Whether the toolbar offers the zoom levels.
+                    </ApiParameter>
+                    <ApiParameter Name="Height" Type="string?">
+                        The height of the scrolling area, as a CSS length. The header and the task list stay put while the rest scrolls.
+                    </ApiParameter>
+                    <ApiParameter Name="Loading" Type="bool" Default="false">
+                        Whether a loading indicator replaces the chart.
+                    </ApiParameter>
+                    <ApiParameter Name="EmptyMessage" Type="string?">
+                        The message shown when there is nothing to draw.
+                    </ApiParameter>
+                    <ApiParameter Name="AriaLabel" Type="string?">
+                        The label a screen reader announces for the chart.
+                    </ApiParameter>
+                </ApiReference>
+
+                <ApiReference ComponentName="BbGanttColumn&lt;TItem&gt;">
+                    <ApiParameter Name="Title" Type="string">
+                        The heading.
+                    </ApiParameter>
+                    <ApiParameter Name="Width" Type="int" Default="140">
+                        How wide the column is drawn, in pixels.
+                    </ApiParameter>
+                    <ApiParameter Name="Value" Type="Func&lt;TItem, object?&gt;?">
+                        Reads the cell's value from your task, and is what a sort compares. Unset on the tree column shows the task's name.
+                    </ApiParameter>
+                    <ApiParameter Name="Format" Type="string?">
+                        The format the value is written with, as a standard .NET format string.
+                    </ApiParameter>
+                    <ApiParameter Name="ChildContent" Type="RenderFragment&lt;GanttRow&lt;TItem&gt;&gt;?">
+                        The cell's content, which replaces <code class="text-xs bg-muted px-1 py-0.5 rounded">Value</code>. The context is the row after roll-up, so a date here agrees with the bar beside it.
+                    </ApiParameter>
+                    <ApiParameter Name="Align" Type="GanttColumnAlign" Default="Start">
+                        <code class="text-xs bg-muted px-1 py-0.5 rounded">Start</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">Center</code> or <code class="text-xs bg-muted px-1 py-0.5 rounded">End</code>.
+                    </ApiParameter>
+                    <ApiParameter Name="IsTree" Type="bool" Default="false">
+                        Whether this column carries the expander and the indent. Unset, the first column declared takes it.
+                    </ApiParameter>
+                    <ApiParameter Name="Sortable" Type="bool" Default="false">
+                        Whether the heading sorts the tasks, within their branch.
+                    </ApiParameter>
+                    <ApiParameter Name="Comparer" Type="IComparer&lt;object?&gt;?">
+                        How this column's values are ordered. Defaults to the value's own order.
+                    </ApiParameter>
+                    <ApiParameter Name="Key" Type="string?">
+                        A stable identifier. Defaults to the title.
+                    </ApiParameter>
+                </ApiReference>
+            </div>
+        </section>
+    </div>
+</div>
+
+@code {
+    /// <summary>One task of the plan. A class, not a record, so the drag demo can write to it.</summary>
+    public sealed class PlanTask
+    {
+        public required string Id { get; init; }
+
+        public string? Parent { get; init; }
+
+        public required string Name { get; init; }
+
+        public required string Owner { get; init; }
+
+        public DateTimeOffset Start { get; set; }
+
+        public DateTimeOffset End { get; set; }
+
+        public double Progress { get; set; }
+    }
+
+    /// <summary>The Monday of last week, so that today lands in the middle of the plan.</summary>
+    private static readonly DateTimeOffset Origin = Monday();
+
+    private static DateTimeOffset Monday()
+    {
+        var today = DateTimeOffset.Now.Date;
+        var back = ((int)today.DayOfWeek + 6) % 7;
+        return new DateTimeOffset(today.AddDays(-back - 7), DateTimeOffset.Now.Offset);
+    }
+
+    private static DateTimeOffset Day(int offset) => Origin.AddDays(offset);
+
+    private static PlanTask Task(string id, string? parent, string name, string owner, int start, int length, double progress = 0) =>
+        new()
+        {
+            Id = id,
+            Parent = parent,
+            Name = name,
+            Owner = owner,
+            Start = Day(start),
+            End = Day(start + length),
+            Progress = progress,
+        };
+
+    private static List<PlanTask> BuildPlan() =>
+    [
+        Task("discovery", null, "Discovery", "Ana", 0, 0),
+        Task("interviews", "discovery", "Customer interviews", "Ana", 0, 5, 1.0),
+        Task("survey", "discovery", "Pricing survey", "Ben", 3, 4, 1.0),
+        Task("findings", "discovery", "Findings agreed", "Ana", 8, 0),
+
+        Task("design", null, "Design", "Cal", 0, 0),
+        Task("wireframes", "design", "Wireframes", "Cal", 8, 5, 1.0),
+        Task("visual", "design", "Visual design", "Cal", 0, 0),
+        Task("palette", "visual", "Colour and type", "Cal", 13, 4, 0.75),
+        Task("components", "visual", "Component sheet", "Dee", 13, 7, 0.4),
+        Task("signoff", "design", "Design signed off", "Ana", 21, 0),
+
+        Task("build", null, "Build", "Ben", 0, 0),
+        Task("api", "build", "Scheduling API", "Ben", 21, 10, 0.35),
+        Task("web", "build", "Web client", "Dee", 24, 12, 0.2),
+        Task("integrate", "build", "Integration pass", "Ben", 36, 4),
+
+        Task("launch", null, "Launch", "Ana", 0, 0),
+        Task("beta", "launch", "Private beta", "Ana", 40, 7),
+        Task("docs", "launch", "Docs and release notes", "Dee", 38, 6),
+        Task("ship", "launch", "Ship", "Ana", 47, 0),
+    ];
+
+    private readonly List<PlanTask> plan = BuildPlan();
+
+    private List<PlanTask> editable = BuildPlan();
+
+    private static readonly GanttDependency[] Links =
+    [
+        new("interviews", "survey"),
+        new("survey", "findings"),
+        new("findings", "wireframes"),
+        new("wireframes", "palette"),
+        new("palette", "components", GanttDependencyType.StartToStart),
+        new("components", "signoff"),
+        new("signoff", "api"),
+        new("api", "integrate"),
+        new("web", "integrate", GanttDependencyType.FinishToFinish),
+        new("integrate", "beta"),
+        new("docs", "beta", GanttDependencyType.StartToFinish),
+        new("beta", "ship"),
+    ];
+
+    private GanttDependency[] links => Links;
+
+    private GanttZoom zoom = GanttZoom.Day;
+    private bool rollUp = true;
+    private HashSet<string> closed = [];
+    private string? lastChange;
+
+    /// <summary>Which data panels are open. One per demo, so opening one leaves the others alone.</summary>
+    private readonly HashSet<string> openData = [];
+
+    private void ToggleData(string id)
+    {
+        if (!openData.Remove(id))
+        {
+            openData.Add(id);
+        }
+    }
+
+    private void Fold(string id)
+    {
+        var next = new HashSet<string>(closed);
+        if (!next.Remove(id))
+        {
+            next.Add(id);
+        }
+
+        closed = next;
+    }
+
+    private void ResetEditable()
+    {
+        editable = BuildPlan();
+        lastChange = null;
+    }
+
+    private void Reschedule(GanttChangeContext<PlanTask> change)
+    {
+        if (change.Row.IsSummary)
+        {
+            // A summary is worked out from its children; moving it would be a number with nothing
+            // behind it. Refusing here is what the Cancel flag is for.
+            change.Cancel = true;
+            lastChange = $"{change.Item.Name} is a summary. Drag the tasks under it instead.";
+            return;
+        }
+
+        change.Item.Start = change.Start;
+        change.Item.End = change.End;
+        lastChange = $"{change.Item.Name}: {change.Start:d MMM} to {change.End:d MMM}.";
+    }
+
+    private string Named(string id) =>
+        plan.FirstOrDefault(t => t.Id == id)?.Name ?? id;
+
+    private string Reads(GanttDependency link) => link.Type switch
+    {
+        GanttDependencyType.StartToStart => $"{Named(link.FromId)} starts when {Named(link.ToId)} starts",
+        GanttDependencyType.FinishToFinish => $"{Named(link.FromId)} finishes when {Named(link.ToId)} finishes",
+        GanttDependencyType.StartToFinish => $"{Named(link.FromId)} starts before {Named(link.ToId)} finishes",
+        _ => $"{Named(link.FromId)} finishes before {Named(link.ToId)} starts",
+    };
+
+    private static string OwnerColor(string owner) => owner switch
+    {
+        "Ana" => "var(--color-sky-500, #0ea5e9)",
+        "Ben" => "var(--color-violet-500, #8b5cf6)",
+        "Cal" => "var(--color-emerald-500, #10b981)",
+        _ => "var(--color-amber-500, #f59e0b)",
+    };
+
+    /// <summary>
+    /// A collapsible view of the rows a chart was built from. A summary's bar disagrees with its
+    /// own declared dates on purpose, and that is only readable next to the rows themselves.
+    /// </summary>
+    private RenderFragment DataPanel(string id) => @<div class="space-y-2">
+        <button type="button"
+                class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                aria-expanded="@(openData.Contains(id) ? "true" : "false")"
+                @onclick="@(() => ToggleData(id))">
+            <span class="font-mono text-xs">@(openData.Contains(id) ? "▾" : "▸")</span>
+            @(openData.Contains(id)
+                ? "Hide the data"
+                : $"Show the data — {plan.Count} tasks")
+        </button>
+
+        @if (openData.Contains(id))
+        {
+            <div class="rounded-md border overflow-auto" style="max-height: 22rem">
+                <table class="w-full text-xs">
+                    <thead class="sticky top-0 bg-muted">
+                        <tr class="border-b">
+                            <th class="px-2 py-1.5 text-left font-medium">Id</th>
+                            <th class="px-2 py-1.5 text-left font-medium">Parent</th>
+                            <th class="px-2 py-1.5 text-left font-medium">Name</th>
+                            <th class="px-2 py-1.5 text-left font-medium">Owner</th>
+                            <th class="px-2 py-1.5 text-left font-medium">Start</th>
+                            <th class="px-2 py-1.5 text-left font-medium">End</th>
+                            <th class="px-2 py-1.5 text-right font-medium">Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var task in plan)
+                        {
+                            <tr class="border-b last:border-0">
+                                <td class="px-2 py-1 font-mono">@task.Id</td>
+                                <td class="px-2 py-1 font-mono text-muted-foreground">@(task.Parent ?? "—")</td>
+                                <td class="px-2 py-1">@task.Name</td>
+                                <td class="px-2 py-1">@task.Owner</td>
+                                <td class="px-2 py-1 tabular-nums">@task.Start.ToString("ddd d MMM")</td>
+                                <td class="px-2 py-1 tabular-nums">@task.End.ToString("ddd d MMM")</td>
+                                <td class="px-2 py-1 text-right tabular-nums">@task.Progress.ToString("P0")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-xs text-muted-foreground">
+                Every phase is declared with no length at all. What you see on its bar is its
+                children's span, worked out by the engine.
+            </p>
+        }
+    </div>;
+
+    private string HeadlessDump
+    {
+        get
+        {
+            var chart = GanttBuilder.Build(new GanttSource<PlanTask>
+            {
+                Items = plan,
+                Id = t => t.Id,
+                ParentId = t => t.Parent,
+                Text = t => t.Name,
+                Start = t => t.Start,
+                End = t => t.End,
+                Progress = t => t.Progress,
+                Zoom = GanttZoom.Week,
+            });
+
+            var builder = new System.Text.StringBuilder();
+            var culture = System.Globalization.CultureInfo.InvariantCulture;
+            const int Track = 48;
+            var scale = (double)Track / chart.Axis.SlotCount;
+
+            foreach (var row in chart.Rows)
+            {
+                var name = new string(' ', row.Depth * 2) + row.Text;
+                var from = (int)Math.Round(row.OffsetSlots * scale);
+                var length = Math.Max(row.IsMilestone ? 0 : 1, (int)Math.Round(row.LengthSlots * scale));
+                var fill = row.IsMilestone ? "◆" : new string(row.IsSummary ? '=' : '#', length);
+
+                builder.Append(culture, $"{name,-26}");
+                builder.Append(new string('·', Math.Min(from, Track)));
+                builder.Append(fill);
+                builder.Append(new string('·', Math.Max(0, Track - from - fill.Length)));
+                builder.Append(culture, $" {row.Progress * 100,3:0}%");
+                builder.Append('\n');
+            }
+
+            return builder.ToString();
+        }
+    }
+}

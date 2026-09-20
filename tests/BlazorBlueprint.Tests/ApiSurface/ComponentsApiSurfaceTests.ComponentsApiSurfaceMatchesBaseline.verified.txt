@@ -2555,6 +2555,66 @@
   - Title : String
   - Width : String
 
+### BbGanttColumn`1 (BlazorBlueprint.Components)
+  - Align : GanttColumnAlign
+  - ChildContent : RenderFragment<GanttRow<TItem>>
+  - Comparer : IComparer<Object>
+  - Format : String
+  - IsTree : Boolean
+  - Key : String
+  - Sortable : Boolean
+  - Title : String
+  - Value : Func<TItem, Object>
+  - Width : Int32
+  - Parent : BbGantt<TItem> [CascadingParameter]
+
+### BbGantt`1 (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AllowDrag : Boolean
+  - AllowResize : Boolean
+  - AriaLabel : String
+  - BarColorSelector : Func<TItem, String>
+  - BarTemplate : RenderFragment<GanttRow<TItem>>
+  - Class : String
+  - CollapsedIds : HashSet<String>
+  - CollapsedIdsChanged : EventCallback<HashSet<String>>
+  - Columns : RenderFragment
+  - Data : IEnumerable<TItem>
+  - DefaultExpandAll : Boolean
+  - Dependencies : IEnumerable<GanttDependency>
+  - EmptyMessage : String
+  - EndSelector : Func<TItem, DateTimeOffset> [EditorRequired]
+  - HeaderRowHeight : Int32
+  - Height : String
+  - IdSelector : Func<TItem, String> [EditorRequired]
+  - Loading : Boolean
+  - MinColumnWidth : Int32
+  - NonWorkingDays : IReadOnlyCollection<DayOfWeek>
+  - OnBuilt : EventCallback<GanttChart<TItem>>
+  - OnTaskChange : EventCallback<GanttChangeContext<TItem>>
+  - OnTaskClick : EventCallback<TItem>
+  - ParentIdSelector : Func<TItem, String>
+  - ProgressSelector : Func<TItem, Double>
+  - RangeEnd : DateTimeOffset?
+  - RangeSnap : GanttRangeSnap
+  - RangeStart : DateTimeOffset?
+  - Resizable : Boolean
+  - RollUpSummaries : Boolean
+  - RowHeight : Int32
+  - ScrollToToday : Boolean
+  - ShowDependencies : Boolean
+  - ShowNonWorkingDays : Boolean
+  - ShowTaskLabels : Boolean
+  - ShowToday : Boolean
+  - ShowToolbar : Boolean
+  - ShowZoomControls : Boolean
+  - SlotWidth : Int32?
+  - SnapToSlot : Boolean
+  - StartSelector : Func<TItem, DateTimeOffset> [EditorRequired]
+  - TextSelector : Func<TItem, String> [EditorRequired]
+  - Zoom : GanttZoom
+  - ZoomChanged : EventCallback<GanttZoom>
+
 ### BbGauge (BlazorBlueprint.Components)
   - AxisLineWidth : Int32
   - ChildContent : RenderFragment
@@ -5327,6 +5387,16 @@
   - Descending = 0
   - Ascending = 1
   - None = 2
+
+### GanttChangeKind (BlazorBlueprint.Components)
+  - Move = 0
+  - ResizeStart = 1
+  - ResizeEnd = 2
+
+### GanttColumnAlign (BlazorBlueprint.Components)
+  - Start = 0
+  - Center = 1
+  - End = 2
 
 ### GradientDirection (BlazorBlueprint.Components)
   - Vertical = 0
