@@ -311,13 +311,14 @@
             <div class="space-y-3">
                 <h3 class="font-semibold">Setup Requirements</h3>
                 <p class="text-sm text-muted-foreground">
-                    Add Quill.js CSS to your <code class="bg-muted px-1 rounded">&lt;head&gt;</code>:
+                    None. Quill 2 ships inside the package and loads on demand the first time an editor
+                    is created, so there is no script or stylesheet to add to your host page.
                 </p>
-                <pre class="text-xs bg-muted p-3 rounded-md overflow-auto">&lt;link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.core.css" rel="stylesheet" /&gt;</pre>
                 <p class="text-sm text-muted-foreground mt-2">
-                    Add Quill.js script before the closing <code class="bg-muted px-1 rounded">&lt;/body&gt;</code> tag:
+                    To pin a different Quill build, load it yourself before the first editor renders. The
+                    component uses the <code class="bg-muted px-1 rounded">window.Quill</code> global when it
+                    is already present and leaves the bundled copy unfetched.
                 </p>
-                <pre class="text-xs bg-muted p-3 rounded-md overflow-auto">&lt;script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"&gt;&lt;/script&gt;</pre>
             </div>
 
             <div class="space-y-3">
