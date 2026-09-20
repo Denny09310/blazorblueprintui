@@ -11,6 +11,13 @@
                 One field down the side, another across the top, and a worked-out value where they
                 cross. The one grid whose columns come from the data rather than from a declaration.
             </p>
+            <p class="text-muted-foreground">
+                Every table on this page cross-tabulates the same @sales.Length orders. Each order is
+                one <code class="text-xs bg-muted px-1 py-0.5 rounded">Sale</code> &mdash; a region, a
+                country, a category, a year, a quarter, a month, an amount and a number of units.
+                Open <strong>Show the data</strong> under any table to read the rows it was built
+                from.
+            </p>
         </div>
     </div>
 
@@ -41,6 +48,8 @@
                     </Values>
                 </BbPivotDataGrid>
             </div>
+
+            @DataPanel("basic")
 
             <CodeBlock Source="Components/PivotDataGrid/basic.txt" />
         </section>
@@ -77,6 +86,8 @@
                 </BbPivotDataGrid>
             </div>
 
+            @DataPanel("nesting")
+
             <CodeBlock Source="Components/PivotDataGrid/nesting.txt" />
         </section>
 
@@ -110,6 +121,8 @@
                 </BbPivotDataGrid>
             </div>
 
+            @DataPanel("values")
+
             <CodeBlock Source="Components/PivotDataGrid/values.txt" />
         </section>
 
@@ -138,6 +151,8 @@
                     </Values>
                 </BbPivotDataGrid>
             </div>
+
+            @DataPanel("custom-aggregate")
 
             <CodeBlock Source="Components/PivotDataGrid/custom-aggregate.txt" />
         </section>
@@ -169,6 +184,8 @@
                     </Values>
                 </BbPivotDataGrid>
             </div>
+
+            @DataPanel("bucketing")
 
             <CodeBlock Source="Components/PivotDataGrid/bucketing.txt" />
         </section>
@@ -226,6 +243,8 @@
                 }
             </div>
 
+            @DataPanel("drill-down")
+
             <CodeBlock Source="Components/PivotDataGrid/drill-down.txt" />
         </section>
 
@@ -259,6 +278,8 @@
                     </Values>
                 </BbPivotDataGrid>
             </div>
+
+            @DataPanel("field-picker")
 
             <CodeBlock Source="Components/PivotDataGrid/field-picker.txt" />
         </section>
@@ -297,6 +318,8 @@
                     </Values>
                 </BbPivotDataGrid>
             </div>
+
+            @DataPanel("paging")
 
             <CodeBlock Source="Components/PivotDataGrid/paging.txt" />
         </section>
@@ -337,6 +360,8 @@
                 </BbPivotDataGrid>
             </div>
 
+            @DataPanel("templates")
+
             <CodeBlock Source="Components/PivotDataGrid/templates.txt" />
         </section>
 
@@ -355,6 +380,8 @@
             <div class="rounded-lg border bg-card p-6">
                 <pre class="overflow-x-auto rounded-md bg-muted p-3 text-xs"><code>@HeadlessDump</code></pre>
             </div>
+
+            @DataPanel("headless")
 
             <CodeBlock Source="Components/PivotDataGrid/headless.txt" />
         </section>
@@ -529,6 +556,69 @@
         Array.IndexOf(Bands, a?.ToString()).CompareTo(Array.IndexOf(Bands, b?.ToString())));
 
     private PivotCellContext<Sale>? drilled;
+
+    /// <summary>Which data panels are open. One per demo, so opening one leaves the others alone.</summary>
+    private readonly HashSet<string> openData = [];
+
+    private void ToggleData(string id)
+    {
+        if (!openData.Remove(id))
+        {
+            openData.Add(id);
+        }
+    }
+
+    /// <summary>
+    /// A collapsible view of the rows a table was built from. The numbers above it mean very little
+    /// without them, and the table is only rendered while it is open so ten copies cost nothing.
+    /// </summary>
+    private RenderFragment DataPanel(string id) => @<div class="space-y-2">
+        @* aria-expanded takes the words: a bool would render as a bare attribute. *@
+        <button type="button"
+                class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                aria-expanded="@(openData.Contains(id) ? "true" : "false")"
+                @onclick="@(() => ToggleData(id))">
+            <span class="font-mono text-xs">@(openData.Contains(id) ? "\u25be" : "\u25b8")</span>
+            @(openData.Contains(id)
+                ? "Hide the data"
+                : $"Show the data \u2014 {sales.Length} orders")
+        </button>
+
+        @if (openData.Contains(id))
+        {
+            <div class="rounded-md border overflow-auto" style="max-height: 20rem">
+                <table class="w-full text-xs">
+                    <thead class="sticky top-0 bg-muted">
+                        <tr class="border-b">
+                            <th class="px-2 py-1.5 text-left font-medium">Region</th>
+                            <th class="px-2 py-1.5 text-left font-medium">Country</th>
+                            <th class="px-2 py-1.5 text-left font-medium">Category</th>
+                            <th class="px-2 py-1.5 text-left font-medium">Year</th>
+                            <th class="px-2 py-1.5 text-left font-medium">Quarter</th>
+                            <th class="px-2 py-1.5 text-left font-medium">Month</th>
+                            <th class="px-2 py-1.5 text-right font-medium">Amount</th>
+                            <th class="px-2 py-1.5 text-right font-medium">Units</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var sale in sales)
+                        {
+                            <tr class="border-b last:border-0">
+                                <td class="px-2 py-1">@sale.Region</td>
+                                <td class="px-2 py-1">@sale.Country</td>
+                                <td class="px-2 py-1">@sale.Category</td>
+                                <td class="px-2 py-1 tabular-nums">@sale.Year</td>
+                                <td class="px-2 py-1">@sale.Quarter</td>
+                                <td class="px-2 py-1 tabular-nums">@sale.Month</td>
+                                <td class="px-2 py-1 text-right tabular-nums">@sale.Amount.ToString("C0")</td>
+                                <td class="px-2 py-1 text-right tabular-nums">@sale.Units</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>;
 
     private static string Band(decimal amount) => amount switch
     {
