@@ -275,6 +275,23 @@
   - Title : String
   - Width : String
 
+### BbBarcode (BlazorBlueprint.Components)
+  - AddChecksum : Boolean
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
+  - Background : String
+  - Class : String
+  - Foreground : String
+  - Height : String
+  - Label : String
+  - ModuleWidth : String
+  - OnEncoded : EventCallback<BarcodeSymbol>
+  - QuietZone : Int32?
+  - ShowChecksum : Boolean
+  - ShowValue : Boolean
+  - Type : BarcodeType
+  - Value : String
+
 ### BbBottomNav (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaLabel : String

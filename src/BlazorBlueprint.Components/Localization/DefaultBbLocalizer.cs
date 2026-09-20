@@ -25,6 +25,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         // AppBar
         ["AppBar.Back"] = "Go back",
 
+        // Barcode
+        ["Barcode.AriaLabel"] = "{0} barcode for {1}",
+
         // BottomNav
         ["BottomNav.Label"] = "Primary navigation",
 

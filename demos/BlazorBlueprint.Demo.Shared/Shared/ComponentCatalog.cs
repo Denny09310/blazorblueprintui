@@ -22,6 +22,7 @@ internal static class ComponentCatalog
             new("Attachment", "/components/attachment", "Displays files or images with metadata, upload states, actions, and optional trigger overlays.", "component"),
             new("Avatar", "/components/avatar", "User profile images with fallback initials and icons", "circle-user"),
             new("Badge", "/components/badge", "Labels for status, categories, and metadata", "badge"),
+            new("Barcode", "/components/barcode", "Linear barcode drawn as SVG, in fourteen symbologies, with no dependency", "scan-barcode", IsNew: true, Component: "BbBarcode"),
             new("Badge Icon", "/components/badge#badge-icon", "Decorative icons inside badges.", "component", IsNew: true, Component: "BbBadgeIcon"),
             new("Bottom Navigation", "/components/bottom-nav", "Mobile navigation with active state, links and safe-area padding.", "panel-bottom", IsNew: true, Component: "BbBottomNav"),
             new("Bottom Navigation Item", "/components/bottom-nav#bottom-nav-item", "A mobile navigation link or action with active state.", "component", IsNew: true, Component: "BbBottomNavItem"),

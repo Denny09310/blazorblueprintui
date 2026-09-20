@@ -1028,6 +1028,22 @@
   - Single = 0
   - Multiple = 1
 
+### BarcodeType (BlazorBlueprint.Primitives.Barcode)
+  - Code128 = 0
+  - Code39 = 1
+  - Ean13 = 2
+  - Ean8 = 3
+  - UpcA = 4
+  - Itf = 5
+  - Codabar = 6
+  - Postnet = 7
+  - Pharmacode = 8
+  - Rm4scc = 9
+  - Isbn = 10
+  - Issn = 11
+  - Msi = 12
+  - Telepen = 13
+
 ### DashboardBreakpoint (BlazorBlueprint.Primitives.DashboardGrid)
   - Large = 0
   - Medium = 1

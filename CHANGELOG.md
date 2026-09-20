@@ -11,6 +11,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **`BbBarcode`, fourteen linear symbologies drawn as SVG, on encoders written from scratch in C#.**
+  Code 128, Code 39, EAN-13, EAN-8, UPC-A, Interleaved 2 of 5, Codabar, ISBN, ISSN, MSI, Telepen,
+  Pharmacode, POSTNET and the Royal Mail 4-state code. No JavaScript, no image request, no
+  dependency: the symbol is part of the rendered markup, which matters more here than for a QR code
+  because a barcode is usually printed and a vector stays sharp at whatever size the label turns
+  out to be.
+
+  **Checked twice, against two independent implementations.** Every symbol matches zint bar for
+  bar — position, width and height, in modules — and every symbology a reader library supports was
+  decoded back to its original text by zxing-cpp. That found four real errors along the way: two
+  wrong Code 39 punctuation patterns, a reversed two-of-four table in the Royal Mail code, and both
+  the start and the stop pattern of MSI. Telepen was nearly dropped, because its bit-to-bar rule
+  resisted a confident reading; it went in once each character turned out to be a context-free
+  block of sixteen modules, which made the table derivable and then verifiable.
+
+  **The value is a rule, not a string.** Each symbology has its own alphabet, its own length rule
+  and its own check digit, and the encoder enforces all three rather than producing a symbol no
+  reader will accept. Give EAN-13 twelve digits and the check digit is worked out; give it thirteen
+  and it is verified. `BarcodeSymbol.Value` reports what was actually encoded, which is what a
+  scanner will report back. A value that breaks a rule renders a message naming the problem
+  character or the expected length, rather than throwing — which on Blazor Server would take the
+  circuit down.
+
+  **Two of them carry their data in the bar heights.** POSTNET and the Royal Mail code put every
+  bar on the same pitch and vary the shape instead, which survives a sorting conveyor far better.
+  The practical consequence is that squashing one destroys the data rather than just making it
+  harder to aim at, so `IsHeightModulated` says which you are holding.
+
+  **The printed line is HTML, not SVG text.** The bars stretch freely, because a barcode's width
+  comes from its data while its height is a free choice — and stretching SVG text along with them
+  turned the digits into unreadable slivers. As HTML the line stays legible at any shape, and it is
+  selectable, which is what someone does when the scan fails and they have to key the number in.
+  On the retail codes its position either side of the guard bars is part of the standard.
+  `GetSvg()` returns a different document for a file: fixed proportions, text drawn inside, colours
+  baked in.
+
+  The colours are dark on white in both themes, and there is less room to play than with a QR code:
+  a scanner measures the contrast between a bar and the space beside it, and an inverted symbol
+  reads as no symbol at all on most hardware. `AddChecksum` adds the optional check character on
+  Code 39, ITF, Codabar and MSI, off by default because a reader that is not expecting one reports
+  it as data; `ShowChecksum` decides whether it also appears in the printed line. `QuietZone`
+  defaults to whatever the symbology asks for, because too little margin is the most common reason
+  a printed barcode will not read.
+
 - **`BbQrCode`, a scannable code drawn as SVG, on a QR encoder written from scratch in C#.** No
   JavaScript, no image request, no dependency: the code is part of the rendered markup, so it
   scales, prints and copies like any other vector, and it works the same on Server, WASM and Auto.
