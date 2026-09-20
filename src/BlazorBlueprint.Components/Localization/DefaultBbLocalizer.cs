@@ -533,6 +533,14 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["ListBox.NoMatches"] = "No matches",
         ["ListBox.SelectedCount"] = "{0} selected",
 
+        // PickList
+        ["PickList.Available"] = "Available",
+        ["PickList.Selected"] = "Selected",
+        ["PickList.MoveSelectedToTarget"] = "Move selected",
+        ["PickList.MoveAllToTarget"] = "Move all",
+        ["PickList.MoveSelectedToSource"] = "Remove selected",
+        ["PickList.MoveAllToSource"] = "Remove all",
+
         // Select
         ["Select.ChooseOption"] = "Choose an option",
 

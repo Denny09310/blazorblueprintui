@@ -29,6 +29,7 @@ public partial class BbListBox<TValue> : ComponentBase, IAsyncDisposable
     private List<SelectOption<TValue>> visibleOptions = [];
     private HashSet<TValue> selectedValues = new();
     private string searchQuery = string.Empty;
+    private string lastSuppliedSearch = string.Empty;
     private int activeIndex = -1;
     private int anchorIndex = -1;
     private bool hasFocus;
@@ -123,6 +124,22 @@ public partial class BbListBox<TValue> : ComponentBase, IAsyncDisposable
     /// </summary>
     [Parameter]
     public string? SearchPlaceholder { get; set; }
+
+    /// <summary>
+    /// Gets or sets what the search box contains. Use with <c>@bind-SearchText</c>.
+    /// </summary>
+    /// <remarks>
+    /// Bindable so that a parent can tell which options are on screen rather than guessing, which
+    /// is what <c>BbPickList</c> needs to move only what a search has left visible.
+    /// </remarks>
+    [Parameter]
+    public string? SearchText { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback invoked when the search box changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string?> SearchTextChanged { get; set; }
 
     /// <summary>
     /// Gets or sets whether a select-all checkbox is shown. Only applies in
@@ -260,6 +277,16 @@ public partial class BbListBox<TValue> : ComponentBase, IAsyncDisposable
 
     protected override void OnParametersSet()
     {
+        // Adopt the supplied term only when it is a new one. Comparing against searchQuery instead
+        // would undo the person's typing on the next render, because their text is exactly what the
+        // parameter does not yet hold.
+        var supplied = SearchText ?? string.Empty;
+        if (supplied != lastSuppliedSearch)
+        {
+            lastSuppliedSearch = supplied;
+            searchQuery = supplied;
+        }
+
         selectedValues = IsMultiple
             ? [.. Values ?? []]
             : Value is null ? [] : [Value];
@@ -284,9 +311,7 @@ public partial class BbListBox<TValue> : ComponentBase, IAsyncDisposable
     private void RebuildVisibleOptions()
     {
         var all = Options?.Where(o => o is not null) ?? [];
-        visibleOptions = searchQuery.Length == 0
-            ? [.. all]
-            : [.. all.Where(o => o.Text.Contains(searchQuery, StringComparison.CurrentCultureIgnoreCase))];
+        visibleOptions = [.. all.Where(o => ListBoxSearch.Matches(o.Text, searchQuery))];
 
         if (activeIndex >= visibleOptions.Count)
         {
@@ -391,7 +416,10 @@ public partial class BbListBox<TValue> : ComponentBase, IAsyncDisposable
         // The old active index refers to a list that no longer exists.
         activeIndex = visibleOptions.Count > 0 ? FirstEnabled(0, 1) : -1;
         anchorIndex = -1;
-        await Task.CompletedTask;
+        // lastSuppliedSearch deliberately untouched: it records what the parent last supplied, not
+        // what was typed. Setting it here would make the next parameter pass look like a change and
+        // wipe the typing on a list box whose SearchText nobody is binding.
+        await SearchTextChanged.InvokeAsync(searchQuery);
     }
 
     private async Task HandleSearchKeyDownAsync(KeyboardEventArgs args)

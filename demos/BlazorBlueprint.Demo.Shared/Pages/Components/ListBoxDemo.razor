@@ -236,6 +236,12 @@
                 <ApiParameter Name="SearchPlaceholder" Type="string?">
                     The placeholder for the search box.
                 </ApiParameter>
+                <ApiParameter Name="SearchText" Type="string?">
+                    What the search box contains. Use with <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-SearchText</code> when a parent needs to know which options are on screen — which is how <a href="/components/pick-list" class="underline">Pick List</a> moves only what a search has left visible.
+                </ApiParameter>
+                <ApiParameter Name="SearchTextChanged" Type="EventCallback&lt;string?&gt;">
+                    Invoked when the search box changes.
+                </ApiParameter>
                 <ApiParameter Name="ShowSelectAll" Type="bool" Default="true">
                     Whether a select-all checkbox is shown. Multiple selection only. It covers what the search has left visible.
                 </ApiParameter>

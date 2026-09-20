@@ -11,6 +11,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **`BbPickList`, two lists and the buttons that move options between them.** Pick rows and press
+  a button rather than dragging. On a list long enough to need a scrollbar that is the difference
+  between a usable control and a frustrating one — and unlike a drag, it works from the keyboard.
+  Each pane is a `BbListBox`, so the whole listbox keyboard pattern comes with it: arrows, `Space`,
+  `Shift` to extend a range, `Ctrl+A`, typeahead.
+
+  **One binding, not two.** `Options` holds every option and `@bind-Values` holds the ones picked;
+  the available pane is whatever is left. Two bound collections — a `Source` and a `Target`, as
+  most pick lists take — can drift out of step with each other, putting an option in both panes or
+  in neither, and nothing can be asked to reconcile that afterwards. The picked order is kept as
+  moved rather than as listed, because a pick list is usually building an ordered thing: a set of
+  columns, a playlist, a sequence of steps.
+
+  **The move-everything buttons move what a search has left visible, not the hidden rest.** That
+  needed `BbListBox` to expose its search term, which it now does through a bindable `SearchText`,
+  so the pick list can tell what is actually on screen rather than guessing. Both sides share one
+  definition of what a search matches, because two copies of that rule would drift and the symptom
+  would be a button quietly moving rows nobody could see. A button that would do nothing is
+  disabled rather than silently inert.
+
+  `OptionDisabled` marks an option that cannot move, and the move-everything buttons leave it
+  where it is — which is how a required column stays put. `Orientation` stacks the panes with up
+  and down arrows for a narrow screen; the horizontal layout already stacks on small screens and
+  turns its button column into a row when it does. `OnMove` reports which values moved and which
+  way.
+
 - **`BbListBox`, an always-visible list of options.** No trigger, no popover: the choices stay on
   screen, which is what a settings panel, a transfer list or a filter pane wants. `SelectionMode`
   picks between one (`@bind-Value`) and many (`@bind-Values`), and it takes the same

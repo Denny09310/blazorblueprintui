@@ -2930,6 +2930,8 @@
   - OptionDisabled : Func<SelectOption<TValue>, Boolean>
   - Options : IEnumerable<SelectOption<TValue>>
   - SearchPlaceholder : String
+  - SearchText : String
+  - SearchTextChanged : EventCallback<String>
   - SelectAllLabel : String
   - SelectionMode : ListBoxSelectionMode
   - ShowSearch : Boolean
@@ -3379,6 +3381,28 @@
   - Size : PaginationLinkSize
   - Text : String
   - Context : PaginationContext [CascadingParameter]
+
+### BbPickList`1 (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - Class : String
+  - Disabled : Boolean
+  - Height : String
+  - ItemTemplate : RenderFragment<SelectOption<TValue>>
+  - OnMove : EventCallback<PickListMoveEventArgs<TValue>>
+  - OptionDisabled : Func<SelectOption<TValue>, Boolean>
+  - Options : IEnumerable<SelectOption<TValue>>
+  - Orientation : PickListOrientation
+  - ShowMoveAll : Boolean
+  - ShowSearch : Boolean
+  - ShowSelectAll : Boolean
+  - SourceEmptyMessage : String
+  - SourceLabel : String
+  - TargetEmptyMessage : String
+  - TargetLabel : String
+  - Values : IEnumerable<TValue>
+  - ValuesChanged : EventCallback<IEnumerable<TValue>>
+  - ValuesExpression : Expression<Func<IEnumerable<TValue>>>
+  - CascadedEditContext : EditContext [CascadingParameter]
 
 ### BbPie (BlazorBlueprint.Components)
   - ActiveIndex : Int32?
@@ -5391,6 +5415,10 @@
 ### PaginationLinkSize (BlazorBlueprint.Components)
   - Default = 0
   - Icon = 1
+
+### PickListOrientation (BlazorBlueprint.Components)
+  - Horizontal = 0
+  - Vertical = 1
 
 ### PrimaryColor (BlazorBlueprint.Components)
   - Default = 0
