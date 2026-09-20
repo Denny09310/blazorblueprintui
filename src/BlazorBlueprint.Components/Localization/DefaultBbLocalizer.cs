@@ -379,6 +379,19 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["NumericInput.IncreaseValue"] = "Increase value",
         ["NumericInput.DecreaseValue"] = "Decrease value",
 
+        // PivotDataGrid
+        ["PivotDataGrid.Total"] = "Total",
+        ["PivotDataGrid.Blank"] = "(blank)",
+        ["PivotDataGrid.Empty"] = "Nothing to cross-tabulate",
+        ["PivotDataGrid.Loading"] = "Loading...",
+        ["PivotDataGrid.Fields"] = "Fields",
+        ["PivotDataGrid.RowFields"] = "Rows",
+        ["PivotDataGrid.ColumnFields"] = "Columns",
+        ["PivotDataGrid.ValueFields"] = "Values",
+        ["PivotDataGrid.PageOf"] = "Page {0} of {1}",
+        ["PivotDataGrid.PreviousPage"] = "Previous page",
+        ["PivotDataGrid.NextPage"] = "Next page",
+
         // Pagination
         ["Pagination.Pagination"] = "Pagination",
         ["Pagination.Previous"] = "Previous",

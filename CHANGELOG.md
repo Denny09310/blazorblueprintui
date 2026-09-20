@@ -11,6 +11,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **`BbPivotDataGrid`, a cross-tabulation: one field down the side, another across the top, and a
+  worked-out value where they cross.** This is the one grid whose columns come from the data rather
+  than from a declaration, which is the whole difference between it and grouping in `BbDataGrid` —
+  a grouped grid still has the columns you wrote down, where a pivot grows a column for every value
+  it finds. Fields go in `Rows` and `Columns`, values in `Values`, and which axis a field belongs to
+  comes from the fragment it is written in, so moving a field between them is moving it in the
+  markup.
+
+  **A total is worked out from every item under it, not from the cells it covers.** Items are
+  bucketed in one pass and each bucket keeps its items, so a subtotal or a grand total re-runs the
+  aggregate over everything beneath it. For a sum the two answers agree and nobody notices; for an
+  average they do not, and an average of averages is wrong in a way that is invisible until someone
+  checks. The same mechanism is what lets a custom `Aggregate` report a rate or a median for a
+  total — it is handed the items, not the numbers above it.
+
+  **Totals read as totals *of* the thing named.** `RowTotals` is a column at the end of every row,
+  `ColumnTotals` is a row at the bottom, and the two subtotal flags do the same one level in. That
+  naming is the opposite of at least one other library's, so it is spelled out in the parameter
+  docs and on the demo page rather than left to be discovered.
+
+  `Label` turns a group's value into its heading, so a field can be bucketed or formatted while
+  still grouping — and therefore sorting — on the real value: the difference between Jan, Feb, Mar
+  and Apr, Aug, Dec. `OnCellClick` makes the cells buttons and hands over the items behind one,
+  including behind a total. `ShowFieldPicker` turns declared fields and values on and off without
+  the markup changing, and refuses to remove the last value, because a pivot with nothing in its
+  cells is not a table. Paging counts outermost row groups rather than rows, so a group is never
+  split across a boundary and its subtotal always lands with it.
+
+  `PivotBuilder` in `BlazorBlueprint.Primitives` is the engine on its own — two trees of headings
+  and the values where they cross, with no markup — for rendering somewhere that is not a screen.
+
 - **`BbBarcode`, fourteen linear symbologies drawn as SVG, on encoders written from scratch in C#.**
   Code 128, Code 39, EAN-13, EAN-8, UPC-A, Interleaved 2 of 5, Codabar, ISBN, ISSN, MSI, Telepen,
   Pharmacode, POSTNET and the Royal Mail 4-state code. No JavaScript, no image request, no

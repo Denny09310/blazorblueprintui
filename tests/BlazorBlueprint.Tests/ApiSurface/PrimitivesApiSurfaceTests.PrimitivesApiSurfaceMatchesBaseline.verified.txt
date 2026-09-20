@@ -1143,6 +1143,15 @@
   - Container = 1
   - None = 2
 
+### PivotTotals (BlazorBlueprint.Primitives.Pivot)
+  - None = 0
+  - RowTotals = 1
+  - ColumnTotals = 2
+  - Grand = 3
+  - ColumnSubtotals = 4
+  - RowSubtotals = 8
+  - All = 15
+
 ### PopoverAlign (BlazorBlueprint.Primitives)
   - Start = 0
   - Center = 1

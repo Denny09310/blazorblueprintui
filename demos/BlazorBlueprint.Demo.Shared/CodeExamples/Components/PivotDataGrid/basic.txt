@@ -1,0 +1,14 @@
+<BbPivotDataGrid TItem="Sale" Data="@sales">
+    <Rows>
+        <BbPivotField TItem="Sale" Title="Country" Value="@(s => s.Country)" />
+    </Rows>
+    <Columns>
+        <BbPivotField TItem="Sale" Title="Category" Value="@(s => s.Category)" />
+    </Columns>
+    <Values>
+        <BbPivotValue TItem="Sale" Title="Sales"
+                      Function="AggregateFunction.Sum"
+                      Value="@(s => s.Amount)"
+                      Format="C0" />
+    </Values>
+</BbPivotDataGrid>

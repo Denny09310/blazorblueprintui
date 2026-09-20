@@ -136,6 +136,7 @@ internal static class ComponentCatalog
             new("Numeric Input", "/components/numeric-input", "Numeric input with increment/decrement and validation", "component"),
             new("Page Transition", "/components/page-transition", "Incoming-page transitions on navigation.", "route", IsNew: true, Component: "BbPageTransition"),
             new("Pagination", "/components/pagination", "Page navigation with previous/next controls", "arrow-left-right"),
+            new("Pivot Data Grid", "/components/pivot-data-grid", "Cross-tabulation with nested groups, totals, drill-down and a field picker", "table-2", IsNew: true, Component: "BbPivotDataGrid"),
             new("Pick List", "/components/pick-list", "Two lists and the buttons that move options between them", "arrow-right-left", IsNew: true, Component: "BbPickList"),
             new("Popover", "/components/popover", "Floating panels for additional content and actions", "message-square"),
             new("Progress", "/components/progress", "Progress indicator for task completion", "loader"),

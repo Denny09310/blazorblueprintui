@@ -3451,6 +3451,53 @@
   - Title : String
   - Width : String
 
+### BbPivotDataGrid`1 (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AlternatingRows : Boolean
+  - AriaLabel : String
+  - BlankLabel : String
+  - Class : String
+  - Columns : RenderFragment
+  - CornerTemplate : RenderFragment
+  - Data : IEnumerable<TItem>
+  - EmptyMessage : String
+  - GridLines : PivotGridLines
+  - HeaderTemplate : RenderFragment<PivotHeaderContext>
+  - Height : String
+  - Loading : Boolean
+  - OnBuilt : EventCallback<PivotTable<TItem>>
+  - OnCellClick : EventCallback<PivotCellContext<TItem>>
+  - PageSize : Int32?
+  - PagerPosition : PivotPagerPosition
+  - Rows : RenderFragment
+  - ShowFieldPicker : Boolean
+  - TotalLabel : String
+  - Totals : PivotTotals
+  - Values : RenderFragment
+
+### BbPivotField`1 (BlazorBlueprint.Components)
+  - Comparer : IComparer<Object>
+  - Descending : Boolean
+  - Key : String
+  - Label : Func<Object, String>
+  - Title : String [EditorRequired]
+  - Value : Func<TItem, Object> [EditorRequired]
+  - Visible : Boolean
+  - Axis : PivotAxis [CascadingParameter]
+  - Parent : BbPivotDataGrid<TItem> [CascadingParameter]
+
+### BbPivotValue`1 (BlazorBlueprint.Components)
+  - Aggregate : Func<IEnumerable<TItem>, Object>
+  - Format : String
+  - Function : AggregateFunction
+  - HeaderTemplate : RenderFragment<BbPivotValue<TItem>>
+  - Key : String
+  - Template : RenderFragment<PivotCellContext<TItem>>
+  - Title : String [EditorRequired]
+  - Value : Func<TItem, Object>
+  - Visible : Boolean
+  - Parent : BbPivotDataGrid<TItem> [CascadingParameter]
+
 ### BbPopover (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
@@ -5455,6 +5502,21 @@
 ### PickListOrientation (BlazorBlueprint.Components)
   - Horizontal = 0
   - Vertical = 1
+
+### PivotAxis (BlazorBlueprint.Components)
+  - Row = 0
+  - Column = 1
+
+### PivotGridLines (BlazorBlueprint.Components)
+  - Both = 0
+  - Horizontal = 1
+  - Vertical = 2
+  - None = 3
+
+### PivotPagerPosition (BlazorBlueprint.Components)
+  - Bottom = 0
+  - Top = 1
+  - Both = 2
 
 ### PrimaryColor (BlazorBlueprint.Components)
   - Default = 0
