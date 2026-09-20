@@ -356,6 +356,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **`BbTabsList` can now add, close, rename and reorder its tabs.** Four flags — `Addable`,
+  `Closable`, `Renamable` and `Reorderable` — each paired with a callback. Every one is off by
+  default, and a flag without its callback draws nothing at all: an affordance that does nothing
+  when it is used is worse than no affordance. `BbTabsTrigger` can override any of the three
+  per-tab flags for itself, which is how one tab stays pinned while the rest close.
+
+  **None of the four changes the tabs.** Each asks, and the caller changes the collection the tabs
+  are written from — the same bargain `BbGantt` makes, and for the same reason: the order and the
+  names live wherever the caller keeps them, and a component that wrote to its own markup would be
+  guessing. `OnMove` therefore has no `Cancel` flag, because nothing has moved to put back;
+  declining to apply it is the refusal. `OnRename` does have one, because there *is* something to
+  undo — a refused rename reopens the editor with what was typed still in it, rather than making
+  someone retype a long name because one character clashed.
+
+  **Every gesture has a keyboard route**, which decided the markup. The close affordance is an
+  `aria-hidden` span rather than a nested button, because a `role="tab"` element must not contain
+  another interactive element; the keyboard closes with `Delete` instead, announced on the tab
+  itself rather than as a second stop inside it. The add button sits *beside* the tablist rather
+  than in it, so it is its own tab stop and never reports itself as a tab. `F2` renames, `Enter`
+  commits, `Escape` cancels, and an empty box is a cancel rather than a request for a nameless tab.
+  `Ctrl` with an arrow key moves a tab one place and does not wrap at either end — a tab that
+  jumped from last place to first would read as a bug whichever way the move was meant.
+
+  **A move reads its position from the DOM, not from the component tree.** Reordering a keyed list
+  changes no parameter, so Blazor moves the existing components without running any child
+  lifecycle: an order held in C# from registration time is wrong from the first move onwards. One
+  interop call per keypress is the price of an index that cannot drift, and a keypress is not a
+  per-frame event.
+
+  The wrapper element these need is only rendered when one of the behaviours is actually on, so a
+  plain tab list keeps exactly the markup it has always had.
+
 - **`datagrid-columns.js` is now `table-columns.js`, shared by `BbDataGrid` and `BbGantt`.** It was
   already generic — it works off `data-column-id`, a `colgroup` and one callback — and only the name
   said otherwise. Two things had to give for a second caller: columns are matched to their `<col>` by

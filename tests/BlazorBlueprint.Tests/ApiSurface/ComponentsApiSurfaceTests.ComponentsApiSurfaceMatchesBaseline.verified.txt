@@ -4521,9 +4521,18 @@
   - Value : String [EditorRequired]
 
 ### BbTabsList (BlazorBlueprint.Components)
+  - AddLabel : String
+  - Addable : Boolean
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - Class : String
+  - Closable : Boolean
+  - OnAdd : EventCallback
+  - OnClose : EventCallback<String>
+  - OnMove : EventCallback<TabMoveContext>
+  - OnRename : EventCallback<TabRenameContext>
+  - Renamable : Boolean
+  - Reorderable : Boolean
   - Responsive : Boolean
   - SelectClass : String
   - Context : TabsContext [CascadingParameter]
@@ -4532,8 +4541,11 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - Class : String
+  - Closable : Boolean?
   - Disabled : Boolean
   - Label : String
+  - Renamable : Boolean?
+  - Reorderable : Boolean?
   - Value : String [EditorRequired]
   - ComponentsList : BbTabsList [CascadingParameter]
 

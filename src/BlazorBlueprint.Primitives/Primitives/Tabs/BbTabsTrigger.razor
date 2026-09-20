@@ -61,6 +61,42 @@
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
+    /// <summary>
+    /// Invoked when the tab asks to be closed, which is Delete or Backspace while it has focus.
+    /// </summary>
+    /// <remarks>
+    /// The key route exists because a close affordance drawn inside a tab cannot be a button of
+    /// its own — a <c>role="tab"</c> element must not contain another interactive element — so the
+    /// pointer gets an icon and the keyboard gets this. Leave it unset and the keys do nothing.
+    /// </remarks>
+    [Parameter]
+    public EventCallback OnCloseRequested { get; set; }
+
+    /// <summary>
+    /// Invoked when the tab asks to be renamed, which is F2 while it has focus.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnRenameRequested { get; set; }
+
+    /// <summary>
+    /// Invoked when the tab asks to move, carrying -1 to move towards the start of the list and
+    /// 1 to move towards the end. Raised by Ctrl with an arrow key.
+    /// </summary>
+    /// <remarks>
+    /// The delta is already resolved against the writing direction, so Ctrl and the left arrow
+    /// moves a tab towards the start of the list in a left-to-right page and towards the start of
+    /// the list in a right-to-left one. Both are what the reader sees as "left".
+    /// </remarks>
+    [Parameter]
+    public EventCallback<int> OnMoveRequested { get; set; }
+
+    /// <summary>Gets whether this tab has somewhere to send a move request.</summary>
+    internal bool CanMove => OnMoveRequested.HasDelegate;
+
+    /// <summary>Asks the owner to move this tab by one place.</summary>
+    /// <param name="delta">-1 towards the start of the list, 1 towards the end.</param>
+    internal Task RequestMoveAsync(int delta) => OnMoveRequested.InvokeAsync(delta);
+
     protected override void OnInitialized()
     {
         if (Context == null)
@@ -94,6 +130,20 @@
             return;
         }
 
+        // Delete closes, F2 renames. Both are inert unless the owner wired them, so a plain tab
+        // list behaves exactly as it did before.
+        if (e.Key is "Delete" or "Backspace" && OnCloseRequested.HasDelegate)
+        {
+            _ = OnCloseRequested.InvokeAsync();
+            return;
+        }
+
+        if (e.Key == "F2" && OnRenameRequested.HasDelegate)
+        {
+            _ = OnRenameRequested.InvokeAsync();
+            return;
+        }
+
         // Handle navigation keys — only pass orientation-appropriate arrow keys
         if (List != null)
         {
@@ -101,7 +151,19 @@
             var isRelevantArrow = (isHorizontal && e.Key is "ArrowLeft" or "ArrowRight") ||
                                  (!isHorizontal && e.Key is "ArrowUp" or "ArrowDown");
 
-            if (isRelevantArrow || e.Key is "Home" or "End")
+            // Ctrl with an arrow moves the tab rather than the focus. Checked before the plain
+            // arrow branch, or the same key would both reorder and navigate.
+            if (isRelevantArrow && (e.CtrlKey || e.MetaKey))
+            {
+                if (CanMove)
+                {
+                    List.HandleMoveRequest(Value, e.Key);
+                }
+
+                return;
+            }
+
+            if ((isRelevantArrow || e.Key is "Home" or "End") && !e.CtrlKey && !e.MetaKey)
             {
                 List.HandleKeyNavigation(Value, e.Key);
             }

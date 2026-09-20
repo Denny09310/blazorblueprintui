@@ -924,6 +924,9 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - Disabled : Boolean
+  - OnCloseRequested : EventCallback
+  - OnMoveRequested : EventCallback<Int32>
+  - OnRenameRequested : EventCallback
   - Value : String [EditorRequired]
   - Context : TabsContext [CascadingParameter]
   - List : BbTabsList [CascadingParameter]

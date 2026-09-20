@@ -632,6 +632,11 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Sortable.Removed"] = "Item removed from position {0} and placed at position {1} in another list.",
         ["Sortable.Received"] = "Item received at position {0}.",
 
+        // Tabs
+        ["Tabs.Add"] = "New tab",
+        ["Tabs.Close"] = "Close",
+        ["Tabs.RenameLabel"] = "Rename {0}",
+
         // TagInput
         ["TagInput.Placeholder"] = "Add tag...",
         ["TagInput.RemoveTag"] = "Remove {0}",
