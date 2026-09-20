@@ -38,6 +38,7 @@ import * as portal from './portal.js';
 import * as positioning from './positioning.js';
 import * as scrollArea from './scroll-area.js';
 import * as select from './select.js';
+import * as signaturePad from './signature-pad.js';
 import * as slider from './slider.js';
 import * as sortable from './sortable.js';
 import * as swipeArea from './swipe-area.js';
@@ -84,6 +85,7 @@ assertFresh('portal.js', portal, 'setupPortal');
 assertFresh('positioning.js', positioning, 'hidePosition');
 assertFresh('scroll-area.js', scrollArea, 'initialize');
 assertFresh('select.js', select, 'scrollMarkedIntoView');
+assertFresh('signature-pad.js', signaturePad, 'initialize');
 assertFresh('slider.js', slider, 'initialize');
 assertFresh('sortable.js', sortable, 'init');
 assertFresh('swipe-area.js', swipeArea, 'initialize');
@@ -105,6 +107,7 @@ export {
     positioning,
     scrollArea,
     select,
+    signaturePad,
     slider,
     sortable,
     swipeArea,

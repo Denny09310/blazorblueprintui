@@ -4163,6 +4163,21 @@
   - OnClick : EventCallback<MouseEventArgs>
   - Context : SidebarContext [CascadingParameter]
 
+### BbSignature (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AllowTyped : Boolean
+  - Class : String
+  - Disabled : Boolean
+  - Height : String
+  - Label : String
+  - MaxWidth : Double
+  - MinWidth : Double
+  - ShowUndo : Boolean
+  - StrokeColor : String
+  - TypedFontFamily : String
+  - Value : SignatureValue
+  - ValueChanged : EventCallback<SignatureValue>
+
 ### BbSkeleton (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - Class : String
@@ -5490,6 +5505,11 @@
   - Sidebar = 0
   - Floating = 1
   - Inset = 2
+
+### SignatureKind (BlazorBlueprint.Components)
+  - None = 0
+  - Drawn = 1
+  - Typed = 2
 
 ### SkeletonShape (BlazorBlueprint.Components)
   - Rectangular = 0

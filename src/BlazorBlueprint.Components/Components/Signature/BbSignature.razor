@@ -1,0 +1,369 @@
+@namespace BlazorBlueprint.Components
+@using System.Globalization
+@using System.Net
+@using BlazorBlueprint.Primitives.SignaturePad
+@inject IBbLocalizer Localizer
+
+@*
+    Signature - a signing field with a drawn and a typed route.
+
+    A drawn signature is unreachable by keyboard and by a screen reader, so the typed route is on
+    by default. Turning it off leaves some people unable to sign at all.
+*@
+
+<div class="@RootClass" data-slot="signature" @attributes="AdditionalAttributes">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <BbLabel For="@fieldId" Class="bb:mb-2 bb:block">@Label</BbLabel>
+    }
+
+    @if (AllowTyped)
+    {
+        <BbToggleGroup TValue="SignatureKind"
+                       Type="ToggleGroupType.Single"
+                       Value="@mode"
+                       ValueChanged="@OnModeChangedAsync"
+                       Variant="ToggleVariant.Outline"
+                       Size="ToggleSize.Small"
+                       Disabled="@Disabled"
+                       aria-label="@Localizer["Signature.MethodLabel"]"
+                       Class="bb:mb-2">
+            <BbToggleGroupItem TValue="SignatureKind" Value="SignatureKind.Drawn">
+                @Localizer["Signature.Draw"]
+            </BbToggleGroupItem>
+            <BbToggleGroupItem TValue="SignatureKind" Value="SignatureKind.Typed">
+                @Localizer["Signature.Type"]
+            </BbToggleGroupItem>
+        </BbToggleGroup>
+    }
+
+    <div class="bb:relative bb:rounded-md bb:border bb:border-input bb:bg-background bb:overflow-hidden"
+         style="height: @Height">
+
+        @* The baseline sits under both routes, so a typed name lands where a drawn one would. *@
+        <div class="bb:pointer-events-none bb:absolute bb:inset-x-6 bb:bottom-8 bb:border-b bb:border-muted-foreground/30"></div>
+        <span class="bb:pointer-events-none bb:absolute bb:start-6 bb:bottom-8 bb:-translate-y-1 bb:text-muted-foreground/60 bb:text-lg bb:leading-none">&times;</span>
+
+        @if (mode == SignatureKind.Typed)
+        {
+            <div class="bb:absolute bb:inset-0 bb:flex bb:items-center bb:justify-center bb:px-6 bb:pb-8">
+                <span class="bb:text-3xl bb:truncate @(string.IsNullOrWhiteSpace(typedText) ? "bb:text-muted-foreground/50" : "bb:text-foreground")"
+                      style="font-family: @TypedFontFamily">
+                    @(string.IsNullOrWhiteSpace(typedText) ? Localizer["Signature.TypeHint"] : typedText)
+                </span>
+            </div>
+        }
+        else
+        {
+            @if (isEmpty)
+            {
+                <div class="bb:pointer-events-none bb:absolute bb:inset-0 bb:flex bb:items-center bb:justify-center">
+                    <span class="bb:text-sm bb:text-muted-foreground/60">@Localizer["Signature.DrawHint"]</span>
+                </div>
+            }
+            <BbSignaturePad @ref="pad"
+                            OnChange="OnPadChangedAsync"
+                            StrokeColor="@StrokeColor"
+                            MinWidth="@MinWidth"
+                            MaxWidth="@MaxWidth"
+                            Disabled="@Disabled"
+                            class="bb:absolute bb:inset-0 bb:h-full bb:w-full bb:cursor-crosshair bb:text-foreground"
+                            role="img"
+                            aria-label="@Localizer["Signature.Canvas"]" />
+        }
+    </div>
+
+    <div class="bb:mt-2 bb:flex bb:items-center bb:gap-2">
+        @if (mode == SignatureKind.Typed)
+        {
+            <BbInput id="@fieldId"
+                     Value="@typedText"
+                     ValueChanged="@OnTypedTextChangedAsync"
+                     Placeholder="@Localizer["Signature.TypeHint"]"
+                     Disabled="@Disabled"
+                     Class="bb:flex-1" />
+        }
+        else if (ShowUndo)
+        {
+            <BbButton Variant="ButtonVariant.Outline"
+                      Size="ButtonSize.Small"
+                      Disabled="@(Disabled || isEmpty)"
+                      OnClick="UndoAsync">
+                @Localizer["Signature.Undo"]
+            </BbButton>
+        }
+
+        <BbButton Variant="ButtonVariant.Ghost"
+                  Size="ButtonSize.Small"
+                  Disabled="@(Disabled || IsCurrentRouteEmpty)"
+                  OnClick="ClearAsync"
+                  Class="bb:ms-auto">
+            @Localizer["Signature.Clear"]
+        </BbButton>
+    </div>
+</div>
+
+@code {
+    private BbSignaturePad? pad;
+    private readonly string fieldId = $"bb-signature-{Guid.NewGuid():N}";
+    private SignatureKind mode = SignatureKind.Drawn;
+    private string typedText = string.Empty;
+    private bool isEmpty = true;
+
+    /// <summary>
+    /// Gets or sets the captured signature.
+    /// </summary>
+    [Parameter]
+    public SignatureValue? Value { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback invoked when the signature changes. Use with <c>@@bind-Value</c>.
+    /// </summary>
+    [Parameter]
+    public EventCallback<SignatureValue?> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Gets or sets the label shown above the field.
+    /// </summary>
+    [Parameter]
+    public string? Label { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the typed route is offered. Default is <c>true</c>.
+    /// </summary>
+    /// <remarks>
+    /// A drawn signature cannot be given with a keyboard, a switch or a screen reader. Turning
+    /// this off leaves those people unable to sign, so only do it where a drawn mark is a legal
+    /// requirement and another route exists outside this field.
+    /// </remarks>
+    [Parameter]
+    public bool AllowTyped { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the height of the signing area as a CSS length. Default is <c>10rem</c>.
+    /// </summary>
+    [Parameter]
+    public string Height { get; set; } = "10rem";
+
+    /// <summary>
+    /// Gets or sets the CSS font stack a typed signature is drawn in.
+    /// </summary>
+    /// <remarks>
+    /// Defaults to the handwriting families that ship with the common desktop and mobile systems,
+    /// ending in the generic <c>cursive</c>. No font is bundled, so nothing is downloaded.
+    /// </remarks>
+    [Parameter]
+    public string TypedFontFamily { get; set; } = "'Segoe Script', 'Bradley Hand', 'Snell Roundhand', 'Apple Chancery', cursive";
+
+    /// <summary>
+    /// Gets or sets the ink colour as a CSS colour. When unset, the signature is drawn in the
+    /// theme's foreground colour and follows it when the theme changes.
+    /// </summary>
+    [Parameter]
+    public string? StrokeColor { get; set; }
+
+    /// <summary>
+    /// Gets or sets the thinnest the drawn line can get, in CSS pixels. Default is 0.7.
+    /// </summary>
+    [Parameter]
+    public double MinWidth { get; set; } = 0.7;
+
+    /// <summary>
+    /// Gets or sets the thickest the drawn line can get, in CSS pixels. Default is 2.5.
+    /// </summary>
+    [Parameter]
+    public double MaxWidth { get; set; } = 2.5;
+
+    /// <summary>
+    /// Gets or sets whether an undo button is shown beside the drawing area. Default is <c>true</c>.
+    /// </summary>
+    [Parameter]
+    public bool ShowUndo { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether the field is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional CSS classes for the root element.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes for the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string RootClass => ClassNames.cn(
+        "bb:w-full",
+        Disabled ? "bb:opacity-60" : null,
+        Class);
+
+    private bool IsCurrentRouteEmpty => mode == SignatureKind.Typed
+        ? string.IsNullOrWhiteSpace(typedText)
+        : isEmpty;
+
+    protected override void OnParametersSet()
+    {
+        // Adopt an externally supplied value once, so that a form loading a saved signature opens
+        // on the route it was given with. Later edits are driven from inside.
+        if (Value is { Kind: SignatureKind.Typed } typed && typedText.Length == 0)
+        {
+            mode = SignatureKind.Typed;
+            typedText = typed.Text ?? string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// The drawn signature as a PNG data URL, or <c>null</c> when it is empty or was typed.
+    /// </summary>
+    /// <param name="background">
+    /// A CSS colour to fill behind the ink, or <c>null</c> for a transparent background.
+    /// </param>
+    /// <param name="ink">
+    /// A CSS colour for the strokes. Defaults to black rather than to the theme's ink, because a
+    /// signature drawn in a dark theme is near-white and would vanish on white paper.
+    /// </param>
+    public Task<string?> GetPngAsync(string? background = null, string ink = "#000000")
+        => pad is null ? Task.FromResult<string?>(null) : pad.GetPngAsync(background, ink);
+
+    /// <summary>
+    /// The drawn signature as PNG bytes, or <c>null</c> when it is empty or was typed.
+    /// </summary>
+    /// <param name="background">
+    /// A CSS colour to fill behind the ink, or <c>null</c> for a transparent background.
+    /// </param>
+    /// <param name="ink">A CSS colour for the strokes.</param>
+    /// <remarks>
+    /// Prefer this over <see cref="GetPngAsync"/> when the image is being saved or uploaded rather
+    /// than shown: a data URL is a third larger for no benefit outside an <c>img</c> tag.
+    /// </remarks>
+    public Task<byte[]?> GetPngBytesAsync(string? background = null, string ink = "#000000")
+        => pad is null ? Task.FromResult<byte[]?>(null) : pad.GetPngBytesAsync(background, ink);
+
+    /// <summary>
+    /// The raw samples behind a drawn signature, for storing one that can be replayed or checked
+    /// later. Empty when the signature was typed.
+    /// </summary>
+    public Task<IReadOnlyList<SignatureStroke>> GetStrokesAsync()
+        => pad is null
+            ? Task.FromResult<IReadOnlyList<SignatureStroke>>(Array.Empty<SignatureStroke>())
+            : pad.GetStrokesAsync();
+
+    /// <summary>
+    /// Replaces the drawing with previously captured samples and switches to the drawn route.
+    /// </summary>
+    /// <param name="strokes">The samples to draw, in the coordinates they were captured in.</param>
+    public async Task SetStrokesAsync(IReadOnlyList<SignatureStroke>? strokes)
+    {
+        mode = SignatureKind.Drawn;
+        if (pad is not null)
+        {
+            await pad.SetStrokesAsync(strokes);
+        }
+    }
+
+    /// <summary>
+    /// Clears the signature on whichever route is showing.
+    /// </summary>
+    public async Task ClearAsync()
+    {
+        if (mode == SignatureKind.Typed)
+        {
+            typedText = string.Empty;
+            await EmitAsync(SignatureValue.Empty);
+            return;
+        }
+
+        if (pad is not null)
+        {
+            await pad.ClearAsync();
+        }
+    }
+
+    private async Task UndoAsync()
+    {
+        if (pad is not null)
+        {
+            await pad.UndoAsync();
+        }
+    }
+
+    private async Task OnModeChangedAsync(SignatureKind next)
+    {
+        // The toggle group deselects on a second click. Signing has no "neither", so the press is
+        // ignored rather than leaving the field with no route showing.
+        if (next == SignatureKind.None || next == mode)
+        {
+            return;
+        }
+
+        mode = next;
+        // Each route holds its own state, so switching abandons whatever the other one had rather
+        // than leaving a stale drawing behind a typed name.
+        typedText = string.Empty;
+        isEmpty = true;
+        await EmitAsync(SignatureValue.Empty);
+    }
+
+    private async Task OnPadChangedAsync(bool empty)
+    {
+        isEmpty = empty;
+        if (empty)
+        {
+            await EmitAsync(SignatureValue.Empty);
+            return;
+        }
+
+        var svg = pad is null ? null : await pad.GetSvgAsync();
+        await EmitAsync(new SignatureValue { Kind = SignatureKind.Drawn, Svg = svg });
+    }
+
+    private async Task OnTypedTextChangedAsync(string? text)
+    {
+        typedText = text ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(typedText))
+        {
+            await EmitAsync(SignatureValue.Empty);
+            return;
+        }
+
+        await EmitAsync(new SignatureValue
+        {
+            Kind = SignatureKind.Typed,
+            Text = typedText,
+            Svg = TypedSvg(typedText, TypedFontFamily)
+        });
+    }
+
+    /// <summary>
+    /// A typed name as SVG: one text element in the same font stack the field shows it in.
+    /// </summary>
+    /// <remarks>
+    /// The glyphs are not outlined, so this renders in whatever handwriting font the viewing
+    /// machine has rather than in the one the signer saw. That is the honest trade for markup that
+    /// stays a few hundred bytes and recolours with <c>currentColor</c>.
+    /// </remarks>
+    private static string TypedSvg(string text, string fontFamily)
+    {
+        var escapedText = WebUtility.HtmlEncode(text);
+        var escapedFont = WebUtility.HtmlEncode(fontFamily);
+        // Sized from the character count so a long name is not clipped by the view box.
+        var width = Math.Max(240, text.Length * 22);
+        // Same intrinsic size plus scaling style as a drawn signature, so the two forms drop into
+        // a page the same way rather than one of them overflowing.
+        return string.Create(CultureInfo.InvariantCulture,
+            $"""<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="80" viewBox="0 0 {width} 80" style="max-width:100%;height:auto"><text x="50%" y="52" text-anchor="middle" font-family="{escapedFont}" font-size="40" fill="currentColor">{escapedText}</text></svg>""");
+    }
+
+    private async Task EmitAsync(SignatureValue value)
+    {
+        Value = value;
+        await ValueChanged.InvokeAsync(value);
+        StateHasChanged();
+    }
+}

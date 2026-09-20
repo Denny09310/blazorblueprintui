@@ -532,6 +532,16 @@ public class DefaultBbLocalizer : IBbLocalizer
         // Sheet
         ["Sheet.Close"] = "Close",
 
+        // Signature
+        ["Signature.Draw"] = "Draw",
+        ["Signature.Type"] = "Type",
+        ["Signature.DrawHint"] = "Sign here",
+        ["Signature.TypeHint"] = "Type your full name",
+        ["Signature.Clear"] = "Clear",
+        ["Signature.Undo"] = "Undo last stroke",
+        ["Signature.Canvas"] = "Signature drawing area",
+        ["Signature.MethodLabel"] = "How to sign",
+
         // Sidebar
         ["Sidebar.PillNavigation"] = "Primary navigation",
         ["Sidebar.ExpandNavigation"] = "Expand navigation",

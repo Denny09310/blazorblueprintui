@@ -740,6 +740,15 @@
   - OnClick : EventCallback<MouseEventArgs>
   - Context : SheetContext [CascadingParameter]
 
+### BbSignaturePad (BlazorBlueprint.Primitives.SignaturePad)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - Disabled : Boolean
+  - MaxWidth : Double
+  - MinWidth : Double
+  - OnChange : EventCallback<Boolean>
+  - StrokeColor : String
+  - VelocityWeight : Double
+
 ### BbSlider (BlazorBlueprint.Primitives.Slider)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment

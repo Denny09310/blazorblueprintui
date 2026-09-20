@@ -11,6 +11,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **`BbSignature`, a signing field, on the new `BbSignaturePad` primitive.** Sign by drawing or by
+  typing a name. `@bind-Value` gives back a `SignatureValue` carrying `Kind` (`Drawn` or `Typed`),
+  the signature as `Svg`, and the typed `Text`. `GetPngAsync` and `GetStrokesAsync` pull the other
+  two forms on demand, because neither belongs in an event that fires on every stroke.
+
+  **The typed route is on by default and it is the accessible one.** A drawn signature cannot be
+  given with a keyboard, a switch or a screen reader. `AllowTyped="false"` removes it, and the demo
+  says plainly what that costs: only do it where a drawn mark is a legal requirement and another
+  route exists outside the field. No font is bundled for the typed signature — it uses the
+  handwriting families that ship with the common systems, ending in the generic `cursive`.
+
+  **The ink engine is ours, about 300 lines, no new dependency.** A signature drawn as straight
+  lines between pointer samples looks like a mouse scribble. Two things make it read as ink: the
+  path is a cubic Bezier through the samples rather than a polyline, and the stroke thins as the
+  pen speeds up. `MinWidth`, `MaxWidth` and `VelocityWeight` tune the second. All of it runs in the
+  browser — C# hears one call when a stroke finishes and nothing while one is being drawn, so a
+  Blazor Server circuit carries a handful of messages per signature rather than one per pointer
+  move. Pointer events are coalesced where the browser offers them, so a high-rate pen produces a
+  smooth curve rather than a faceted one.
+
+  **Only geometry is stored, so the ink follows the theme.** Colour is resolved from the element at
+  render time and the pad repaints when the theme changes, rather than leaving a white signature on
+  a page that just went light. The samples are kept in CSS pixels and replayed after a resize or a
+  move between monitors, which is also how `UndoAsync` and `SetStrokesAsync` work.
+
+  **The three output forms differ in what they can defer.** SVG is the one to store: one path per
+  curve rather than the thousands of dots the canvas draws, so it stays small and keeps the taper,
+  and its ink is `currentColor`, so the same markup renders dark on paper and light on a dark page.
+  It carries an intrinsic width and height for an `<img>` tag and a PDF, plus `max-width:100%`, so
+  dropping a signature drawn on a wide pad into a narrow column shrinks it instead of cutting it
+  off. PNG has nowhere to defer the colour to, so it is redrawn at an explicit colour — defaulting
+  to black, deliberately not to the theme's ink, because exporting a dark theme's near-white stroke
+  onto the white background a PDF wants produces a blank page. `GetPngBytesAsync` returns the same
+  image without the data-URL padding, for saving and uploading. The raw samples are the smallest
+  form and the only replayable one, and they carry the timings, which is what a later check of how
+  a signature was written needs.
+
+  **Every export is streamed rather than returned.** A Blazor Server circuit caps an incoming hub
+  message at 32KB by default, and a real signature clears that on all three forms at once — a
+  300-sample scrawl is roughly 22KB of SVG and 41KB of PNG. Returning one tore the circuit down
+  mid-call, so the component never got its answer and the page stopped responding with nothing on
+  screen to say why. Streams are chunked by the framework and are not subject to the cap, so no
+  host has to raise a limit it could not have known about.
+
 - **`BbSwipeArea`, a headless swipe gesture primitive.** Wrap any content and hear about swipes
   across it: `OnSwipe` reports a completed gesture with its `Direction`, `DeltaX`, `DeltaY`,
   `Distance` and `Velocity`; `OnSwipeMove` follows the pointer while it is down; `OnSwipeCancel`

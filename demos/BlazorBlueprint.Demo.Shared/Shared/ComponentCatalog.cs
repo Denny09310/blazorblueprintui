@@ -153,6 +153,7 @@ internal static class ComponentCatalog
             new("Selection Indicator", "/components/selection-indicator", "Animated active, hover and focus feedback.", "square-dashed", IsNew: true, Component: "BbSelectionIndicator"),
             new("Separator", "/components/separator", "Visual dividers for content sections", "minus"),
             new("Sheet", "/components/sheet", "Side panels that slide in from viewport edges", "panel-right"),
+            new("Signature", "/components/signature", "Sign by hand or by typing a name, with SVG, PNG and raw stroke output", "pen-tool", IsNew: true, Component: "BbSignature"),
             new("Sidebar", "/components/sidebar", "Responsive navigation sidebar with collapsible menus", "panel-left"),
             new("Sidebar Pill Inset", "/components/sidebar#sidebar-pill-inset", "Content spacing that follows pill collapse state.", "component", IsNew: true, Component: "BbSidebarPillInset"),
             new("Sidebar Pill Navigation", "/components/sidebar#sidebar-pill-nav", "Compact navigation when the sidebar collapses.", "component", IsNew: true, Component: "BbSidebarPillNav"),

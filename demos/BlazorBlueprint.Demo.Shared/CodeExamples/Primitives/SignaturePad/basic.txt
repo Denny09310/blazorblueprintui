@@ -1,0 +1,11 @@
+@* Headless: give it a size and a border of your own. *@
+<BbSignaturePad @ref="pad"
+                OnChange="@(empty => isEmpty = empty)"
+                class="...your-styles..." />
+
+<button @onclick="@(() => pad!.ClearAsync())" disabled="@isEmpty">Clear</button>
+
+@code {
+    private BbSignaturePad? pad;
+    private bool isEmpty = true;
+}
