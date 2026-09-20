@@ -1,0 +1,230 @@
+@namespace BlazorBlueprint.Primitives.SwipeArea
+@using System.ComponentModel
+@using System.Globalization
+@inherits BbPrimitiveBase
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@*
+    SwipeArea primitive - headless swipe gesture detection over arbitrary content.
+
+    The gesture maths runs in the browser. C# hears one terminal event per gesture, plus
+    throttled position updates only when OnSwipeMove is wired up.
+*@
+
+<div @ref="areaRef"
+     data-axis="@Axis.ToString().ToLowerInvariant()"
+     data-threshold="@Threshold.ToString(CultureInfo.InvariantCulture)"
+     data-min-velocity="@MinVelocity.ToString(CultureInfo.InvariantCulture)"
+     data-report-move="@(OnSwipeMove.HasDelegate ? "true" : null)"
+     data-disabled="@(Disabled ? "true" : null)"
+     @attributes="FilteredAttributes"
+     style="@MergeStyles(TouchActionStyle)">
+    @ChildContent
+</div>
+
+@code {
+    private ElementReference areaRef;
+    private IJSObjectReference? jsModule;
+    private DotNetObjectReference<BbSwipeArea>? dotNetRef;
+    private readonly string areaId = Guid.NewGuid().ToString("N");
+    private bool jsInitialized;
+    private bool disposed;
+
+    /// <summary>
+    /// Gets or sets the content the gesture is detected over.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback invoked once, when a gesture ends far enough or fast enough to
+    /// count as a swipe.
+    /// </summary>
+    [Parameter]
+    public EventCallback<SwipeEventArgs> OnSwipe { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback invoked while the pointer is down, for following the gesture.
+    /// </summary>
+    /// <remarks>
+    /// Leaving this unset costs nothing: with no handler the browser sends no position updates at
+    /// all. Wiring it up means one call every 50ms for as long as the finger moves, so prefer
+    /// <see cref="OnSwipe"/> unless the content actually tracks the pointer.
+    /// </remarks>
+    [Parameter]
+    public EventCallback<SwipeMoveEventArgs> OnSwipeMove { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback invoked when a gesture ends without becoming a swipe, or is
+    /// taken away by the browser.
+    /// </summary>
+    /// <remarks>
+    /// This is the signal to undo whatever <see cref="OnSwipeMove"/> was drawing. It fires only
+    /// for a gesture that reported movement, so a plain tap raises nothing.
+    /// </remarks>
+    [Parameter]
+    public EventCallback OnSwipeCancel { get; set; }
+
+    /// <summary>
+    /// Gets or sets how far the pointer must travel along the reported axis, in CSS pixels, for
+    /// the gesture to count as a swipe. Default is 50.
+    /// </summary>
+    [Parameter]
+    public double Threshold { get; set; } = 50;
+
+    /// <summary>
+    /// Gets or sets the speed, in CSS pixels per millisecond, at which a gesture counts as a
+    /// swipe even though it never reached <see cref="Threshold"/>. Default is 0.5.
+    /// </summary>
+    /// <remarks>
+    /// This is what makes a quick flick work. It still requires 16 pixels of travel, so the jitter
+    /// of a tap — which is fast over a tiny distance, and so has a deceptively high velocity —
+    /// cannot trip it. Set it to <see cref="double.PositiveInfinity"/> to judge on distance alone.
+    /// </remarks>
+    [Parameter]
+    public double MinVelocity { get; set; } = 0.5;
+
+    /// <summary>
+    /// Gets or sets which axis swipes are reported on. Default is <see cref="SwipeAxis.Both"/>.
+    /// </summary>
+    [Parameter]
+    public SwipeAxis Axis { get; set; } = SwipeAxis.Both;
+
+    /// <summary>
+    /// Gets or sets what the browser may still do with a touch inside the area. Default is
+    /// <see cref="SwipeTouchAction.Auto"/>, which changes nothing.
+    /// </summary>
+    /// <remarks>
+    /// A horizontal swipe on a page that scrolls vertically wants
+    /// <see cref="SwipeTouchAction.PanY"/>.
+    /// </remarks>
+    [Parameter]
+    public SwipeTouchAction TouchAction { get; set; } = SwipeTouchAction.Auto;
+
+    /// <summary>
+    /// Gets or sets whether gestures are ignored. A gesture already in progress is abandoned.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    private string? TouchActionStyle => TouchAction switch
+    {
+        SwipeTouchAction.PanX => "touch-action: pan-x",
+        SwipeTouchAction.PanY => "touch-action: pan-y",
+        SwipeTouchAction.None => "touch-action: none",
+        _ => null
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await InitializeJsAsync();
+        }
+    }
+
+    private async Task InitializeJsAsync()
+    {
+        if (jsInitialized)
+        {
+            return;
+        }
+
+        try
+        {
+            jsModule = await PrimitiveModules.GetAsync(JSRuntime);
+            dotNetRef = DotNetObjectReference.Create(this);
+            await jsModule.InvokeVoidAsync("swipeArea.initialize", areaRef, dotNetRef, areaId);
+            jsInitialized = true;
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect
+        }
+        catch (InvalidOperationException)
+        {
+            // JS interop not available during prerendering
+        }
+    }
+
+    /// <summary>
+    /// Abandons a gesture in progress without reporting it, and without raising
+    /// <see cref="OnSwipeCancel"/>. Does nothing when no gesture is running.
+    /// </summary>
+    /// <remarks>
+    /// For the case where something else takes over mid-gesture — a dialog opening, a list
+    /// reloading — and the swipe that was under way no longer refers to anything.
+    /// </remarks>
+    public async Task CancelAsync()
+    {
+        if (disposed || !jsInitialized || jsModule is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await jsModule.InvokeVoidAsync("swipeArea.cancel", areaId);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect
+        }
+    }
+
+    [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public async Task JsSwipeMove(double deltaX, double deltaY)
+    {
+        if (disposed || Disabled)
+        {
+            return;
+        }
+
+        await OnSwipeMove.InvokeAsync(new SwipeMoveEventArgs(deltaX, deltaY));
+    }
+
+    [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public async Task JsSwipeEnd(string direction, double deltaX, double deltaY, double distance, double velocity)
+    {
+        if (disposed || Disabled)
+        {
+            return;
+        }
+
+        var parsed = Enum.TryParse<SwipeDirection>(direction, out var value) ? value : SwipeDirection.None;
+        await OnSwipe.InvokeAsync(new SwipeEventArgs(parsed, deltaX, deltaY, distance, velocity));
+    }
+
+    [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public async Task JsSwipeCancel()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        await OnSwipeCancel.InvokeAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        disposed = true;
+        if (jsModule != null && jsInitialized)
+        {
+            try
+            {
+                await jsModule.InvokeVoidAsync("swipeArea.dispose", areaId);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+        }
+        dotNetRef?.Dispose();
+    }
+}

@@ -794,6 +794,18 @@
   - RemovedAnnouncement : String
   - Sort : Boolean
 
+### BbSwipeArea (BlazorBlueprint.Primitives.SwipeArea)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - Axis : SwipeAxis
+  - ChildContent : RenderFragment
+  - Disabled : Boolean
+  - MinVelocity : Double
+  - OnSwipe : EventCallback<SwipeEventArgs>
+  - OnSwipeCancel : EventCallback
+  - OnSwipeMove : EventCallback<SwipeMoveEventArgs>
+  - Threshold : Double
+  - TouchAction : SwipeTouchAction
+
 ### BbSwitch (BlazorBlueprint.Primitives.Switch)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - Checked : Boolean
@@ -1166,6 +1178,24 @@
   - None = 0
   - Ascending = 1
   - Descending = 2
+
+### SwipeAxis (BlazorBlueprint.Primitives.SwipeArea)
+  - Both = 0
+  - Horizontal = 1
+  - Vertical = 2
+
+### SwipeDirection (BlazorBlueprint.Primitives.SwipeArea)
+  - None = 0
+  - Left = 1
+  - Right = 2
+  - Up = 3
+  - Down = 4
+
+### SwipeTouchAction (BlazorBlueprint.Primitives.SwipeArea)
+  - Auto = 0
+  - PanX = 1
+  - PanY = 2
+  - None = 3
 
 ### SelectionMode (BlazorBlueprint.Primitives.Table)
   - None = 0

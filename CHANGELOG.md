@@ -7,6 +7,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 
+## 2026-09-20
+
+### Added
+
+- **`BbSwipeArea`, a headless swipe gesture primitive.** Wrap any content and hear about swipes
+  across it: `OnSwipe` reports a completed gesture with its `Direction`, `DeltaX`, `DeltaY`,
+  `Distance` and `Velocity`; `OnSwipeMove` follows the pointer while it is down; `OnSwipeCancel`
+  fires when a gesture that reported movement ends without committing, which is the signal to
+  spring back whatever `OnSwipeMove` was drawing. `CancelAsync()` abandons a gesture when something
+  else takes over mid-swipe.
+
+  **The gesture maths stays in the browser.** A swipe costs one call into C#, not one per pointer
+  move, which on Blazor Server is the difference between a handful of circuit messages and a
+  message per mouse move for the length of the drag. `OnSwipeMove` is the exception and it is
+  opt-in twice over: with no handler attached the browser sends nothing at all, and with one it
+  sends at most a call every 50ms with a single call in flight, so a slow circuit drops
+  intermediate positions rather than queueing them behind the finger.
+
+  **A swipe commits on distance or on speed.** `Threshold` (50px) is the distance; `MinVelocity`
+  (0.5 px/ms) lets a shorter flick through, because a quick 30px flick reads as a swipe to the
+  person making it and a distance-only test throws it away. The velocity path carries a 16px floor
+  of its own: a 3px tap wobble over 5ms computes to 0.6 px/ms and would otherwise clear any
+  velocity bar worth setting. Velocity is measured over the last 100ms of travel rather than the
+  whole gesture, so a drag that stalls before the finger lifts does not report the speed it started
+  with. Set `MinVelocity` to `double.PositiveInfinity` to judge on distance alone.
+
+  **`TouchAction` maps to the CSS `touch-action` property** — `Auto`, `PanX`, `PanY` or `None` —
+  rather than calling `preventDefault` on pointer events. It is the difference between telling the
+  browser which directions it may scroll before the gesture starts and asking it to undo a scroll
+  it has already handed to the compositor, which arrives too late and is ignored outright on a
+  passive listener. A horizontal swipe in a page that scrolls vertically wants `PanY`.
+
+  `Axis` (`Both`, `Horizontal`, `Vertical`) decides which directions are reported, so a
+  mostly-vertical drag on a horizontal area is judged on how far it went sideways rather than
+  firing something unintended. Directions are physical — `Left` means the pointer moved left — and
+  do not flip in a right-to-left layout; a component that means "forward" maps that itself, next to
+  the thing being navigated. The gesture takes pointer capture, so a swipe that runs off the edge
+  of the element still counts.
+
+  **A swipe is never reachable by keyboard.** Whatever the gesture does needs a second, visible
+  route as well. The demo page says so where it cannot be missed.
+
 ## 2026-09-19
 
 ### Added
