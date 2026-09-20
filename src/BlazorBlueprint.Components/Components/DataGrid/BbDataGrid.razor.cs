@@ -998,7 +998,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         {
             if (!jsInitialized)
             {
-                columnsModule = await JsModules.GetAsync(Js, "./_content/BlazorBlueprint.Components/js/datagrid-columns.js");
+                columnsModule = await JsModules.GetAsync(Js, "./_content/BlazorBlueprint.Components/js/table-columns.js");
                 selfRef = DotNetObjectReference.Create(this);
                 jsInitialized = true;
 
