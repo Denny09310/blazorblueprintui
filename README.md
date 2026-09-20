@@ -221,13 +221,15 @@ Blazor Blueprint includes the styled component families below, with composable s
 
 ### New in v4.1
 
-Five components, each with its engine in `BlazorBlueprint.Primitives` and no runtime dependency of its own.
+Seven components, none of which takes a runtime dependency of its own.
 
 | Component | What it is | Demo |
 |-----------|------------|------|
 | `BbQrCode` | A scannable code drawn as SVG, on a from-scratch ISO/IEC 18004 encoder: all 40 versions, four error-correction levels, numeric, alphanumeric and UTF-8 byte modes, module shapes and a centre logo. No JavaScript and no image request. | `/components/qr-code` |
 | `BbBarcode` | Fourteen linear symbologies drawn as SVG, on encoders written in C#: Code 128, Code 39, EAN-13, EAN-8, UPC-A, ITF, Codabar, ISBN, ISSN, MSI, Telepen, Pharmacode, POSTNET and the Royal Mail 4-state code. Every symbol was checked bar for bar against zint and decoded back with zxing-cpp. | `/components/barcode` |
-| `BbPickList` | Two lists and the buttons that move options between them, with reordering, search and keyboard support. | `/components/pick-list` |
+| `BbListBox` | An always-visible list of options: no trigger and no popover, with the full listbox keyboard pattern, search and range selection. | `/components/list-box` |
+| `BbPickList` | Two lists and the buttons that move options between them, with reordering, search and keyboard support. Each pane is a `BbListBox`. | `/components/pick-list` |
+| `BbSignature` | A signing field on the `BbSignaturePad` primitive: sign by drawing or by typing a name, with SVG, PNG and raw stroke output. | `/components/signature` |
 | `BbPivotDataGrid` | A cross-tabulation whose columns come from the data: nested fields on both axes, subtotals and grand totals worked out from the items rather than the cells, custom aggregates, drill-down, a field picker and group-aware paging. | `/components/pivot-data-grid` |
 | `BbGantt` | A plan against a timeline, with the task list and the bars in one table so a row cannot drift. Six zoom levels, summary roll-up, milestones, all four dependency types with routed arrows, drag to move, resize, set progress and draw a dependency, drag a row to reorder or re-parent, a hover card and a legend, non-working days, a today marker and right-to-left support. | `/components/gantt` |
 
@@ -353,6 +355,7 @@ Production-ready components for complex data-driven applications:
 | **Input Group** | Enhanced inputs with icons, buttons, and addons |
 | **Input OTP** | One-time password input with individual digit fields |
 | **Label** | Form labels with control association |
+| **List Box** | Always-visible list of options with the full listbox keyboard pattern, search, and single, multiple or range selection |
 | **Masked Input** | Input with format masks (phone, SSN, etc.) |
 | **MultiSelect** | Searchable multi-selection with tags, checkboxes, custom footer and programmatic close |
 | **Native Select** | Browser-native select with consistent styling |
@@ -361,6 +364,7 @@ Production-ready components for complex data-driven applications:
 | **Range Slider** | Dual-handle slider for selecting value ranges, horizontal or vertical |
 | **Rating** | Star/icon rating input |
 | **Select** | Keyboard-accessible selection with popover or bottom-sheet presentation |
+| **Signature** | Signing field that captures a drawn or typed signature, with SVG, PNG and raw stroke output |
 | **Slider** | Range input with drag support, horizontal or vertical |
 | **Sortable** | Pointer and keyboard sortable lists/grids, connected-list transfer, move/drop permissions, reusable handles and custom drag previews |
 | **Split Button** | Primary action with dropdown for secondary actions |
@@ -461,7 +465,7 @@ Building blocks for chat and AI-agent interfaces:
 
 ## Primitives
 
-Blazor Blueprint's **29 headless primitives** provide behavior, ARIA attributes, and keyboard support without any styling. They handle all the complex interaction logic — focus trapping, ARIA attributes, keyboard shortcuts, portal rendering — while giving you complete control over appearance.
+Blazor Blueprint's **35 headless primitives** provide behavior, ARIA attributes, and keyboard support without any styling. They handle all the complex interaction logic — focus trapping, ARIA attributes, keyboard shortcuts, portal rendering — while giving you complete control over appearance.
 
 Use primitives when you need full design freedom or are building a custom design system.
 
@@ -469,6 +473,7 @@ Use primitives when you need full design freedom or are building a custom design
 |-----------|----------------|
 | **Accordion** | Expand/collapse logic, single/multiple mode, keyboard navigation |
 | **Alert Dialog** | Modal requiring explicit acknowledgement, no dismiss via overlay or Escape |
+| **Barcode** | Fourteen linear symbology encoders, each with its own alphabet, length rule and check digit, producing bar geometry rather than pixels |
 | **Checkbox** | Checked/unchecked/indeterminate state, ARIA attributes |
 | **Collapsible** | Open/close state, animated transitions |
 | **Context Menu** | Right-click menu with keyboard navigation and positioning |
@@ -477,19 +482,24 @@ Use primitives when you need full design freedom or are building a custom design
 | **Dialog** | Focus trapping, escape to close, scroll locking, portal rendering |
 | **Direction** | Writing direction for everything inside it, cascaded as a context and written as a `dir` attribute |
 | **Dropdown Menu** | Open/close, keyboard navigation, click-outside dismissal |
+| **Gantt** | Task tree, summary roll-up, the timeline's two tiers and dependencies resolved against the rows on screen, with no markup |
 | **Hover Card** | Hover intent, delay timing, portal positioning |
 | **Label** | Label-control association |
 | **Menubar** | Application-style menu bar with roving focus, submenus and typeahead |
 | **Navigation Menu** | Site navigation with hoverable panels, pointer intent and keyboard access |
+| **Pivot** | Cross-tabulation: nested headings on both axes, and totals worked out from the items rather than from the cells |
 | **Popover** | Floating positioning, portal rendering, click-outside |
 | **Progress** | Accessible progress bar with determinate and indeterminate states |
+| **QR Code** | The whole of ISO/IEC 18004: every version and error-correction level, Reed-Solomon over GF(256), block interleaving and the eight masks, producing a module matrix |
 | **Radio Group** | Single selection, arrow key navigation, ARIA roles |
 | **Scroll Area** | Custom scrollbar with accessible ARIA scrollbar role and drag support |
 | **Select** | Dropdown behavior, typeahead, keyboard navigation |
 | **Separator** | Semantic or decorative divider with orientation support |
 | **Sheet** | Side panel, focus trapping, scroll locking |
+| **Signature Pad** | Stroke capture from pointer, touch or stylus, keeping the raw points behind a signature |
 | **Slider** | Range input with keyboard navigation and pointer drag support |
 | **Sortable** | Drag-and-drop sortable lists with SortableJS interop, ARIA live announcements, and connected multi-list support |
+| **Swipe Area** | Swipe gestures with a distance threshold, an axis to judge them on, and pointer capture so a swipe off the edge still counts |
 | **Switch** | Toggle state, keyboard support, ARIA switch role |
 | **Table** | Sorting, pagination, row selection, keyboard row navigation |
 | **Tabs** | Tab selection, arrow key navigation, ARIA tab roles |

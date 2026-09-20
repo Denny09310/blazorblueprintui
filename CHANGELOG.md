@@ -92,8 +92,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   page, so an arrow that still pointed right would be pointing backwards in time. A drag reads the
   direction at the moment of the gesture, so dragging towards the right edge moves a task earlier.
 
-  Columns carry a width in pixels rather than a share of the space, because the chart has to know how
-  wide the task list is before it can place the first bar. `Value` reads the task and is what a sort
+  A `BbGanttColumn` carries a width in pixels rather than a share of the space, because the chart
+  has to know how wide the task list is before it can place the first bar. `Value` reads the task and is what a sort
   compares — sorting reorders siblings and never moves a child out of its branch — while a column's
   content reads the row, which is the task after roll-up, so a date in the list agrees with the bar
   beside it. `CollapsedIds` names the closed set rather than the open one, unlike `BbDataGrid`'s
@@ -107,9 +107,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   worked-out value where they cross.** This is the one grid whose columns come from the data rather
   than from a declaration, which is the whole difference between it and grouping in `BbDataGrid` —
   a grouped grid still has the columns you wrote down, where a pivot grows a column for every value
-  it finds. Fields go in `Rows` and `Columns`, values in `Values`, and which axis a field belongs to
-  comes from the fragment it is written in, so moving a field between them is moving it in the
-  markup.
+  it finds. A `BbPivotField` goes in `Rows` or `Columns` and a `BbPivotValue` in `Values`, and which
+  axis a field belongs to comes from the fragment it is written in, so moving a field between them
+  is moving it in the markup.
 
   **A total is worked out from every item under it, not from the cells it covers.** Items are
   bucketed in one pass and each bucket keeps its items, so a subtotal or a grand total re-runs the
@@ -153,7 +153,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and its own check digit, and the encoder enforces all three rather than producing a symbol no
   reader will accept. Give EAN-13 twelve digits and the check digit is worked out; give it thirteen
   and it is verified. `BarcodeSymbol.Value` reports what was actually encoded, which is what a
-  scanner will report back. A value that breaks a rule renders a message naming the problem
+  scanner will report back. `BarcodeEncoder` in `BlazorBlueprint.Primitives` is the encoders on
+  their own, handing back bar geometry rather than pixels, for printing somewhere that is not a
+  screen. A value that breaks a rule renders a message naming the problem
   character or the expected length, rather than throwing — which on Blazor Server would take the
   circuit down.
 
