@@ -13,4 +13,7 @@ public enum GanttChangeKind
 
     /// <summary>The finishing edge moved, changing the length.</summary>
     ResizeEnd,
+
+    /// <summary>The fill was dragged, changing how far along the task is.</summary>
+    Progress,
 }

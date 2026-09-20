@@ -44,11 +44,53 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   five, clear of the row's own border line, since drawing the long run on top of the border makes the
   arrow read as going nowhere.
 
-  **`AllowDrag` and `AllowResize` hand back dates rather than writing them.** The drag itself stays
+  **Every gesture asks rather than writes.** `AllowDrag` moves a bar, `AllowResize` pulls its edges
+  and `AllowProgressDrag` puts a grip on the fill for how far along a task is; all three come back
+  through one `OnTaskChange` with `Kind` saying which, carrying all four values so a handler stores
+  them the same way whichever fired. `Cancel` snaps the bar straight back. The gesture itself stays
   in the browser, because a pointermove per frame over a Blazor Server circuit is a bar that lags
-  behind the pointer; only the finished gesture crosses, and `OnTaskChange` carries the dates it is
-  asking for with a `Cancel` that snaps the bar straight back. `SnapToSlot` keeps a plan agreed in
-  days from coming back with a start at 09:47.
+  behind the pointer; only the finished drag crosses. `SnapToSlot` keeps a plan agreed in days from
+  coming back with a start at 09:47.
+
+  **`AllowLinking` draws a dependency by dragging between two bars.** A dot at each end of a bar,
+  and the two ends the gesture touched decide the type — leave from the end, drop on a start, and
+  that is a finish to start. There is no menu asking which of the four was meant, because the
+  gesture has already said it. `OnDependencyCreate` can refuse, which is where a plan puts its loop
+  detection; clicking an arrow raises `OnDependencyClick`, which is how one gets deleted. The arrow
+  only becomes clickable while linking is on, because an arrow nobody can change is an arrow nobody
+  should be able to hit by accident — and a one-and-a-half pixel line is not a target, so a wide
+  transparent twin is what the pointer actually finds.
+
+  **The chart says what its shapes mean.** A filled bar is a task, the solid part being what is
+  done. A summary is a bracket — a thin line with a leg hanging at each end — because a summary is
+  the span of what is under it rather than a task in its own right, and a slightly thinner bar was a
+  difference nobody noticed. A milestone is a diamond. `ShowLegend` names them under the chart and
+  lists only what that chart actually draws: no milestone entry where there are none, no shading
+  entry where nothing is shaded. `ShowTooltip` puts a card on every bar with its dates, its length
+  and how far along it is, `TooltipTemplate` replaces the lines. The card is plain markup shown by
+  CSS rather than a floating overlay, because a plan can hold hundreds of bars and on Blazor Server
+  asking the circuit what to show on every pointer-over is a card that arrives after the pointer has
+  moved on.
+
+  **`AllowRowDrag` reorders the task list, and re-parents with the same gesture.** Drop between two
+  rows and the task becomes their sibling; drop onto the middle of one and it becomes that task's
+  child. `OnTaskMove` carries the target, the position and the `NewParentId` already worked out, so
+  a handler that only stores a parent identifier does not have to reason about the two cases. A task
+  dropped into its own branch is refused by the chart rather than handed back as a tree that is no
+  longer a tree.
+
+  **Adding, deleting and renaming need nothing from the chart.** A column's content is the caller's
+  markup over the caller's own task, and the tree column hands the template its whole cell rather
+  than wrapping it in a truncating span — so the name can be an input and the last column can be a
+  delete button. The chart draws whatever the collection says on the next render.
+
+  **Time runs the way the page reads.** In a right-to-left page the task list moves to the right,
+  the timeline starts at the right edge, and the bars, the shading, the today line and the arrows
+  all turn round with it. Nothing is configured: everything is placed with logical offsets, which
+  mirror on their own. Two things cannot and are handled off `[dir="rtl"]` in the stylesheet — a
+  repeating gradient needs a physical direction, and an SVG coordinate system does not flip with the
+  page, so an arrow that still pointed right would be pointing backwards in time. A drag reads the
+  direction at the moment of the gesture, so dragging towards the right edge moves a task earlier.
 
   Columns carry a width in pixels rather than a share of the space, because the chart has to know how
   wide the task list is before it can place the first bar. `Value` reads the task and is what a sort

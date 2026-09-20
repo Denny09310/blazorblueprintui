@@ -2571,7 +2571,10 @@
 ### BbGantt`1 (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AllowDrag : Boolean
+  - AllowLinking : Boolean
+  - AllowProgressDrag : Boolean
   - AllowResize : Boolean
+  - AllowRowDrag : Boolean
   - AriaLabel : String
   - BarColorSelector : Func<TItem, String>
   - BarTemplate : RenderFragment<GanttRow<TItem>>
@@ -2591,8 +2594,11 @@
   - MinColumnWidth : Int32
   - NonWorkingDays : IReadOnlyCollection<DayOfWeek>
   - OnBuilt : EventCallback<GanttChart<TItem>>
+  - OnDependencyClick : EventCallback<GanttDependency>
+  - OnDependencyCreate : EventCallback<GanttDependencyContext<TItem>>
   - OnTaskChange : EventCallback<GanttChangeContext<TItem>>
   - OnTaskClick : EventCallback<TItem>
+  - OnTaskMove : EventCallback<GanttMoveContext<TItem>>
   - ParentIdSelector : Func<TItem, String>
   - ProgressSelector : Func<TItem, Double>
   - RangeEnd : DateTimeOffset?
@@ -2603,15 +2609,18 @@
   - RowHeight : Int32
   - ScrollToToday : Boolean
   - ShowDependencies : Boolean
+  - ShowLegend : Boolean
   - ShowNonWorkingDays : Boolean
   - ShowTaskLabels : Boolean
   - ShowToday : Boolean
   - ShowToolbar : Boolean
+  - ShowTooltip : Boolean
   - ShowZoomControls : Boolean
   - SlotWidth : Int32?
   - SnapToSlot : Boolean
   - StartSelector : Func<TItem, DateTimeOffset> [EditorRequired]
   - TextSelector : Func<TItem, String> [EditorRequired]
+  - TooltipTemplate : RenderFragment<GanttRow<TItem>>
   - Zoom : GanttZoom
   - ZoomChanged : EventCallback<GanttZoom>
 
@@ -5392,11 +5401,17 @@
   - Move = 0
   - ResizeStart = 1
   - ResizeEnd = 2
+  - Progress = 3
 
 ### GanttColumnAlign (BlazorBlueprint.Components)
   - Start = 0
   - Center = 1
   - End = 2
+
+### GanttDropPosition (BlazorBlueprint.Components)
+  - Before = 0
+  - After = 1
+  - Inside = 2
 
 ### GradientDirection (BlazorBlueprint.Components)
   - Vertical = 0

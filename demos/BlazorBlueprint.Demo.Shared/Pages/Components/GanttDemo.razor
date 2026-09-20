@@ -30,6 +30,14 @@
                     <strong>summary</strong>: it takes its dates and its progress from the work
                     underneath rather than carrying its own.
                 </p>
+                <p class="text-muted-foreground">
+                    A <strong>filled bar</strong> is one task, the solid part being what is done. A
+                    <strong>bracket</strong> &mdash; a thin line with a leg at each end &mdash; is a
+                    summary, and the shape is what says it is a span rather than a task in its own
+                    right. A <strong>diamond</strong> is a milestone. The key under the chart names
+                    them, and only lists what that chart actually draws; hover any bar for its dates,
+                    its length and how far along it is.
+                </p>
             </div>
 
             <div class="rounded-lg border bg-card p-6">
@@ -257,10 +265,17 @@
                 <h2 class="text-2xl font-semibold">Dragging</h2>
                 <p class="text-muted-foreground">
                     Turn on <code class="text-xs bg-muted px-1 py-0.5 rounded">AllowDrag</code> to
-                    move a bar and
+                    move a bar,
                     <code class="text-xs bg-muted px-1 py-0.5 rounded">AllowResize</code> to pull its
-                    edges. The chart does not write to your task: it hands you the dates the drag is
-                    asking for and you store them, or set
+                    edges, and
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">AllowProgressDrag</code> for a
+                    grip that sets how far along a task is. All three come back through the one
+                    callback, with <code class="text-xs bg-muted px-1 py-0.5 rounded">Kind</code>
+                    saying which.
+                </p>
+                <p class="text-muted-foreground">
+                    The chart does not write to your task: it hands you the dates the drag is asking
+                    for and you store them, or set
                     <code class="text-xs bg-muted px-1 py-0.5 rounded">Cancel</code> and the bar
                     snaps back. Drags land on whole slots unless you turn
                     <code class="text-xs bg-muted px-1 py-0.5 rounded">SnapToSlot</code> off.
@@ -278,6 +293,7 @@
                          ProgressSelector="@(t => t.Progress)"
                          AllowDrag="true"
                          AllowResize="true"
+                         AllowProgressDrag="true"
                          OnTaskChange="@Reschedule"
                          ShowToolbar="false"
                          Height="26rem"
@@ -296,12 +312,131 @@
                         Put it back
                     </BbButton>
                     <p class="text-sm text-muted-foreground">
-                        @(lastChange ?? "Drag a bar, or pull one of its edges. A summary is worked out from its children, so drag a leaf.")
+                        @(lastChange ?? "Drag a bar, pull an edge, or slide the diamond inside it. A summary is worked out from its children, so use a leaf.")
                     </p>
                 </div>
             </div>
 
             <CodeBlock Source="Components/Gantt/dragging.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Drawing Dependencies</h2>
+                <p class="text-muted-foreground">
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">AllowLinking</code> puts a dot
+                    at each end of a bar. Drag from one to another bar and the two ends you touched
+                    decide the type: leave from the end, drop on a start, and that is a finish to
+                    start. There is no menu asking which of the four you meant, because the gesture
+                    has already said.
+                </p>
+                <p class="text-muted-foreground">
+                    Click an arrow to remove it. Both go through callbacks that can refuse &mdash;
+                    this page turns down a link that would point backwards in time, which is the
+                    hook a real plan would use for loop detection.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbGantt TItem="PlanTask"
+                         Data="@linkable"
+                         IdSelector="@(t => t.Id)"
+                         ParentIdSelector="@(t => t.Parent)"
+                         TextSelector="@(t => t.Name)"
+                         StartSelector="@(t => t.Start)"
+                         EndSelector="@(t => t.End)"
+                         ProgressSelector="@(t => t.Progress)"
+                         Dependencies="@drawn"
+                         AllowLinking="true"
+                         OnDependencyCreate="@AddLink"
+                         OnDependencyClick="@RemoveLink"
+                         ShowToolbar="false"
+                         Height="26rem"
+                         AriaLabel="Plan you can draw dependencies on">
+                    <Columns>
+                        <BbGanttColumn TItem="PlanTask" Title="Task" Width="230" IsTree="true" />
+                    </Columns>
+                </BbGantt>
+
+                <div class="flex items-center gap-3">
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="ResetLinks">
+                        Clear them
+                    </BbButton>
+                    <p class="text-sm text-muted-foreground">
+                        @(lastLink ?? $"{drawn.Count} arrows. Hover a bar, then drag one of its dots onto another bar.")
+                    </p>
+                </div>
+            </div>
+
+            <CodeBlock Source="Components/Gantt/linking.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Reordering the Task List</h2>
+                <p class="text-muted-foreground">
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">AllowRowDrag</code> puts a grip
+                    on each row. Drop between two rows and the task becomes their sibling; drop onto
+                    the middle of one and it becomes that task's child. Reordering and re-parenting
+                    are the same gesture, and both arrive as
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">OnTaskMove</code> with the new
+                    parent already worked out. A task cannot be dropped into its own branch.
+                </p>
+                <p class="text-muted-foreground">
+                    <strong>Adding, deleting and renaming need nothing from the chart.</strong> A
+                    column's content is your markup over your own task, so the name here is an input
+                    and the last column holds a delete button. The chart draws whatever the
+                    collection says on the next render.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <div class="flex flex-wrap items-center gap-2">
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="AddTask">
+                        Add a task
+                    </BbButton>
+                    <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="ResetOrderable">
+                        Put it back
+                    </BbButton>
+                    <p class="text-sm text-muted-foreground">
+                        @(lastMove ?? "Drag a row by its grip. Drop on the middle of another row to nest it.")
+                    </p>
+                </div>
+
+                <BbGantt TItem="PlanTask"
+                         Data="@orderable"
+                         IdSelector="@(t => t.Id)"
+                         ParentIdSelector="@(t => t.Parent)"
+                         TextSelector="@(t => t.Name)"
+                         StartSelector="@(t => t.Start)"
+                         EndSelector="@(t => t.End)"
+                         ProgressSelector="@(t => t.Progress)"
+                         AllowRowDrag="true"
+                         OnTaskMove="@MoveTask"
+                         ShowToolbar="false"
+                         Height="26rem"
+                         AriaLabel="Plan you can reorder">
+                    <Columns>
+                        <BbGanttColumn TItem="PlanTask" Title="Task" Width="250" IsTree="true">
+                            <BbInput Value="@context.Item.Name"
+                                     ValueChanged="@(value => context.Item.Name = value ?? string.Empty)"
+                                     UpdateTiming="UpdateTiming.Debounced"
+                                     Class="h-7 text-sm"
+                                     aria-label="@($"Rename {context.Text}")" />
+                        </BbGanttColumn>
+                        <BbGanttColumn TItem="PlanTask" Title="" Width="56" Align="GanttColumnAlign.Center">
+                            <BbButton Variant="ButtonVariant.Ghost"
+                                      Size="ButtonSize.Icon"
+                                      OnClick="@(() => DeleteTask(context.Item))"
+                                      aria-label="@($"Delete {context.Text}")">
+                                <LucideIcon Name="trash-2" Size="14" />
+                            </BbButton>
+                        </BbGanttColumn>
+                    </Columns>
+                </BbGantt>
+            </div>
+
+            <CodeBlock Source="Components/Gantt/reordering.txt" />
         </section>
 
         <section class="space-y-4">
@@ -383,6 +518,40 @@
             </div>
 
             <CodeBlock Source="Components/Gantt/folding.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Right to Left</h2>
+                <p class="text-muted-foreground">
+                    Time runs the way the page reads. The task list moves to the right, the timeline
+                    starts at the right edge, and the bars, the shading and the arrows all turn round
+                    with it &mdash; including the arrowheads, which is the part an SVG will not do on
+                    its own. Nothing here is configured: the chart is placed with logical offsets and
+                    the page's own direction does the rest.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6" dir="rtl">
+                <BbGantt TItem="PlanTask"
+                         Data="@plan"
+                         IdSelector="@(t => t.Id)"
+                         ParentIdSelector="@(t => t.Parent)"
+                         TextSelector="@(t => t.Name)"
+                         StartSelector="@(t => t.Start)"
+                         EndSelector="@(t => t.End)"
+                         ProgressSelector="@(t => t.Progress)"
+                         Dependencies="@links"
+                         ShowToolbar="false"
+                         Height="24rem"
+                         AriaLabel="Plan in a right-to-left page">
+                    <Columns>
+                        <BbGanttColumn TItem="PlanTask" Title="Task" Width="230" IsTree="true" />
+                    </Columns>
+                </BbGantt>
+            </div>
+
+            <CodeBlock Source="Components/Gantt/rtl.txt" />
         </section>
 
         <section class="space-y-4">
@@ -490,11 +659,23 @@
                     <ApiParameter Name="AllowResize" Type="bool" Default="false">
                         Whether a bar's edges can be dragged to change its length.
                     </ApiParameter>
+                    <ApiParameter Name="AllowProgressDrag" Type="bool" Default="false">
+                        Whether a grip inside a bar can be dragged to set how far along the task is.
+                    </ApiParameter>
+                    <ApiParameter Name="AllowLinking" Type="bool" Default="false">
+                        Whether a dependency can be drawn by dragging from a dot at one end of a bar onto another bar, and removed by clicking its arrow.
+                    </ApiParameter>
+                    <ApiParameter Name="OnDependencyCreate" Type="EventCallback&lt;GanttDependencyContext&lt;TItem&gt;&gt;">
+                        Fired when a dependency is drawn. Add it to your collection, or set <code class="text-xs bg-muted px-1 py-0.5 rounded">Cancel</code>.
+                    </ApiParameter>
+                    <ApiParameter Name="OnDependencyClick" Type="EventCallback&lt;GanttDependency&gt;">
+                        Fired when an arrow is clicked, which is how one gets deleted. Only reachable while <code class="text-xs bg-muted px-1 py-0.5 rounded">AllowLinking</code> is on.
+                    </ApiParameter>
                     <ApiParameter Name="SnapToSlot" Type="bool" Default="true">
                         Whether a drag lands on whole slots.
                     </ApiParameter>
                     <ApiParameter Name="OnTaskChange" Type="EventCallback&lt;GanttChangeContext&lt;TItem&gt;&gt;">
-                        Fired when a bar is dragged. Store the new dates, or set <code class="text-xs bg-muted px-1 py-0.5 rounded">Cancel</code>.
+                        Fired when a bar is moved, resized or its progress dragged. <code class="text-xs bg-muted px-1 py-0.5 rounded">Kind</code> says which. Store the new values, or set <code class="text-xs bg-muted px-1 py-0.5 rounded">Cancel</code>.
                     </ApiParameter>
                     <ApiParameter Name="OnTaskClick" Type="EventCallback&lt;TItem&gt;">
                         Fired when a bar is clicked.
@@ -504,6 +685,21 @@
                     </ApiParameter>
                     <ApiParameter Name="BarTemplate" Type="RenderFragment&lt;GanttRow&lt;TItem&gt;&gt;?">
                         What is drawn inside a bar, replacing the default fill.
+                    </ApiParameter>
+                    <ApiParameter Name="AllowRowDrag" Type="bool" Default="false">
+                        Whether a row can be dragged up and down the task list. Between two rows reorders; onto the middle of one re-parents.
+                    </ApiParameter>
+                    <ApiParameter Name="OnTaskMove" Type="EventCallback&lt;GanttMoveContext&lt;TItem&gt;&gt;">
+                        Fired when a row is dropped somewhere else, with <code class="text-xs bg-muted px-1 py-0.5 rounded">NewParentId</code> already worked out. Apply it to your collection, or set <code class="text-xs bg-muted px-1 py-0.5 rounded">Cancel</code>.
+                    </ApiParameter>
+                    <ApiParameter Name="ShowLegend" Type="bool" Default="true">
+                        Whether a key to the shapes is shown under the chart. It lists only what that chart actually draws.
+                    </ApiParameter>
+                    <ApiParameter Name="ShowTooltip" Type="bool" Default="true">
+                        Whether hovering a bar shows a card with its dates, length and progress.
+                    </ApiParameter>
+                    <ApiParameter Name="TooltipTemplate" Type="RenderFragment&lt;GanttRow&lt;TItem&gt;&gt;?">
+                        What the hover card holds, replacing the default lines.
                     </ApiParameter>
                     <ApiParameter Name="ShowTaskLabels" Type="bool" Default="false">
                         Whether a task's name is written beside its bar. Off by default, because the task list is already pinned to the side.
@@ -577,9 +773,9 @@
     {
         public required string Id { get; init; }
 
-        public string? Parent { get; init; }
+        public string? Parent { get; set; }
 
-        public required string Name { get; init; }
+        public required string Name { get; set; }
 
         public required string Owner { get; init; }
 
@@ -661,6 +857,18 @@
 
     private GanttDependency[] links => Links;
 
+    private readonly List<PlanTask> linkable = BuildPlan();
+
+    private List<PlanTask> orderable = BuildPlan();
+
+    private string? lastMove;
+
+    private int added;
+
+    private List<GanttDependency> drawn = [];
+
+    private string? lastLink;
+
     private GanttZoom zoom = GanttZoom.Day;
     private bool rollUp = true;
     private HashSet<string> closed = [];
@@ -705,9 +913,104 @@
             return;
         }
 
+        if (change.Kind == GanttChangeKind.Progress)
+        {
+            change.Item.Progress = change.Progress;
+            lastChange = $"{change.Item.Name} is {change.Progress:P0} done.";
+            return;
+        }
+
         change.Item.Start = change.Start;
         change.Item.End = change.End;
         lastChange = $"{change.Item.Name}: {change.Start:d MMM} to {change.End:d MMM}.";
+    }
+
+    private void MoveTask(GanttMoveContext<PlanTask> move)
+    {
+        var item = move.Item;
+        orderable.Remove(item);
+        item.Parent = move.NewParentId;
+
+        // Dropping inside puts the task first under its new parent, which is where a reader who
+        // just aimed at that row expects to find it.
+        var target = orderable.IndexOf(move.Target.Item);
+        var at = move.Position == GanttDropPosition.Before ? target : target + 1;
+        orderable.Insert(Math.Clamp(at, 0, orderable.Count), item);
+
+        lastMove = move.Position == GanttDropPosition.Inside
+            ? $"{item.Name} now sits under {move.Target.Text}."
+            : $"{item.Name} moved {move.Position.ToString().ToLowerInvariant()} {move.Target.Text}.";
+    }
+
+    private void DeleteTask(PlanTask task)
+    {
+        // Everything under it goes too, or its children would reappear at the top level.
+        var doomed = new HashSet<string>(StringComparer.Ordinal) { task.Id };
+        for (var pass = 0; pass < orderable.Count; pass++)
+        {
+            foreach (var candidate in orderable.Where(t => t.Parent is not null && doomed.Contains(t.Parent)))
+            {
+                doomed.Add(candidate.Id);
+            }
+        }
+
+        orderable = [.. orderable.Where(t => !doomed.Contains(t.Id))];
+        lastMove = $"{task.Name} deleted, with {doomed.Count - 1} task(s) under it.";
+    }
+
+    private void AddTask()
+    {
+        added++;
+        var start = orderable.Count > 0 ? orderable.Max(t => t.End) : Day(0);
+        orderable = [.. orderable, new PlanTask
+        {
+            Id = $"new-{added}",
+            Name = $"New task {added}",
+            Owner = "Ana",
+            Start = start,
+            End = start.AddDays(3),
+        }];
+        lastMove = $"New task {added} added at the end. Drag it wherever it belongs.";
+    }
+
+    private void ResetOrderable()
+    {
+        orderable = BuildPlan();
+        added = 0;
+        lastMove = null;
+    }
+
+    private void AddLink(GanttDependencyContext<PlanTask> link)
+    {
+        // The one rule this page enforces. A real plan would check for a loop here, which is the
+        // same shape of check and the reason the callback can refuse at all.
+        if (link.To.Start < link.From.Start)
+        {
+            link.Cancel = true;
+            lastLink = $"{link.To.Text} starts before {link.From.Text}, so that arrow would point backwards.";
+            return;
+        }
+
+        if (drawn.Any(d => d.FromId == link.Dependency.FromId && d.ToId == link.Dependency.ToId))
+        {
+            lastLink = $"{link.From.Text} already points at {link.To.Text}.";
+            return;
+        }
+
+        drawn = [.. drawn, link.Dependency];
+        lastLink = $"{link.From.Text} \u2192 {link.To.Text} ({link.Dependency.Type}). Click the arrow to remove it.";
+    }
+
+    private void RemoveLink(GanttDependency dependency)
+    {
+        drawn = [.. drawn.Where(d => !ReferenceEquals(d, dependency))];
+        lastLink = "Arrow removed.";
+    }
+
+    private void ResetLinks()
+    {
+        drawn = [];
+        lastLink = null;
     }
 
     private string Named(string id) =>

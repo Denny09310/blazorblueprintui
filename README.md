@@ -217,7 +217,21 @@ If you also run your own Tailwind build, load its output before or after `blazor
 
 ## Components
 
-Blazor Blueprint includes the styled component families below, with composable subcomponents and headless primitives. See the [changelog](CHANGELOG.md) for the v4 additions and changes.
+Blazor Blueprint includes the styled component families below, with composable subcomponents and headless primitives. See the [changelog](CHANGELOG.md) for the additions and changes in each release.
+
+### New in v4.1
+
+Five components, each with its engine in `BlazorBlueprint.Primitives` and no runtime dependency of its own.
+
+| Component | What it is | Demo |
+|-----------|------------|------|
+| `BbQrCode` | A scannable code drawn as SVG, on a from-scratch ISO/IEC 18004 encoder: all 40 versions, four error-correction levels, numeric, alphanumeric and UTF-8 byte modes, module shapes and a centre logo. No JavaScript and no image request. | `/components/qr-code` |
+| `BbBarcode` | Fourteen linear symbologies drawn as SVG, on encoders written in C#: Code 128, Code 39, EAN-13, EAN-8, UPC-A, ITF, Codabar, ISBN, ISSN, MSI, Telepen, Pharmacode, POSTNET and the Royal Mail 4-state code. Every symbol was checked bar for bar against zint and decoded back with zxing-cpp. | `/components/barcode` |
+| `BbPickList` | Two lists and the buttons that move options between them, with reordering, search and keyboard support. | `/components/pick-list` |
+| `BbPivotDataGrid` | A cross-tabulation whose columns come from the data: nested fields on both axes, subtotals and grand totals worked out from the items rather than the cells, custom aggregates, drill-down, a field picker and group-aware paging. | `/components/pivot-data-grid` |
+| `BbGantt` | A plan against a timeline, with the task list and the bars in one table so a row cannot drift. Six zoom levels, summary roll-up, milestones, all four dependency types with routed arrows, drag to move, resize, set progress and draw a dependency, drag a row to reorder or re-parent, a hover card and a legend, non-working days, a today marker and right-to-left support. | `/components/gantt` |
+
+The QR and barcode symbols stay dark on a light field in both themes. A reader expects that, and enough of them refuse an inverted symbol that tracking a dark theme would trade a working code for a tidier page.
 
 ### New in v4
 
@@ -272,6 +286,8 @@ Production-ready components for complex data-driven applications:
 |-----------|-------------|
 | **Dashboard Grid** | Drag-and-drop, resizable widget layout for composing dashboards. Built on CSS Grid with responsive breakpoints, state persistence, keyboard accessibility, and loading/empty states. |
 | **Scheduler** | Day/week/work-week scheduling with Monday/Sunday week starts, configurable slots, resource lanes, drag/resize, event editing, confirmed deletion, recurrence and optional per-event IANA time zones |
+| **Gantt** | A plan against a timeline: task list and bars in one table, six zoom levels, summary roll-up, milestones, all four dependency types with routed arrows, drag/resize/progress editing, dependency drawing, row drag to reorder and re-parent, hover cards, a legend, non-working days and a today marker. `GanttBuilder` is the same engine without markup. |
+| **Pivot Data Grid** | Cross-tabulation whose columns come from the data: nested row and column fields, subtotals and grand totals worked out from the items rather than the cells, custom aggregates, drill-down, a field picker and group-aware paging. `PivotBuilder` is the same engine without markup. |
 | **TreeSelect** | Searchable single/multiple hierarchy selection with cascading checkboxes, indeterminate states, leaf-only selection and form binding |
 | **Cascader** | Hierarchy columns, path search, leaf/branch selection, keyboard/RTL navigation and automatic scrolling to the active level |
 | **FileUpload** | Optional transport callback with progress, cancellation, retries and preserved browser files |
@@ -294,6 +310,7 @@ Production-ready components for complex data-driven applications:
 | **Calendar** | Interactive calendar with date constraints, range selection, and per-day templates/styling |
 | **Checkbox** | Checkbox with indeterminate state and ARIA attributes |
 | **Checkbox Group** | Group of checkboxes with select-all support |
+| **Pick List** | Two lists and the buttons that move options between them, with reordering, search and keyboard support |
 | **Color Picker** | Color selection with swatches and custom input |
 | **Combobox** | Searchable autocomplete dropdown |
 | **Currency Input** | Currency-formatted numeric input with locale support |
@@ -405,7 +422,9 @@ Production-ready components for complex data-driven applications:
 | **DataTable**        | Tables with sorting, filtering, pagination, and row selection                                                      |
 | **DataView**         | Templated grid/list layouts, selection, grouping, list virtualization, mobile sorting/filtering, pagination and infinite scrolling |
 | **Event Calendar**   | Month, Week, and Agenda views over your own event model with per-event templates, styling, and click callbacks    |
+| **Gantt**            | Task list and timeline in one table, six zoom levels, summary roll-up, milestones, dependency arrows, drag/resize/progress editing, row reordering and re-parenting, and right-to-left support |
 | **Markdown Editor**  | Toolbar formatting with live preview                                                                               |
+| **Pivot Data Grid**  | Cross-tabulation with nested groups, totals worked out from the items, custom aggregates, drill-down and a field picker |
 | **Rich Text Editor** | WYSIWYG editor on Quill 2 with headings, lists and checklists, links, images with an upload hook, tables, colour, alignment, code, and undo/redo |
 | **Scheduler**        | Day/week/work-week appointments with resource lanes, configurable week starts and slots, drag/resize, recurring events and time-zone handling |
 | **Tree View**        | Hierarchical data display with selection, checkboxes, lazy loading, drag-and-drop, search filtering, and data-driven or declarative modes |
@@ -416,12 +435,14 @@ Production-ready components for complex data-driven applications:
 |-----------|-------------|
 | **Alert** | Callout messages with dismissible variants |
 | **Avatar** | User avatars with fallback and group support |
+| **Barcode** | Fourteen linear symbologies drawn as SVG on encoders written in C# — Code 128/39, EAN-13/8, UPC-A, ITF, Codabar, ISBN, ISSN, MSI, Telepen, Pharmacode, POSTNET and Royal Mail 4-state |
 | **Badge** | Semantic/soft status variants and composable decorative icons |
 | **Copy Text** | Click-to-copy text with tooltip feedback and copied-state indicator |
 | **Dark Mode Toggle** | Button that toggles light/dark mode with customizable icons and optional label |
 | **Empty** | Empty state placeholder with icon, title, and description |
 | **Kbd** | Keyboard shortcut display |
 | **Progress** | Progress bar indicator |
+| **QR Code** | Scannable code drawn as SVG on a from-scratch ISO/IEC 18004 encoder — all 40 versions, four error-correction levels, module shapes and a centre logo |
 | **Skeleton** | Loading placeholders |
 | **Spinner** | Loading spinner with size variants |
 | **Theme Switcher** | Theme customization popover — light/dark mode, independent base and primary colors, and radius, with persistence |

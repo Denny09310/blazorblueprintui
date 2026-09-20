@@ -7,6 +7,7 @@
          EndSelector="@(t => t.End)"
          AllowDrag="true"
          AllowResize="true"
+         AllowProgressDrag="true"
          SnapToSlot="true"
          OnTaskChange="@Reschedule"
          Height="26rem" />
@@ -14,6 +15,12 @@
 @code {
     private void Reschedule(GanttChangeContext<PlanTask> change)
     {
+        if (change.Kind == GanttChangeKind.Progress)
+        {
+            change.Item.Progress = change.Progress;
+            return;
+        }
+
         if (change.Row.IsSummary)
         {
             // A summary is worked out from its children. Moving it would be a number with
@@ -30,5 +37,7 @@
 @* The chart never writes to your task. It hands you the dates the drag is asking for, and the
    bar goes back where it was unless your data comes back changed.
 
-   Kind says which part was taken hold of: Move, ResizeStart or ResizeEnd.
+   Kind says which part was taken hold of: Move, ResizeStart, ResizeEnd or Progress.
+   Every kind carries all four values, so a handler can store them the same way whichever
+   one fired; only the dragged one has changed.
    SnapToSlot keeps a plan agreed in days from coming back with a start at 09:47. *@

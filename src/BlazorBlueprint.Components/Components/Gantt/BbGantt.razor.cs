@@ -200,6 +200,42 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
     public bool AllowResize { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the fill inside a bar can be dragged to set how far along a task is.
+    /// </summary>
+    [Parameter]
+    public bool AllowProgressDrag { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether a dependency can be drawn by dragging from one bar to another.
+    /// </summary>
+    /// <remarks>
+    /// The end you drag from and the end you drop on decide the type between them, so all four
+    /// come out of the same gesture rather than out of a menu asking which one you meant.
+    /// </remarks>
+    [Parameter]
+    public bool AllowLinking { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback fired when a dependency is drawn. Set <c>Cancel</c> to refuse it.
+    /// </summary>
+    /// <remarks>
+    /// Like a task drag, this asks rather than writes: the arrow appears once the new dependency is
+    /// in the collection the chart was given.
+    /// </remarks>
+    [Parameter]
+    public EventCallback<GanttDependencyContext<TItem>> OnDependencyCreate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback fired when an arrow is clicked, which is how one gets deleted.
+    /// </summary>
+    /// <remarks>
+    /// Only reachable while <see cref="AllowLinking"/> is on, because an arrow nobody can change is
+    /// an arrow nobody should be able to click by accident.
+    /// </remarks>
+    [Parameter]
+    public EventCallback<GanttDependency> OnDependencyClick { get; set; }
+
+    /// <summary>
     /// Gets or sets whether a drag lands on whole slots.
     /// </summary>
     /// <remarks>
@@ -222,6 +258,49 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
     /// <summary>Gets or sets the callback fired when a task is clicked, in the list or on the bar.</summary>
     [Parameter]
     public EventCallback<TItem> OnTaskClick { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether a key to the shapes is shown under the chart.
+    /// </summary>
+    /// <remarks>
+    /// On by default, and it only lists what the chart actually draws: no milestone entry where
+    /// there are no milestones, no shading entry where nothing is shaded.
+    /// </remarks>
+    [Parameter]
+    public bool ShowLegend { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether hovering a bar shows a card with its dates, length and progress.
+    /// </summary>
+    /// <remarks>
+    /// The card is plain markup shown by CSS on hover, not a floating overlay. A Gantt can hold
+    /// hundreds of bars, and on Blazor Server asking the circuit what to show on every pointer-over
+    /// is a card that arrives after the pointer has moved on.
+    /// </remarks>
+    [Parameter]
+    public bool ShowTooltip { get; set; } = true;
+
+    /// <summary>Gets or sets what the hover card holds, replacing the default lines.</summary>
+    [Parameter]
+    public RenderFragment<GanttRow<TItem>>? TooltipTemplate { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether a row can be dragged up and down the task list.
+    /// </summary>
+    /// <remarks>
+    /// Dropping between two rows reorders; dropping onto the middle of one re-parents. Both arrive
+    /// as <see cref="OnTaskMove"/>, because only the caller knows whether the order it keeps is a
+    /// list, a sort field or a column in a database.
+    /// </remarks>
+    [Parameter]
+    public bool AllowRowDrag { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback fired when a row is dropped somewhere else. Set <c>Cancel</c> to
+    /// refuse it.
+    /// </summary>
+    [Parameter]
+    public EventCallback<GanttMoveContext<TItem>> OnTaskMove { get; set; }
 
     /// <summary>Gets or sets what is drawn inside a bar, replacing the default fill.</summary>
     [Parameter]
@@ -307,6 +386,9 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
         GanttZoom.Quarter => 82,
         _ => 88,
     };
+
+    /// <summary>Gets whether any gesture on a bar is switched on.</summary>
+    private bool Interactive => AllowDrag || AllowResize || AllowProgressDrag || AllowLinking || AllowRowDrag;
 
     /// <summary>Gets the width a column is drawn at, which a drag on its edge overrides.</summary>
     /// <param name="column">The column.</param>
@@ -475,6 +557,7 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
             Row = row,
             Start = chart.Axis.At(from),
             End = chart.Axis.At(to),
+            Progress = row.Progress,
         };
 
         if (OnTaskChange.HasDelegate)
@@ -485,6 +568,141 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
         // Redraw either way: accepted, the caller's new dates are already in Data; refused, the
         // bar has to go back to where the drag started from.
         Invalidate();
+    }
+
+    /// <summary>
+    /// Reports a finished drag on a bar's fill. Called from JavaScript.
+    /// </summary>
+    /// <param name="id">The identifier of the task that was dragged.</param>
+    /// <param name="fraction">How far along the drag is asking the task to be, from 0 to 1.</param>
+    [JSInvokable]
+    public async Task OnProgressDragged(string id, double fraction)
+    {
+        var row = chart?.Rows.FirstOrDefault(r => string.Equals(r.Id, id, StringComparison.Ordinal));
+        if (row is null)
+        {
+            return;
+        }
+
+        if (OnTaskChange.HasDelegate)
+        {
+            await OnTaskChange.InvokeAsync(new GanttChangeContext<TItem>
+            {
+                Kind = GanttChangeKind.Progress,
+                Item = row.Item,
+                Row = row,
+                Start = row.Start,
+                End = row.End,
+                Progress = Math.Clamp(fraction, 0, 1),
+            });
+        }
+
+        Invalidate();
+    }
+
+    /// <summary>
+    /// Reports a dependency drawn between two bars. Called from JavaScript.
+    /// </summary>
+    /// <param name="fromId">The identifier of the task the drag started on.</param>
+    /// <param name="fromAnchor">Which end of it the drag started from.</param>
+    /// <param name="toId">The identifier of the task the drag ended on.</param>
+    /// <param name="toAnchor">Which end of it the drag ended on.</param>
+    [JSInvokable]
+    public async Task OnLinkDrawn(string fromId, string fromAnchor, string toId, string toAnchor)
+    {
+        var from = chart?.Rows.FirstOrDefault(r => string.Equals(r.Id, fromId, StringComparison.Ordinal));
+        var to = chart?.Rows.FirstOrDefault(r => string.Equals(r.Id, toId, StringComparison.Ordinal));
+
+        if (from is null || to is null || ReferenceEquals(from, to))
+        {
+            return;
+        }
+
+        var leaving = string.Equals(fromAnchor, "start", StringComparison.Ordinal);
+        var arriving = string.Equals(toAnchor, "start", StringComparison.Ordinal);
+
+        // The two ends the gesture touched are the two ends the name is made of.
+        var type = (leaving, arriving) switch
+        {
+            (true, true) => GanttDependencyType.StartToStart,
+            (true, false) => GanttDependencyType.StartToFinish,
+            (false, false) => GanttDependencyType.FinishToFinish,
+            _ => GanttDependencyType.FinishToStart,
+        };
+
+        if (OnDependencyCreate.HasDelegate)
+        {
+            await OnDependencyCreate.InvokeAsync(new GanttDependencyContext<TItem>
+            {
+                Dependency = new GanttDependency(from.Id, to.Id, type),
+                From = from,
+                To = to,
+            });
+        }
+
+        Invalidate();
+    }
+
+    /// <summary>
+    /// Reports a row dropped somewhere else in the task list. Called from JavaScript.
+    /// </summary>
+    /// <param name="id">The identifier of the task that was dragged.</param>
+    /// <param name="targetId">The identifier of the task it was dropped on.</param>
+    /// <param name="position">Whether it landed before, after or inside the target.</param>
+    [JSInvokable]
+    public async Task OnRowDropped(string id, string targetId, string position)
+    {
+        var row = chart?.Rows.FirstOrDefault(r => string.Equals(r.Id, id, StringComparison.Ordinal));
+        var target = chart?.Rows.FirstOrDefault(r => string.Equals(r.Id, targetId, StringComparison.Ordinal));
+
+        // A task cannot be dropped into its own branch: it would become its own ancestor, and the
+        // tree it is drawn from would stop being a tree.
+        if (row is null || target is null || ReferenceEquals(row, target) || Descends(target, row))
+        {
+            Invalidate();
+            return;
+        }
+
+        var where = position switch
+        {
+            "before" => GanttDropPosition.Before,
+            "inside" => GanttDropPosition.Inside,
+            _ => GanttDropPosition.After,
+        };
+
+        if (OnTaskMove.HasDelegate)
+        {
+            await OnTaskMove.InvokeAsync(new GanttMoveContext<TItem>
+            {
+                Item = row.Item,
+                Row = row,
+                Target = target,
+                Position = where,
+                NewParentId = where == GanttDropPosition.Inside ? target.Id : target.ParentId,
+            });
+        }
+
+        Invalidate();
+    }
+
+    /// <summary>Says whether one row sits somewhere under another.</summary>
+    /// <param name="row">The row that might be underneath.</param>
+    /// <param name="ancestor">The row that might be above it.</param>
+    /// <returns><see langword="true"/> when it does.</returns>
+    private bool Descends(GanttRow<TItem> row, GanttRow<TItem> ancestor)
+    {
+        var parent = row.ParentId;
+        while (parent is { Length: > 0 })
+        {
+            if (string.Equals(parent, ancestor.Id, StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            parent = chart?.Rows.FirstOrDefault(r => string.Equals(r.Id, parent, StringComparison.Ordinal))?.ParentId;
+        }
+
+        return false;
     }
 
     /// <inheritdoc />
@@ -539,7 +757,7 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
                 jsReady = true;
             }
 
-            if (AllowDrag || AllowResize)
+            if (Interactive)
             {
                 await ganttModule!.InvokeVoidAsync("initialize", rootElement, selfRef);
             }
@@ -699,6 +917,14 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
         if (OnTaskClick.HasDelegate)
         {
             await OnTaskClick.InvokeAsync(row.Item);
+        }
+    }
+
+    private async Task ClickLinkAsync(GanttLink link)
+    {
+        if (OnDependencyClick.HasDelegate)
+        {
+            await OnDependencyClick.InvokeAsync(link.Dependency);
         }
     }
 

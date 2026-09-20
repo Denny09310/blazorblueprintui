@@ -30,12 +30,19 @@ public partial class BbGantt<TItem>
     /// <summary>Gets how tall a bar is drawn, in pixels.</summary>
     private int BarHeight => Math.Max(10, RowHeight - 16);
 
-    /// <summary>Gets how tall a summary's bracket is drawn, in pixels.</summary>
-    private int SummaryHeight => Math.Max(5, BarHeight / 2);
+    /// <summary>Gets how tall the crossbar of a summary's bracket is, in pixels.</summary>
+    private int SummaryHeight => Math.Max(4, BarHeight / 3);
 
-    /// <summary>Gets the style for the downstroke at each end of a summary's bracket.</summary>
-    private string SummaryCapStyle() =>
-        $"height:{Px(SummaryHeight + 4)}px;background-color:var(--bb-gantt-bar)";
+    /// <summary>Gets how far a summary's legs hang below its crossbar, in pixels.</summary>
+    private int SummaryLeg => Math.Max(4, BarHeight / 3);
+
+    /// <summary>Gets the style for the leg at each end of a summary's bracket.</summary>
+    /// <remarks>
+    /// The legs are what make a summary read as a span rather than as a task. Without them a
+    /// slightly thinner bar is a difference nobody notices, which is exactly what happened.
+    /// </remarks>
+    private string SummaryLegStyle() =>
+        $"height:{Px(SummaryHeight + SummaryLeg)}px;background-color:var(--bb-gantt-bar)";
 
     /// <summary>Gets how wide a milestone marker is drawn, in pixels.</summary>
     private int MilestoneSize => Math.Max(10, RowHeight - 20);
@@ -52,8 +59,11 @@ public partial class BbGantt<TItem>
     /// </remarks>
     private string GridBackground()
     {
+        // Measured from the reading edge, so the lines land on the slot boundaries in a
+        // right-to-left page too. The timeline is a whole number of slots wide either way.
         var width = EffectiveSlotWidth;
-        return $"background-image:repeating-linear-gradient(to right,color-mix(in oklab,var(--border) 70%,transparent) 0 1px,transparent 1px {width}px)";
+        return "background-image:repeating-linear-gradient(to var(--bb-gantt-flow)," +
+               $"color-mix(in oklab,var(--border) 70%,transparent) 0 1px,transparent 1px {width}px)";
     }
 
     /// <summary>Gets the style that sizes the whole table.</summary>
@@ -106,19 +116,19 @@ public partial class BbGantt<TItem>
     /// </remarks>
     private string DrawingLayerStyle() =>
         $"inset-inline-start:{Px(TreeWidth)}px;top:{Px(HeaderHeight)}px;width:{Px(TimelineWidth)}px;" +
-        $"height:{Px(BodyHeight)}px;direction:ltr;{GridBackground()}";
+        $"height:{Px(BodyHeight)}px;{GridBackground()}";
 
     /// <summary>Gets the style that places one band of non-working days.</summary>
     /// <param name="x">The band's left edge, in pixels.</param>
     /// <param name="width">The band's width, in pixels.</param>
     /// <returns>The inline style.</returns>
     private static string BandStyle(double x, double width) =>
-        $"left:{Px(x)}px;width:{Px(width)}px";
+        $"inset-inline-start:{Px(x)}px;width:{Px(width)}px";
 
     /// <summary>Gets the style that places one vertical line.</summary>
     /// <param name="x">The line's position, in pixels.</param>
     /// <returns>The inline style.</returns>
-    private static string LineStyle(double x) => $"left:{Px(x)}px";
+    private static string LineStyle(double x) => $"inset-inline-start:{Px(x)}px";
 
     /// <summary>Gets the style that sets a row's height.</summary>
     private string RowStyle() => $"height:{Px(RowHeight)}px";
@@ -238,13 +248,14 @@ public partial class BbGantt<TItem>
     {
         var width = EffectiveSlotWidth;
         var height = row.IsSummary ? SummaryHeight : BarHeight;
+        var glyph = row.IsSummary ? SummaryHeight + SummaryLeg : BarHeight;
         var left = row.OffsetSlots * width;
 
         // Never narrower than two pixels: a task that runs for an hour at month zoom still has to
         // be something a reader can see and take hold of.
         var length = Math.Max(row.LengthSlots * width, 2);
 
-        return $"left:{Px(left)}px;width:{Px(length)}px;top:{Px(Top(row, height))}px;height:{height}px";
+        return $"inset-inline-start:{Px(left)}px;width:{Px(length)}px;top:{Px(Top(row, glyph))}px;height:{height}px";
     }
 
     /// <summary>Gets the style that places a milestone marker.</summary>
@@ -255,7 +266,7 @@ public partial class BbGantt<TItem>
         var size = MilestoneSize;
         var left = (row.OffsetSlots * EffectiveSlotWidth) - (size / 2.0);
 
-        return $"left:{Px(left)}px;top:{Px(Top(row, size))}px;width:{size}px;height:{size}px";
+        return $"inset-inline-start:{Px(left)}px;top:{Px(Top(row, size))}px;width:{size}px;height:{size}px";
     }
 
     /// <summary>Gets the style that places the name written beside a bar.</summary>
@@ -268,8 +279,24 @@ public partial class BbGantt<TItem>
             ? (row.OffsetSlots * width) + (MilestoneSize / 2.0)
             : (row.OffsetSlots + row.LengthSlots) * width;
 
-        return $"left:{Px(end + 8)}px;top:{Px(row.Index * RowHeight)}px;height:{Px(RowHeight)}px";
+        return $"inset-inline-start:{Px(end + 8)}px;top:{Px(row.Index * RowHeight)}px;height:{Px(RowHeight)}px";
     }
+
+    /// <summary>Gets the style that places the grip for dragging a task's progress.</summary>
+    /// <param name="row">The row.</param>
+    /// <returns>The inline style.</returns>
+    /// <remarks>
+    /// Placed with a logical offset and no transform, so it sits on the fill's edge in a
+    /// right-to-left page without the sign of a translation having to be worked out.
+    /// </remarks>
+    private static string ProgressHandleStyle(GanttRow<TItem> row) =>
+        $"inset-inline-start:calc({Percent(row.Progress)}% - 5px)";
+
+    /// <summary>Gets the style that places a connector just outside one end of a bar.</summary>
+    /// <param name="start">Whether this is the starting end.</param>
+    /// <returns>The inline style.</returns>
+    private static string ConnectorStyle(bool start) =>
+        start ? "inset-inline-start:-14px" : "inset-inline-end:-14px";
 
     /// <summary>
     /// Routes one dependency arrow.
@@ -386,6 +413,57 @@ public partial class BbGantt<TItem>
     /// <returns>The percentage.</returns>
     private static string Percent(double value) =>
         (Math.Clamp(value, 0, 1) * 100).ToString("0.##", CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// Gets the style that places a bar's hover card.
+    /// </summary>
+    /// <param name="row">The row.</param>
+    /// <returns>The inline style.</returns>
+    /// <remarks>
+    /// Below the bar in the top half of the chart and above it in the bottom half, so the card
+    /// always opens into the rows rather than out through the header or the bottom edge. A bar near
+    /// the end of the timeline hangs its card off its own end, or the card would widen the scroll.
+    /// </remarks>
+    private string TooltipStyle(GanttRow<TItem> row)
+    {
+        var rows = chart?.Rows.Count ?? 1;
+        var vertical = row.Index < rows / 2 ? "top:calc(100% + 6px)" : "bottom:calc(100% + 6px)";
+        var nearEnd = (row.OffsetSlots * EffectiveSlotWidth) > TimelineWidth - 260;
+
+        return $"{vertical};{(nearEnd ? "inset-inline-end:0" : "inset-inline-start:0")}";
+    }
+
+    /// <summary>Gets the dates line of a bar's hover card.</summary>
+    /// <param name="row">The row.</param>
+    /// <returns>The line.</returns>
+    private string TooltipRange(GanttRow<TItem> row)
+    {
+        var culture = CultureInfo.CurrentCulture;
+        var pattern = Zoom == GanttZoom.Hour ? "g" : "d MMM yyyy";
+
+        return row.IsMilestone
+            ? row.Start.ToString(pattern, culture)
+            : string.Format(culture, Localizer["Gantt.TooltipRange"], row.Start.ToString(pattern, culture), row.End.ToString(pattern, culture));
+    }
+
+    /// <summary>Gets the length line of a bar's hover card.</summary>
+    /// <param name="row">The row.</param>
+    /// <returns>The line, or null for a milestone, which has no length.</returns>
+    private string? TooltipLength(GanttRow<TItem> row)
+    {
+        if (row.IsMilestone)
+        {
+            return null;
+        }
+
+        var culture = CultureInfo.CurrentCulture;
+        var span = row.End - row.Start;
+
+        // Under a day, days would read as "0" and say nothing.
+        return span.TotalDays >= 1
+            ? string.Format(culture, Localizer["Gantt.TooltipDays"], span.TotalDays.ToString("0.#", culture))
+            : string.Format(culture, Localizer["Gantt.TooltipHours"], span.TotalHours.ToString("0.#", culture));
+    }
 
     /// <summary>
     /// Says what a dependency is, for a reader who cannot see the arrow.

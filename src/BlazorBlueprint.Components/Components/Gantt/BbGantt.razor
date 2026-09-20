@@ -104,6 +104,10 @@
              data-snap="@(SnapToSlot ? "true" : "false")"
              data-allow-drag="@(AllowDrag ? "true" : "false")"
              data-allow-resize="@(AllowResize ? "true" : "false")"
+             data-allow-progress="@(AllowProgressDrag ? "true" : "false")"
+             data-allow-link="@(AllowLinking ? "true" : "false")"
+             data-allow-row-drag="@(AllowRowDrag ? "true" : "false")"
+             data-row-height="@RowHeight"
              class="bb:overflow-auto bb:rounded-md bb:border bb:border-border"
              style="@(Height is { Length: > 0 } height ? $"height:{height};" : string.Empty)">
 
@@ -230,7 +234,16 @@
                                     style="@BodyCellStyle(offset)">
                                     @if (isTree)
                                     {
-                                        <div class="bb:flex bb:items-center bb:gap-1" style="@IndentStyle(row)">
+                                        <div class="bb:flex bb:items-center bb:gap-1" style="@IndentStyle(row)" data-gantt-row="@row.Id">
+                                            @if (AllowRowDrag)
+                                            {
+                                                <span class="bb:flex bb:size-4 bb:shrink-0 bb:cursor-grab bb:items-center bb:justify-center bb:text-muted-foreground bb:opacity-0 bb:group-hover/row:opacity-100"
+                                                      data-gantt-row-handle
+                                                      role="button"
+                                                      aria-label="@string.Format(System.Globalization.CultureInfo.CurrentCulture, Localizer["Gantt.DragRow"], row.Text)">
+                                                    <LucideIcon Name="grip-vertical" Size="14" />
+                                                </span>
+                                            }
                                             @if (row.IsSummary)
                                             {
                                                 <button type="button"
@@ -245,9 +258,21 @@
                                             {
                                                 <span class="bb:size-5 bb:shrink-0"></span>
                                             }
-                                            <span class="bb:truncate @(row.IsSummary ? "bb:font-medium" : string.Empty)" title="@row.Text">
-                                                @(column.ChildContent is not null ? column.ChildContent(row) : (RenderFragment)(@<text>@column.Text(row)</text>))
-                                            </span>
+                                            @if (column.ChildContent is not null)
+                                            {
+                                                @* The template owns the rest of the cell. Wrapping
+                                                   it in the truncating span as well would clip
+                                                   whatever it put there, an input most of all. *@
+                                                <div class="bb:min-w-0 bb:flex-1">
+                                                    @column.ChildContent(row)
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="bb:truncate @(row.IsSummary ? "bb:font-medium" : string.Empty)" title="@row.Text">
+                                                    @column.Text(row)
+                                                </span>
+                                            }
                                         </div>
                                     }
                                     else if (column.ChildContent is not null)
@@ -294,16 +319,22 @@
                 {
                     @if (row.IsMilestone)
                     {
-                        <div class="bb:pointer-events-auto bb:absolute bb:rotate-45 bb:rounded-[2px] @(AllowDrag ? "bb:cursor-grab bb:touch-none" : string.Empty)"
-                             style="@(MilestoneStyle(row) + MilestonePaint(row))"
+                        @* The marker is turned, so the box holding it is not: a connector inside a rotated
+                           parent turns with it, and the handles have to sit square to the row. *@
+                        <div class="@ClassNames.cn("bb:group/bar bb:pointer-events-auto bb:absolute", AllowDrag ? "bb:cursor-grab bb:touch-none" : null)"
+                             style="@MilestoneStyle(row)"
                              data-gantt-bar="@row.Id"
                              role="img"
                              aria-label="@BarLabel(row)"
-                             @onclick="@(() => ClickAsync(row))"></div>
+                             @onclick="@(() => ClickAsync(row))">
+                            <div class="bb:size-full bb:rotate-45 bb:rounded-[2px]" style="@MilestonePaint(row).TrimStart(';')"></div>
+                            @Connectors(row)
+                            @Tooltip(row)
+                        </div>
                     }
                     else if (row.IsSummary)
                     {
-                        <div class="bb:pointer-events-auto bb:absolute"
+                        <div class="@ClassNames.cn("bb:group/bar bb:pointer-events-auto bb:absolute")"
                              style="@(BarStyle(row) + BarPaint(row))"
                              data-gantt-bar="@row.Id"
                              role="img"
@@ -314,8 +345,12 @@
                                 <div class="bb:absolute bb:inset-y-0 bb:start-0"
                                      style="@ProgressStyle(row)"></div>
                             }
-                            <div class="bb:absolute bb:top-0 bb:start-0 bb:w-0.5" style="@SummaryCapStyle()"></div>
-                            <div class="bb:absolute bb:top-0 bb:end-0 bb:w-0.5" style="@SummaryCapStyle()"></div>
+                            @* The two legs hang below the crossbar, which is what says "this is
+                               the span of what is under it" rather than "this is a task". *@
+                            <div class="bb:absolute bb:top-0 bb:start-0 bb:w-[3px]" style="@SummaryLegStyle()"></div>
+                            <div class="bb:absolute bb:top-0 bb:end-0 bb:w-[3px]" style="@SummaryLegStyle()"></div>
+                            @Connectors(row)
+                            @Tooltip(row)
                         </div>
                     }
                     else
@@ -330,10 +365,25 @@
                             {
                                 @BarTemplate(row)
                             }
-                            else if (row.Progress > 0)
+                            else if (row.Progress > 0 || AllowProgressDrag)
                             {
+                                @* Rendered even at nothing done, or a drag would have no fill to
+                                   widen and a task could never be started from the chart. *@
                                 <div class="bb:absolute bb:inset-y-0 bb:start-0 bb:rounded-s-[3px]"
-                                     style="@ProgressStyle(row)"></div>
+                                     style="@ProgressStyle(row)"
+                                     data-gantt-fill></div>
+                            }
+
+                            @if (AllowProgressDrag)
+                            {
+                                <div class="bb:absolute bb:top-1/2 bb:-mt-[5px] bb:size-2.5 bb:rotate-45 bb:cursor-ew-resize bb:rounded-[2px] bb:bg-background bb:opacity-0 bb:ring-1 bb:group-hover/bar:opacity-100"
+                                     style="@ProgressHandleStyle(row)"
+                                     data-gantt-progress
+                                     role="slider"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"
+                                     aria-valuenow="@((int)Math.Round(row.Progress * 100))"
+                                     aria-label="@string.Format(System.Globalization.CultureInfo.CurrentCulture, Localizer["Gantt.ProgressHandle"], row.Text)"></div>
                             }
 
                             @if (AllowResize)
@@ -343,6 +393,9 @@
                                 <div class="bb:absolute bb:inset-y-0 bb:end-0 bb:w-1.5 bb:cursor-ew-resize bb:rounded-e-[3px] bb:bg-foreground/40 bb:opacity-0 bb:group-hover/bar:opacity-100"
                                      data-gantt-resize="end"></div>
                             }
+
+                            @Connectors(row)
+                            @Tooltip(row)
                         </div>
                     }
 
@@ -355,19 +408,33 @@
                     }
                 }
 
-                @if (ShowDependencies && chart.Links.Count > 0)
+                @if (ShowDependencies)
                 {
+                    @* Mirrored as a whole in a right-to-left page: an SVG coordinate system does
+                       not flip on its own, and an arrow that still points right there would be
+                       pointing backwards in time. *@
                     <svg class="bb:absolute bb:top-0 bb:start-0 bb:text-muted-foreground"
                          width="@timelineWidth"
                          height="@BodyHeight"
+                         data-gantt-links
                          role="list"
                          aria-label="@Localizer["Gantt.Dependencies"]">
                         @foreach (var link in chart.Links)
                         {
-                            <g role="listitem">
+                            <g role="listitem" class="@(AllowLinking ? "bb:pointer-events-auto bb:cursor-pointer bb:hover:text-destructive" : string.Empty)">
                                 <title>@LinkLabel(link)</title>
-                                <path d="@LinkPath(link)" fill="none" stroke="currentColor" stroke-width="1.5" />
-                                <polygon points="@LinkArrow(link)" fill="currentColor" />
+                                @if (AllowLinking)
+                                {
+                                    @* A one-and-a-half pixel line is not something anyone can hit.
+                                       The wide transparent twin is what the pointer actually finds. *@
+                                    <path d="@LinkPath(link)"
+                                          fill="none"
+                                          stroke="transparent"
+                                          stroke-width="10"
+                                          @onclick="@(() => ClickLinkAsync(link))" />
+                                }
+                                <path d="@LinkPath(link)" fill="none" stroke="currentColor" stroke-width="1.5" pointer-events="none" />
+                                <polygon points="@LinkArrow(link)" fill="currentColor" pointer-events="none" />
                             </g>
                         }
                     </svg>
@@ -375,5 +442,127 @@
             </div>
             </div>
         </div>
+
+        @if (ShowLegend)
+        {
+            <div class="bb:flex bb:flex-wrap bb:items-center bb:gap-x-5 bb:gap-y-2 bb:text-xs bb:text-muted-foreground"
+                 role="list"
+                 aria-label="@Localizer["Gantt.Legend"]">
+                <span class="bb:flex bb:items-center bb:gap-2" role="listitem">
+                    <span class="bb:inline-flex bb:h-2.5 bb:w-8 bb:overflow-hidden bb:rounded-[3px] bb:bg-primary/30 bb:ring-1 bb:ring-inset bb:ring-primary/50" aria-hidden="true">
+                        <span class="bb:h-full bb:w-1/2 bb:bg-primary"></span>
+                    </span>
+                    @Localizer["Gantt.LegendTask"] <span class="bb:opacity-60">(@Localizer["Gantt.LegendDone"])</span>
+                </span>
+
+                @if (chart.Rows.Any(r => r.IsSummary))
+                {
+                    <span class="bb:flex bb:items-center bb:gap-2" role="listitem">
+                        <span class="bb:relative bb:inline-block bb:h-3 bb:w-8" aria-hidden="true">
+                            <span class="bb:absolute bb:inset-x-0 bb:top-0 bb:h-1 bb:bg-foreground/80"></span>
+                            <span class="bb:absolute bb:start-0 bb:top-0 bb:h-2.5 bb:w-[3px] bb:bg-foreground/80"></span>
+                            <span class="bb:absolute bb:end-0 bb:top-0 bb:h-2.5 bb:w-[3px] bb:bg-foreground/80"></span>
+                        </span>
+                        @Localizer["Gantt.LegendSummary"]
+                    </span>
+                }
+
+                @if (chart.Rows.Any(r => r.IsMilestone))
+                {
+                    <span class="bb:flex bb:items-center bb:gap-2" role="listitem">
+                        <span class="bb:inline-block bb:size-2.5 bb:rotate-45 bb:rounded-[2px] bb:bg-foreground" aria-hidden="true"></span>
+                        @Localizer["Gantt.LegendMilestone"]
+                    </span>
+                }
+
+                @if (ShowToday)
+                {
+                    <span class="bb:flex bb:items-center bb:gap-2" role="listitem">
+                        <span class="bb:inline-block bb:h-3.5 bb:w-px bb:bg-primary" aria-hidden="true"></span>
+                        @Localizer["Gantt.LegendToday"]
+                    </span>
+                }
+
+                @if (ShowNonWorkingDays && chart.Axis.Minor.Any(slot => slot.IsNonWorking))
+                {
+                    <span class="bb:flex bb:items-center bb:gap-2" role="listitem">
+                        <span class="bb:inline-block bb:h-3.5 bb:w-4 bb:rounded-[2px] bb:bg-muted" aria-hidden="true"></span>
+                        @Localizer["Gantt.LegendNonWorking"]
+                    </span>
+                }
+
+                @if (ShowDependencies && chart.Links.Count > 0)
+                {
+                    <span class="bb:flex bb:items-center bb:gap-2" role="listitem">
+                        <svg width="26" height="10" aria-hidden="true" class="bb:text-muted-foreground">
+                            <path d="M 0 5 L 17 5" fill="none" stroke="currentColor" stroke-width="1.5" />
+                            <polygon points="23,5 17,2 17,8" fill="currentColor" />
+                        </svg>
+                        @Localizer["Gantt.Dependencies"]
+                    </span>
+                }
+            </div>
+        }
     }
 </div>
+
+@code {
+    /// <summary>
+    /// The two dots a dependency is drawn from, one at each end of a bar.
+    /// </summary>
+    /// <remarks>
+    /// Which dot the drag starts on and which half of the target it lands on decide the type, so
+    /// all four come out of the gesture rather than out of a menu asking which one was meant.
+    /// </remarks>
+    private RenderFragment Connectors(GanttRow<TItem> row) => @<text>
+        @if (AllowLinking)
+        {
+            <div class="bb:absolute bb:top-1/2 bb:-mt-1 bb:size-2 bb:cursor-crosshair bb:rounded-full bb:bg-background bb:opacity-0 bb:ring-1 bb:group-hover/bar:opacity-100"
+                 style="@ConnectorStyle(start: true)"
+                 data-gantt-link="start"
+                 aria-label="@string.Format(System.Globalization.CultureInfo.CurrentCulture, Localizer["Gantt.LinkFromStart"], row.Text)"></div>
+            <div class="bb:absolute bb:top-1/2 bb:-mt-1 bb:size-2 bb:cursor-crosshair bb:rounded-full bb:bg-background bb:opacity-0 bb:ring-1 bb:group-hover/bar:opacity-100"
+                 style="@ConnectorStyle(start: false)"
+                 data-gantt-link="end"
+                 aria-label="@string.Format(System.Globalization.CultureInfo.CurrentCulture, Localizer["Gantt.LinkFromEnd"], row.Text)"></div>
+        }
+    </text>;
+
+    /// <summary>
+    /// The card shown while a bar is hovered.
+    /// </summary>
+    /// <remarks>
+    /// Plain markup shown by CSS, not a floating overlay. A plan can hold hundreds of bars, and on
+    /// Blazor Server asking the circuit what to show on every pointer-over is a card that arrives
+    /// after the pointer has moved on. The bar already carries the same words in its aria-label, so
+    /// this is hidden from a screen reader rather than read out twice.
+    /// </remarks>
+    private RenderFragment Tooltip(GanttRow<TItem> row) => @<text>
+        @if (ShowTooltip)
+        {
+            <div class="bb:pointer-events-none bb:absolute bb:z-10 bb:w-max bb:max-w-60 bb:rounded-md bb:border bb:border-border bb:bg-popover bb:px-2.5 bb:py-2 bb:text-xs bb:text-popover-foreground bb:shadow-md bb:opacity-0 bb:transition-opacity bb:group-hover/bar:opacity-100"
+                 style="@TooltipStyle(row)"
+                 aria-hidden="true">
+                @if (TooltipTemplate is not null)
+                {
+                    @TooltipTemplate(row)
+                }
+                else
+                {
+                    <p class="bb:font-medium bb:text-foreground">@row.Text</p>
+                    <p class="bb:mt-0.5 bb:text-muted-foreground">@TooltipRange(row)</p>
+                    @if (TooltipLength(row) is { } length)
+                    {
+                        <p class="bb:text-muted-foreground">@length</p>
+                    }
+                    @if (!row.IsMilestone)
+                    {
+                        <p class="bb:text-muted-foreground">
+                            @string.Format(System.Globalization.CultureInfo.CurrentCulture, Localizer["Gantt.TooltipDone"], (int)Math.Round(row.Progress * 100))
+                        </p>
+                    }
+                }
+            </div>
+        }
+    </text>;
+}

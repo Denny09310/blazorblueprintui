@@ -27,6 +27,15 @@ public sealed class GanttChangeContext<TItem>
     /// <summary>Gets the end the drag is asking for.</summary>
     public required DateTimeOffset End { get; init; }
 
+    /// <summary>
+    /// Gets how far along the drag is asking the task to be, from 0 to 1.
+    /// </summary>
+    /// <remarks>
+    /// Only a <see cref="GanttChangeKind.Progress"/> drag changes this. Every other kind reports
+    /// the progress the task already had, so a handler can store all four fields the same way.
+    /// </remarks>
+    public required double Progress { get; init; }
+
     /// <summary>Gets or sets whether to leave the task where it was.</summary>
     public bool Cancel { get; set; }
 }
