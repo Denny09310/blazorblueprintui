@@ -116,6 +116,7 @@ internal static class ComponentCatalog
             new("Kbd", "/components/kbd", "Display keyboard shortcuts and key combinations", "keyboard"),
             new("Label", "/components/label", "Accessible labels for form controls", "tag"),
             new("Link", "/components/link", "Styled anchor for a link inside text", "link", IsNew: true, Component: "BbLink"),
+            new("List Box", "/components/list-box", "Always-visible list of options with keyboard navigation, search and range selection", "list-checks", IsNew: true, Component: "BbListBox"),
             new("Markdown Editor", "/components/markdown-editor", "Rich text editor with toolbar formatting and live preview", "file-text"),
             new("Marker", "/components/marker", "Displays inline status notes, bordered rows, and labeled separators in conversations.", "component"),
             new("Masked Input", "/components/masked-input", "Input with structured formats like phone, SSN, and credit card", "component"),

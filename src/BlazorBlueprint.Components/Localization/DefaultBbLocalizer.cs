@@ -526,6 +526,13 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Scheduler.SaveRejected"] = "These changes were rejected. Your edits have been retained.",
         ["Scheduler.SaveFailed"] = "Unable to save. Your edits have been retained; please try again.",
 
+        // ListBox
+        ["ListBox.SearchPlaceholder"] = "Search...",
+        ["ListBox.SelectAll"] = "Select all",
+        ["ListBox.Empty"] = "No options",
+        ["ListBox.NoMatches"] = "No matches",
+        ["ListBox.SelectedCount"] = "{0} selected",
+
         // Select
         ["Select.ChooseOption"] = "Choose an option",
 

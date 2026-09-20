@@ -11,6 +11,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **`BbListBox`, an always-visible list of options.** No trigger, no popover: the choices stay on
+  screen, which is what a settings panel, a transfer list or a filter pane wants. `SelectionMode`
+  picks between one (`@bind-Value`) and many (`@bind-Values`), and it takes the same
+  `SelectOption<TValue>` that `BbSelect` and `BbMultiSelect` already take, so options move between
+  them unchanged.
+
+  **The list is the keyboard control the popover ones are not.** The list inside `BbSelect` and
+  `BbMultiSelect` has no arrow-key handling of its own — it does not need any, because the popover
+  owns focus. A listbox has no popover, so it carries the whole ARIA pattern itself: one tab stop
+  rather than one per option, an active option tracked through `aria-activedescendant` and scrolled
+  into view as it moves, arrows, `Home`/`End`, `PageUp`/`PageDown`, `Space` to toggle, `Shift` with
+  an arrow or a click to extend a range from the last option touched, `Ctrl+A` to take everything,
+  and typeahead — where pressing one letter repeatedly walks through the options starting with it
+  rather than searching for "ccc" and finding nothing. Single selection selects as it moves, the
+  way a native list does; multiple selection moves without selecting until you say so.
+
+  **Select-all sits above the list, not inside it,** because an option that selects the other
+  options gets announced as one of the choices and takes a place in the arrow-key order. It covers
+  what the search box has left visible rather than the hidden rest — a control that quietly
+  selected rows the person could not see would be worse than no shortcut at all. The per-option
+  indicator is a drawn box rather than a real checkbox for the same class of reason: a focusable
+  control inside every option would be a second tab stop and a second thing to announce, when
+  `aria-selected` already carries the state.
+
+  `OptionDisabled` takes the whole option rather than a value, so the rule can read either; the
+  arrow keys step over a disabled row instead of stopping dead on it. `ItemTemplate` owns the row
+  content while the indicator is still drawn. `ShowSearch`, `Height`, `EmptyMessage`, `Label`,
+  `AriaLabel` and `Disabled` round it out, and `ValueExpression`/`ValuesExpression` wire it to
+  `EditForm` validation.
+
 - **`BbSignature`, a signing field, on the new `BbSignaturePad` primitive.** Sign by drawing or by
   typing a name. `@bind-Value` gives back a `SignatureValue` carrying `Kind` (`Drawn` or `Typed`),
   the signature as `Svg`, and the typed `Text`. `GetPngAsync` and `GetStrokesAsync` pull the other

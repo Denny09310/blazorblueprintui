@@ -2918,6 +2918,30 @@
   - Underline : LinkUnderline
   - Variant : LinkVariant
 
+### BbListBox`1 (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
+  - Class : String
+  - Disabled : Boolean
+  - EmptyMessage : String
+  - Height : String
+  - ItemTemplate : RenderFragment<SelectOption<TValue>>
+  - Label : String
+  - OptionDisabled : Func<SelectOption<TValue>, Boolean>
+  - Options : IEnumerable<SelectOption<TValue>>
+  - SearchPlaceholder : String
+  - SelectAllLabel : String
+  - SelectionMode : ListBoxSelectionMode
+  - ShowSearch : Boolean
+  - ShowSelectAll : Boolean
+  - Value : TValue
+  - ValueChanged : EventCallback<TValue>
+  - ValueExpression : Expression<Func<TValue>>
+  - Values : IEnumerable<TValue>
+  - ValuesChanged : EventCallback<IEnumerable<TValue>>
+  - ValuesExpression : Expression<Func<IEnumerable<TValue>>>
+  - CascadedEditContext : EditContext [CascadingParameter]
+
 ### BbMarkdownEditor (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaDescribedBy : String
@@ -5304,6 +5328,10 @@
   - Inherit = 1
   - Muted = 2
   - Destructive = 3
+
+### ListBoxSelectionMode (BlazorBlueprint.Components)
+  - Single = 0
+  - Multiple = 1
 
 ### MarkerElement (BlazorBlueprint.Components)
   - Div = 0

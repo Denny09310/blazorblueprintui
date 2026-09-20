@@ -1,0 +1,314 @@
+@page "/components/list-box"
+@using BlazorBlueprint.Primitives
+<PageTitle>List Box - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">List Box</h1>
+            <p class="text-xl text-muted-foreground">
+                An always-visible list of options, with no trigger and no popover. The list is a
+                single tab stop and moves an active option with the arrow keys.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Single Selection</h2>
+                <p class="text-muted-foreground">
+                    The default. Moving with the arrow keys selects as it goes, which is how a native
+                    list behaves. Click the list and try the arrows, <strong>Home</strong>,
+                    <strong>End</strong>, or typing the first letters of an option.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbListBox TValue="string"
+                           Label="Delivery method"
+                           Options="@deliveryOptions"
+                           @bind-Value="deliveryChoice" />
+                <p class="text-sm text-muted-foreground">
+                    Chosen: <span class="font-mono text-foreground">@(deliveryChoice ?? "none")</span>
+                </p>
+            </div>
+
+            <CodeBlock Source="Components/ListBox/single.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Multiple Selection</h2>
+                <p class="text-muted-foreground">
+                    The arrow keys move without selecting. <strong>Space</strong> toggles the active
+                    option, <strong>Shift</strong> with an arrow or a click extends a range from the
+                    last one you touched, and <strong>Ctrl+A</strong> takes everything.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbListBox TValue="string"
+                           Label="Regions"
+                           SelectionMode="ListBoxSelectionMode.Multiple"
+                           Options="@regionOptions"
+                           @bind-Values="regionChoices" />
+                <p class="text-sm text-muted-foreground">
+                    Chosen: <span class="font-mono text-foreground">@DescribeRegions</span>
+                </p>
+            </div>
+
+            <CodeBlock Source="Components/ListBox/multiple.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Search</h2>
+                <p class="text-muted-foreground">
+                    The search box is its own tab stop. Press <strong>Down</strong> in it to hand the
+                    arrow keys to the list. Select all covers what the search has left visible, not
+                    the hidden rest — a box that quietly selected rows you could not see would be
+                    worse than no shortcut at all.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbListBox TValue="string"
+                           SelectionMode="ListBoxSelectionMode.Multiple"
+                           ShowSearch="true"
+                           Height="12rem"
+                           Options="@countryOptions"
+                           @bind-Values="countryChoices" />
+                <p class="text-sm text-muted-foreground">
+                    Chosen: <span class="font-mono text-foreground">@(countryChoices?.Count() ?? 0) of @countryOptions.Length</span>
+                </p>
+            </div>
+
+            <CodeBlock Source="Components/ListBox/search.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Unavailable Options</h2>
+                <p class="text-muted-foreground">
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">OptionDisabled</code> takes the
+                    whole option, so the rule can read the value or the text. The arrow keys step over
+                    a disabled row rather than stopping dead on it.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BbListBox TValue="string"
+                           Label="Delivery method"
+                           Options="@deliveryOptions"
+                           OptionDisabled="@(o => o.Value == "express")"
+                           @bind-Value="disabledDemoChoice" />
+            </div>
+
+            <CodeBlock Source="Components/ListBox/disabled-options.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Item Template</h2>
+                <p class="text-muted-foreground">
+                    The selected indicator is drawn either way. The template owns the rest of the row.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BbListBox TValue="string" Options="@deliveryOptions" @bind-Value="templateChoice">
+                    <ItemTemplate Context="option">
+                        <span class="flex-1">@option.Text</span>
+                        <span class="text-xs text-muted-foreground font-mono">@option.Value</span>
+                    </ItemTemplate>
+                </BbListBox>
+            </div>
+
+            <CodeBlock Source="Components/ListBox/template.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Disabled</h2>
+                <p class="text-muted-foreground">
+                    The whole list is out of the tab order and ignores the keyboard and the mouse.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BbListBox TValue="string" Label="Delivery method" Options="@deliveryOptions" Disabled="true" Value="@("express")" />
+            </div>
+        </section>
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                The list is <code class="text-xs bg-muted px-1 py-0.5 rounded">role="listbox"</code> with
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">role="option"</code> children, and
+                carries <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-multiselectable</code> when
+                more than one can be chosen.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                One tab stop, not one per option. The active option is reported through
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-activedescendant</code> and scrolled
+                into view as it moves.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Each option carries <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-selected</code>,
+                and an unavailable one carries
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-disabled</code>. The indicator box is
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-hidden</code>: it is a picture of the
+                state that <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-selected</code> already
+                carries, and a real checkbox there would be a second tab stop inside every row.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Select-all sits above the list rather than inside it, so it is not announced as one of the
+                choices and does not take a place in the arrow-key order.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">Label</code> is tied to the list with
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">for</code>. Without one, give the list an
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">AriaLabel</code>.
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move the active option. In single selection this also selects it">
+                <BbKbd>&uarr;</BbKbd> / <BbKbd>&darr;</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move to the first or last option">
+                <BbKbd>Home</BbKbd> / <BbKbd>End</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move ten options at a time">
+                <BbKbd>PgUp</BbKbd> / <BbKbd>PgDn</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Select, or toggle when more than one can be chosen">
+                <BbKbd>Space</BbKbd> / <BbKbd>Enter</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Extend the selection from the last option you touched">
+                <BbKbd>Shift</BbKbd> + <BbKbd>&uarr;</BbKbd> / <BbKbd>&darr;</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Select everything currently visible">
+                <BbKbd>Ctrl</BbKbd> + <BbKbd>A</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Jump to the next option starting with what you type">
+                <BbKbd>A</BbKbd>&hellip;<BbKbd>Z</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move from the search box into the list">
+                <BbKbd>&darr;</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbListBox">
+                <ApiParameter Name="Options" Type="IEnumerable&lt;SelectOption&lt;TValue&gt;&gt;?">
+                    The options to choose from. The same <code class="text-xs bg-muted px-1 py-0.5 rounded">SelectOption&lt;TValue&gt;</code> that <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSelect</code> and <code class="text-xs bg-muted px-1 py-0.5 rounded">BbMultiSelect</code> take.
+                </ApiParameter>
+                <ApiParameter Name="SelectionMode" Type="ListBoxSelectionMode" Default="Single">
+                    Whether one option can be chosen or many.
+                </ApiParameter>
+                <ApiParameter Name="Value" Type="TValue?">
+                    The chosen value in single selection. Use with <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Value</code>.
+                </ApiParameter>
+                <ApiParameter Name="ValueChanged" Type="EventCallback&lt;TValue?&gt;">
+                    Invoked when the chosen value changes.
+                </ApiParameter>
+                <ApiParameter Name="Values" Type="IEnumerable&lt;TValue&gt;?">
+                    The chosen values in multiple selection. Use with <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Values</code>.
+                </ApiParameter>
+                <ApiParameter Name="ValuesChanged" Type="EventCallback&lt;IEnumerable&lt;TValue&gt;?&gt;">
+                    Invoked when the chosen values change.
+                </ApiParameter>
+                <ApiParameter Name="Label" Type="string?">
+                    The label shown above the list, tied to it with <code class="text-xs bg-muted px-1 py-0.5 rounded">for</code>.
+                </ApiParameter>
+                <ApiParameter Name="ShowSearch" Type="bool" Default="false">
+                    Whether a search box is shown above the list.
+                </ApiParameter>
+                <ApiParameter Name="SearchPlaceholder" Type="string?">
+                    The placeholder for the search box.
+                </ApiParameter>
+                <ApiParameter Name="ShowSelectAll" Type="bool" Default="true">
+                    Whether a select-all checkbox is shown. Multiple selection only. It covers what the search has left visible.
+                </ApiParameter>
+                <ApiParameter Name="SelectAllLabel" Type="string?">
+                    The label for the select-all checkbox.
+                </ApiParameter>
+                <ApiParameter Name="OptionDisabled" Type="Func&lt;SelectOption&lt;TValue&gt;, bool&gt;?">
+                    A predicate marking individual options as unavailable. The arrow keys step over them.
+                </ApiParameter>
+                <ApiParameter Name="ItemTemplate" Type="RenderFragment&lt;SelectOption&lt;TValue&gt;&gt;?">
+                    A template for an option's content. The selected indicator is drawn either way.
+                </ApiParameter>
+                <ApiParameter Name="EmptyMessage" Type="string?">
+                    The message shown when there is nothing to choose from.
+                </ApiParameter>
+                <ApiParameter Name="Height" Type="string" Default="16rem">
+                    The height of the scrolling area, as a CSS length.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether the whole list is disabled.
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?">
+                    An accessible name for the list, for when there is no <code class="text-xs bg-muted px-1 py-0.5 rounded">Label</code>.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?">
+                    Additional CSS classes for the root element.
+                </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes applied to the root element.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+    </div>
+</div>
+
+@code {
+    private string? deliveryChoice = "standard";
+    private string? disabledDemoChoice;
+    private string? templateChoice;
+    private IEnumerable<string>? regionChoices;
+    private IEnumerable<string>? countryChoices;
+
+    private readonly SelectOption<string>[] deliveryOptions =
+    [
+        new("standard", "Standard"),
+        new("express", "Express"),
+        new("courier", "Courier"),
+        new("collection", "Collect in store"),
+    ];
+
+    private readonly SelectOption<string>[] regionOptions =
+    [
+        new("na", "North America"),
+        new("sa", "South America"),
+        new("eu", "Europe"),
+        new("me", "Middle East"),
+        new("af", "Africa"),
+        new("ap", "Asia Pacific"),
+    ];
+
+    private readonly SelectOption<string>[] countryOptions =
+    [
+        new("au", "Australia"), new("br", "Brazil"), new("ca", "Canada"),
+        new("cn", "China"), new("de", "Germany"), new("es", "Spain"),
+        new("fr", "France"), new("id", "Indonesia"), new("in", "India"),
+        new("it", "Italy"), new("jp", "Japan"), new("ke", "Kenya"),
+        new("mx", "Mexico"), new("ng", "Nigeria"), new("nz", "New Zealand"),
+        new("pt", "Portugal"), new("se", "Sweden"), new("sg", "Singapore"),
+        new("uk", "United Kingdom"), new("us", "United States"),
+    ];
+
+    private string DescribeRegions => regionChoices is null || !regionChoices.Any()
+        ? "none"
+        : string.Join(", ", regionOptions.GetTexts(regionChoices));
+}
