@@ -39,6 +39,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   empty message or an error is what is actually on screen. Checking only that a chart had been
   built was the mistake: a chart can exist in C# while the markup shows something else entirely.
 
+  **And then it asks the element reference itself**, because every one of those checks only
+  *infers* that the element exists. A `BbGanttColumn` registers during the chart's own render and
+  invalidates it afterwards, so with columns declared a further pass can land between the build and
+  the draw — an interleaving no amount of state-reading can see. An `ElementReference` that no
+  render has assigned has a null `Id`, and that is a direct test which cannot be raced. It defers
+  rather than disables: the next render wires everything up, and a test holds both halves of that
+  so a future guard cannot quietly turn the gestures off instead of fixing them.
+
+  The JavaScript setup also now catches `JSException`. A wiring problem should leave a chart with
+  degraded gestures and a readable plan, not a red banner over a chart that drew perfectly well.
+
 - **`BbBarcode` no longer prints `Arg_ParamName_Name` instead of an error on WebAssembly.** It
   showed `ArgumentException.Message` with the parameter-name suffix stripped off by searching for
   the English wording of that suffix. The wording comes from a framework resource string, and on

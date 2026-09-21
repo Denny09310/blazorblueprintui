@@ -767,6 +767,17 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
             return;
         }
 
+        // And then the direct test, because everything above only infers that the element exists.
+        // A column registering calls Invalidate after the chart is already built, and the pass
+        // that follows can reach here before the chart branch has drawn — an interleaving the
+        // state check cannot see. An ElementReference no render has assigned has a null Id, and
+        // handing one of those to JavaScript is what produced "addEventListener is not a
+        // function". Asking the reference itself cannot be raced.
+        if (string.IsNullOrEmpty(rootElement.Id))
+        {
+            return;
+        }
+
         try
         {
             if (!jsReady)
@@ -796,9 +807,15 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
                 await GoToTodayAsync();
             }
         }
-        catch (JSDisconnectedException)
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
         {
             // The circuit went away mid-render; there is nothing left to wire up.
+        }
+        catch (JSException)
+        {
+            // A module that failed to load, or a call the browser refused. Catching it is what
+            // keeps a wiring problem from becoming a red banner over a chart that has drawn
+            // perfectly well: the gestures are degraded, the plan is still readable.
         }
     }
 
