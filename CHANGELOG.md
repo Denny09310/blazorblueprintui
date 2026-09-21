@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## 2026-09-21
 
-### Added (v4.1.0)
+### Added
 
 - **`BbMapChart` and `BbMap`**: a world choropleth for visitors, sales, and other
   country-level datasets. Bind ISO country codes or English names to numeric
@@ -17,6 +17,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   enable pan/zoom with `Roam`. Missing values use a separate fill; country clicks
   retain the source dataset index. Natural Earth boundaries ship as a lazy-loaded
   static asset. Includes a website-visitors demo at `/charts/map`.
+
+- **`AsChildDiagnostics.WarnIfUnconsumed<TTrigger>` and `AsChildTriggerDescription`**
+  (`BlazorBlueprint.Primitives.Utilities`). The warning every AsChild trigger in the library now
+  logs, public so a trigger built outside the library can log it too. Call it from
+  `OnAfterRender` on the first render, with the `TriggerContext` the render cascaded. It is public
+  because the drawer's triggers live in Components and needed it; the other route, opening
+  Primitives' internals to Components, would break at runtime for an app that pairs Components
+  with a newer Primitives.
+
+- **`BarcodeFormatException`, in `BlazorBlueprint.Primitives.Barcode`.** An `ArgumentException`, so
+  existing catch blocks are unaffected, whose message is safe to put in front of whoever typed the
+  value. Every refusal from `BarcodeEncoder` is now one of these.
 
 ### Fixed
 
@@ -127,20 +139,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `ParamName` for anything that wants it; it is only kept out of what a reader sees. A null value is
   still an `ArgumentNullException`, because that is a mistake in the calling code rather than
   something to show anyone.
-
-### Added
-
-- **`AsChildDiagnostics.WarnIfUnconsumed<TTrigger>` and `AsChildTriggerDescription`**
-  (`BlazorBlueprint.Primitives.Utilities`). The warning every AsChild trigger in the library now
-  logs, public so a trigger built outside the library can log it too. Call it from
-  `OnAfterRender` on the first render, with the `TriggerContext` the render cascaded. It is public
-  because the drawer's triggers live in Components and needed it; the other route, opening
-  Primitives' internals to Components, would break at runtime for an app that pairs Components
-  with a newer Primitives.
-
-- **`BarcodeFormatException`, in `BlazorBlueprint.Primitives.Barcode`.** An `ArgumentException`, so
-  existing catch blocks are unaffected, whose message is safe to put in front of whoever typed the
-  value. Every refusal from `BarcodeEncoder` is now one of these.
 
 ---
 
