@@ -28,6 +28,7 @@
     private ElementReference canvasRef;
     private IJSObjectReference? jsModule;
     private DotNetObjectReference<BbSignaturePad>? dotNetRef;
+    private readonly TaskCompletionSource<bool> initializationReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly string padId = Guid.NewGuid().ToString("N");
     private bool jsInitialized;
     private bool disposed;
@@ -110,6 +111,10 @@
         catch (InvalidOperationException)
         {
             // JS interop not available during prerendering
+        }
+        finally
+        {
+            initializationReady.TrySetResult(jsInitialized && !disposed);
         }
     }
 
@@ -222,6 +227,10 @@
     /// </remarks>
     public async Task SetStrokesAsync(IReadOnlyList<SignatureStroke>? strokes)
     {
+        if (!await initializationReady.Task)
+        {
+            return;
+        }
         if (await CallAsync("signaturePad.setStrokes", strokes ?? Array.Empty<SignatureStroke>()))
         {
             await OnChange.InvokeAsync(await IsEmptyAsync());
@@ -324,6 +333,7 @@
     {
         GC.SuppressFinalize(this);
         disposed = true;
+        initializationReady.TrySetResult(false);
         if (jsModule != null && jsInitialized)
         {
             try

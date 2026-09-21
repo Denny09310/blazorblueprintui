@@ -726,6 +726,7 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
         if (stale)
         {
             var previous = chart;
+            var previousError = buildError;
             Rebuild();
 
             // Compared by value, not by reference. Rebuild always makes a new chart, so a
@@ -733,9 +734,10 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
             // handles it, whose re-render sets this component's parameters again, which marks it
             // stale again, which rebuilds again. That circle has nothing to stop it, and it hangs
             // the circuit on Server and the tab on WebAssembly.
-            if (!SameChart(previous, chart))
+            var chartChanged = !SameChart(previous, chart);
+            if (chartChanged || !string.Equals(previousError, buildError, StringComparison.Ordinal))
             {
-                if (OnBuilt.HasDelegate)
+                if (chartChanged && OnBuilt.HasDelegate)
                 {
                     await OnBuilt.InvokeAsync(chart);
                 }
@@ -890,7 +892,8 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
         if (left.Axis.Zoom != right.Axis.Zoom
             || left.Axis.Start != right.Axis.Start
             || left.Axis.End != right.Axis.End
-            || left.Axis.SlotCount != right.Axis.SlotCount)
+            || !left.Axis.Minor.SequenceEqual(right.Axis.Minor)
+            || !left.Axis.Major.SequenceEqual(right.Axis.Major))
         {
             return false;
         }

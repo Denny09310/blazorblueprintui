@@ -36,6 +36,13 @@
 
 ### Bug Fixes
 
+- **Radar tooltips**: data-derived indicator names, series names and values are HTML-escaped to prevent HTML injection.
+- **BbSignature**: stroke restoration waits for the drawn pad to mount and initialize, including repeated restoration from typed mode.
+- **BbPivotDataGrid**, **BbGantt**: changed parent headings and non-working-day bands redraw immediately. Gantt also renders initial build errors without requiring another parent interaction.
+- **BbListBox**: the visible label supplies the accessible name, and navigation keys no longer consume the next Tab.
+- **Charts**: click callbacks can be added, replaced and removed after initialization without remounting or changing chart data.
+- **BbFileUpload**: explicitly setting bound `Files` to null clears the selection and releases removed resources; omitting `Files` still permits uncontrolled selection.
+
 - **BbGantt**, **BbPivotDataGrid**: `OnBuilt` no longer loops when a parent handles it. Gantt waits for its rendered element before wiring JavaScript and preserves pending setup across deferred renders. **BbBarcode** displays encoder messages without framework resource keys on WebAssembly.
 - **Tabs and steppers**: responsive tab lists support adding/reordering, and conditional steps follow their current markup order.
 - **Dates and time**: blocked dates also apply to Now and empty-value time stepping; the first segment increment starts at its minimum; custom calendar day names update with parameters. Editable date inputs reflect EditForm validation state.

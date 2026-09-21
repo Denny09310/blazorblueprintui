@@ -23,6 +23,10 @@
 
 ### Bug Fixes
 
+- **BbCheckbox**, **BbSlider**: keyboard activation/navigation preserves the next Tab; checkbox activation uses the native button click once per key.
+- **BbSignaturePad**: stroke restoration waits for JavaScript initialization when called immediately after mounting.
+- **BbSwipeArea**: cancellation discards unsent movement updates, including work queued behind an in-flight callback.
+
 - **BbDialogClose**, **BbSheetClose**: native keyboard activation invokes the close action once, including when closing is prevented.
 - **Dialog and Popover**: `Modal` now controls outside/Escape dismissal according to its existing contract; it does not change focus trapping.
 - **BbMenubar**: closed triggers support keyboard navigation, Escape restores focus, and outside-pointer handling no longer uses a blocking overlay.

@@ -355,6 +355,7 @@ public partial class BbPivotDataGrid<TItem> : ComponentBase
         }
 
         var previous = table;
+        var previousError = buildError;
         Rebuild();
 
         // Compared by value, not by reference. Rebuild always makes a new table, so a reference
@@ -362,9 +363,10 @@ public partial class BbPivotDataGrid<TItem> : ComponentBase
         // whose re-render sets this component's parameters again, which marks it stale again,
         // which rebuilds again. That circle has nothing to stop it, and it hangs the circuit on
         // Server and the tab on WebAssembly.
-        if (!SameTable(previous, table))
+        var tableChanged = !SameTable(previous, table);
+        if (tableChanged || !string.Equals(previousError, buildError, StringComparison.Ordinal))
         {
-            if (OnBuilt.HasDelegate)
+            if (tableChanged && OnBuilt.HasDelegate)
             {
                 await OnBuilt.InvokeAsync(table);
             }
@@ -414,14 +416,16 @@ public partial class BbPivotDataGrid<TItem> : ComponentBase
 
         for (var i = 0; i < left.Measures.Count; i++)
         {
-            if (!string.Equals(left.Measures[i].Key, right.Measures[i].Key, StringComparison.Ordinal))
+            if (!string.Equals(left.Measures[i].Key, right.Measures[i].Key, StringComparison.Ordinal)
+                || !string.Equals(left.Measures[i].Title, right.Measures[i].Title, StringComparison.Ordinal)
+                || !string.Equals(left.Measures[i].Format, right.Measures[i].Format, StringComparison.Ordinal))
             {
                 return false;
             }
         }
 
-        if (!SameHeadings(left.RowLeaves, right.RowLeaves)
-            || !SameHeadings(left.ColumnLeaves, right.ColumnLeaves))
+        if (!SameHeadings(left.RowRoots, right.RowRoots)
+            || !SameHeadings(left.ColumnRoots, right.ColumnRoots))
         {
             return false;
         }
@@ -448,12 +452,18 @@ public partial class BbPivotDataGrid<TItem> : ComponentBase
 
     private static bool SameHeadings(IReadOnlyList<PivotAxisNode> left, IReadOnlyList<PivotAxisNode> right)
     {
+        if (left.Count != right.Count)
+        {
+            return false;
+        }
         for (var i = 0; i < left.Count; i++)
         {
-            if (!string.Equals(left[i].Label, right[i].Label, StringComparison.Ordinal)
+            if (!Equals(left[i].Key, right[i].Key)
+                || !string.Equals(left[i].Label, right[i].Label, StringComparison.Ordinal)
                 || left[i].Depth != right[i].Depth
                 || left[i].IsTotal != right[i].IsTotal
-                || left[i].Span != right[i].Span)
+                || left[i].Span != right[i].Span
+                || !SameHeadings(left[i].Children, right[i].Children))
             {
                 return false;
             }

@@ -159,6 +159,7 @@ export function initialize(element, dotNetRef, areaId) {
             if (pointerId == null) return;
             if (element.hasPointerCapture(pointerId)) element.releasePointerCapture(pointerId);
             reset();
+            moves.cancel();
         },
         dispose: () => {
             disposed = true;

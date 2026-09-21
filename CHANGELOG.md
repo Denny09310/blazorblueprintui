@@ -7,6 +7,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 
+## 2026-09-22
+
+### Fixed
+
+- Radar tooltips escape data-derived text, preventing HTML injection through labels or series names.
+- Signature stroke restoration waits for the drawn pad to mount and initialize, including repeated switches from typed mode.
+- Pivot parent headings and Gantt non-working-day bands redraw when their visible metadata changes. Initial Gantt build errors appear immediately.
+- ListBox, Slider and Checkbox keyboard navigation preserves Tab behavior; ListBox uses its visible label as its accessible name.
+- Chart click callbacks can be added, removed or replaced after initialization without remounting the chart.
+- Swipe cancellation discards queued movement updates. Explicitly setting FileUpload's bound `Files` to null clears the selection and releases removed file resources.
+
 ## 2026-09-21
 
 ### Added

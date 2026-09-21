@@ -33,7 +33,8 @@ public partial class BbListBox<TValue> : ComponentBase, IAsyncDisposable
     private int activeIndex = -1;
     private int anchorIndex = -1;
     private bool hasFocus;
-    private bool preventDefaultKey;
+    private ElementReference listElement;
+    private IJSObjectReference? keyboardCleanup;
     private bool pendingScroll;
 
     private string typeahead = string.Empty;
@@ -363,8 +364,6 @@ public partial class BbListBox<TValue> : ComponentBase, IAsyncDisposable
             return;
         }
 
-        preventDefaultKey = true;
-
         switch (args.Key)
         {
             case "ArrowDown":
@@ -401,12 +400,9 @@ public partial class BbListBox<TValue> : ComponentBase, IAsyncDisposable
         // A single printable character jumps to the next option starting with it.
         if (args.Key.Length == 1 && !args.CtrlKey && !args.MetaKey && !args.AltKey)
         {
-            preventDefaultKey = false;
             await TypeaheadAsync(args.Key);
             return;
         }
-
-        preventDefaultKey = false;
     }
 
     private async Task HandleSearchInputAsync(ChangeEventArgs args)
@@ -634,6 +630,12 @@ public partial class BbListBox<TValue> : ComponentBase, IAsyncDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (keyboardCleanup is null && !disposed)
+        {
+            await SafeJsAsync(async module => keyboardCleanup = await module.InvokeAsync<IJSObjectReference>(
+                "keyboardNav.setupListBox", listElement));
+        }
+
         if (!pendingScroll || disposed)
         {
             return;
@@ -669,10 +671,21 @@ public partial class BbListBox<TValue> : ComponentBase, IAsyncDisposable
     }
 
     /// <inheritdoc />
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         GC.SuppressFinalize(this);
         disposed = true;
-        return ValueTask.CompletedTask;
+        if (keyboardCleanup is not null)
+        {
+            try
+            {
+                await keyboardCleanup.InvokeVoidAsync("dispose");
+                await keyboardCleanup.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+            {
+                // The browser may have gone away before the component unmounted.
+            }
+        }
     }
 }

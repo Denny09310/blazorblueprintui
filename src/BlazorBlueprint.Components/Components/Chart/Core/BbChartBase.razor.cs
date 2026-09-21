@@ -15,6 +15,7 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
 
     private IJSObjectReference? jsModule;
     private DotNetObjectReference<BbChartBase>? dotNetRef;
+    private bool clickHandlersEnabled;
     private bool jsInitialized;
     private bool disposed;
     private readonly string chartId = Guid.NewGuid().ToString("N");
@@ -248,6 +249,7 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
 
             await jsModule.InvokeVoidAsync("initialize", chartId, serialized, dotNetRef);
             jsInitialized = true;
+            clickHandlersEnabled = dotNetRef is not null;
         }
         catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
         {
@@ -268,6 +270,17 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
 
         try
         {
+            var enableClicks = OnDataPointClick.HasDelegate || OnChartClick.HasDelegate;
+            if (enableClicks != clickHandlersEnabled)
+            {
+                if (enableClicks)
+                {
+                    dotNetRef ??= DotNetObjectReference.Create(this);
+                }
+                await jsModule.InvokeVoidAsync("setClickHandler", chartId, enableClicks ? dotNetRef : null);
+                clickHandlersEnabled = enableClicks;
+            }
+
             var option = BuildOption();
             var json = JsonSerializer.Serialize(option, SerializerOptions);
 

@@ -3,6 +3,7 @@
 @using System.Net
 @using BlazorBlueprint.Primitives.SignaturePad
 @inject IBbLocalizer Localizer
+@implements IDisposable
 
 @*
     Signature - a signing field with a drawn and a typed route.
@@ -105,6 +106,9 @@
 
 @code {
     private BbSignaturePad? pad;
+    private TaskCompletionSource<BbSignaturePad>? padReady;
+    private bool disposed;
+    private bool initialTypedValueApplied;
     private readonly string fieldId = $"bb-signature-{Guid.NewGuid():N}";
     private SignatureKind mode = SignatureKind.Drawn;
     private string typedText = string.Empty;
@@ -211,8 +215,9 @@
     {
         // Adopt an externally supplied value once, so that a form loading a saved signature opens
         // on the route it was given with. Later edits are driven from inside.
-        if (Value is { Kind: SignatureKind.Typed } typed && typedText.Length == 0)
+        if (!initialTypedValueApplied && Value is { Kind: SignatureKind.Typed } typed)
         {
+            initialTypedValueApplied = true;
             mode = SignatureKind.Typed;
             typedText = typed.Text ?? string.Empty;
         }
@@ -260,11 +265,44 @@
     /// <param name="strokes">The samples to draw, in the coordinates they were captured in.</param>
     public async Task SetStrokesAsync(IReadOnlyList<SignatureStroke>? strokes)
     {
-        mode = SignatureKind.Drawn;
-        if (pad is not null)
+        if (disposed)
         {
-            await pad.SetStrokesAsync(strokes);
+            return;
         }
+        if (mode != SignatureKind.Drawn || pad is null)
+        {
+            pad = null;
+            mode = SignatureKind.Drawn;
+            var ready = padReady ??= new(TaskCreationOptions.RunContinuationsAsynchronously);
+            StateHasChanged();
+            try
+            {
+                pad = await ready.Task;
+            }
+            catch (OperationCanceledException)
+            {
+                // The user switched modes again, or the signing field was removed.
+                return;
+            }
+        }
+        await pad.SetStrokesAsync(strokes);
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (mode == SignatureKind.Drawn && pad is not null && padReady is { } ready)
+        {
+            padReady = null;
+            ready.TrySetResult(pad);
+        }
+    }
+
+    void IDisposable.Dispose()
+    {
+        disposed = true;
+        padReady?.TrySetCanceled();
+        padReady = null;
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>
@@ -303,6 +341,9 @@
         }
 
         mode = next;
+        pad = null;
+        padReady?.TrySetCanceled();
+        padReady = null;
         // Each route holds its own state, so switching abandons whatever the other one had rather
         // than leaving a stale drawing behind a typed name.
         typedText = string.Empty;

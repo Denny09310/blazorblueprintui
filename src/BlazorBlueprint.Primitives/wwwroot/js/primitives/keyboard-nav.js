@@ -121,3 +121,19 @@ export function navigateLast(container) {
     items[lastIndex]?.focus();
     return items[lastIndex] || null;
 }
+
+
+// The list's .NET handler changes selection; cancellation must happen for this browser event.
+export function setupListBox(element) {
+    if (!element) return { dispose() {} };
+    const keydown = event => {
+        if (element.getAttribute('aria-disabled') === 'true') return;
+        const selectAll = element.getAttribute('aria-multiselectable') === 'true'
+            && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a';
+        if (selectAll || ['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageUp', 'PageDown', ' ', 'Enter'].includes(event.key)) {
+            event.preventDefault();
+        }
+    };
+    element.addEventListener('keydown', keydown);
+    return { dispose: () => element.removeEventListener('keydown', keydown) };
+}

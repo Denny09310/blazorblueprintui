@@ -41,3 +41,9 @@ Coverage includes:
 - Interactive Auto using a Server circuit on the first visit and WebAssembly on a subsequent visit, followed by functional input interaction.
 
 These are targeted interaction regressions, not a screen-reader certification or exhaustive coverage of every component.
+
+## Parameter and lifecycle regressions
+
+`npm run test:state-changes` builds and starts the small test fixture on port 7188, runs Chromium and WebKit, and stops the fixture afterward. It covers signature restoration across modes, Gantt/Pivot redraws and errors, keyboard Tab behavior, ListBox labels, changing chart callbacks, FileUpload resets, and escaped radar tooltips. Run it with demo hosts stopped so its build can update static assets safely. The browser overrides above also apply.
+
+To test an already running fixture, set `BB_STATE_CHANGES_URL`. The fixture project is `fixtures/StateChanges/StateChanges.csproj`; it references the current source projects and is separate from the product demos.

@@ -126,33 +126,34 @@ export async function initialize(chartId, option, dotNetRef) {
     }
   });
 
-  if (dotNetRef) {
-    // 'click' on the instance fires for data points only. Blank areas of the canvas never reach
-    // it, which is why the zrender-level handler below exists for OnChartClick.
-    chart.on('click', (params) => {
-      dotNetRef.invokeMethodAsync('HandleDataPointClick', toClickArgs(params));
-    });
-
-    // zrender sees every click on the canvas, and sets `target` only when the click landed on a
-    // rendered shape. No target means blank space, which is the one case 'click' above misses.
-    //
-    // Deliberately not chart.containPixel('grid', ...): that is true anywhere inside the plot
-    // area, including the gaps between bars, so it suppressed nearly every blank click.
-    chart.getZr().on('click', (event) => {
-      if (!event.target) {
-        dotNetRef.invokeMethodAsync('HandleChartClick');
-      }
-    });
-  }
-
   instances.set(chartId, {
     chart,
     element,
     resizeObserver,
     themeUnwatch,
-    dotNetRef,
+    dotNetRef: null,
     lastOption: option
   });
+  setClickHandler(chartId, dotNetRef);
+}
+
+// Keep subscriptions independent of chart options: callbacks can change without data changes.
+export function setClickHandler(chartId, dotNetRef) {
+  const state = instances.get(chartId);
+  if (!state || state.chart.isDisposed()) return;
+  if (state.dataClick) state.chart.off('click', state.dataClick);
+  if (state.blankClick) state.chart.getZr().off('click', state.blankClick);
+  state.dataClick = state.blankClick = null;
+  state.dotNetRef = dotNetRef;
+  if (!dotNetRef) return;
+  // ECharts reports data points here; zrender also sees blank canvas clicks.
+  state.dataClick = params => dotNetRef.invokeMethodAsync('HandleDataPointClick', toClickArgs(params));
+  state.blankClick = event => {
+    // A target is a rendered shape. containPixel('grid') would also exclude gaps between bars.
+    if (!event.target) dotNetRef.invokeMethodAsync('HandleChartClick');
+  };
+  state.chart.on('click', state.dataClick);
+  state.chart.getZr().on('click', state.blankClick);
 }
 
 /**
@@ -173,9 +174,15 @@ export async function update(chartId, option, notMerge) {
   state.chart.setOption(resolved, { notMerge: notMerge !== false });
 }
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[char]);
+}
+
 /**
  * If the chart is a radar with rich-text indicator names (e.g. "{a|186/80}\n{b|January}"),
- * install a tooltip formatter that strips the rich-text tokens and renders clean HTML.
+ * install a tooltip formatter that strips the rich-text tokens and escapes data-derived text.
  * @param {object} option - Resolved ECharts option
  */
 function applyRadarTooltipFormatter(option) {
@@ -195,11 +202,11 @@ function applyRadarTooltipFormatter(option) {
   });
 
   option.tooltip.formatter = (params) => {
-    let html = `${params.marker} <strong>${params.seriesName}</strong>`;
+    let html = `${params.marker} <strong>${escapeHtml(params.seriesName)}</strong>`;
     if (Array.isArray(params.value)) {
       params.value.forEach((val, idx) => {
         if (idx < cleanNames.length) {
-          html += `<br/>${cleanNames[idx]}: ${val}`;
+          html += `<br/>${escapeHtml(cleanNames[idx])}: ${escapeHtml(val)}`;
         }
       });
     }

@@ -15,7 +15,7 @@
 <div class="@RootClass" data-slot="listbox" @attributes="AdditionalAttributes">
     @if (!string.IsNullOrEmpty(Label))
     {
-        <BbLabel For="@listId" Class="bb:mb-2 bb:block">@Label</BbLabel>
+        <BbLabel id="@($"{listId}-label")" For="@listId" Class="bb:mb-2 bb:block">@Label</BbLabel>
     }
 
     <div class="@FrameClass">
@@ -61,15 +61,15 @@
             </div>
         }
 
-        <ul id="@listId"
+        <ul @ref="listElement" id="@listId"
             role="listbox"
             tabindex="@(Disabled ? -1 : 0)"
             aria-multiselectable="@(IsMultiple ? "true" : null)"
             aria-activedescendant="@ActiveDescendantId"
             aria-disabled="@(Disabled ? "true" : null)"
             aria-label="@AriaLabel"
+            aria-labelledby="@(string.IsNullOrEmpty(AriaLabel) && !string.IsNullOrEmpty(Label) ? $"{listId}-label" : null)"
             @onkeydown="HandleKeyDownAsync"
-            @onkeydown:preventDefault="preventDefaultKey"
             @onfocus="HandleFocus"
             @onblur="HandleBlur"
             style="max-height: @Height"
