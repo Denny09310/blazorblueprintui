@@ -92,6 +92,9 @@ test('scroll watcher finds late targets, updates thresholds, restores focus and 
         await new Promise(requestAnimationFrame);
         target.scrollTop = 500;
         target.dispatchEvent(new Event('scroll'));
+        // WebKit must present the starting scroll position before a second smooth scroll.
+        // This also separates setup from activation, as real user input does.
+        await new Promise(requestAnimationFrame);
         const appeared = reports.at(-1);
         module.observe('audit', '#audit-scroll', 600, callback);
         const hidden = reports.at(-1) === false;

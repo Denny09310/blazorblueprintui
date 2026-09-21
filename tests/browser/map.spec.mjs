@@ -40,6 +40,16 @@ async function mapPoint(page, coordinates, index = 0) {
     }, { selector, engine, coordinates, index });
 }
 
+async function clickCountry(page, coordinates) {
+    const point = await mapPoint(page, coordinates);
+    await page.mouse.move(point.x, point.y);
+    // Let ECharts paint the emphasis label before pressing: otherwise WebKit can
+    // hit the region on pointer down and the new label on pointer up.
+    await page.evaluate(() => new Promise(resolve =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await page.mouse.click(point.x, point.y);
+}
+
 test('world maps share geometry, update data and preserve country click indices', async ({ page }) => {
     const errors = [];
     let mapRequests = 0;
@@ -55,11 +65,9 @@ test('world maps share geometry, update data and preserve country click indices'
     expect(initial.usa.fill).not.toBe(initial.mexico.fill);
     expect(mapRequests).toBe(1);
 
-    const point = await mapPoint(page, [-100, 40]);
-    await page.mouse.click(point.x, point.y);
+    await clickCountry(page, [-100, 40]);
     await expect(page.getByRole('status')).toContainText('12,400 visitors (dataset row 1)');
-    const mexico = await mapPoint(page, [-102, 23]);
-    await page.mouse.click(mexico.x, mexico.y);
+    await clickCountry(page, [-102, 23]);
     await expect(page.getByRole('status')).toHaveText('Mexico: no visitor data.');
     await page.getByRole('button', { name: 'Show last 30 days' }).click();
     await expect.poll(async () => (await readMap(page))?.usa.value).toBe(49600);
