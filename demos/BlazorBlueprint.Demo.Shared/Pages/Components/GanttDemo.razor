@@ -40,7 +40,20 @@
                 </p>
             </div>
 
-            <div class="rounded-lg border bg-card p-6">
+            <p class="text-muted-foreground">
+                <code>OnBuilt</code> hands the finished chart to the page after every build, which
+                is how anything outside the chart reads what it drew. The line under this one is
+                written from it.
+            </p>
+
+            <div class="rounded-lg border bg-card p-6 space-y-3">
+                @if (basicSummary is not null)
+                {
+                    <p class="text-sm text-muted-foreground" data-testid="gantt-built-summary">
+                        @basicSummary
+                    </p>
+                }
+
                 <BbGantt TItem="PlanTask"
                          Data="@plan"
                          IdSelector="@(t => t.Id)"
@@ -49,6 +62,7 @@
                          StartSelector="@(t => t.Start)"
                          EndSelector="@(t => t.End)"
                          ProgressSelector="@(t => t.Progress)"
+                         OnBuilt="@DescribeBuild"
                          Height="26rem"
                          AriaLabel="Product launch plan" />
             </div>
@@ -768,6 +782,30 @@
 </div>
 
 @code {
+    private string? basicSummary;
+
+    /// <summary>
+    /// Reads the finished chart. This is the arrangement that used to hang: the handler lives on
+    /// the page that declares the chart, so every call re-renders the page and sets the chart's
+    /// parameters again.
+    /// </summary>
+    private void DescribeBuild(GanttChart<PlanTask>? chart)
+    {
+        if (chart is null)
+        {
+            basicSummary = null;
+            return;
+        }
+
+        var milestones = chart.Rows.Count(r => r.IsMilestone);
+        var summaries = chart.Rows.Count(r => r.IsSummary);
+
+        basicSummary =
+            $"{chart.TaskCount} tasks over {chart.Axis.SlotCount} days, " +
+            $"{summaries} of them summaries and {milestones} milestones, " +
+            $"from {chart.Axis.Start:d MMM yyyy} to {chart.Axis.End:d MMM yyyy}.";
+    }
+
     /// <summary>One task of the plan. A class, not a record, so the drag demo can write to it.</summary>
     public sealed class PlanTask
     {

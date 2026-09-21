@@ -30,13 +30,24 @@ public static class BarcodeEncoder
     /// where the check digit is either mandatory or built into the symbology.
     /// </param>
     /// <returns>The finished symbol.</returns>
-    /// <exception cref="ArgumentException">
+    /// <exception cref="BarcodeFormatException">
     /// <paramref name="value"/> is empty, or it holds a character or a length the symbology cannot
     /// carry, or it ends in a check digit that does not match.
     /// </exception>
     public static BarcodeSymbol Encode(string value, BarcodeType type, bool addChecksum = false)
     {
-        ArgumentException.ThrowIfNullOrEmpty(value);
+        // A null is a mistake in the calling code and never reaches a reader, so the framework's
+        // own exception is right for it.
+        ArgumentNullException.ThrowIfNull(value);
+
+        // An empty value is not. It is what a bound input holds before anyone has typed, and the
+        // message goes on the page — so it is ours. ArgumentException.ThrowIfNullOrEmpty would
+        // word it from a framework resource, and on WebAssembly those are routinely trimmed to
+        // their keys.
+        if (value.Length == 0)
+        {
+            throw new BarcodeFormatException("There is nothing to encode.", nameof(value));
+        }
 
         return type switch
         {
@@ -85,7 +96,7 @@ public static class BarcodeEncoder
     /// <param name="value">The value as given.</param>
     /// <param name="type">The symbology, for the error message.</param>
     /// <returns>The digits.</returns>
-    /// <exception cref="ArgumentException">The value holds something other than digits.</exception>
+    /// <exception cref="BarcodeFormatException">The value holds something other than digits.</exception>
     internal static string DigitsOnly(string value, BarcodeType type)
     {
         var digits = new char[value.Length];
@@ -100,7 +111,7 @@ public static class BarcodeEncoder
 
             if (!char.IsAsciiDigit(c))
             {
-                throw new ArgumentException(
+                throw new BarcodeFormatException(
                     $"{type} holds digits only, and this value contains '{c}'. {DescribeInput(type)}",
                     nameof(value));
             }

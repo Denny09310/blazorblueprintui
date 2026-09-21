@@ -51,6 +51,10 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
     private bool seeded;
     private bool stale = true;
     private bool scrolled;
+
+    // Set when a rebuild has changed the chart but the DOM still shows the previous one. The
+    // JavaScript is wired up on the pass after that, not on the pass that rebuilt.
+    private bool redrawPending;
     private string? buildError;
     private string? sortKey;
     private bool sortDescending;
@@ -719,31 +723,46 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
     /// <inheritdoc />
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var rebuilt = false;
-
         if (stale)
         {
             var previous = chart;
             Rebuild();
-            rebuilt = !ReferenceEquals(previous, chart);
 
-            if (rebuilt)
+            // Compared by value, not by reference. Rebuild always makes a new chart, so a
+            // reference test is always "changed" — and OnBuilt calls StateHasChanged on whoever
+            // handles it, whose re-render sets this component's parameters again, which marks it
+            // stale again, which rebuilds again. That circle has nothing to stop it, and it hangs
+            // the circuit on Server and the tab on WebAssembly.
+            if (!SameChart(previous, chart))
             {
                 if (OnBuilt.HasDelegate)
                 {
                     await OnBuilt.InvokeAsync(chart);
                 }
 
+                // What is on screen is still the chart as it was before this rebuild — on the very
+                // first pass, that is the empty message, which has no chart element in it at all.
+                // Wiring up JavaScript here hands it something that is not an element. Ask for
+                // another render and wire up on the pass after it, when the DOM matches the build.
+                redrawPending = true;
                 StateHasChanged();
+                return;
             }
         }
 
-        await SetUpJsAsync(rebuilt || firstRender);
+        var redrawn = redrawPending;
+        redrawPending = false;
+
+        await SetUpJsAsync(redrawn || firstRender);
     }
 
     private async Task SetUpJsAsync(bool redrawn)
     {
-        if (chart is null)
+        // Every one of these draws something other than the chart, so the element the JavaScript
+        // needs is not in the document. Checking only for a built chart is what put a red banner
+        // on the demo page: a chart can exist in C# while the markup is still showing a spinner,
+        // an empty message or an error.
+        if (chart is null || chart.IsEmpty || Loading || buildError is not null)
         {
             return;
         }
@@ -782,6 +801,89 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
             // The circuit went away mid-render; there is nothing left to wire up.
         }
     }
+
+    /// <summary>
+    /// Gets whether two builds draw the same chart.
+    /// </summary>
+    /// <param name="left">The chart built last time, which may be null.</param>
+    /// <param name="right">The chart just built, which may be null.</param>
+    /// <returns><see langword="true"/> when nothing a reader or a handler could notice differs.</returns>
+    /// <remarks>
+    /// <para>
+    /// This walks the rows, which is the same order of work the rebuild that produced them already
+    /// did, so it costs one more pass over something already in cache rather than a second build.
+    /// It stops at the first difference.
+    /// </para>
+    /// <para>
+    /// Compared exactly rather than through a hash: a hash would be the same cost with a small
+    /// chance of calling two different charts the same, and a missed <c>OnBuilt</c> is a silent
+    /// wrong answer where an extra one is only wasted work.
+    /// </para>
+    /// <para>
+    /// The source items are deliberately not compared. A change to a field the chart does not draw
+    /// is not a change to the chart, and the columns re-render from the caller's own markup anyway.
+    /// </para>
+    /// </remarks>
+    private static bool SameChart(GanttChart<TItem>? left, GanttChart<TItem>? right)
+    {
+        if (ReferenceEquals(left, right))
+        {
+            return true;
+        }
+
+        if (left is null || right is null)
+        {
+            return false;
+        }
+
+        if (left.TaskCount != right.TaskCount
+            || left.Rows.Count != right.Rows.Count
+            || left.Links.Count != right.Links.Count)
+        {
+            return false;
+        }
+
+        if (left.Axis.Zoom != right.Axis.Zoom
+            || left.Axis.Start != right.Axis.Start
+            || left.Axis.End != right.Axis.End
+            || left.Axis.SlotCount != right.Axis.SlotCount)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < left.Rows.Count; i++)
+        {
+            if (!SameRow(left.Rows[i], right.Rows[i]))
+            {
+                return false;
+            }
+        }
+
+        for (var i = 0; i < left.Links.Count; i++)
+        {
+            // GanttLink is a record, so this compares every end and position it carries.
+            if (left.Links[i] != right.Links[i])
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool SameRow(GanttRow<TItem> left, GanttRow<TItem> right) =>
+        string.Equals(left.Id, right.Id, StringComparison.Ordinal)
+        && string.Equals(left.Text, right.Text, StringComparison.Ordinal)
+        && left.Start == right.Start
+        && left.End == right.End
+        && left.Progress.Equals(right.Progress)
+        && left.Depth == right.Depth
+        && left.ChildCount == right.ChildCount
+        && left.IsSummary == right.IsSummary
+        && left.IsMilestone == right.IsMilestone
+        && left.IsExpanded == right.IsExpanded
+        && left.OffsetSlots.Equals(right.OffsetSlots)
+        && left.LengthSlots.Equals(right.LengthSlots);
 
     private void Rebuild()
     {

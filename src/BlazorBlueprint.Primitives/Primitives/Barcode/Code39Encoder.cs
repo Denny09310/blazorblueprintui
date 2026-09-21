@@ -48,7 +48,7 @@ internal static class Code39Encoder
             var index = Charset.IndexOf(upper[i], StringComparison.Ordinal);
             if (index < 0)
             {
-                throw new ArgumentException(
+                throw new BarcodeFormatException(
                     $"Code 39 holds digits, letters and - . space $ / + %, and this value contains '{value[i]}'. Use Code 128 for anything else.",
                     nameof(value));
             }

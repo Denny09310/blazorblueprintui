@@ -63,7 +63,7 @@ internal static class TelepenEncoder
         {
             if (c > 127)
             {
-                throw new ArgumentException(
+                throw new BarcodeFormatException(
                     $"Telepen holds ASCII only, and this value contains '{c}'.",
                     nameof(value));
             }

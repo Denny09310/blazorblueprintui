@@ -80,7 +80,7 @@ internal static class EanUpcEncoder
 
         if (digits.Length != length)
         {
-            throw new ArgumentException(
+            throw new BarcodeFormatException(
                 $"{type} needs {length - 1} digits, or {length} with the check digit already on the end. This value has {digits.Length}.",
                 nameof(digits));
         }
@@ -88,7 +88,7 @@ internal static class EanUpcEncoder
         var expected = CheckDigit(digits[..^1]);
         if (digits[^1] != expected)
         {
-            throw new ArgumentException(
+            throw new BarcodeFormatException(
                 $"The check digit is wrong: {type} of {digits[..^1]} ends in {expected}, not {digits[^1]}. Leave the check digit off and it is worked out.",
                 nameof(digits));
         }
@@ -233,7 +233,7 @@ internal static class EanUpcEncoder
             return cleaned;
         }
 
-        throw new ArgumentException(
+        throw new BarcodeFormatException(
             $"An ISBN is 10 digits, or 13 beginning 978 or 979, with or without hyphens. This value is \"{value}\".",
             nameof(value));
     }
@@ -257,7 +257,7 @@ internal static class EanUpcEncoder
             return cleaned;
         }
 
-        throw new ArgumentException(
+        throw new BarcodeFormatException(
             $"An ISSN is 8 characters, with or without a hyphen. This value is \"{value}\".",
             nameof(value));
     }

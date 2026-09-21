@@ -47,7 +47,7 @@ internal static class Code128Encoder
         {
             if (c > 127)
             {
-                throw new ArgumentException(
+                throw new BarcodeFormatException(
                     $"Code 128 holds ASCII only, and this value contains '{c}'. Use a QR code for anything beyond that.",
                     nameof(value));
             }

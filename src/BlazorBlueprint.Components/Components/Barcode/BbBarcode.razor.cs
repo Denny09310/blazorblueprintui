@@ -239,7 +239,12 @@ public partial class BbBarcode : ComponentBase
                 // A value the symbology cannot carry is a content problem, not a bug. Say what is
                 // wrong in the markup rather than throwing, which on Blazor Server would take the
                 // circuit down.
-                encodeError = WithoutParameterName(error.Message);
+                //
+                // Shown as it is. BarcodeFormatException.Message is the encoder's own sentence and
+                // nothing else — this used to strip a parameter-name suffix off the framework's
+                // composed message, which printed the raw resource key Arg_ParamName_Name on
+                // WebAssembly, where that resource is trimmed away.
+                encodeError = error.Message;
             }
         }
 
@@ -305,16 +310,6 @@ public partial class BbBarcode : ComponentBase
 
         var value = span ? modules : modules + EffectiveQuietZone;
         return FormattableString.Invariant($"{value / TotalWidth * 100:0.###}%");
-    }
-
-    /// <summary>
-    /// Strips the parameter name ArgumentException appends, which means nothing to whoever is
-    /// looking at the page.
-    /// </summary>
-    private static string WithoutParameterName(string message)
-    {
-        var suffix = message.IndexOf(" (Parameter '", StringComparison.Ordinal);
-        return suffix < 0 ? message : message[..suffix];
     }
 
     /// <summary>

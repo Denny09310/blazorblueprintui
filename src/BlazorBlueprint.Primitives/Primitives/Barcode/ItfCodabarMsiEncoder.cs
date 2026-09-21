@@ -49,7 +49,7 @@ internal static class ItfCodabarMsiEncoder
 
         if (digits.Length == 0)
         {
-            throw new ArgumentException("Interleaved 2 of 5 needs at least two digits.", nameof(value));
+            throw new BarcodeFormatException("Interleaved 2 of 5 needs at least two digits.", nameof(value));
         }
 
         var builder = new BarcodeBuilder();
@@ -104,7 +104,7 @@ internal static class ItfCodabarMsiEncoder
         {
             if (!CodabarCharset.Contains(c, StringComparison.Ordinal))
             {
-                throw new ArgumentException(
+                throw new BarcodeFormatException(
                     $"Codabar holds digits and - $ : / . +, wrapped in a start and stop letter from A to D. This value contains '{c}'.",
                     nameof(value));
             }
@@ -145,7 +145,7 @@ internal static class ItfCodabarMsiEncoder
 
         if (digits.Length == 0)
         {
-            throw new ArgumentException("MSI needs at least one digit.", nameof(value));
+            throw new BarcodeFormatException("MSI needs at least one digit.", nameof(value));
         }
 
         if (addChecksum)

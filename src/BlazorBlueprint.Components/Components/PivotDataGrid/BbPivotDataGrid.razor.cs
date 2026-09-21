@@ -357,7 +357,12 @@ public partial class BbPivotDataGrid<TItem> : ComponentBase
         var previous = table;
         Rebuild();
 
-        if (!ReferenceEquals(previous, table))
+        // Compared by value, not by reference. Rebuild always makes a new table, so a reference
+        // test is always "changed" — and OnBuilt calls StateHasChanged on whoever handles it,
+        // whose re-render sets this component's parameters again, which marks it stale again,
+        // which rebuilds again. That circle has nothing to stop it, and it hangs the circuit on
+        // Server and the tab on WebAssembly.
+        if (!SameTable(previous, table))
         {
             if (OnBuilt.HasDelegate)
             {
@@ -366,6 +371,95 @@ public partial class BbPivotDataGrid<TItem> : ComponentBase
 
             StateHasChanged();
         }
+    }
+
+    /// <summary>
+    /// Gets whether two builds draw the same cross-tabulation.
+    /// </summary>
+    /// <param name="left">The table built last time, which may be null.</param>
+    /// <param name="right">The table just built, which may be null.</param>
+    /// <returns><see langword="true"/> when nothing a reader or a handler could notice differs.</returns>
+    /// <remarks>
+    /// <para>
+    /// The headings are compared first and the cells only if they match, so the usual case — a
+    /// parent re-rendering with nothing changed — costs a walk of the headings rather than of the
+    /// grid. Where it does reach the cells it is one more pass over values the rebuild has just
+    /// worked out, which is the same order of work as drawing them.
+    /// </para>
+    /// <para>
+    /// The cells have to be included. A pivot whose shape is unchanged but whose numbers moved is
+    /// exactly the case a handler is watching for, and a comparison that stopped at the headings
+    /// would report nothing had happened.
+    /// </para>
+    /// </remarks>
+    private static bool SameTable(PivotTable<TItem>? left, PivotTable<TItem>? right)
+    {
+        if (ReferenceEquals(left, right))
+        {
+            return true;
+        }
+
+        if (left is null || right is null)
+        {
+            return false;
+        }
+
+        if (left.ItemCount != right.ItemCount
+            || left.RowLeaves.Count != right.RowLeaves.Count
+            || left.ColumnLeaves.Count != right.ColumnLeaves.Count
+            || left.Measures.Count != right.Measures.Count)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < left.Measures.Count; i++)
+        {
+            if (!string.Equals(left.Measures[i].Key, right.Measures[i].Key, StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        if (!SameHeadings(left.RowLeaves, right.RowLeaves)
+            || !SameHeadings(left.ColumnLeaves, right.ColumnLeaves))
+        {
+            return false;
+        }
+
+        for (var row = 0; row < left.RowLeaves.Count; row++)
+        {
+            for (var column = 0; column < left.ColumnLeaves.Count; column++)
+            {
+                for (var measure = 0; measure < left.Measures.Count; measure++)
+                {
+                    var before = left.GetValue(left.RowLeaves[row], left.ColumnLeaves[column], measure);
+                    var after = right.GetValue(right.RowLeaves[row], right.ColumnLeaves[column], measure);
+
+                    if (!Equals(before, after))
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static bool SameHeadings(IReadOnlyList<PivotAxisNode> left, IReadOnlyList<PivotAxisNode> right)
+    {
+        for (var i = 0; i < left.Count; i++)
+        {
+            if (!string.Equals(left[i].Label, right[i].Label, StringComparison.Ordinal)
+                || left[i].Depth != right[i].Depth
+                || left[i].IsTotal != right[i].IsTotal
+                || left[i].Span != right[i].Span)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void Rebuild()

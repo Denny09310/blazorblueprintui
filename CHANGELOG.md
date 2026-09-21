@@ -7,6 +7,58 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 
+## 2026-09-21
+
+### Fixed
+
+- **`OnBuilt` no longer rebuilds forever when the page that declares the chart handles it.**
+  `BbGantt` and `BbPivotDataGrid` both guarded the callback on a reference comparison against the
+  previous build, and both build a brand new object every time — so the guard was never once true.
+  `EventCallback.InvokeAsync` calls `StateHasChanged` on whoever handles it; where that is the page
+  the chart is written on, its re-render sets the chart's parameters again, which marks it stale,
+  which rebuilds, which reports again. Nothing in that circle stopped it, and it hung the circuit
+  on Server and the tab on WebAssembly.
+
+  Both now compare what was built. The Gantt walks its rows, the pivot checks its headings and then
+  its cells, and both stop at the first difference — one more pass over something the rebuild has
+  just worked out, rather than a second build. Compared exactly rather than through a hash, because
+  a hash costs the same and brings a small chance of calling two different charts the same: a
+  missed report is a silent wrong answer where an extra one is only wasted work.
+
+  The Gantt demo's first example now uses `OnBuilt`, which is both the missing demonstration of the
+  parameter and the exact arrangement that used to hang.
+
+- **`BbGantt` no longer wires up JavaScript against an element that is not there.** The chart is
+  built in `OnAfterRender`, so on the pass that builds it the document still shows whatever came
+  before — on the very first pass, the empty message, which has no chart element in it at all.
+  JavaScript setup ran anyway and was handed something that was not an element, which is the red
+  error banner that appeared under the charts. The charts still drew, because the gesture handlers
+  are attached later.
+
+  Setup now waits for the render after a rebuild, and refuses to run at all while a spinner, an
+  empty message or an error is what is actually on screen. Checking only that a chart had been
+  built was the mistake: a chart can exist in C# while the markup shows something else entirely.
+
+- **`BbBarcode` no longer prints `Arg_ParamName_Name` instead of an error on WebAssembly.** It
+  showed `ArgumentException.Message` with the parameter-name suffix stripped off by searching for
+  the English wording of that suffix. The wording comes from a framework resource string, and on
+  WebAssembly those are routinely trimmed away — what comes back in their place is the resource
+  key, the search misses it, and the key lands on the page.
+
+  The encoder now throws `BarcodeFormatException`, whose `Message` is the sentence it was given and
+  nothing else, so there is no framework text involved at any point. The parameter name is still on
+  `ParamName` for anything that wants it; it is only kept out of what a reader sees. A null value is
+  still an `ArgumentNullException`, because that is a mistake in the calling code rather than
+  something to show anyone.
+
+### Added
+
+- **`BarcodeFormatException`, in `BlazorBlueprint.Primitives.Barcode`.** An `ArgumentException`, so
+  existing catch blocks are unaffected, whose message is safe to put in front of whoever typed the
+  value. Every refusal from `BarcodeEncoder` is now one of these.
+
+---
+
 ## 2026-09-20
 
 ### Added

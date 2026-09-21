@@ -7,6 +7,11 @@ namespace BlazorBlueprint.Tests.Barcode;
 /// Validation, check digits and structure. The exact bars are cross-checked against zint in
 /// <see cref="BarcodeEncoderGoldenTests"/>.
 /// </summary>
+/// <remarks>
+/// Every refusal is a <see cref="BarcodeFormatException"/>, which is an
+/// <see cref="ArgumentException"/> whose message is the encoder's own sentence and nothing else.
+/// The wording of those messages is covered in <see cref="BarcodeMessageTests"/>.
+/// </remarks>
 public class BarcodeEncoderTests
 {
     public static TheoryData<BarcodeType> AllTypes() =>
@@ -16,7 +21,7 @@ public class BarcodeEncoderTests
     [MemberData(nameof(AllTypes))]
     public void RejectsAnEmptyValue(BarcodeType type)
     {
-        Assert.Throws<ArgumentException>(() => BarcodeEncoder.Encode(string.Empty, type));
+        Assert.Throws<BarcodeFormatException>(() => BarcodeEncoder.Encode(string.Empty, type));
         Assert.Throws<ArgumentNullException>(() => BarcodeEncoder.Encode(null!, type));
     }
 
@@ -104,7 +109,7 @@ public class BarcodeEncoderTests
     [Fact]
     public void Ean13RejectsAWrongCheckDigit()
     {
-        var error = Assert.Throws<ArgumentException>(
+        var error = Assert.Throws<BarcodeFormatException>(
             () => BarcodeEncoder.Encode("5901234123450", BarcodeType.Ean13));
 
         Assert.Contains("check digit", error.Message, StringComparison.OrdinalIgnoreCase);
@@ -127,7 +132,7 @@ public class BarcodeEncoderTests
     [InlineData("1234567890")]
     [InlineData("59012341234567")]
     public void Ean13RejectsTheWrongLength(string value) =>
-        Assert.Throws<ArgumentException>(() => BarcodeEncoder.Encode(value, BarcodeType.Ean13));
+        Assert.Throws<BarcodeFormatException>(() => BarcodeEncoder.Encode(value, BarcodeType.Ean13));
 
     [Theory]
     [InlineData("0306406152")]
@@ -172,12 +177,12 @@ public class BarcodeEncoderTests
     [InlineData("A_B")]
     [InlineData("caf\u00e9")]
     public void Code39RejectsCharactersItCannotCarry(string value) =>
-        Assert.Throws<ArgumentException>(() => BarcodeEncoder.Encode(value, BarcodeType.Code39));
+        Assert.Throws<BarcodeFormatException>(() => BarcodeEncoder.Encode(value, BarcodeType.Code39));
 
     [Fact]
     public void Code128RejectsAnythingBeyondAscii()
     {
-        var error = Assert.Throws<ArgumentException>(
+        var error = Assert.Throws<BarcodeFormatException>(
             () => BarcodeEncoder.Encode("café", BarcodeType.Code128));
 
         Assert.Contains("ASCII", error.Message, StringComparison.Ordinal);
@@ -204,7 +209,7 @@ public class BarcodeEncoderTests
     [InlineData("123456")]
     [InlineData("1234567890")]
     public void PostnetRejectsAnythingButFiveNineOrElevenDigits(string value) =>
-        Assert.Throws<ArgumentException>(() => BarcodeEncoder.Encode(value, BarcodeType.Postnet));
+        Assert.Throws<BarcodeFormatException>(() => BarcodeEncoder.Encode(value, BarcodeType.Postnet));
 
     [Theory]
     [InlineData("12345", "123455")]
@@ -223,7 +228,7 @@ public class BarcodeEncoderTests
     [InlineData("0")]
     [InlineData("not a number")]
     public void PharmacodeRejectsAnythingOutsideThreeToOneThreeOneZeroSeventy(string value) =>
-        Assert.Throws<ArgumentException>(() => BarcodeEncoder.Encode(value, BarcodeType.Pharmacode));
+        Assert.Throws<BarcodeFormatException>(() => BarcodeEncoder.Encode(value, BarcodeType.Pharmacode));
 
     [Theory]
     [InlineData(3)]
@@ -277,7 +282,7 @@ public class BarcodeEncoderTests
 
     [Fact]
     public void TelepenRejectsAnythingBeyondAscii() =>
-        Assert.Throws<ArgumentException>(() => BarcodeEncoder.Encode("café", BarcodeType.Telepen));
+        Assert.Throws<BarcodeFormatException>(() => BarcodeEncoder.Encode("café", BarcodeType.Telepen));
 
     /// <summary>
     /// A value every symbology accepts, for the tests that run across all of them.

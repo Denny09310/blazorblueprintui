@@ -60,7 +60,7 @@ internal static class PostalEncoder
 
         if (digits.Length is not (5 or 9 or 11))
         {
-            throw new ArgumentException(
+            throw new BarcodeFormatException(
                 $"POSTNET carries a 5-digit ZIP, a 9-digit ZIP+4 or an 11-digit delivery point code. This value has {digits.Length} digits.",
                 nameof(value));
         }
@@ -107,7 +107,7 @@ internal static class PostalEncoder
         {
             if (!Rm4sccCharset.Contains(c, StringComparison.Ordinal))
             {
-                throw new ArgumentException(
+                throw new BarcodeFormatException(
                     $"The Royal Mail 4-state code holds digits and upper-case letters, and this value contains '{c}'.",
                     nameof(value));
             }
@@ -115,7 +115,7 @@ internal static class PostalEncoder
 
         if (upper.Length == 0)
         {
-            throw new ArgumentException("The Royal Mail 4-state code needs at least one character.", nameof(value));
+            throw new BarcodeFormatException("The Royal Mail 4-state code needs at least one character.", nameof(value));
         }
 
         var builder = new BarcodeBuilder();
@@ -216,7 +216,7 @@ internal static class PostalEncoder
         if (!int.TryParse(value, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var number)
             || number is < 3 or > 131070)
         {
-            throw new ArgumentException(
+            throw new BarcodeFormatException(
                 $"Pharmacode carries a whole number from 3 to 131070, and this value is \"{value}\".",
                 nameof(value));
         }

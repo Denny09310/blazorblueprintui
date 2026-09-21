@@ -6,6 +6,7 @@
          StartSelector="@(t => t.Start)"
          EndSelector="@(t => t.End)"
          ProgressSelector="@(t => t.Progress)"
+         OnBuilt="@DescribeBuild"
          Height="26rem"
          AriaLabel="Product launch plan" />
 
@@ -34,4 +35,18 @@
         new() { Id = "signoff", Parent = "design", Name = "Design signed off",
                 Start = Day(12), End = Day(12) },
     ];
+}
+
+@code {
+    private string? summary;
+
+    // Fires after every build that changed something. Safe to handle from the page that declares
+    // the chart: a build that produced the same thing does not report again, so this does not
+    // re-render the page forever.
+    private void DescribeBuild(GanttChart<PlanTask>? chart)
+    {
+        summary = chart is null
+            ? null
+            : $"{chart.TaskCount} tasks over {chart.Axis.SlotCount} days.";
+    }
 }
