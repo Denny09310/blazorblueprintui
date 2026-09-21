@@ -161,12 +161,24 @@ public class BbGanttColumn<TItem> : ComponentBase, IDisposable
     /// Reads the cell's text for a row.
     /// </summary>
     /// <param name="row">The row.</param>
-    /// <returns>The text, or null where the column has no reader.</returns>
-    internal string? Text(GanttRow<TItem> row)
+    /// <param name="isTree">
+    /// Whether this column is the one carrying the tree, as the chart decided.
+    /// </param>
+    /// <returns>The text, or null where the column has nothing to show.</returns>
+    /// <remarks>
+    /// The answer is passed in rather than read from <see cref="IsTree"/>, because which column
+    /// carries the tree is the chart's decision and not this one's: left unset on every column,
+    /// the first declared column gets the job. Asking its own parameter meant a tree column that
+    /// had not been told it was one returned nothing, and the first column of every chart that
+    /// declared its own columns came out blank — expander and indent drawn, no name beside them.
+    /// </remarks>
+    internal string? Text(GanttRow<TItem> row, bool isTree)
     {
         if (Value is null)
         {
-            return IsTree ? row.Text : null;
+            // Only the tree column falls back to the task's name. Every other column with nothing
+            // to read stays empty, or an unconfigured column would print the name again.
+            return isTree ? row.Text : null;
         }
 
         var value = Value(row.Item);

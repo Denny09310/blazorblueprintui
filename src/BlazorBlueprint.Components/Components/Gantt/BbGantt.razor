@@ -270,7 +270,7 @@
                                             else
                                             {
                                                 <span class="bb:truncate @(row.IsSummary ? "bb:font-medium" : string.Empty)" title="@row.Text">
-                                                    @column.Text(row)
+                                                    @column.Text(row, isTree)
                                                 </span>
                                             }
                                         </div>
@@ -281,7 +281,7 @@
                                     }
                                     else
                                     {
-                                        <span class="bb:truncate">@column.Text(row)</span>
+                                        <span class="bb:truncate">@column.Text(row, isTree)</span>
                                     }
                                 </td>
                             }

@@ -50,6 +50,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   The JavaScript setup also now catches `JSException`. A wiring problem should leave a chart with
   degraded gestures and a readable plan, not a red banner over a chart that drew perfectly well.
 
+- **A Gantt's tree column shows the task name again when the chart declares its own `Columns`.**
+  Seven of nine charts on the docs page had a completely empty first column — expander, indent and
+  bars all correct, no text. Only the two that declared no columns at all were right, because the
+  built-in default column sets `IsTree` on itself.
+
+  The column was reading its own `IsTree` parameter to decide whether to fall back to the task's
+  name. But which column carries the tree is the *chart's* decision: with `IsTree` unset on every
+  column the first declared one gets the job, and the markup drew its expander and indent while the
+  column itself still believed it was an ordinary column. The render call site already knew the
+  answer, so it now passes it in.
+
+  Only the tree column falls back. A declared column with nothing to read stays empty, or every
+  unconfigured column would print the task's name — a test holds that half too. Sorting was never
+  affected; it had the right fallback already.
+
 - **A Gantt's column resize handles are wired on the first mount.** They were drawn but never
   connected on eight of nine charts, so a column edge simply did not drag; changing the zoom, or
   anything else that rebuilt the chart, wired that one up and it worked from then on. No console
