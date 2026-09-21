@@ -2,9 +2,11 @@
 // Manages ECharts instance lifecycle: create, update, resize, dispose
 
 import { resolveThemeColors, watchThemeChanges } from './chart-theme.js';
+import { ensureWorldMap, prepareWorldMap, resizeWorldMap } from './world-map.js';
 
 /** @type {Map<string, ChartState>} */
 const instances = new Map();
+const pendingInitializations = new Map();
 
 /** @type {Promise|null} */
 let echartsLoadPromise = null;
@@ -55,7 +57,7 @@ function toClickArgs(params) {
   let value = null;
   let values = null;
 
-  if (typeof raw === 'number') {
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
     value = raw;
   } else if (Array.isArray(raw)) {
     values = raw.map((v) => (typeof v === 'number' ? v : Number(v))).map((v) => (Number.isFinite(v) ? v : 0));
@@ -64,7 +66,9 @@ function toClickArgs(params) {
   return {
     seriesName: params.seriesName ?? null,
     seriesIndex: typeof params.seriesIndex === 'number' ? params.seriesIndex : -1,
-    dataIndex: typeof params.dataIndex === 'number' ? params.dataIndex : -1,
+    dataIndex: params.seriesType === 'map'
+      ? (params.data?.bbSourceIndex ?? -1)
+      : (typeof params.dataIndex === 'number' ? params.dataIndex : -1),
     name: params.name ?? null,
     componentType: params.componentType ?? null,
     value,
@@ -88,12 +92,17 @@ export async function initialize(chartId, option, dotNetRef) {
     dispose(chartId);
   }
 
+  const initialization = {};
+  pendingInitializations.set(chartId, initialization);
   const echarts = await loadECharts();
+  await ensureWorldMap(echarts, option);
+  if (pendingInitializations.get(chartId) !== initialization || !element.isConnected) return;
+  pendingInitializations.delete(chartId);
 
   const chart = echarts.init(element, null, { renderer: 'svg' });
 
   // Resolve CSS variables and set options
-  const resolvedOption = resolveThemeColors(option, element);
+  const resolvedOption = resolveThemeColors(prepareWorldMap(option, element), element);
   applyRadarTooltipFormatter(resolvedOption);
   chart.setOption(resolvedOption);
 
@@ -101,6 +110,8 @@ export async function initialize(chartId, option, dotNetRef) {
   const resizeObserver = new ResizeObserver(() => {
     if (!chart.isDisposed()) {
       chart.resize();
+      const state = instances.get(chartId);
+      if (state) resizeWorldMap(chart, state.lastOption, element);
     }
   });
   resizeObserver.observe(element);
@@ -109,7 +120,7 @@ export async function initialize(chartId, option, dotNetRef) {
   const themeUnwatch = watchThemeChanges(() => {
     const state = instances.get(chartId);
     if (state && state.lastOption && !state.chart.isDisposed()) {
-      const reresolved = resolveThemeColors(state.lastOption, state.element);
+      const reresolved = resolveThemeColors(prepareWorldMap(state.lastOption, state.element), state.element);
       applyRadarTooltipFormatter(reresolved);
       state.chart.setOption(reresolved, { notMerge: true });
     }
@@ -150,12 +161,14 @@ export async function initialize(chartId, option, dotNetRef) {
  * @param {object} option - New ECharts option
  * @param {boolean} notMerge - If true, replace entirely (default: true)
  */
-export function update(chartId, option, notMerge) {
+export async function update(chartId, option, notMerge) {
   const state = instances.get(chartId);
   if (!state || state.chart.isDisposed()) return;
 
   state.lastOption = option;
-  const resolved = resolveThemeColors(option, state.element);
+  await ensureWorldMap(echartsLib, option);
+  if (state.chart.isDisposed() || state.lastOption !== option) return;
+  const resolved = resolveThemeColors(prepareWorldMap(option, state.element), state.element);
   applyRadarTooltipFormatter(resolved);
   state.chart.setOption(resolved, { notMerge: notMerge !== false });
 }
@@ -199,6 +212,7 @@ function applyRadarTooltipFormatter(option) {
  * @param {string} chartId - Chart identifier
  */
 export function dispose(chartId) {
+  pendingInitializations.delete(chartId);
   const state = instances.get(chartId);
   if (!state) return;
 

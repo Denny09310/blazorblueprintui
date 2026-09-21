@@ -116,7 +116,7 @@ public partial class BbChartTooltip : ComponentBase, IChartComponent, IDisposabl
         }
 
         var seriesType = ParentChart.SeriesType;
-        if (seriesType is "pie" or "radar" or "funnel" or "gauge" or "sankey")
+        if (seriesType is "pie" or "radar" or "funnel" or "gauge" or "sankey" or "map")
         {
             return "item";
         }

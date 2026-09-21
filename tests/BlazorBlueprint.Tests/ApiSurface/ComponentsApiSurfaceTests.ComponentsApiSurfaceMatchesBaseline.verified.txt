@@ -3030,6 +3030,30 @@
   - ValuesExpression : Expression<Func<IEnumerable<TValue>>>
   - CascadedEditContext : EditContext [CascadingParameter]
 
+### BbMap (BlazorBlueprint.Components)
+  - BorderColor : String
+  - ChildContent : RenderFragment
+  - Color : String
+  - CountryKey : String
+  - DataKey : String
+  - Name : String
+  - NoDataColor : String
+  - Roam : Boolean
+  - ShowLabel : Boolean
+
+### BbMapChart (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Class : String
+  - Config : ChartConfig
+  - Data : Object
+  - EnableAnimations : Boolean
+  - Height : String
+  - OnChartClick : EventCallback
+  - OnDataPointClick : EventCallback<ChartClickEventArgs>
+  - Title : String
+  - Width : String
+
 ### BbMarkdownEditor (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaDescribedBy : String

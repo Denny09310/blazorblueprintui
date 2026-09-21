@@ -20,7 +20,7 @@ Beautiful UI components for Blazor, built with accessibility in mind. Inspired b
 </p>
 
 <p align="center">
-  <strong>Styled Components</strong> · <strong>Headless Primitives</strong> · <strong>13 Chart Types</strong> · <strong>5,300+ Icons</strong>
+  <strong>Styled Components</strong> · <strong>Headless Primitives</strong> · <strong>14 Chart Types</strong> · <strong>5,300+ Icons</strong>
 </p>
 
 ## Table of Contents
@@ -59,7 +59,7 @@ See the [changelog](CHANGELOG.md#2026-09-19) for the full list and the [migratio
 - **Right-to-left support** — Wrap the layout in `BbDirectionProvider` and the library mirrors for Arabic or Hebrew. Layout mirrors through logical CSS properties rather than through C#, a convention test keeps it that way, overlays inherit the direction across the portal boundary, and the components that place content with pixel maths read the direction at the moment of the gesture. Parameters that name a physical side — `SheetSide`, `ToastPosition` and the rest — keep their promise, by design. See the [Right-to-Left guide](demos/BlazorBlueprint.Demo.Shared/Pages/Guides/RtlGuide.razor).
 - **Scheduler** — Day, Week, Monday–Friday WorkWeek and Month views, resource lanes, overlapping appointments, drag to move and resize either time boundary. All-day events draw as bars in a band above the time grid, and a multi-day run is one bar rather than a chip per day. `ActiveHours` mutes or refuses the parts of a day the schedule is not about. Recurring series support individual exceptions; IANA time zones include daylight-saving validation, and `TimeZones` lets you name your own. Derive from `SchedulerEvent` to carry your own fields into the editor, filter the visible resources, replace the toolbar, and right-click a slot or an appointment for a context menu.
 - **DataGrid cell and batch editing** — Isolated drafts, validation, rejected-save recovery and keyboard save/cancel. Inline editors preserve column widths, support custom Bb input controls, and reapply sorting after accepted edits. Applications supply a deep-copy `EditItemFactory` and persistence callbacks.
-- **Charts** — 13 types on Apache ECharts with a declarative composition API: Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Rose, Sankey and Scatter. Colours resolve from your theme's CSS variables at runtime and re-render on a theme change, and `OnDataPointClick` maps a click straight back to the position in the collection you bound.
+- **Charts** — 14 types on Apache ECharts with a declarative composition API: Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Map, Pie, Radar, Radial Bar, Rose, Sankey and Scatter. Colours resolve from your theme's CSS variables at runtime and re-render on a theme change, and `OnDataPointClick` maps a click straight back to the position in the collection you bound.
 - **Ten more components** — `BbChip` and `BbChipSet` for selectable, dismissible pills; `BbFab` for a screen's one main action; `BbStepper` and `BbStep` for progress through a sequence; `BbLink` for a link that sits on the text baseline; `BbHighlighter` to mark what matched a search; `BbImage` with a fallback for a source that will not load; `BbScrollToTop`; and `BbExitPrompt`, which holds a navigation while there is unsaved work.
 - **Mobile components** — `BbAppBar`, `BbBottomNav`, `BbNotificationBadge`, `BbQuantityStepper` and `BbSectionHeader`, plus Drawer snap points with pointer and keyboard resizing, Select as a bottom sheet, and a DataView mobile toolbar that puts sorting and filters in one.
 - **Reusable motion** — `BbMotion` presets and custom keyframes with viewport, hover, press and manual triggers; `BbHeightAnimation`, `BbSelectionIndicator`, `BbPageTransition` and `BbScreenTransition`. Animations honour a reduced-motion preference, cancel stale work, and keep prerendered content usable.
@@ -297,7 +297,7 @@ Production-ready components for complex data-driven applications:
 | **Dynamic Form** | Schema-driven form rendering — define fields, validation rules, and layout in a schema object, and the component generates the complete form with appropriate inputs, conditional visibility, and error display. |
 | **Filter Builder** | Visual query builder for constructing complex filter expressions with AND/OR logic, nested condition groups, and type-aware operators. Pairs with DataGrid for interactive data exploration. |
 | **Form Wizard** | Multi-step form wizard with progress indicators, per-step validation, optional/skippable steps, and navigation controls. |
-| **Chart** | 13 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Rose, Sankey, Scatter) built on Apache ECharts with a declarative composition API and automatic theme integration. |
+| **Chart** | 14 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Map, Pie, Radar, Radial Bar, Rose, Sankey, Scatter) built on Apache ECharts with a declarative composition API and automatic theme integration. |
 | **Dock** | IDE-style docking layout — drag-and-drop panels between regions, pinning, maximize, close/reopen, pop-out floating panels, and tab-strip overflow. |
 | **Event Calendar** | Agenda/event calendar with Month, Week, and Agenda views, generic over your own event model, with per-event templates and styling. |
 | **Rich Text Editor** | WYSIWYG editor on Quill 2 — headings, lists and checklists, links, images with an upload hook, tables, text colour and highlight, alignment, inline and block code, undo/redo — with sanitised HTML and Delta output. |
@@ -420,7 +420,7 @@ Production-ready components for complex data-driven applications:
 
 | Component            | Description                                                                                                        |
 |----------------------|--------------------------------------------------------------------------------------------------------------------|
-| **Chart**            | 13 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Rose, Sankey, Scatter) with theme integration |
+| **Chart**            | 14 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Map, Pie, Radar, Radial Bar, Rose, Sankey, Scatter) with theme integration |
 | **Dashboard Grid**   | Drag-and-drop, resizable widget layout for dashboards with responsive breakpoints, state persistence, and keyboard accessibility |
 | **DataGrid**         | Enterprise data grid with row/cell/batch editing, validation, sorting, per-column filtering, row grouping with aggregates, hierarchical tree data, selection, expandable rows, row virtualization, context menu, pinned columns, column reordering/resizing/visibility, and state persistence |
 | **DataTable**        | Tables with sorting, filtering, pagination, and row selection                                                      |

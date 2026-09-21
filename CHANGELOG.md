@@ -9,6 +9,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## 2026-09-21
 
+### Added (v4.1.0)
+
+- **`BbMapChart` and `BbMap`**: a world choropleth for visitors, sales, and other
+  country-level datasets. Bind ISO country codes or English names to numeric
+  values, use the automatic color scale or customize it with `BbVisualMap`, and
+  enable pan/zoom with `Roam`. Missing values use a separate fill; country clicks
+  retain the source dataset index. Natural Earth boundaries ship as a lazy-loaded
+  static asset. Includes a website-visitors demo at `/charts/map`.
+
 ### Fixed
 
 - **`BbDrawer` reports `OpenChanged` when it is left to itself.** Without `Open` bound, the drawer

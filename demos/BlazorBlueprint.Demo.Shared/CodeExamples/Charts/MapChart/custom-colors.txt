@@ -1,0 +1,9 @@
+<BbMapChart Data="@visitors" Height="420px">
+    <BbVisualMap Min="0" Max="50000" Colors="@colors" />
+    <BbChartTooltip />
+    <BbMap CountryKey="Country" DataKey="Visitors" Name="Visitors" Roam="true" />
+</BbMapChart>
+
+@code {
+    private readonly string[] colors = ["#dbeafe", "#60a5fa", "#1d4ed8"];
+}

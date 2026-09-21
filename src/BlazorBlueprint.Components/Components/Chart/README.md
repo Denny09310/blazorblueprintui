@@ -206,6 +206,45 @@ child `BbCenterLabel` — applies here too. `Mode` maps to the ECharts `roseType
 `RoseMode.Radius` keeps the pie's proportional angles and adds radius on top, `RoseMode.Area` gives
 every sector the same angle and varies the radius alone.
 
+### MapChart (v4.1.0)
+
+A world choropleth that colors countries from a numeric dataset. Country boundaries
+ship with the library and load only when a map is used; no API key or external map
+service is required.
+
+```razor
+<BbMapChart Data="@visitors" Height="420px" OnDataPointClick="SelectCountry">
+    <BbChartTooltip />
+    <BbMap CountryKey="Country" DataKey="Visitors" Name="Visitors" />
+</BbMapChart>
+```
+
+`visitors` can contain records such as `new CountryVisitors("US", 12400)`.
+`CountryKey` accepts ISO alpha-2 codes (`US`), alpha-3 codes (`USA`), and English
+names from the bundled Natural Earth dataset, ignoring case and outer whitespace.
+Use one `BbMap` series per chart and aggregate to one row per country. Unknown
+countries are ignored; the first row wins for duplicate countries, even when
+identified by different aliases. Missing, invalid, and non-finite values retain
+the no-data fill; zero is a valid measured value.
+
+The default color scale spans zero and the supplied values (including negative
+values). Add `<BbVisualMap Min="0" Max="50000" Colors="@colors" />` for a fixed
+range and your own low-to-high color palette. Fixed ranges make multiple maps or
+periods comparable. Values outside an explicit range use ECharts' out-of-range
+styling. `BbMap.NoDataColor` defaults to `var(--muted)` and `BorderColor` to
+`var(--background)`. `Roam="true"` enables pan and zoom; `ShowLabel="true"` displays
+country names. Both are off by default. Fill gradients are configured through
+`BbVisualMap`, rather than the inherited series `Color` parameter.
+
+Tooltips use country names. `OnDataPointClick` reports the canonical English name,
+value, and original dataset index. A country absent from the dataset reports
+`DataIndex = -1` and a null value. Provide a data table alongside the chart when
+users need a keyboard-accessible alternative to pointing at countries.
+
+The bundled map contains 241 countries and regions, excluding Antarctica. Small
+islands may be absent or hard to see at world scale. See
+[map provenance and rebuilding](../../wwwroot/maps/README.md).
+
 ### SankeyChart
 
 Shows how a quantity splits and recombines as it moves between stages.

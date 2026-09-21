@@ -11,6 +11,8 @@
 
 ### New Components
 
+- **BbMapChart**, **BbMap**: a world choropleth chart with ISO country-code or English-name binding, automatic value-based coloring, `BbVisualMap` palette/range customization, no-data styling, tooltips, country clicks, and optional pan/zoom. World boundaries are bundled and loaded on demand; no API key is required.
+
 - **BbGantt**, **BbGanttColumn**: a plan drawn against a timeline, with a task list, a bar per task and dependency arrows. It has six zoom levels, summary tasks that roll up dates and progress from their children, milestones, non-working-day shading and a today line. The chart draws dependencies but does not enforce them, so moving a task does not move the tasks after it.
 - **BbGantt** editing: `AllowDrag`, `AllowResize`, `AllowProgressDrag`, `AllowLinking` and `AllowRowDrag` hand each change back through `OnTaskChange`, `OnDependencyCreate` and `OnTaskMove` rather than writing it, and each change can be refused. `ShowLegend`, `ShowTooltip`, sortable and resizable columns, and right-to-left pages are supported.
 - **BbPivotDataGrid**, **BbPivotField**, **BbPivotValue**: row fields down the side, column fields across the top, and an aggregate where they cross. Totals and subtotals are worked out from every item under them, so an average total is a true average. `OnCellClick` gives the items behind a cell, `ShowFieldPicker` turns fields on and off, and paging never splits a row group.
