@@ -65,6 +65,56 @@ public class GanttJsElementTests
         Assert.Equal(3, js.GoodElementCalls.Count(c => c == "initialize"));
     }
 
+    [Fact]
+    public async System.Threading.Tasks.Task ColumnResizeIsWiredOnTheFirstMount()
+    {
+        // The handles are drawn by the markup whatever happens, so their presence proves nothing.
+        // What matters is that table-columns.js was told about them, and on the first mount that
+        // only happens if the redraw signal survived the pass that bailed out waiting for the
+        // element. Consume it before the bail-out and the handles are drawn and never wired: no
+        // console error, no banner, a column edge that simply does not drag.
+        var js = await RenderAsync(withColumns: true);
+
+        Assert.Contains("initColumnResize", js.AllCalls);
+        Assert.Contains("setupResizeHandles", js.AllCalls);
+
+        // And with the element it needs, not an unset one.
+        Assert.Contains("initColumnResize", js.GoodElementCalls);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task EveryChartGetsItsColumnResizeWired()
+    {
+        // Eight of nine charts on the docs site had handles with no listener. One chart passing is
+        // not evidence.
+        var js = await RenderAsync(withColumns: true, charts: 3);
+
+        Assert.Equal(3, js.AllCalls.Count(c => c == "setupResizeHandles"));
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task ColumnResizeIsNotRewiredOnEveryRender()
+    {
+        // The other half of the bargain. On Blazor Server each of these is a circuit round trip,
+        // so wiring on every render would trade a silent bug for a slow one.
+        var js = await RenderAsync(withColumns: true);
+
+        Assert.Equal(1, js.AllCalls.Count(c => c == "setupResizeHandles"));
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task AChartWithNoDeclaredColumnsStillWiresItsDefaultOne()
+    {
+        // There is no such thing as a chart with no columns: leaving Columns unset draws a single
+        // task column, and that one is resizable like any other. The reported difference between
+        // the two cases was never about whether wiring was wanted — it was that declaring columns
+        // adds an Invalidate after the build, which is what creates the pass that used to eat the
+        // redraw signal.
+        var js = await RenderAsync(withColumns: false);
+
+        Assert.Contains("setupResizeHandles", js.AllCalls);
+    }
+
     // -------------------------------------------------------------------------------------
 
     private static async System.Threading.Tasks.Task<RecordingJavaScript> RenderAsync(
@@ -163,11 +213,16 @@ public class GanttJsElementTests
 
         public List<string> GoodElementCalls { get; } = [];
 
+        /// <summary>Every call, whether or not it carried an element.</summary>
+        public List<string> AllCalls { get; } = [];
+
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
             InvokeAsync<TValue>(identifier, CancellationToken.None, args);
 
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
         {
+            AllCalls.Add(identifier);
+
             foreach (var arg in args ?? [])
             {
                 if (arg is ElementReference element)

@@ -750,13 +750,34 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
             }
         }
 
-        var redrawn = redrawPending;
-        redrawPending = false;
+        // The first mount needs the same full wiring a rebuild does, so it rides the same flag
+        // rather than a second one. firstRender is true for exactly one pass and cannot be
+        // carried forward; this can.
+        if (firstRender)
+        {
+            redrawPending = true;
+        }
 
-        await SetUpJsAsync(redrawn || firstRender);
+        // Cleared only once the setup has actually used it. Consuming it before the call was the
+        // bug: a pass that bailed out threw away the very signal the next pass needed, so the
+        // column resize handles were drawn and never wired. It only showed up on charts that
+        // declare columns, because a column invalidating the chart after it is built is what makes
+        // a bail-out pass happen at all.
+        if (await SetUpJsAsync(redrawPending))
+        {
+            redrawPending = false;
+        }
     }
 
-    private async Task SetUpJsAsync(bool redrawn)
+    /// <summary>
+    /// Wires up the JavaScript for the chart.
+    /// </summary>
+    /// <param name="redrawn">Whether the chart has been drawn again since the last wiring.</param>
+    /// <returns>
+    /// <see langword="true"/> when the wiring ran. <see langword="false"/> where it bailed out, so
+    /// the caller knows to keep the redraw signal for a pass that can use it.
+    /// </returns>
+    private async Task<bool> SetUpJsAsync(bool redrawn)
     {
         // Every one of these draws something other than the chart, so the element the JavaScript
         // needs is not in the document. Checking only for a built chart is what put a red banner
@@ -764,7 +785,7 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
         // an empty message or an error.
         if (chart is null || chart.IsEmpty || Loading || buildError is not null)
         {
-            return;
+            return false;
         }
 
         // And then the direct test, because everything above only infers that the element exists.
@@ -775,7 +796,7 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
         // function". Asking the reference itself cannot be raced.
         if (string.IsNullOrEmpty(rootElement.Id))
         {
-            return;
+            return false;
         }
 
         try
@@ -806,6 +827,8 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
                 scrolled = true;
                 await GoToTodayAsync();
             }
+
+            return true;
         }
         catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
         {
@@ -817,6 +840,10 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
             // keeps a wiring problem from becoming a red banner over a chart that has drawn
             // perfectly well: the gestures are degraded, the plan is still readable.
         }
+
+        // Reported as not run, so a later pass tries again rather than leaving the chart with
+        // handles nobody wired.
+        return false;
     }
 
     /// <summary>

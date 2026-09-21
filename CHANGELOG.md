@@ -50,6 +50,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   The JavaScript setup also now catches `JSException`. A wiring problem should leave a chart with
   degraded gestures and a readable plan, not a red banner over a chart that drew perfectly well.
 
+- **A Gantt's column resize handles are wired on the first mount.** They were drawn but never
+  connected on eight of nine charts, so a column edge simply did not drag; changing the zoom, or
+  anything else that rebuilt the chart, wired that one up and it worked from then on. No console
+  error, no banner — the failure was silent, which is why the element fix above looked complete.
+
+  The redraw signal was being consumed before the element check could run. A pass that bailed out
+  waiting for the element threw the flag away, and the pass that finally had an element no longer
+  knew a full wiring was owed. Bar drag, resize and progress were unaffected because `initialize`
+  is not gated on that flag. The flag is now cleared only once the setup has actually used it, so
+  no bail-out can lose it — and the first mount rides the same flag rather than a separate one.
+
+  It still wires only after a redraw. Doing it on every render would trade a silent bug for a slow
+  one: on Blazor Server each of those calls is a circuit round trip. Both halves are held by tests,
+  so neither can be traded away by accident.
+
 - **`BbBarcode` no longer prints `Arg_ParamName_Name` instead of an error on WebAssembly.** It
   showed `ArgumentException.Message` with the parameter-name suffix stripped off by searching for
   the English wording of that suffix. The wording comes from a framework resource string, and on
