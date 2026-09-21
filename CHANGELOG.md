@@ -11,6 +11,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **`BbDrawer` reports `OpenChanged` when it is left to itself.** Without `Open` bound, the drawer
+  opened and closed but never raised `OpenChanged`, so a page that listened to it without binding
+  `Open` never heard anything. `BbDialog` and `BbSheet` report in both modes, and a page cannot tell
+  which kind of overlay it is listening to. The drawer now reports too, and only when its state
+  actually changed: closing a drawer that is already closed is not reported. Bound drawers are
+  unchanged.
+
 - **A trigger in AsChild mode now says so when nothing inside it can use it.** Eleven triggers
   default `AsChild` to `true`: collapsible, popover, dialog, dialog close, sheet, sheet close,
   dropdown menu, hover card, and the alert dialog trigger, action and cancel. In that mode the

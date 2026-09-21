@@ -231,13 +231,7 @@ public sealed class AsChildTriggerTests : IDisposable
             ["ChildContent"] = (RenderFragment)(builder => BuildTrigger(builder, trigger, child, asChild, pageClass)),
         };
 
-        if (trigger.Parent == typeof(BbDrawer))
-        {
-            // The drawer only reports OpenChanged when the page owns Open; left to itself it keeps
-            // the state and says nothing. The other parents report either way.
-            parameters["Open"] = trigger.StartsOpen;
-        }
-        else if (trigger.StartsOpen)
+        if (trigger.StartsOpen)
         {
             parameters["DefaultOpen"] = true;
         }
