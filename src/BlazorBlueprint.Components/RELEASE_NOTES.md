@@ -1,10 +1,13 @@
-## What's New in v4.1.0-beta.1
+## What's New in v4.1.0 (unreleased)
 
-> **Prerelease:** this is a beta of v4.1.0, and the API may still change before the stable release.
+> **Prerelease preparation:** these cumulative notes describe the current v4.1.0 branch. The release script selects the package version.
 
 ### Breaking Changes
 
-- **BlazorBlueprint.Primitives**: the dependency is now 4.1.0-beta.1. Keep Components and Primitives on matching versions, and see the Primitives release notes.
+- **BbDateTimePicker**: `MinuteStep` must be between 1 and 59; invalid values now throw during parameter validation.
+- **BbDockPanel**: panel IDs must be nonempty and unique within their dock layout; invalid registrations now throw.
+
+- **BlazorBlueprint.Primitives**: the audit fixes require the matching Primitives build. Keep Components and Primitives on matching release versions, and see the Primitives release notes.
 - **BbTabsTrigger**: Ctrl or Cmd with an arrow key, Home or End no longer moves focus to another tab. Ctrl or Cmd with an arrow key now moves the tab, and only when **BbTabsList** has `Reorderable` on and `OnMove` set. Otherwise it does nothing.
 - **BbTooltipTrigger**, **BbHoverCardTrigger**: the Development-only AsChild warning now logs under the event name `TriggerContextUnconsumed` instead of `TooltipTriggerContextUnconsumed` and `HoverCardTriggerContextUnconsumed`, and its text changes. Update any log filter that matched the old names.
 - **BbDataGrid**: the column resize module `js/datagrid-columns.js` is renamed `js/table-columns.js`, and each `<col>` now carries `data-column-id`. Only custom code that imported the old file directly needs to change.
@@ -24,14 +27,30 @@
 
 ### New Features
 
+- **Accessible labels**: date/time pickers, selection controls, OTP input and file upload now expose `AriaLabel` on their interactive element; form wrappers forward it.
+- **BbSectionHeader**: `HeadingLevel` selects h1 through h6, with h2 as the default.
+- **Form wrappers**: checkbox groups, date ranges and file uploads support EditForm field expressions and field-change notifications. **BbMultiSelect** now has explicit `Required` and `ActiveClass` forwarding.
+
 - **BbTabsList**: `Addable`, `Closable`, `Renamable` and `Reorderable`, each paired with a callback (`OnAdd`, `OnClose`, `OnRename`, `OnMove`). All are off by default, and a flag without its callback draws nothing. The tabs only ask, so you change the collection the tabs come from.
 - **BbTabsTrigger**: `Closable`, `Renamable` and `Reorderable` override the list for one tab, for example to pin it. Delete or Backspace closes a tab, F2 or a double-click renames it, and setting `Cancel` on `TabRenameContext` reopens the editor with the typed text.
 
 ### Bug Fixes
 
+- **BbGantt**, **BbPivotDataGrid**: `OnBuilt` no longer loops when a parent handles it. Gantt waits for its rendered element before wiring JavaScript and preserves pending setup across deferred renders. **BbBarcode** displays encoder messages without framework resource keys on WebAssembly.
+- **Tabs and steppers**: responsive tab lists support adding/reordering, and conditional steps follow their current markup order.
+- **Dates and time**: blocked dates also apply to Now and empty-value time stepping; the first segment increment starts at its minimum; custom calendar day names update with parameters. Editable date inputs reflect EditForm validation state.
+- **Selection and uploads**: required chip sets retain their last selected chip; toggle navigation accounts for changed disabled items; file-upload paste handling follows runtime `AllowPaste` changes.
+- **ScrollToTop**: changed options and late/replaced targets are observed, focus is restored appropriately, and completion fires after reaching the top. **Motion** visibility changes only activate the Visibility trigger.
+- **Rendering and callbacks**: pagination templates receive current state/options; signature empty-state reporting reflects restored strokes; message alignment and tinted bubble contrast are corrected.
+- **Accessibility**: attachment actions have accessible names, decorative image fallbacks are hidden from assistive technology, and links announce a new tab only for `Target="_blank"`.
+- **Chart colors**: explicit heatmap/candlestick series colors and map fill children are honored, with documented visual-map precedence.
+
 - **BbDrawer**: `OpenChanged` now fires when `Open` is not bound. Before, a page that listened without binding `Open` heard nothing. It fires only on a real change, and a bound drawer is unchanged.
 
 ### Improvements
+
+- **Localization**: sortable instructions and announcements, file-upload text/errors, AM/PM labels, and MultiSelect count/removal labels use `IBbLocalizer`.
+- **Compatibility**: WholeWord retains word-start matching, Sidebar retains its controlled-mode callback requirement, and compact form-wrapper popup defaults remain unchanged.
 
 - **BbRichTextEditor**: Quill 2.0.3 now ships inside the package and loads on first use, so the host page no longer needs Quill `<script>` or `<link>` tags. A host that loads its own Quill first keeps it. The package grows by about 214 KB of static assets.
 - **AsChild triggers**: **BbCollapsibleTrigger**, **BbPopoverTrigger**, **BbDialogTrigger**, **BbDialogClose**, **BbSheetTrigger**, **BbSheetClose**, **BbDropdownMenuTrigger**, **BbAlertDialogTrigger**, **BbAlertDialogAction** and **BbAlertDialogCancel** now log a Development-only warning when nothing inside them reads the trigger context. Before, text or an icon inside such a trigger did nothing, and nothing said why.

@@ -1,6 +1,6 @@
-## What's New in v4.1.0-beta.1
+## What's New in v4.1.0 (unreleased)
 
-> **Prerelease:** this is a beta of v4.1.0, and the API may still change before the stable release.
+> **Prerelease preparation:** these cumulative notes describe the current v4.1.0 branch. The release script selects the package version.
 
 ### Breaking Changes
 
@@ -21,7 +21,19 @@
 - **BbTabsTrigger** gains `OnCloseRequested` (Delete or Backspace), `OnRenameRequested` (F2) and `OnMoveRequested` (Ctrl or Cmd with an arrow key). Each key does nothing until its callback is set, and the move follows the writing direction.
 - **AsChildDiagnostics** and **AsChildTriggerDescription**: public helpers, so a custom AsChild trigger can log the same Development-only warning as the library's own triggers.
 
+### Bug Fixes
+
+- **BbDialogClose**, **BbSheetClose**: native keyboard activation invokes the close action once, including when closing is prevented.
+- **Dialog and Popover**: `Modal` now controls outside/Escape dismissal according to its existing contract; it does not change focus trapping.
+- **BbMenubar**: closed triggers support keyboard navigation, Escape restores focus, and outside-pointer handling no longer uses a blocking overlay.
+- **Navigation menus**: optional arrow/Home/End/Escape navigation works, links remain tabbable, and items without explicit values receive stable IDs instead of opening on a null match.
+- **BbContextMenu**: controlled `Open` values are observed, and uncontrolled state changes notify subscribed callbacks.
+- **Dropdown menus**: `Dir` applies to trigger content and portaled panels; a null value inherits surrounding direction.
+- **BbSignaturePad**: restoring strokes reports whether the filtered drawing is actually empty. Clearing an already-empty pad retains the documented successful-operation callback.
+
 ### Improvements
+
+- **Sortable**: per-message overrides make headless keyboard instructions and announcements localizable.
 
 - **AsChild triggers**: **BbCollapsibleTrigger**, **BbPopoverTrigger**, **BbDialogTrigger**, **BbDialogClose**, **BbSheetTrigger**, **BbSheetClose** and **BbDropdownMenuTrigger** now log a Development-only warning when nothing inside them reads the `TriggerContext`. Before, text or an icon inside such a trigger did nothing, and nothing said why.
 - **AsChild warning**: all triggers share one message, which says to set `AsChild="false"` or to put a BbButton inside, and names any class or attributes that had no element to go on.
