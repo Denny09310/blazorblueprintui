@@ -68,7 +68,7 @@ See the [changelog](CHANGELOG.md#2026-09-19) for the full list and the [migratio
 - **TreeSelect and Cascader** — Searchable hierarchy selection with form bindings and keyboard navigation. TreeSelect supports cascading parent checkboxes and indeterminate states; Cascader reveals the selected path and scrolls to newly opened levels.
 - **Menu families** — DropdownMenu, ContextMenu and Menubar gain shared submenu and radio-item families, and ContextMenu gains checkbox items, so the three stay consistent with each other.
 - **FileUpload lifecycle** — Supply an `UploadHandler` for progress, cancellation and retry, with browser file references retained across selections.
-- **Localizable throughout** — Every piece of component chrome reads from `IBbLocalizer`; the built-in English defaults cover all 470 strings.
+- **Localizable throughout** — Every piece of component chrome reads from `IBbLocalizer`; the built-in English defaults cover all 546 strings.
 - **Browser regression coverage** — A Playwright suite runs against Server, WebAssembly and Interactive Auto in Chromium and WebKit, covering keyboard navigation, mobile overlays, scoped themes, scheduler editing and Auto's hand-off to WebAssembly.
 
 Try these features in the [source demos](#demo-applications).
@@ -221,7 +221,7 @@ Blazor Blueprint includes the styled component families below, with composable s
 
 ### New in v4.1
 
-Seven components, none of which takes a runtime dependency of its own.
+Eight components, none of which takes a runtime dependency of its own.
 
 | Component | What it is | Demo |
 |-----------|------------|------|
@@ -232,6 +232,7 @@ Seven components, none of which takes a runtime dependency of its own.
 | `BbSignature` | A signing field on the `BbSignaturePad` primitive: sign by drawing or by typing a name, with SVG, PNG and raw stroke output. | `/components/signature` |
 | `BbPivotDataGrid` | A cross-tabulation whose columns come from the data: nested fields on both axes, subtotals and grand totals worked out from the items rather than the cells, custom aggregates, drill-down, a field picker and group-aware paging. | `/components/pivot-data-grid` |
 | `BbGantt` | A plan against a timeline, with the task list and the bars in one table so a row cannot drift. Six zoom levels, summary roll-up, milestones, all four dependency types with routed arrows, drag to move, resize, set progress and draw a dependency, drag a row to reorder or re-parent, a hover card and a legend, non-working days, a today marker and right-to-left support. | `/components/gantt` |
+| `BbMapChart` | A world choropleth for country-level data such as visitors or sales. Bind ISO country codes or English names to values, colour them on an automatic or custom scale with `BbVisualMap`, and turn on pan and zoom with `Roam`. A click reports the index in the collection you bound. The Natural Earth boundaries load only when a page draws a map. | `/charts/map` |
 
 The QR and barcode symbols stay dark on a light field in both themes. A reader expects that, and enough of them refuse an inverted symbol that tracking a dark theme would trade a working code for a tidier page.
 
@@ -396,7 +397,7 @@ Production-ready components for complex data-driven applications:
 | **Scroll Area** | Custom scrollable area with styled scrollbars |
 | **Separator** | Horizontal/vertical dividers with solid, dashed and dotted line styles |
 | **Sidebar** | Responsive icon/pill collapse modes, animated navigation indicators, inset/floating variants and mobile sheets |
-| **Tabs** | Tabbed interfaces with controlled/uncontrolled modes |
+| **Tabs** | Tabbed interfaces with controlled/uncontrolled modes, and tabs the user can add, close, rename and reorder |
 | **Timeline** | Vertical timeline with alignment, connector styles, loading states, and collapsible items |
 
 ### Overlay
@@ -569,7 +570,7 @@ Apply the `.dark` class to your `<html>` element. All components automatically s
 
 ## Localization
 
-All component chrome strings (button labels, placeholders, ARIA labels, status messages) are localizable via the `IBbLocalizer` interface. The built-in `DefaultBbLocalizer` provides English defaults for all 470 strings.
+All component chrome strings (button labels, placeholders, ARIA labels, status messages) are localizable via the `IBbLocalizer` interface. The built-in `DefaultBbLocalizer` provides English defaults for all 546 strings.
 
 ### Quick Start
 
@@ -678,6 +679,10 @@ Blazor Blueprint implements components in Blazor and C#, drawing on the design o
 - [Quill](https://quilljs.com/) — Bundled rich text editing engine; BSD 3-Clause License.
 - [Markdig](https://github.com/xoofx/markdig) — Markdown parsing and HTML rendering; BSD 2-Clause License.
 - [HtmlSanitizer](https://github.com/mganss/HtmlSanitizer) — HTML sanitization for the rich text and Markdown editors; MIT License.
+
+**Map data**
+
+- [Natural Earth](https://www.naturalearthdata.com/) — World map boundaries for `BbMapChart`, derived from Natural Earth v5.1.2; public domain.
 
 **Icons**
 

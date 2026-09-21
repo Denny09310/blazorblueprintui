@@ -17,7 +17,7 @@ Pre-styled Blazor components with shadcn/ui design. Beautiful defaults with zero
 
 ## Installation
 
-Retarget your application to .NET 10 or later before upgrading to v4, and keep Components and Primitives on matching v4 versions. This branch includes unreleased v4 changes; see the repository's [migration guide](https://github.com/blazorblueprintui/ui/blob/v4/V4-MIGRATION-GUIDE.md) and [changelog](https://github.com/blazorblueprintui/ui/blob/v4/CHANGELOG.md).
+Retarget your application to .NET 10 or later before upgrading to v4, and keep Components and Primitives on matching v4 versions. See the repository's [migration guide](https://github.com/blazorblueprintui/ui/blob/main/V4-MIGRATION-GUIDE.md) and [changelog](https://github.com/blazorblueprintui/ui/blob/main/CHANGELOG.md).
 
 ```bash
 dotnet add package BlazorBlueprint.Components
@@ -127,25 +127,39 @@ That's it! No Tailwind installation, no build configuration needed.
 | **Aspect Ratio** | Maintain consistent width-to-height ratios |
 | **Avatar** | User profile images with fallback initials and group support |
 | **Badge** | Labels for status, categories, and metadata |
+| **Barcode** | Fourteen linear symbologies drawn as SVG, on encoders written in C# — Code 128/39, EAN-13/8, UPC-A, ITF, Codabar, ISBN, ISSN, MSI, Telepen, Pharmacode, POSTNET and Royal Mail 4-state |
 | **Breadcrumb** | Navigation breadcrumb trail with separator support |
 | **Button** | Interactive buttons with multiple variants and sizes |
 | **Button Group** | Grouped button controls with shared styling |
 | **Calendar** | Date selection calendar |
 | **Card** | Content container with header, content, and footer sections |
 | **Carousel** | Scrollable content carousel with navigation controls |
-| **Chart** | Data visualization with multiple series types (Bar, Line, Area, Pie, Radar, Radial) |
+| **Chart** | 14 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Map, Pie, Radar, Radial Bar, Rose, Sankey, Scatter) on Apache ECharts with theme integration |
+| **Chip** | Selectable, dismissible pills, grouped with `BbChipSet` |
 | **Collapsible** | Expandable content area with trigger control |
+| **Copy Text** | Click-to-copy text with tooltip feedback and copied-state indicator |
+| **Dark Mode Toggle** | Button that toggles light/dark mode with customizable icons and optional label |
 | **Empty** | Empty state placeholder for no-content scenarios |
+| **Fab** | Floating action button for a screen's one main action |
+| **Highlighter** | Marks the parts of a text that matched a search |
+| **Image** | Image with a fallback for a source that will not load |
 | **Item** | List item container for menus and lists |
 | **Kbd** | Keyboard shortcut display |
+| **Link** | A link that sits on the text baseline |
+| **Notification Badge** | Accessible count or dot overlay for another element |
 | **Pagination** | Page navigation controls |
 | **Progress** | Progress indicator bar |
+| **QR Code** | Scannable code drawn as SVG on a from-scratch ISO/IEC 18004 encoder — all 40 versions, four error-correction levels, module shapes and a centre logo |
 | **Resizable** | Resizable panel layout with drag handles |
 | **Scroll Area** | Custom scrollable area with styled scrollbars |
+| **Scroll To Top** | Floating button that appears once the page has scrolled, and returns it to the top |
+| **Section Header** | Section heading with actions |
 | **Separator** | Visual dividers for content sections |
 | **Skeleton** | Loading placeholders for content and images |
 | **Spinner** | Loading spinner indicator |
 | **Split Button** | Button with dropdown action split |
+| **Stepper** | Progress through a sequence, with a `BbStep` for each stage |
+| **Theme Switcher** | Theme customization popover — light/dark mode, independent base and primary colors, and radius, with persistence |
 | **Timeline** | Chronological event display |
 | **Toggle** | Toggle button control |
 | **Toggle Group** | Single or multi-select toggle group |
@@ -156,11 +170,14 @@ That's it! No Tailwind installation, no build configuration needed.
 
 | Component | Description |
 |-----------|-------------|
+| **App Bar** | Top bar with title and back actions, safe-area insets and touch-sized controls |
+| **Bottom Nav** | Safe-area bottom navigation with active links and touch-sized items |
 | **Command** | Command palette for quick actions and navigation |
 | **Context Menu** | Right-click context menus with items, labels, and shortcuts |
 | **Dialog** | Modal dialogs with backdrop and focus management |
 | **Drawer** | Slide-out drawer panels with header, footer, and items |
 | **Dropdown Menu** | Context menus with items, separators, and shortcuts |
+| **Exit Prompt** | Holds a navigation while there is unsaved work |
 | **Hover Card** | Rich preview cards on hover with delay control |
 | **Menubar** | Horizontal menu bar with dropdown menus |
 | **Navigation Menu** | Responsive navigation menu with submenus |
@@ -168,7 +185,7 @@ That's it! No Tailwind installation, no build configuration needed.
 | **Responsive Nav** | Mobile-responsive navigation |
 | **Sheet** | Side panels that slide in from viewport edges |
 | **Sidebar** | Responsive navigation sidebar with collapsible menus |
-| **Tabs** | Tabbed interface for organizing related content |
+| **Tabs** | Tabbed interface for organizing related content, with tabs the user can add, close, rename and reorder |
 | **Toast** | Toast notification system with action support |
 | **Tooltip** | Brief informational popups on hover or focus |
 
@@ -187,6 +204,11 @@ That's it! No Tailwind installation, no build configuration needed.
 | **Dynamic Form** | Schema-driven form rendering from JSON or code definitions |
 | **Filter Builder** | Visual query builder for data filter expressions with AND/OR logic and nested groups |
 | **Form Wizard** | Multi-step form wizard with progress tracking, per-step validation, and navigation controls |
+| **Dock** | IDE-style docking layout with drag-and-drop panels, pinning, maximize, pop-out floating windows, and tab overflow |
+| **Event Calendar** | Month, Week, and Agenda views over your own event model with per-event templates, styling, and click callbacks |
+| **Gantt** | A plan against a timeline: task list and bars in one table, six zoom levels, summary roll-up, milestones, dependency arrows, drag/resize/progress editing, row reordering and re-parenting, and right-to-left support |
+| **Pivot Data Grid** | Cross-tabulation with nested fields on both axes, totals worked out from the items, custom aggregates, drill-down and a field picker |
+| **Sortable** | Pointer and keyboard sortable lists/grids, connected-list transfer, move/drop permissions, reusable handles and custom drag previews |
 
 ### Form Controls
 
@@ -197,8 +219,10 @@ That's it! No Tailwind installation, no build configuration needed.
 | **Color Picker** | Color selection input |
 | **Combobox** | Autocomplete input with searchable dropdown |
 | **Currency Input** | Currency-formatted number input |
+| **Date Input** | Culture-ordered date segments with keyboard editing, calendar access and EditForm draft validation |
 | **Date Picker** | Date selection input with calendar popup |
 | **Date Range Picker** | Date range selection input |
+| **Date Time Picker** | Combined date and time selection in one popover |
 | **Field** | Form field wrapper with label, description, and error states |
 | **File Upload** | Drag-and-drop file selection with preview and optional upload progress, cancellation and retry |
 | **Input** | Text input fields with multiple types and sizes |
@@ -206,18 +230,23 @@ That's it! No Tailwind installation, no build configuration needed.
 | **Input Group** | Grouped input controls with addons and buttons |
 | **Input OTP** | One-time password input with segmented fields |
 | **Label** | Accessible labels for form controls |
+| **List Box** | Always-visible list of options with the full listbox keyboard pattern, search, and single, multiple or range selection |
 | **Masked Input** | Input with mask pattern enforcement |
 | **Multi Select** | Multi-select dropdown with tag support |
 | **Native Select** | Native HTML select element with styling |
 | **Numeric Input** | Number input with formatting and validation |
+| **Pick List** | Two lists and the buttons that move options between them, with reordering, search and keyboard support |
+| **Quantity Stepper** | Touch-sized quantity editing with bounds and remove-at-minimum action |
 | **Radio Group** | Mutually exclusive options with keyboard navigation |
 | **Range Slider** | Dual-handle range slider input |
 | **Rating** | Star/icon rating input |
 | **Select** | Dropdown selection with groups and labels |
+| **Signature** | Signing field that captures a drawn or typed signature, with SVG, PNG and raw stroke output |
 | **Slider** | Single-handle slider input |
 | **Switch** | Toggle control for on/off states |
 | **Tag Input** | Inline tag/chip input for managing string lists with suggestions and validation |
 | **Textarea** | Multi-line text input field |
+| **Time Input** | Segmented 12/24-hour entry with optional seconds, bounds, picker and EditForm validation |
 | **Time Picker** | Time selection input |
 
 ### Editors
@@ -233,13 +262,52 @@ Convenience wrappers that combine a form control with `BbField` for label, descr
 
 | Component | Description |
 |-----------|-------------|
+| **FormFieldCascader** | Cascader with integrated field wrapper |
 | **FormFieldCheckbox** | Checkbox with integrated field wrapper |
+| **FormFieldCheckboxGroup** | CheckboxGroup with integrated field wrapper |
 | **FormFieldCombobox** | Combobox with integrated field wrapper |
+| **FormFieldCurrencyInput** | CurrencyInput with integrated field wrapper |
+| **FormFieldDateInput** | DateInput with integrated field wrapper |
+| **FormFieldDatePicker** | DatePicker with integrated field wrapper |
+| **FormFieldDateRangePicker** | DateRangePicker with integrated field wrapper |
+| **FormFieldDateTimePicker** | DateTimePicker with integrated field wrapper |
+| **FormFieldFileUpload** | FileUpload with integrated field wrapper |
 | **FormFieldInput** | Input with integrated field wrapper |
+| **FormFieldInputOTP** | InputOTP with integrated field wrapper |
+| **FormFieldMaskedInput** | MaskedInput with integrated field wrapper |
 | **FormFieldMultiSelect** | MultiSelect with integrated field wrapper |
+| **FormFieldNativeSelect** | NativeSelect with integrated field wrapper |
+| **FormFieldNumericInput** | NumericInput with integrated field wrapper |
+| **FormFieldQuantityStepper** | QuantityStepper with integrated field wrapper |
 | **FormFieldRadioGroup** | RadioGroup with integrated field wrapper |
 | **FormFieldSelect** | Select with integrated field wrapper |
 | **FormFieldSwitch** | Switch with integrated field wrapper |
+| **FormFieldTagInput** | TagInput with integrated field wrapper |
+| **FormFieldTextarea** | Textarea with integrated field wrapper |
+| **FormFieldTimeInput** | TimeInput with integrated field wrapper |
+| **FormFieldTimePicker** | TimePicker with integrated field wrapper |
+| **FormFieldTreeSelect** | TreeSelect with integrated field wrapper |
+
+### Motion & Themes
+
+| Component | Description |
+|-----------|-------------|
+| **Height Animation** | Expansion, collapse and automatic content resizing while retaining child state |
+| **Motion** | Entrance/exit presets, custom keyframes, viewport/hover/press/manual triggers and reduced-motion handling |
+| **Page Transition** | Incoming navigation animation with a stable first render |
+| **Render State Provider** | Cascading prerender/interactive state |
+| **Screen Transition** | Keyed screen animations with a stable first render |
+| **Selection Indicator** | Animated active, hover and keyboard-focus feedback |
+| **Theme Scope** | Scoped density, typography, surfaces and menu appearance; floating overlays inherit the scope |
+
+### Chat & AI
+
+| Component | Description |
+|-----------|-------------|
+| **Attachment** | File attachment chips with upload states (uploading, processing, error, done), previews, and actions |
+| **Bubble** | Message bubbles with tinted/outlined variants, reactions, and attachment slots |
+| **Marker** | Inline status and tool-call markers with an animated shimmer effect |
+| **Message** | Chat message rows with avatar, content, and footer, aligned per role |
 
 ### Services
 
@@ -618,7 +686,7 @@ For full documentation, examples, and API reference, visit:
 - [BlazorBlueprint.Primitives](https://www.nuget.org/packages/BlazorBlueprint.Primitives) - Headless component primitives (auto-installed)
 - [BlazorBlueprint.Icons.Lucide](https://www.nuget.org/packages/BlazorBlueprint.Icons.Lucide) - Lucide icon set (auto-installed)
 - [TailwindMerge.NET](https://github.com/desmondinho/tailwind-merge-dotnet), [Markdig](https://github.com/xoofx/markdig), and [HtmlSanitizer](https://github.com/mganss/HtmlSanitizer) (auto-installed)
-- Pre-built CSS, tw-animate-css animation utilities, Apache ECharts, and Quill 2 (bundled)
+- Pre-built CSS, tw-animate-css animation utilities, Apache ECharts, Quill 2, and Natural Earth world map boundaries (bundled)
 
 **Optional:**
 - Tailwind CSS (if you want to use Tailwind classes for customization)
@@ -627,7 +695,7 @@ For full documentation, examples, and API reference, visit:
 
 Apache License 2.0 - see [LICENSE](https://github.com/blazorblueprintui/ui/blob/main/LICENSE) for details.
 
-The package includes `LICENSE`, `NOTICE`, and `staticwebassets/THIRD-PARTY-NOTICES.txt`. The bundled Tailwind CSS, tw-animate-css, ECharts, and Quill assets retain their upstream licenses, including the D3, ZRender, and Microsoft helper notices within ECharts. These notices are also available at `_content/BlazorBlueprint.Components/THIRD-PARTY-NOTICES.txt`.
+The package includes `LICENSE`, `NOTICE`, and `staticwebassets/THIRD-PARTY-NOTICES.txt`. The bundled Tailwind CSS, tw-animate-css, ECharts, and Quill assets retain their upstream licenses, including the D3, ZRender, and Microsoft helper notices within ECharts. These notices are also available at `_content/BlazorBlueprint.Components/THIRD-PARTY-NOTICES.txt`. The world map boundaries are derived from Natural Earth, which is public domain.
 
 ## Contributing
 

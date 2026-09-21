@@ -56,23 +56,33 @@ BlazorBlueprint.Components can load it or not; the two stylesheets agree.
 |-----------|-------------|
 | **Accordion** | Collapsible content sections with single or multiple item expansion |
 | **Alert Dialog** | Modal requiring explicit acknowledgement, no dismiss via overlay or Escape |
+| **Barcode** | Fourteen linear symbology encoders, each with its own alphabet, length rule and check digit, producing bar geometry rather than pixels |
 | **Checkbox** | Binary selection control with indeterminate state and `BbCheckboxIndicator` sub-component |
 | **Collapsible** | Expandable content area with trigger control |
 | **Context Menu** | Right-click menu with keyboard navigation and positioning |
 | **Dashboard Grid** | Widget layout state, drag-and-drop coordination, resize handling, responsive breakpoints |
 | **DataGrid** | Headless data grid with sorting, filtering, pagination, selection, expansion, row grouping, and state management |
 | **Dialog** | Modal dialogs with backdrop, focus management, and portal rendering |
+| **Direction** | Writing direction for everything inside it, cascaded as a context and written as a `dir` attribute |
 | **Dropdown Menu** | Context menus with items, checkbox items, separators, and keyboard shortcuts |
+| **Gantt** | Task tree, summary roll-up, the timeline's two tiers and dependencies resolved against the rows on screen, with no markup |
 | **Hover Card** | Rich preview cards on hover with delay control |
 | **Label** | Accessible labels for form controls with automatic association |
+| **Menubar** | Application-style menu bar with roving focus, submenus and typeahead |
+| **Navigation Menu** | Site navigation with hoverable panels, pointer intent and keyboard access |
+| **Pivot** | Cross-tabulation: nested headings on both axes, and totals worked out from the items rather than from the cells |
 | **Popover** | Floating panels for additional content with positioning |
 | **Progress** | Accessible progress bar with determinate and indeterminate states |
+| **QR Code** | The whole of ISO/IEC 18004: every version and error-correction level, Reed-Solomon over GF(256), block interleaving and the eight masks, producing a module matrix |
 | **Radio Group** | Mutually exclusive options with keyboard navigation |
 | **Scroll Area** | Custom scrollbar with accessible ARIA scrollbar role and drag support |
 | **Select** | Dropdown selection with cascading type inference and display text resolution |
 | **Separator** | Semantic or decorative divider with orientation support |
 | **Sheet** | Side panels that slide in from viewport edges |
+| **Signature Pad** | Stroke capture from pointer, touch or stylus, keeping the raw points behind a signature |
 | **Slider** | Range input with keyboard navigation and pointer drag support |
+| **Sortable** | Drag-and-drop sortable lists with SortableJS interop, ARIA live announcements, and connected multi-list support |
+| **Swipe Area** | Swipe gestures with a distance threshold, an axis to judge them on, and pointer capture so a swipe off the edge still counts |
 | **Switch** | Toggle control with `BbSwitchThumb` sub-component for automatic `data-state` sync |
 | **Table** | Data table with header, body, rows, cells, and pagination |
 | **Tabs** | Tabbed interface with keyboard navigation |
