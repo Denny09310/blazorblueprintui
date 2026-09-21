@@ -4,7 +4,7 @@
 @inject IBbLocalizer Localizer
 
 <div @ref="_rootRef" class="@WrapperCssClass" @attributes="AdditionalAttributes">
-    <input type="text"
+    <input type="text" aria-label="@AriaLabel"
            class="bb:flex-1 bb:min-w-0 bb:bg-transparent bb:px-3 bb:py-2 bb:outline-none bb:placeholder:text-muted-foreground bb:disabled:cursor-not-allowed"
            value="@Text"
            placeholder="@Placeholder"
@@ -27,6 +27,9 @@
 </div>
 
 @code {
+    /// <summary>The accessible name of the control.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+
     private ElementReference _rootRef;
     private TriggerContext? _previousTriggerContext;
 

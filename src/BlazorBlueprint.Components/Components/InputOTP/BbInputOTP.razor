@@ -13,7 +13,7 @@
     @for (int i = 0; i < Length; i++)
     {
         var index = i;
-        <input @ref="_inputRefs[index]"
+        <input @ref="_inputRefs[index]" aria-label="@AriaLabel"
                type="text"
                inputmode="@HtmlInputMode"
                maxlength="1"
@@ -41,6 +41,10 @@
 </div>
 
 @code {
+    /// <summary>The accessible name of the control.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+
+
     private FieldIdentifier _fieldIdentifier;
     private EditContext? _editContext;
 

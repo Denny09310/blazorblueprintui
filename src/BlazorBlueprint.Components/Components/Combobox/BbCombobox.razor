@@ -4,7 +4,7 @@
 <CascadingValue Value="this" IsFixed="true">
     <div class="@ContainerClass" @attributes="AdditionalAttributes">
         <BbPopover Open="_isOpen" OpenChanged="HandleOpenChanged" RestoreFocusOnClose="_restoreFocusOnClose">
-            <BbPopoverTrigger AsChild="false" role="combobox"
+            <BbPopoverTrigger AsChild="false" role="combobox" aria-label="@AriaLabel"
                            aria-expanded="@GetIsOpen().ToString().ToLower()"
                            aria-controls="@($"{Id}-listbox")"
                            aria-haspopup="listbox"

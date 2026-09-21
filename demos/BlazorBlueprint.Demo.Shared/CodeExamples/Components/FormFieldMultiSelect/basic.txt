@@ -1,4 +1,4 @@
-<BbFormFieldMultiSelect TValue="string"
+<BbFormFieldMultiSelect Required="true" AriaLabel="Programming languages" TValue="string"
                       Options="_languages"
                       @bind-Values="_selectedLanguages"
                       Label="Programming languages"

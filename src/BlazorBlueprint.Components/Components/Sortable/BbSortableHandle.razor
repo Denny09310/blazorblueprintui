@@ -1,7 +1,8 @@
 @namespace BlazorBlueprint.Components
+@inject IBbLocalizer Localizer
 
 <button @attributes="AdditionalAttributes" type="button" data-bb-sortable-handle disabled="@Disabled"
-        aria-label="@AriaLabel" class="@CssClass" @onclick:stopPropagation="true">
+        aria-label="@(AriaLabel ?? Localizer["Sortable.Handle"])" class="@CssClass" @onclick:stopPropagation="true">
     @if (ChildContent is not null)
     {
         @ChildContent
@@ -20,7 +21,7 @@
     /// <summary>Optional handle content. Defaults to a grip icon.</summary>
     [Parameter] public RenderFragment? ChildContent { get; set; }
     /// <summary>The accessible handle label.</summary>
-    [Parameter] public string AriaLabel { get; set; } = "Reorder item";
+    [Parameter] public string? AriaLabel { get; set; }
     /// <summary>Disables the handle.</summary>
     [Parameter] public bool Disabled { get; set; }
     /// <summary>Additional CSS classes.</summary>

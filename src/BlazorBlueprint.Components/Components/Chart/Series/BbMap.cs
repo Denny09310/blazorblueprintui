@@ -10,7 +10,7 @@ namespace BlazorBlueprint.Components;
 /// case and surrounding whitespace. Unknown countries are ignored; the first row wins
 /// when more than one row identifies the same country. Aggregate source data first.
 /// </remarks>
-public class BbMap : SeriesBase
+public partial class BbMap : SeriesBase
 {
     /// <summary>The property containing a country code or English country name.</summary>
     [Parameter]
@@ -47,7 +47,7 @@ public class BbMap : SeriesBase
             Bottom = "55",
             ItemStyle = new EChartsItemStyleOption
             {
-                AreaColor = NoDataColor,
+                AreaColor = GetResolvedFillColor() ?? GetResolvedColor() ?? NoDataColor,
                 BorderColor = BorderColor,
                 BorderWidth = 1
             },

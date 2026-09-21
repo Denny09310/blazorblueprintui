@@ -150,7 +150,6 @@
     private CultureInfo _resolvedCulture = CultureInfo.CurrentCulture;
     private DayOfWeek _cachedFirstDayOfWeek;
     private bool _cachedShowOutsideDays;
-    private string[]? _cachedDayNames;
     private List<List<DateTime?>>? _cachedWeeks;
 
     // ShouldRender tracking fields
@@ -324,7 +323,6 @@
         if (!ReferenceEquals(_resolvedCulture, currentCulture) && _resolvedCulture.Name != currentCulture.Name)
         {
             _resolvedCulture = currentCulture;
-            _cachedDayNames = null;
             _cachedWeeks = null;
         }
 
@@ -332,7 +330,6 @@
         if (_cachedFirstDayOfWeek != EffectiveFirstDayOfWeek)
         {
             _cachedFirstDayOfWeek = EffectiveFirstDayOfWeek;
-            _cachedDayNames = null;
             _cachedWeeks = null;
         }
 
@@ -408,7 +405,7 @@
         return date >= firstDay ? date : new DateTime(DisplayDate.Year, DisplayDate.Month, 1).AddMonths(1).AddDays(-1);
     }
 
-    private string[] DayNames => _cachedDayNames ??= BuildDayNames();
+    private string[] DayNames => BuildDayNames();
 
     private string[] BuildDayNames()
     {

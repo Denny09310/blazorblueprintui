@@ -23,7 +23,7 @@
                 in one go — click outside or press Escape to close.
             </p>
         </div>
-        <BbDateTimePicker @bind-Value="_basicValue" />
+        <BbDateTimePicker AriaLabel="Choose a date and time" @bind-Value="_basicValue" />
         <p class="text-sm text-muted-foreground">
             Selected: @(_basicValue?.ToString("g") ?? "None")
         </p>
@@ -202,6 +202,7 @@
 
         <div class="space-y-4">
             <ApiReference ComponentName="DateTimePicker">
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">Accessible name forwarded to the interactive control or group.</ApiParameter>
                 <ApiParameter Name="Value" Type="DateTime?">
                     The selected date and time. Use @@bind-Value for two-way binding.
                 </ApiParameter>

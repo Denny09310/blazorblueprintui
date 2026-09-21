@@ -1,6 +1,6 @@
 @namespace BlazorBlueprint.Primitives.Menubar
 
-<button type="button"
+<button @ref="triggerRef" type="button"
         role="menuitem"
         aria-haspopup="menu"
         aria-expanded="@(Menu?.IsOpen == true ? "true" : "false")"
@@ -12,6 +12,11 @@
 </button>
 
 @code {
+    private ElementReference triggerRef;
+    protected override void OnInitialized()
+    {
+        if (Menu is not null) Menu.FocusTrigger = () => triggerRef.FocusAsync().AsTask();
+    }
     [CascadingParameter]
     private MenubarMenuContext? Menu { get; set; }
 

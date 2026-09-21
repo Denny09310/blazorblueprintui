@@ -1,5 +1,5 @@
 <BbTabs @bind-Value="activeSheet">
-    <BbTabsList Closable Renamable Reorderable Addable
+    <BbTabsList Responsive Closable Renamable Reorderable Addable
                 AddLabel="New sheet"
                 OnAdd="AddSheet"
                 OnClose="CloseSheet"

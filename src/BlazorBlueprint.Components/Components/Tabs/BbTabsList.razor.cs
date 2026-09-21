@@ -358,7 +358,7 @@ public partial class BbTabsList : IAsyncDisposable
 
         // Started on the first render that actually draws the wrapper, which is not necessarily
         // the first render: Reorderable can be switched on later.
-        if (!reorderStarted && NeedsWrapper && Reorderable && HasMoveHandler)
+        if (!reorderStarted && (Responsive || NeedsWrapper) && Reorderable && HasMoveHandler)
         {
             reorderStarted = true;
 
@@ -373,7 +373,7 @@ public partial class BbTabsList : IAsyncDisposable
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
-                // Circuit disconnected, ignore. The keyboard route still works.
+                // Retry initialization on the next render; both reorder routes need the DOM state.
                 reorderStarted = false;
             }
         }

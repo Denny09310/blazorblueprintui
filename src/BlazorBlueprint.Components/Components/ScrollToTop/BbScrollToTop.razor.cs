@@ -39,6 +39,8 @@ public partial class BbScrollToTop : ComponentBase, IAsyncDisposable
     private IJSObjectReference? module;
     private bool visible;
     private bool observed;
+    private string? observedSelector;
+    private int observedThreshold;
 
     /// <summary>
     /// Gets or sets a CSS selector for the scrolling element to watch. When not set, the document
@@ -132,19 +134,21 @@ public partial class BbScrollToTop : ComponentBase, IAsyncDisposable
     /// <inheritdoc />
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || observed)
+        if (observed && observedSelector == Selector && observedThreshold == VisibleAt)
         {
             return;
         }
 
-        observed = true;
 
         try
         {
-            module = await JsModules.GetAsync(
+            module ??= await JsModules.GetAsync(
                 JS, "./_content/BlazorBlueprint.Components/js/scroll-to-top.js");
-            selfRef = DotNetObjectReference.Create(this);
+            selfRef ??= DotNetObjectReference.Create(this);
             await module.InvokeAsync<bool>("observe", instanceId, Selector, VisibleAt, selfRef);
+            observed = true;
+            observedSelector = Selector;
+            observedThreshold = VisibleAt;
         }
         catch (Exception ex) when (ex is JSDisconnectedException or JSException
             or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
@@ -178,7 +182,10 @@ public partial class BbScrollToTop : ComponentBase, IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("scrollToTop", Selector, Smooth);
+            if (!await module.InvokeAsync<bool>("scrollToTop", Selector, Smooth))
+        {
+            return;
+        }
         }
         catch (Exception ex) when (ex is JSDisconnectedException or JSException
             or TaskCanceledException or ObjectDisposedException)

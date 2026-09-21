@@ -224,7 +224,7 @@
     {
         if (await CallAsync("signaturePad.setStrokes", strokes ?? Array.Empty<SignatureStroke>()))
         {
-            await OnChange.InvokeAsync(strokes is null || strokes.Count == 0);
+            await OnChange.InvokeAsync(await IsEmptyAsync());
         }
     }
 

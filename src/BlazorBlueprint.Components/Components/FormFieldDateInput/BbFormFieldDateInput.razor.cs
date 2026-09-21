@@ -50,6 +50,7 @@ public partial class BbFormFieldDateInput : FormFieldBase
     /// <summary>
     /// Gets or sets whether a calendar picker button is shown beside the segments.
     /// </summary>
+    /// <remarks>Defaults to false for compact form rows; set true to match the standalone input.</remarks>
     [Parameter]
     public bool ShowCalendar { get; set; }
 

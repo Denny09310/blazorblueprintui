@@ -36,7 +36,7 @@ public class BbRadialBarChart : BbChartBase
     /// Gets or sets the ending angle in degrees.
     /// </summary>
     /// <remarks>
-    /// Default is -270 for a full circle. Set to 0 for a half circle.
+    /// Default is -270 for a full circle. With StartAngle = 90, set to -90 for a half circle or 0 for a quarter circle.
     /// </remarks>
     [Parameter]
     public int EndAngle { get; set; } = -270;

@@ -62,3 +62,18 @@ test('dynamic height returns to auto, collapse hides only after animation and te
   f.animations[1].finish(); await Promise.resolve(); assert.equal(f.element.hidden, true);
   dispose(f.element); assert.equal(disconnected, true);
 });
+
+for (const trigger of ['Manual', 'Hover', 'Press', 'InView']) {
+  test(`${trigger} does not animate visibility changes`, () => {
+    const f = fixture();
+    motion(f.element, { ...config, trigger });
+    motion(f.element, { ...config, trigger, visible: false });
+    assert.equal(f.element.hidden, true);
+    motion(f.element, { ...config, trigger });
+    assert.equal(f.element.hidden, false);
+    assert.equal(f.animations.length, 0);
+    play(f.element);
+    assert.equal(f.animations.length, 1);
+    dispose(f.element);
+  });
+}

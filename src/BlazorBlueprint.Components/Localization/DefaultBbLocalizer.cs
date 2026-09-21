@@ -19,6 +19,32 @@ public class DefaultBbLocalizer : IBbLocalizer
 {
     private readonly Dictionary<string, string> defaults = new(StringComparer.Ordinal)
     {
+        ["Attachment.Open"] = "Open attachment",
+        ["Sortable.Handle"] = "Reorder item",
+        ["FileUpload.Drop"] = "Drop files here",
+        ["FileUpload.Drag"] = "Drag and drop files here",
+        ["FileUpload.Browse"] = "Browse to upload",
+        ["FileUpload.Accepted"] = "Accepted: {0}",
+        ["FileUpload.MaxSize"] = "Max size: {0}",
+        ["FileUpload.MaxFiles"] = "Max files: {0}",
+        ["FileUpload.Remove"] = "Remove {0}",
+        ["FileUpload.TooMany"] = "Maximum {0} files allowed",
+        ["FileUpload.TooLarge"] = "{0} exceeds {1} limit",
+        ["FileUpload.InvalidType"] = "{0} is not an accepted file type",
+        ["MultiSelect.More"] = "+{0} more",
+        ["MultiSelect.Remove"] = "Remove {0}",
+        ["DateTimePicker.AM"] = "AM",
+        ["DateTimePicker.PM"] = "PM",
+        ["Sortable.Cancelled"] = "Move cancelled.",
+        ["Sortable.Unchanged"] = "Item dropped in its original position.",
+        ["Sortable.MoveFailed"] = "Unable to move the item. Try again.",
+        ["Sortable.Transferred"] = "Item transferred to the connected list.",
+        ["Sortable.TransferRejected"] = "The transfer was not allowed or no connected list is available.",
+        ["Sortable.TransferFailed"] = "Unable to transfer the item. Try again.",
+        ["Sortable.PickedUp"] = "Picked up item {0} of {1}. Use arrow keys to move.",
+        ["Sortable.Disabled"] = "Reordering is disabled. Control plus Left or Right transfers to a connected list.",
+        ["Sortable.Position"] = "Position {0} of {1}. Press Space or Enter to drop.",
+
         // Alert
         ["Alert.Dismiss"] = "Dismiss",
 

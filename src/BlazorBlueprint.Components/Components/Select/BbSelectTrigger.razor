@@ -3,7 +3,7 @@
 
 @* Styled SelectTrigger wrapper around SelectTrigger primitive *@
 <BlazorBlueprint.Primitives.Select.BbSelectTrigger TValue="TValue"
-                                               class="@CssClass"
+                                               aria-label="@ParentSelect?.AriaLabel" class="@CssClass"
                                                @attributes="AdditionalAttributes">
     @ChildContent
     <svg class="bb:ms-2 bb:h-4 bb:w-4 bb:opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -12,6 +12,7 @@
 </BlazorBlueprint.Primitives.Select.BbSelectTrigger>
 
 @code {
+    [CascadingParameter] private BbSelect<TValue>? ParentSelect { get; set; }
     /// <summary>
     /// Cascading parameter to infer TValue from parent Select context.
     /// </summary>

@@ -1,6 +1,6 @@
 @namespace BlazorBlueprint.Primitives.NavigationMenu
 
-<li @attributes="AdditionalAttributes">
+<li data-nav-item @attributes="AdditionalAttributes">
     <CascadingValue Value="itemContext" IsFixed="true">
         @ChildContent
     </CascadingValue>
@@ -36,5 +36,5 @@
     public NavigationMenuItemContext ItemContext => itemContext;
 
     protected override void OnInitialized() =>
-        itemContext = new NavigationMenuItemContext(MenuContext!, Value);
+        itemContext = new NavigationMenuItemContext(MenuContext!, Value ?? Guid.NewGuid().ToString("N"));
 }

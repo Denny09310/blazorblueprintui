@@ -289,7 +289,7 @@ internal sealed class EChartsItemStyleOption
 {
     [JsonPropertyName("areaColor")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? AreaColor { get; set; }
+    public object? AreaColor { get; set; }
 
     [JsonPropertyName("color")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

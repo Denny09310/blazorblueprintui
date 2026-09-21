@@ -17,7 +17,7 @@ const color = await load('src/BlazorBlueprint.Components/wwwroot/js/color-picker
 
 async function microtasks() { for (let i = 0; i < 15; i++) await Promise.resolve(); }
 function clock(t) {
-  const saved = Object.fromEntries(['performance', 'setTimeout', 'clearTimeout', 'requestAnimationFrame', 'document']
+  const saved = Object.fromEntries(['performance', 'setTimeout', 'clearTimeout', 'requestAnimationFrame', 'document', 'getComputedStyle']
     .map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   let now = 0;
   let nextId = 0;
@@ -27,6 +27,7 @@ function clock(t) {
   globalThis.clearTimeout = id => timers.delete(id);
   globalThis.requestAnimationFrame = fn => setTimeout(fn, 16);
   globalThis.document = { body: { style: {} } };
+  globalThis.getComputedStyle = () => ({ direction: 'ltr' });
   t.after(() => {
     for (const [key, descriptor] of Object.entries(saved)) {
       if (descriptor) Object.defineProperty(globalThis, key, descriptor);

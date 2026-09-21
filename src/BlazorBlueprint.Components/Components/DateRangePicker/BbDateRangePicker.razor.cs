@@ -8,6 +8,10 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public partial class BbDateRangePicker : ComponentBase
 {
+    /// <summary>The accessible name of the control.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+
+
     [Inject] private IBbLocalizer Localizer { get; set; } = default!;
 
     private bool _isOpen;
@@ -22,7 +26,6 @@ public partial class BbDateRangePicker : ComponentBase
     // Caching fields
     private CultureInfo _resolvedCulture = CultureInfo.CurrentCulture;
     private DayOfWeek _cachedFirstDayOfWeek;
-    private string[]? _cachedDayNames;
     private List<List<DateTime?>>? _cachedWeeksMonth1;
     private List<List<DateTime?>>? _cachedWeeksMonth2;
 
@@ -200,7 +203,7 @@ public partial class BbDateRangePicker : ComponentBase
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
-    private string[] DayNames => _cachedDayNames ??= BuildDayNames();
+    private string[] DayNames => BuildDayNames();
 
     private string[] BuildDayNames()
     {
@@ -273,7 +276,6 @@ public partial class BbDateRangePicker : ComponentBase
         if (!ReferenceEquals(_resolvedCulture, currentCulture) && _resolvedCulture.Name != currentCulture.Name)
         {
             _resolvedCulture = currentCulture;
-            _cachedDayNames = null;
             _cachedWeeksMonth1 = null;
             _cachedWeeksMonth2 = null;
         }
@@ -282,7 +284,6 @@ public partial class BbDateRangePicker : ComponentBase
         if (_cachedFirstDayOfWeek != EffectiveFirstDayOfWeek)
         {
             _cachedFirstDayOfWeek = EffectiveFirstDayOfWeek;
-            _cachedDayNames = null;
             _cachedWeeksMonth1 = null;
             _cachedWeeksMonth2 = null;
         }

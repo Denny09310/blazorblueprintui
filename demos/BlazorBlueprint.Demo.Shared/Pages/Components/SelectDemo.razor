@@ -29,7 +29,7 @@
         </p>
 
         <div class="flex items-center gap-4">
-            <BbSelect TValue="string"
+            <BbSelect AriaLabel="Choose an option" TValue="string"
                     @bind-Value="selectedFruit"
                     Options="@fruitOptions"
                     Placeholder="Select a fruit"
@@ -409,6 +409,7 @@
 
         <div class="space-y-4">
             <ApiReference ComponentName="Select&lt;TValue&gt;">
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">Accessible name forwarded to the interactive control or group.</ApiParameter>
                 <ApiParameter Name="Options" Type="IEnumerable&lt;SelectOption&lt;TValue&gt;&gt;?">
                     Collection of options for data-driven mode. When provided, auto-generates trigger, value display, and dropdown content.
                 </ApiParameter>

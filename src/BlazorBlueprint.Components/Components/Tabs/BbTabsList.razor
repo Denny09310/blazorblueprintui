@@ -15,7 +15,8 @@
 
 @if (Responsive)
 {
-    <div @ref="_containerRef" class="bb:relative bb:w-full" @attributes="AdditionalAttributes">
+    <div @ref="reorderRoot" data-tabs-id="@componentId" class="bb:flex bb:w-full bb:items-center bb:gap-1" @attributes="AdditionalAttributes">
+    <div @ref="_containerRef" class="bb:relative bb:min-w-0 bb:flex-1">
         @* Tab buttons — use visibility:hidden (not display:none) when overflowing
            so the element retains its measured width for the ResizeObserver. *@
         <BlazorBlueprint.Primitives.Tabs.BbTabsList class="@ClassNames.cn(CssClass, TabListVisibilityClass)">
@@ -35,6 +36,17 @@
                           Options="@SelectOptions"
                           Class="@SelectCssClass" />
             </div>
+        }
+    </div>
+        @if (Addable && OnAdd.HasDelegate)
+        {
+            <button type="button"
+                    class="@AddCssClass"
+                    title="@EffectiveAddLabel"
+                    aria-label="@EffectiveAddLabel"
+                    @onclick="HandleAddAsync">
+                <LucideIcon Name="plus" Size="14" />
+            </button>
         }
     </div>
 }

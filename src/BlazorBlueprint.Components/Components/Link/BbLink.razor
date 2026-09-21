@@ -13,6 +13,9 @@
     @if (ShowExternalIcon)
     {
         <LucideIcon Name="external-link" Class="bb:inline-block bb:h-3 bb:w-3 bb:shrink-0 bb:align-baseline" />
-        <span class="bb:sr-only">@Localizer["Link.OpensInNewTab"]</span>
+        @if (string.Equals(Target, "_blank", StringComparison.OrdinalIgnoreCase))
+        {
+            <span class="bb:sr-only">@Localizer["Link.OpensInNewTab"]</span>
+        }
     }
 </a>

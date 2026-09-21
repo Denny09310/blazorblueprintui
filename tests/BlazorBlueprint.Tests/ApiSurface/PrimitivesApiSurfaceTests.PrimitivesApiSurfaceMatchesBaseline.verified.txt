@@ -790,6 +790,7 @@
   - Id : String
   - ItemTemplate : RenderFragment<TItem>
   - Items : IList<TItem>
+  - KeyboardAnnouncements : IReadOnlyDictionary<String, String>
   - KeyboardInstructions : String
   - KeyboardSorting : Boolean
   - MoveRejectedAnnouncement : String

@@ -133,6 +133,10 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
     [Parameter]
     public string KeyboardInstructions { get; set; } = "Press Space or Enter to pick up. Use arrows to reorder, Control plus Left or Right to transfer to a connected list, Space or Enter to drop, or Escape to cancel.";
 
+    /// <summary>Localized keyboard announcements, keyed by Cancelled, Unchanged, MoveFailed, Transferred, TransferRejected, TransferFailed, PickedUp, Disabled and Position. Positional templates accept {0} and {1}.</summary>
+    [Parameter] public IReadOnlyDictionary<string, string>? KeyboardAnnouncements { get; set; }
+
+
     /// <summary>
     /// Announced when <see cref="CanMove"/> rejects a reorder.
     /// </summary>

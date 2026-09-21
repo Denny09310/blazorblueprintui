@@ -15,7 +15,7 @@ namespace BlazorBlueprint.Primitives.QrCode;
 /// </para>
 /// <para>
 /// One mode is chosen for the whole string rather than splitting it into mixed-mode segments. A
-/// string that is mostly digits with one letter in it therefore encodes as bytes, which can cost a
+/// string that is mostly digits with one lowercase ASCII letter in it therefore encodes as bytes, which can cost a
 /// version compared with an optimal split. The simpler rule is easier to reason about and the
 /// difference only shows on long, mixed strings.
 /// </para>

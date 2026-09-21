@@ -202,6 +202,7 @@
 
 ### BbAttachmentTrigger (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - AsChild : AttachmentTriggerElement
   - Class : String
   - Href : String
@@ -625,6 +626,7 @@
 
 ### BbCheckboxGroup`1 (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - ChildContent : RenderFragment
   - Class : String
   - Disabled : Boolean
@@ -726,6 +728,7 @@
   - ActiveClass : String
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaDescribedBy : String
+  - AriaLabel : String
   - ChildContent : RenderFragment
   - Class : String
   - Disabled : Boolean
@@ -1390,6 +1393,7 @@
 
 ### BbDatePicker (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - Class : String
   - DateFormat : String
   - DayClassFunc : Func<DateTime, String>
@@ -1399,6 +1403,7 @@
   - Editable : Boolean
   - FirstDayOfWeek : DayOfWeek?
   - InputFormats : String[]
+  - IsInvalid : Boolean
   - MaxDate : DateTime?
   - MinDate : DateTime?
   - Placeholder : String
@@ -1410,6 +1415,7 @@
 
 ### BbDatePickerInput (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - Class : String
   - Disabled : Boolean
   - IsInvalid : Boolean
@@ -1421,6 +1427,7 @@
 
 ### BbDateRangePicker (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - AutoApply : Boolean
   - Class : String
   - CustomDayNames : String[]
@@ -1445,6 +1452,7 @@
 
 ### BbDateTimePicker (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - Class : String
   - DateTimeFormat : String
   - DayClassFunc : Func<DateTime, String>
@@ -1872,6 +1880,7 @@
   - Accept : String
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AllowPaste : Boolean
+  - AriaLabel : String
   - AutoUpload : Boolean
   - Class : String
   - Disabled : Boolean
@@ -1983,6 +1992,7 @@
   - ShowSelectAll : Boolean
   - Values : IReadOnlyCollection<TValue>
   - ValuesChanged : EventCallback<IReadOnlyCollection<TValue>>
+  - ValuesExpression : Expression<Func<IReadOnlyCollection<TValue>>>
 
 ### BbFormFieldCombobox`1 (BlazorBlueprint.Components)
   - ActiveClass : String
@@ -2107,6 +2117,7 @@
   - ShowTwoMonths : Boolean
   - Value : DateRange
   - ValueChanged : EventCallback<DateRange>
+  - ValueExpression : Expression<Func<DateRange>>
 
 ### BbFormFieldDateTimePicker (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -2142,6 +2153,7 @@
   - ErrorText : String
   - Files : IReadOnlyList<FileUploadItem>
   - FilesChanged : EventCallback<IReadOnlyList<FileUploadItem>>
+  - FilesExpression : Expression<Func<IReadOnlyList<FileUploadItem>>>
   - HelperText : String
   - InputClass : String
   - Label : String
@@ -2225,6 +2237,7 @@
   - ValueExpression : Expression<Func<String>>
 
 ### BbFormFieldMultiSelect`1 (BlazorBlueprint.Components)
+  - ActiveClass : String
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaLabel : String
   - AutoClose : Boolean
@@ -2247,6 +2260,7 @@
   - Orientation : FieldOrientation
   - Placeholder : String
   - PopoverWidth : String
+  - Required : Boolean
   - SearchPlaceholder : String
   - SearchQueryChanged : EventCallback<String>
   - SelectAllLabel : String
@@ -2873,6 +2887,7 @@
 
 ### BbInputOTP (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - Class : String
   - Disabled : Boolean
   - GroupSize : Int32
@@ -3260,6 +3275,7 @@
   - ActiveClass : String
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaDescribedBy : String
+  - AriaLabel : String
   - AutoClose : Boolean
   - ChildContent : RenderFragment
   - Class : String
@@ -3276,6 +3292,7 @@
   - Options : IEnumerable<SelectOption<TValue>>
   - Placeholder : String
   - PopoverWidth : String
+  - Required : Boolean
   - SearchPlaceholder : String
   - SearchQueryChanged : EventCallback<String>
   - SelectAllLabel : String
@@ -3288,6 +3305,7 @@
 
 ### BbNativeSelect`1 (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - ChildContent : RenderFragment
   - Class : String
   - Disabled : Boolean
@@ -4052,6 +4070,7 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - Class : String
   - Description : String
+  - HeadingLevel : Int32
   - Separator : Boolean
   - Title : String
 
@@ -4092,6 +4111,7 @@
   - ChildContent : RenderFragment
   - Class : String
   - Context : SelectContext<TValue> [CascadingParameter]
+  - ParentSelect : BbSelect<TValue> [CascadingParameter]
 
 ### BbSelectValue (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -4101,6 +4121,7 @@
 
 ### BbSelect`1 (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - ChildContent : RenderFragment
   - Class : String
   - Disabled : Boolean
@@ -4659,6 +4680,7 @@
 
 ### BbTimePicker (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - Class : String
   - Disabled : Boolean
   - Format : TimeFormat

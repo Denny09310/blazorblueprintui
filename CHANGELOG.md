@@ -11,6 +11,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Accessible names on picker, selection, OTP and upload controls; configurable
+  `BbSectionHeader.HeadingLevel`; EditForm expression support for checkbox groups,
+  date ranges and file-upload wrappers; and translatable sortable announcements.
+
+
 - **`BbMapChart` and `BbMap`**: a world choropleth for visitors, sales, and other
   country-level datasets. Bind ISO country codes or English names to numeric
   values, use the automatic color scale or customize it with `BbVisualMap`, and
@@ -31,6 +36,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   value. Every refusal from `BarcodeEncoder` is now one of these.
 
 ### Fixed
+
+- Responsive tab adding/reordering, conditional step order, required-chip dismissal,
+  runtime upload paste options, custom calendar day names, toggle navigation after
+  disabling items, pagination template updates, and signature empty-state reporting.
+- Date/time restrictions now also apply to Now and empty-value time stepping.
+  `MinuteStep` outside 1–59 and missing/duplicate dock panel IDs fail early.
+- Primitive menus now support the documented keyboard and controlled-state behavior.
+  Dialog/Sheet close buttons activate once per native keyboard click. Dialog/Popover
+  `Modal` now gates outside/Escape dismissal as documented; its legacy name does not
+  change focus trapping. Dropdown `Dir` overrides reach portaled content; null inherits.
+- Tinted bubble contrast, message alignment, editable-date invalid semantics,
+  attachment names, decorative image fallbacks and external-link announcements.
+- ScrollToTop observes changing options and late targets, preserves keyboard focus,
+  and reports completion after reaching the top. Motion visibility changes respect
+  the selected trigger. Map, heatmap and candlestick series honor explicit fills/colors.
+- Upload text/errors, AM/PM labels and MultiSelect removal/count labels are localizable.
+
 
 - **`BbDrawer` reports `OpenChanged` when it is left to itself.** Without `Open` bound, the drawer
   opened and closed but never raised `OpenChanged`, so a page that listened to it without binding

@@ -1,15 +1,16 @@
 @namespace BlazorBlueprint.Components
+@inject IBbLocalizer Localizer
 
 @if (ResolvedElement == AttachmentTriggerElement.Anchor)
 {
-    <a data-slot="attachment-trigger"
+    <a data-slot="attachment-trigger" aria-label="@(AriaLabel ?? Localizer["Attachment.Open"])"
        class="@CssClass"
        href="@Href"
        @attributes="AdditionalAttributes"></a>
 }
 else
 {
-    <button data-slot="attachment-trigger"
+    <button data-slot="attachment-trigger" aria-label="@(AriaLabel ?? Localizer["Attachment.Open"])"
             type="button"
             class="@CssClass"
             @attributes="AdditionalAttributes"></button>

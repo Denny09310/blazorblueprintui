@@ -1,15 +1,55 @@
+@inject IJSRuntime JSRuntime
+@using BlazorBlueprint.Primitives.Services
 @namespace BlazorBlueprint.Primitives.NavigationMenu
 @using Microsoft.AspNetCore.Components.Routing
 @inject NavigationManager NavigationManager
 @implements IDisposable
+@implements IAsyncDisposable
 
-<nav @attributes="AdditionalAttributes">
+<nav @ref="root" @attributes="AdditionalAttributes">
     <CascadingValue Value="context" IsFixed="true">
         @ChildContent
     </CascadingValue>
 </nav>
 
 @code {
+
+    private ElementReference root;
+    private IJSObjectReference? keyboardModule;
+    private bool disposed;
+    private DotNetObjectReference<BbNavigationMenu>? selfRef;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            keyboardModule ??= await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Primitives/js/menu-triggers.js");
+            selfRef ??= DotNetObjectReference.Create(this);
+            await keyboardModule.InvokeVoidAsync("initialize", root, true, EnableKeyboardNavigation, selfRef);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or InvalidOperationException or TaskCanceledException or ObjectDisposedException) { }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (disposed) return;
+        disposed = true;
+        Dispose();
+        selfRef?.Dispose();
+        if (keyboardModule is not null)
+        {
+            try { await keyboardModule.InvokeVoidAsync("dispose", root); }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException) { }
+        }
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>Closes the open panel after keyboard or outside dismissal.</summary>
+    [JSInvokable]
+    public void JsCloseMenus()
+    {
+        if (!disposed && context.ActiveItem is not null) context.SetActiveItem(null);
+    }
+
     private NavigationMenuContext context = null!;
 
     /// <summary>

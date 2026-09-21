@@ -173,7 +173,7 @@ public class NavigationMenuItemContext
     /// <summary>
     /// Whether this item's dropdown is currently open.
     /// </summary>
-    public bool IsOpen => parent.ActiveItem == Value;
+    public bool IsOpen => Value is not null && parent.ActiveItem == Value;
 
     /// <summary>
     /// Creates a new <see cref="NavigationMenuItemContext"/>.

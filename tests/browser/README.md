@@ -24,8 +24,12 @@ npm test
 
 To run one host/browser combination, use `npm test -- --project=wasm-chromium`. To use an installed Google Chrome instead of the bundled Chromium, set `BB_CHROMIUM_CHANNEL=chrome`.
 
+If using a separately installed compatible WebKit, set `BB_WEBKIT_EXECUTABLE` to its launcher path. The bundled revision remains the default.
+
 Coverage includes:
 
+- Audit regressions: conditional step order, responsive tab editing, headless menu focus, EditForm field messages, and scroll completion/focus.
+- World-map data updates, country clicks, theme changes, mobile resizing, pan/zoom, and lazy geometry loading across all three hosts.
 - Segmented input editing and validation, nested pickers and focus return.
 - TreeSelect expansion, single selection and cascading checkbox selection.
 - Nested menu keyboard navigation in LTR and RTL, radio selection and dismissal.

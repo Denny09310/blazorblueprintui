@@ -27,6 +27,9 @@ export default defineConfig({
             use: {
                 baseURL,
                 browserName,
+                ...(browserName === "webkit" && process.env.BB_WEBKIT_EXECUTABLE
+                    ? { launchOptions: { executablePath: process.env.BB_WEBKIT_EXECUTABLE } }
+                    : {}),
                 ...(browserName === "chromium" && process.env.BB_CHROMIUM_CHANNEL
                     ? { channel: process.env.BB_CHROMIUM_CHANNEL }
                     : {}),

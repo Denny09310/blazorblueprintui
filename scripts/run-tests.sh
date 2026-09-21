@@ -61,6 +61,11 @@ dotnet test "$TEST_PROJECT" --verbosity normal
 
 exit_code=$?
 
+if [ "$exit_code" -eq 0 ]; then
+    node --test "$PROJECT_ROOT"/tests/js/*.test.mjs
+    exit_code=$?
+fi
+
 echo ""
 echo "----------------------------------------"
 

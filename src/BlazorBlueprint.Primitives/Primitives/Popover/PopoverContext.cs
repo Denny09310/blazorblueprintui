@@ -34,6 +34,8 @@ public class PopoverState
 /// </summary>
 public class PopoverContext : PrimitiveContextWithEvents<PopoverState>
 {
+    internal bool AllowDismiss { get; set; } = true;
+
     /// <summary>
     /// Initializes a new instance of the PopoverContext.
     /// </summary>

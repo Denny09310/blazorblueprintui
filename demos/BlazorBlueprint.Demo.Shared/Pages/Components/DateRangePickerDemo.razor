@@ -19,7 +19,7 @@
                 Two-month view with preset date ranges.
             </p>
         </div>
-        <BbDateRangePicker @bind-Value="_basicRange" />
+        <BbDateRangePicker AriaLabel="Choose a date range" @bind-Value="_basicRange" />
         <p class="text-sm text-muted-foreground">
             @if (_basicRange != null)
             {
@@ -295,6 +295,7 @@
 
         <div class="space-y-4">
             <ApiReference ComponentName="DateRangePicker">
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">Accessible name forwarded to the interactive control or group.</ApiParameter>
                 <ApiParameter Name="Value" Type="DateRange?">
                     Selected date range (Start, End).
                 </ApiParameter>

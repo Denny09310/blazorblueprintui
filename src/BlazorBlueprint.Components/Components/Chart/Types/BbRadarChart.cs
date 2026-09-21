@@ -49,7 +49,7 @@ public class BbRadarChart : BbChartBase
     /// </summary>
     /// <remarks>
     /// Used for auto-building radar indicators from the chart data.
-    /// Each distinct value of this property becomes an indicator axis.
+    /// Each data row becomes an indicator axis; repeated names are preserved.
     /// </remarks>
     [Parameter]
     public string? IndicatorKey { get; set; }

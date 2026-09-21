@@ -27,7 +27,7 @@
         </p>
 
         <div class="flex flex-col gap-2">
-            <BbCombobox TValue="string"
+            <BbCombobox AriaLabel="Choose an option" TValue="string"
                      Options="frameworks"
                      @bind-Value="selectedFramework"
                      Placeholder="Select framework..."
@@ -617,6 +617,7 @@
 
         <div class="space-y-4">
             <ApiReference ComponentName="Combobox&lt;TValue&gt;">
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">Accessible name forwarded to the interactive control or group.</ApiParameter>
                 <ApiParameter Name="Options" Type="IEnumerable&lt;SelectOption&lt;TValue&gt;&gt;?">
                     Collection of options for data-driven mode. When null, uses compositional mode with ChildContent.
                 </ApiParameter>
