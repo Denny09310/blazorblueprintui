@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Primitives.Sheet
 @using BlazorBlueprint.Primitives.Utilities
+@inject IServiceProvider Services
 
 @* Sheet trigger button - opens the sheet when clicked *@
 @if (AsChild)
@@ -59,10 +60,16 @@ else
     [Parameter]
     public bool CustomClickHandling { get; set; } = false;
 
+    private static readonly AsChildTriggerDescription Diagnostic = new("BbSheetTrigger", "open this sheet", "<button>");
+
+    // The context the last render cascaded, kept so the first after-render can ask whether
+    // anything read it.
+    private TriggerContext? lastTriggerContext;
+
     /// <summary>
     /// Context passed to child components when AsChild is true.
     /// </summary>
-    private TriggerContext TriggerContext => new()
+    private TriggerContext TriggerContext => lastTriggerContext = new()
     {
         TriggerId = Context.TriggerId,
         IsOpen = Context.IsOpen,
@@ -100,6 +107,14 @@ else
             throw new InvalidOperationException(
                 "SheetTrigger must be used within a Sheet component. " +
                 "Ensure SheetTrigger is a child of a Sheet component.");
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            AsChildDiagnostics.WarnIfUnconsumed<BbSheetTrigger>(Services, Diagnostic, AsChild, lastTriggerContext, AdditionalAttributes);
         }
     }
 }

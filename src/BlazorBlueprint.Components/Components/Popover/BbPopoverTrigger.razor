@@ -2,10 +2,13 @@
 
 @* Styled PopoverTrigger wrapper - just passes through to primitive *@
 
+@* In AsChild mode the primitive renders no element, so the trigger's own styling has nowhere to
+   go. Only what the page set is handed down, so the development warning names that and nothing
+   else. *@
 <BlazorBlueprint.Primitives.Popover.BbPopoverTrigger AsChild="@AsChild"
                                                    OnClick="@OnClick"
                                                    CustomClickHandling="@CustomClickHandling"
-                                                   class="bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2"
+                                                   class="@(AsChild ? null : "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2")"
                                                    @attributes="AdditionalAttributes">
     @ChildContent
 </BlazorBlueprint.Primitives.Popover.BbPopoverTrigger>

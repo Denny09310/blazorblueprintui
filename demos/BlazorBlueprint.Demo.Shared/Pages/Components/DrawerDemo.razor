@@ -192,8 +192,11 @@
             <code class="bg-muted px-1 py-0.5 rounded">BbDrawerClose</code> now render a real
             <code class="bg-muted px-1 py-0.5 rounded">&lt;button&gt;</code>, so plain content is reachable by
             keyboard and announced as a control. Set
-            <code class="bg-muted px-1 py-0.5 rounded">AsChild="true"</code> when the child is already a control,
-            otherwise you nest a button inside a button.
+            <code class="bg-muted px-1 py-0.5 rounded">AsChild="true"</code> when the child is a
+            <code class="bg-muted px-1 py-0.5 rounded">BbButton</code>, otherwise you nest a button inside a button.
+            A plain <code class="bg-muted px-1 py-0.5 rounded">&lt;button&gt;</code> cannot read the trigger context, so
+            with <code class="bg-muted px-1 py-0.5 rounded">AsChild="true"</code> it opens nothing; in Development
+            the trigger logs a warning when that happens.
         </p>
 
         <div class="flex flex-wrap gap-4 items-center">
@@ -322,7 +325,7 @@
 
             <ApiReference ComponentName="DrawerTrigger">
                 <ApiParameter Since="v4" Name="AsChild" Type="bool" Default="false">
-                    When true, renders no button of its own and cascades a <code>TriggerContext</code> to the child instead. Use it whenever the child is already a control, such as a <code>BbButton</code> — leaving it false around a control nests a button inside a button.
+                    When true, renders no button of its own and cascades a <code>TriggerContext</code> to the child instead. Use it when the child is a <code>BbButton</code> — leaving it false around one nests a button inside a button. The child has to read the context: a plain <code>&lt;button&gt;</code>, text or an icon cannot, and in Development the trigger logs a warning when nothing did.
                 </ApiParameter>
                 <ApiParameter Name="ChildContent" Type="RenderFragment?">
                     The trigger content. Rendered inside a <code>&lt;button type="button"&gt;</code> unless <code>AsChild</code> is set.

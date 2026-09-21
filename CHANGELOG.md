@@ -11,6 +11,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **A trigger in AsChild mode now says so when nothing inside it can use it.** Eleven triggers
+  default `AsChild` to `true`: collapsible, popover, dialog, dialog close, sheet, sheet close,
+  dropdown menu, hover card, and the alert dialog trigger, action and cancel. In that mode the
+  trigger renders no element and no handlers, and passes its behaviour to a child that reads it —
+  `BbButton` does. Text, an icon or a plain `<span>` cannot, so the trigger did nothing, its `Class`
+  went nowhere, and nothing said why. `<BbCollapsibleTrigger Class="flex gap-1"><LucideIcon ... />
+  Details</BbCollapsibleTrigger>` looks right and cannot be clicked.
+
+  The default stays `true`, because the library and existing apps rely on it to put a `BbButton`
+  inside without nesting one button in another. What changed is that the mistake is now visible:
+  in the Development environment, every one of these triggers logs a warning through `ILogger`
+  when nothing read its context. The warning says to set `AsChild="false"` or to put a `BbButton`
+  inside, and names any class or attributes the trigger was given, since AsChild mode has no
+  element to put them on. Tooltip and hover card already had this warning; all of them now share
+  one. `BbDrawerTrigger` and `BbDrawerClose` default to `false`, and warn the same way when
+  `AsChild="true"` is set on them. Nothing is logged outside Development.
+
+  The `BbCollapsibleTrigger` XML docs taught the broken form in both of their examples, and so did
+  six Dialog code samples on the demo site and the Getting Started page. All of them are fixed.
+
 - **`OnBuilt` no longer rebuilds forever when the page that declares the chart handles it.**
   `BbGantt` and `BbPivotDataGrid` both guarded the callback on a reference comparison against the
   previous build, and both build a brand new object every time — so the guard was never once true.
@@ -93,6 +113,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   something to show anyone.
 
 ### Added
+
+- **`AsChildDiagnostics.WarnIfUnconsumed<TTrigger>` and `AsChildTriggerDescription`**
+  (`BlazorBlueprint.Primitives.Utilities`). The warning every AsChild trigger in the library now
+  logs, public so a trigger built outside the library can log it too. Call it from
+  `OnAfterRender` on the first render, with the `TriggerContext` the render cascaded. It is public
+  because the drawer's triggers live in Components and needed it; the other route, opening
+  Primitives' internals to Components, would break at runtime for an app that pairs Components
+  with a newer Primitives.
 
 - **`BarcodeFormatException`, in `BlazorBlueprint.Primitives.Barcode`.** An `ArgumentException`, so
   existing catch blocks are unaffected, whose message is safe to put in front of whoever typed the

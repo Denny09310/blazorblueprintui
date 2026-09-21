@@ -1,5 +1,5 @@
 <BbDialog>
-    <BbDialogTrigger>Edit Profile</BbDialogTrigger>
+    <BbDialogTrigger AsChild="false">Edit Profile</BbDialogTrigger>
     <BbDialogContent>
         <BbDialogHeader>
             <BbDialogTitle>Edit profile</BbDialogTitle>

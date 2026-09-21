@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Primitives.Sheet
 @using BlazorBlueprint.Primitives.Utilities
+@inject IServiceProvider Services
 
 @*
     SheetClose provides a button to close the sheet.
@@ -61,12 +62,18 @@ else
     [Parameter]
     public bool PreventClose { get; set; } = false;
 
+    private static readonly AsChildTriggerDescription Diagnostic = new("BbSheetClose", "close this sheet", "<button>");
+
+    // The context the last render cascaded, kept so the first after-render can ask whether
+    // anything read it.
+    private TriggerContext? lastTriggerContext;
+
     /// <summary>
     /// Context passed to child components when AsChild is true.
     /// For close buttons, we only provide Close (not Toggle) so the Button
     /// knows this is a close-only action.
     /// </summary>
-    private TriggerContext TriggerContext => new()
+    private TriggerContext TriggerContext => lastTriggerContext = new()
     {
         IsOpen = Context.IsOpen,
         // Note: Toggle is intentionally null - this tells Button it's a close-only button
@@ -110,6 +117,14 @@ else
             {
                 await OnClick.InvokeAsync(new MouseEventArgs());
             }
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            AsChildDiagnostics.WarnIfUnconsumed<BbSheetClose>(Services, Diagnostic, AsChild, lastTriggerContext, AdditionalAttributes);
         }
     }
 }
