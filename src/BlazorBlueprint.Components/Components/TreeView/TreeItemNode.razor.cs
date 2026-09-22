@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Components;
 namespace BlazorBlueprint.Components;
 
 /// <summary>
-/// Internal component for recursively rendering data-driven tree items.
+/// Recursively renders a data-driven tree item. Normally created by BbTreeView; public for advanced composition.
 /// </summary>
 public partial class TreeItemNode<TItem> : ComponentBase
 {

@@ -59,7 +59,12 @@ export function initialize(trackElement, dotNetRef, sliderId, options) {
     const current = generation;
     releaseDragPreview(updates, trackElement, properties, () => !disposed && generation === current && pointerId == null);
   };
-  const listeners = { pointerdown: down, pointermove: move, pointerup: finish, pointercancel: finish, lostpointercapture: finish };
+  const keydown = e => {
+    if (!disabled() && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown'].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+  const listeners = { keydown, pointerdown: down, pointermove: move, pointerup: finish, pointercancel: finish, lostpointercapture: finish };
   Object.entries(listeners).forEach(([event, handler]) => trackElement.addEventListener(event, handler));
   sliderStates.set(sliderId, () => {
     disposed = true;

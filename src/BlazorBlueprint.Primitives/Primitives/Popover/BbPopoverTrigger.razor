@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Primitives.Popover
 @using BlazorBlueprint.Primitives.Utilities
+@inject IServiceProvider Services
 
 @* Popover trigger - opens the popover when clicked *@
 @if (AsChild)
@@ -67,6 +68,8 @@ else
     /// Stores the trigger element reference when using AsChild pattern.
     /// </summary>
     private ElementReference? _asChildTriggerRef;
+
+    private static readonly AsChildTriggerDescription Diagnostic = new("BbPopoverTrigger", "open this popover", "<button>");
 
     /// <summary>
     /// Cached TriggerContext to avoid unnecessary CascadingValue change propagation.
@@ -160,6 +163,11 @@ else
             // _asChildTriggerRef via TriggerContext.SetTriggerElement. We need to
             // propagate this to the context so Content can position relative to it.
             Context.SetTriggerElement(_asChildTriggerRef.Value);
+        }
+
+        if (firstRender)
+        {
+            AsChildDiagnostics.WarnIfUnconsumed<BbPopoverTrigger>(Services, Diagnostic, AsChild, _cachedTriggerContext, AdditionalAttributes);
         }
     }
 }

@@ -80,7 +80,9 @@
                         <pre class="text-sm overflow-x-auto"><code>@@using BlazorBlueprint.Components
 
 &lt;BbDialog&gt;
-    &lt;BbDialogTrigger&gt;Open Dialog&lt;/BbDialogTrigger&gt;
+    &lt;BbDialogTrigger&gt;
+        &lt;BbButton&gt;Open Dialog&lt;/BbButton&gt;
+    &lt;/BbDialogTrigger&gt;
     &lt;BbDialogContent&gt;
         &lt;BbDialogHeader&gt;
             &lt;BbDialogTitle&gt;Dialog Title&lt;/BbDialogTitle&gt;
@@ -158,7 +160,7 @@
                     </p>
                     <div class="rounded-lg border bg-muted/50 p-4">
                         <pre class="text-sm overflow-x-auto"><code>&lt;BbDialog @@bind-Open="isDialogOpen"&gt;
-    &lt;BbDialogTrigger&gt;Open&lt;/BbDialogTrigger&gt;
+    &lt;BbDialogTrigger&gt;&lt;BbButton&gt;Open&lt;/BbButton&gt;&lt;/BbDialogTrigger&gt;
     &lt;BbDialogContent&gt;
         &lt;p&gt;Controlled by parent component&lt;/p&gt;
         &lt;button @@onclick="() => isDialogOpen = false"&gt;
@@ -180,10 +182,10 @@
                     </p>
                     <div class="rounded-lg border bg-muted/50 p-4">
                         <pre class="text-sm overflow-x-auto"><code>&lt;BbDialog&gt;
-    &lt;BbDialogTrigger&gt;Open&lt;/BbDialogTrigger&gt;
+    &lt;BbDialogTrigger&gt;&lt;BbButton&gt;Open&lt;/BbButton&gt;&lt;/BbDialogTrigger&gt;
     &lt;BbDialogContent&gt;
         &lt;p&gt;Component manages its own open/close state&lt;/p&gt;
-        &lt;BbDialogClose&gt;Close&lt;/BbDialogClose&gt;
+        &lt;BbDialogClose&gt;&lt;BbButton Variant="ButtonVariant.Outline"&gt;Close&lt;/BbButton&gt;&lt;/BbDialogClose&gt;
     &lt;/BbDialogContent&gt;
 &lt;/BbDialog&gt;</code></pre>
                     </div>

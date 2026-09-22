@@ -1,0 +1,350 @@
+@namespace BlazorBlueprint.Primitives.SignaturePad
+@using System.ComponentModel
+@using System.Globalization
+@using System.Text
+@using System.Text.Json
+@inherits BbPrimitiveBase
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@*
+    SignaturePad primitive - headless drawing surface for a handwritten signature.
+
+    The ink engine runs in the browser. C# hears one call when a stroke finishes, never while one
+    is being drawn. The canvas carries no styling of its own: give it a size and a border.
+*@
+
+<canvas @ref="canvasRef"
+        data-min-width="@MinWidth.ToString(CultureInfo.InvariantCulture)"
+        data-max-width="@MaxWidth.ToString(CultureInfo.InvariantCulture)"
+        data-velocity-weight="@VelocityWeight.ToString(CultureInfo.InvariantCulture)"
+        data-colour="@StrokeColor"
+        data-disabled="@(Disabled ? "true" : null)"
+        @attributes="FilteredAttributes"
+        style="@MergeStyles("touch-action: none")">
+</canvas>
+
+@code {
+    private ElementReference canvasRef;
+    private IJSObjectReference? jsModule;
+    private DotNetObjectReference<BbSignaturePad>? dotNetRef;
+    private readonly TaskCompletionSource<bool> initializationReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly string padId = Guid.NewGuid().ToString("N");
+    private bool jsInitialized;
+    private bool disposed;
+
+    /// <summary>
+    /// Gets or sets the callback invoked when the drawing changes: after a stroke is finished, and
+    /// after <see cref="ClearAsync"/> or <see cref="UndoAsync"/>. The argument is whether the pad
+    /// is now empty.
+    /// </summary>
+    /// <remarks>
+    /// Nothing is reported while a stroke is being drawn. Read the signature from
+    /// <see cref="GetSvgAsync"/>, <see cref="GetPngAsync"/> or <see cref="GetStrokesAsync"/> when
+    /// this fires, or when the surrounding form is submitted.
+    /// </remarks>
+    [Parameter]
+    public EventCallback<bool> OnChange { get; set; }
+
+    /// <summary>
+    /// Gets or sets the ink colour as a CSS colour. When unset, the pad draws in its own computed
+    /// <c>color</c>, so the signature follows the theme without any wiring.
+    /// </summary>
+    [Parameter]
+    public string? StrokeColor { get; set; }
+
+    /// <summary>
+    /// Gets or sets the thinnest the line can get, in CSS pixels. Default is 0.5.
+    /// </summary>
+    [Parameter]
+    public double MinWidth { get; set; } = 0.5;
+
+    /// <summary>
+    /// Gets or sets the thickest the line can get, in CSS pixels. Default is 2.5.
+    /// </summary>
+    [Parameter]
+    public double MaxWidth { get; set; } = 2.5;
+
+    /// <summary>
+    /// Gets or sets how much the newest speed reading counts towards the line width, between 0 and
+    /// 1. Default is 0.7.
+    /// </summary>
+    /// <remarks>
+    /// Lower values average over more of the stroke, which gives an even line; higher values react
+    /// to each flick of the pen, which gives a sharper taper and a twitchier one.
+    /// </remarks>
+    [Parameter]
+    public double VelocityWeight { get; set; } = 0.7;
+
+    /// <summary>
+    /// Gets or sets whether drawing is ignored. Whatever is already drawn stays visible.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await InitializeJsAsync();
+        }
+    }
+
+    private async Task InitializeJsAsync()
+    {
+        if (jsInitialized)
+        {
+            return;
+        }
+
+        try
+        {
+            jsModule = await PrimitiveModules.GetAsync(JSRuntime);
+            dotNetRef = DotNetObjectReference.Create(this);
+            await jsModule.InvokeVoidAsync("signaturePad.initialize", canvasRef, dotNetRef, padId);
+            jsInitialized = true;
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect
+        }
+        catch (InvalidOperationException)
+        {
+            // JS interop not available during prerendering
+        }
+        finally
+        {
+            initializationReady.TrySetResult(jsInitialized && !disposed);
+        }
+    }
+
+    /// <summary>
+    /// Erases every stroke.
+    /// </summary>
+    public async Task ClearAsync()
+    {
+        if (await CallAsync("signaturePad.clear"))
+        {
+            await OnChange.InvokeAsync(true);
+        }
+    }
+
+    /// <summary>
+    /// Removes the most recent stroke.
+    /// </summary>
+    /// <returns><c>true</c> when there was a stroke to remove.</returns>
+    public async Task<bool> UndoAsync()
+    {
+        var removed = await InvokeAsync<bool>("signaturePad.undo");
+        if (removed)
+        {
+            await OnChange.InvokeAsync(await IsEmptyAsync());
+        }
+        return removed;
+    }
+
+    /// <summary>
+    /// Whether nothing has been drawn.
+    /// </summary>
+    public Task<bool> IsEmptyAsync() => InvokeAsync<bool>("signaturePad.isEmpty", true);
+
+    /// <summary>
+    /// The signature as SVG markup, or <c>null</c> when nothing is drawn.
+    /// </summary>
+    /// <remarks>
+    /// The strokes are drawn in <c>currentColor</c>, so the same markup renders dark on paper and
+    /// light on a dark page. This is the form to store when the signature has to be shown again
+    /// somewhere the ink colour is not known in advance.
+    /// </remarks>
+    public async Task<string?> GetSvgAsync()
+    {
+        var bytes = await ReadStreamAsync("signaturePad.toSvgStream");
+        return bytes is null ? null : Encoding.UTF8.GetString(bytes);
+    }
+
+    /// <summary>
+    /// The signature as a PNG data URL, or <c>null</c> when nothing is drawn.
+    /// </summary>
+    /// <param name="background">
+    /// A CSS colour to fill behind the ink, or <c>null</c> for a transparent background.
+    /// </param>
+    /// <param name="ink">
+    /// A CSS colour for the strokes. Defaults to black rather than to whatever the pad is
+    /// currently drawing in.
+    /// </param>
+    /// <remarks>
+    /// The ink is deliberately not the theme's. A PNG is a file that leaves the application, and a
+    /// signature drawn in a dark theme is near-white: exported as-is onto the white background a
+    /// PDF wants, it is a blank page. <see cref="GetSvgAsync"/> can defer the colour to wherever it
+    /// is rendered; a PNG cannot, so it is fixed here instead of inherited by accident.
+    /// </remarks>
+    public async Task<string?> GetPngAsync(string? background = null, string ink = "#000000")
+    {
+        var bytes = await GetPngBytesAsync(background, ink);
+        return bytes is null ? null : $"data:image/png;base64,{Convert.ToBase64String(bytes)}";
+    }
+
+    /// <summary>
+    /// The signature as PNG bytes, or <c>null</c> when nothing is drawn.
+    /// </summary>
+    /// <param name="background">
+    /// A CSS colour to fill behind the ink, or <c>null</c> for a transparent background.
+    /// </param>
+    /// <param name="ink">A CSS colour for the strokes.</param>
+    /// <remarks>
+    /// Prefer this over <see cref="GetPngAsync"/> when the image is being saved or uploaded rather
+    /// than shown: a data URL is a third larger for no benefit outside an <c>img</c> tag.
+    /// </remarks>
+    public Task<byte[]?> GetPngBytesAsync(string? background = null, string ink = "#000000")
+        => ReadStreamAsync("signaturePad.toPngStream", background, ink);
+
+    /// <summary>
+    /// The raw samples behind the signature.
+    /// </summary>
+    /// <remarks>
+    /// Smaller than an image and replayable through <see cref="SetStrokesAsync"/>. The timings
+    /// come with them, which is what a later check of how a signature was written needs.
+    /// </remarks>
+    public async Task<IReadOnlyList<SignatureStroke>> GetStrokesAsync()
+    {
+        var bytes = await ReadStreamAsync("signaturePad.toStrokesStream");
+        if (bytes is null || bytes.Length == 0)
+        {
+            return Array.Empty<SignatureStroke>();
+        }
+
+        return JsonSerializer.Deserialize<IReadOnlyList<SignatureStroke>>(bytes, StrokeJson)
+            ?? Array.Empty<SignatureStroke>();
+    }
+
+    /// <summary>
+    /// Replaces the drawing with previously captured samples.
+    /// </summary>
+    /// <param name="strokes">The samples to draw, in the coordinates they were captured in.</param>
+    /// <remarks>
+    /// Coordinates are in CSS pixels from the top left of the pad. A pad narrower than the one the
+    /// signature was drawn on will clip it rather than scale it.
+    /// </remarks>
+    public async Task SetStrokesAsync(IReadOnlyList<SignatureStroke>? strokes)
+    {
+        if (!await initializationReady.Task)
+        {
+            return;
+        }
+        if (await CallAsync("signaturePad.setStrokes", strokes ?? Array.Empty<SignatureStroke>()))
+        {
+            await OnChange.InvokeAsync(await IsEmptyAsync());
+        }
+    }
+
+    private async Task<bool> CallAsync(string identifier, params object?[] args)
+    {
+        if (disposed || !jsInitialized || jsModule is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            await jsModule.InvokeVoidAsync(identifier, [padId, .. args]);
+            return true;
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+            return false;
+        }
+    }
+
+    private static readonly JsonSerializerOptions StrokeJson =
+        new(JsonSerializerDefaults.Web);
+
+    /// <summary>
+    /// The largest export this will accept, in bytes. Generous enough for a detailed signature on
+    /// a large pad, bounded so a fault in the browser cannot make the server allocate without end.
+    /// </summary>
+    private const long MaxExportBytes = 32 * 1024 * 1024;
+
+    /// <summary>
+    /// Reads one of the pad's exports as a stream.
+    /// </summary>
+    /// <remarks>
+    /// Exports are streamed rather than returned. A Blazor Server circuit caps an incoming hub
+    /// message at 32KB by default, and a detailed signature clears that on all three forms — the
+    /// SVG, the PNG and the raw samples alike. Returning one tears the circuit down mid-call, so
+    /// the component never gets its answer and the page stops responding with nothing on screen to
+    /// say why. A stream is chunked by the framework and is not subject to the cap.
+    /// </remarks>
+    private async Task<byte[]?> ReadStreamAsync(string identifier, params object?[] args)
+    {
+        if (disposed || !jsInitialized || jsModule is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var reference = await jsModule.InvokeAsync<IJSStreamReference?>(identifier, [padId, .. args]);
+            if (reference is null)
+            {
+                return null;
+            }
+
+            await using var stream = await reference.OpenReadStreamAsync(MaxExportBytes);
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer);
+            return buffer.ToArray();
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+            return null;
+        }
+    }
+
+    private async Task<T> InvokeAsync<T>(string identifier, T fallback = default!, params object?[] args)
+    {
+        if (disposed || !jsInitialized || jsModule is null)
+        {
+            return fallback;
+        }
+
+        try
+        {
+            return await jsModule.InvokeAsync<T>(identifier, [padId, .. args]);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+            return fallback;
+        }
+    }
+
+    [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public async Task JsSignatureChanged(bool empty)
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        await OnChange.InvokeAsync(empty);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        disposed = true;
+        initializationReady.TrySetResult(false);
+        if (jsModule != null && jsInitialized)
+        {
+            try
+            {
+                await jsModule.InvokeVoidAsync("signaturePad.dispose", padId);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+        }
+        dotNetRef?.Dispose();
+    }
+}

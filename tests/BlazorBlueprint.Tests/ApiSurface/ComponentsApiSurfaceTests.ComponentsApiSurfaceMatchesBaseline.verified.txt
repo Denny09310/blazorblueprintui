@@ -202,6 +202,7 @@
 
 ### BbAttachmentTrigger (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - AsChild : AttachmentTriggerElement
   - Class : String
   - Href : String
@@ -274,6 +275,23 @@
   - OnDataPointClick : EventCallback<ChartClickEventArgs>
   - Title : String
   - Width : String
+
+### BbBarcode (BlazorBlueprint.Components)
+  - AddChecksum : Boolean
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
+  - Background : String
+  - Class : String
+  - Foreground : String
+  - Height : String
+  - Label : String
+  - ModuleWidth : String
+  - OnEncoded : EventCallback<BarcodeSymbol>
+  - QuietZone : Int32?
+  - ShowChecksum : Boolean
+  - ShowValue : Boolean
+  - Type : BarcodeType
+  - Value : String
 
 ### BbBottomNav (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -608,6 +626,7 @@
 
 ### BbCheckboxGroup`1 (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - ChildContent : RenderFragment
   - Class : String
   - Disabled : Boolean
@@ -709,6 +728,7 @@
   - ActiveClass : String
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaDescribedBy : String
+  - AriaLabel : String
   - ChildContent : RenderFragment
   - Class : String
   - Disabled : Boolean
@@ -1373,6 +1393,7 @@
 
 ### BbDatePicker (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - Class : String
   - DateFormat : String
   - DayClassFunc : Func<DateTime, String>
@@ -1382,6 +1403,7 @@
   - Editable : Boolean
   - FirstDayOfWeek : DayOfWeek?
   - InputFormats : String[]
+  - IsInvalid : Boolean
   - MaxDate : DateTime?
   - MinDate : DateTime?
   - Placeholder : String
@@ -1393,6 +1415,7 @@
 
 ### BbDatePickerInput (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - Class : String
   - Disabled : Boolean
   - IsInvalid : Boolean
@@ -1404,6 +1427,7 @@
 
 ### BbDateRangePicker (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - AutoApply : Boolean
   - Class : String
   - CustomDayNames : String[]
@@ -1428,6 +1452,7 @@
 
 ### BbDateTimePicker (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - Class : String
   - DateTimeFormat : String
   - DayClassFunc : Func<DateTime, String>
@@ -1855,6 +1880,7 @@
   - Accept : String
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AllowPaste : Boolean
+  - AriaLabel : String
   - AutoUpload : Boolean
   - Class : String
   - Disabled : Boolean
@@ -1966,6 +1992,7 @@
   - ShowSelectAll : Boolean
   - Values : IReadOnlyCollection<TValue>
   - ValuesChanged : EventCallback<IReadOnlyCollection<TValue>>
+  - ValuesExpression : Expression<Func<IReadOnlyCollection<TValue>>>
 
 ### BbFormFieldCombobox`1 (BlazorBlueprint.Components)
   - ActiveClass : String
@@ -2090,6 +2117,7 @@
   - ShowTwoMonths : Boolean
   - Value : DateRange
   - ValueChanged : EventCallback<DateRange>
+  - ValueExpression : Expression<Func<DateRange>>
 
 ### BbFormFieldDateTimePicker (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -2125,6 +2153,7 @@
   - ErrorText : String
   - Files : IReadOnlyList<FileUploadItem>
   - FilesChanged : EventCallback<IReadOnlyList<FileUploadItem>>
+  - FilesExpression : Expression<Func<IReadOnlyList<FileUploadItem>>>
   - HelperText : String
   - InputClass : String
   - Label : String
@@ -2208,6 +2237,7 @@
   - ValueExpression : Expression<Func<String>>
 
 ### BbFormFieldMultiSelect`1 (BlazorBlueprint.Components)
+  - ActiveClass : String
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaLabel : String
   - AutoClose : Boolean
@@ -2230,6 +2260,7 @@
   - Orientation : FieldOrientation
   - Placeholder : String
   - PopoverWidth : String
+  - Required : Boolean
   - SearchPlaceholder : String
   - SearchQueryChanged : EventCallback<String>
   - SelectAllLabel : String
@@ -2538,6 +2569,75 @@
   - Title : String
   - Width : String
 
+### BbGanttColumn`1 (BlazorBlueprint.Components)
+  - Align : GanttColumnAlign
+  - ChildContent : RenderFragment<GanttRow<TItem>>
+  - Comparer : IComparer<Object>
+  - Format : String
+  - IsTree : Boolean
+  - Key : String
+  - Sortable : Boolean
+  - Title : String
+  - Value : Func<TItem, Object>
+  - Width : Int32
+  - Parent : BbGantt<TItem> [CascadingParameter]
+
+### BbGantt`1 (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AllowDrag : Boolean
+  - AllowLinking : Boolean
+  - AllowProgressDrag : Boolean
+  - AllowResize : Boolean
+  - AllowRowDrag : Boolean
+  - AriaLabel : String
+  - BarColorSelector : Func<TItem, String>
+  - BarTemplate : RenderFragment<GanttRow<TItem>>
+  - Class : String
+  - CollapsedIds : HashSet<String>
+  - CollapsedIdsChanged : EventCallback<HashSet<String>>
+  - Columns : RenderFragment
+  - Data : IEnumerable<TItem>
+  - DefaultExpandAll : Boolean
+  - Dependencies : IEnumerable<GanttDependency>
+  - EmptyMessage : String
+  - EndSelector : Func<TItem, DateTimeOffset> [EditorRequired]
+  - HeaderRowHeight : Int32
+  - Height : String
+  - IdSelector : Func<TItem, String> [EditorRequired]
+  - Loading : Boolean
+  - MinColumnWidth : Int32
+  - NonWorkingDays : IReadOnlyCollection<DayOfWeek>
+  - OnBuilt : EventCallback<GanttChart<TItem>>
+  - OnDependencyClick : EventCallback<GanttDependency>
+  - OnDependencyCreate : EventCallback<GanttDependencyContext<TItem>>
+  - OnTaskChange : EventCallback<GanttChangeContext<TItem>>
+  - OnTaskClick : EventCallback<TItem>
+  - OnTaskMove : EventCallback<GanttMoveContext<TItem>>
+  - ParentIdSelector : Func<TItem, String>
+  - ProgressSelector : Func<TItem, Double>
+  - RangeEnd : DateTimeOffset?
+  - RangeSnap : GanttRangeSnap
+  - RangeStart : DateTimeOffset?
+  - Resizable : Boolean
+  - RollUpSummaries : Boolean
+  - RowHeight : Int32
+  - ScrollToToday : Boolean
+  - ShowDependencies : Boolean
+  - ShowLegend : Boolean
+  - ShowNonWorkingDays : Boolean
+  - ShowTaskLabels : Boolean
+  - ShowToday : Boolean
+  - ShowToolbar : Boolean
+  - ShowTooltip : Boolean
+  - ShowZoomControls : Boolean
+  - SlotWidth : Int32?
+  - SnapToSlot : Boolean
+  - StartSelector : Func<TItem, DateTimeOffset> [EditorRequired]
+  - TextSelector : Func<TItem, String> [EditorRequired]
+  - TooltipTemplate : RenderFragment<GanttRow<TItem>>
+  - Zoom : GanttZoom
+  - ZoomChanged : EventCallback<GanttZoom>
+
 ### BbGauge (BlazorBlueprint.Components)
   - AxisLineWidth : Int32
   - ChildContent : RenderFragment
@@ -2787,6 +2887,7 @@
 
 ### BbInputOTP (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - Class : String
   - Disabled : Boolean
   - GroupSize : Int32
@@ -2917,6 +3018,56 @@
   - Target : String
   - Underline : LinkUnderline
   - Variant : LinkVariant
+
+### BbListBox`1 (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
+  - Class : String
+  - Disabled : Boolean
+  - EmptyMessage : String
+  - Height : String
+  - ItemTemplate : RenderFragment<SelectOption<TValue>>
+  - Label : String
+  - OptionDisabled : Func<SelectOption<TValue>, Boolean>
+  - Options : IEnumerable<SelectOption<TValue>>
+  - SearchPlaceholder : String
+  - SearchText : String
+  - SearchTextChanged : EventCallback<String>
+  - SelectAllLabel : String
+  - SelectionMode : ListBoxSelectionMode
+  - ShowSearch : Boolean
+  - ShowSelectAll : Boolean
+  - Value : TValue
+  - ValueChanged : EventCallback<TValue>
+  - ValueExpression : Expression<Func<TValue>>
+  - Values : IEnumerable<TValue>
+  - ValuesChanged : EventCallback<IEnumerable<TValue>>
+  - ValuesExpression : Expression<Func<IEnumerable<TValue>>>
+  - CascadedEditContext : EditContext [CascadingParameter]
+
+### BbMap (BlazorBlueprint.Components)
+  - BorderColor : String
+  - ChildContent : RenderFragment
+  - Color : String
+  - CountryKey : String
+  - DataKey : String
+  - Name : String
+  - NoDataColor : String
+  - Roam : Boolean
+  - ShowLabel : Boolean
+
+### BbMapChart (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - ChildContent : RenderFragment
+  - Class : String
+  - Config : ChartConfig
+  - Data : Object
+  - EnableAnimations : Boolean
+  - Height : String
+  - OnChartClick : EventCallback
+  - OnDataPointClick : EventCallback<ChartClickEventArgs>
+  - Title : String
+  - Width : String
 
 ### BbMarkdownEditor (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -3124,6 +3275,7 @@
   - ActiveClass : String
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaDescribedBy : String
+  - AriaLabel : String
   - AutoClose : Boolean
   - ChildContent : RenderFragment
   - Class : String
@@ -3140,6 +3292,7 @@
   - Options : IEnumerable<SelectOption<TValue>>
   - Placeholder : String
   - PopoverWidth : String
+  - Required : Boolean
   - SearchPlaceholder : String
   - SearchQueryChanged : EventCallback<String>
   - SelectAllLabel : String
@@ -3152,6 +3305,7 @@
 
 ### BbNativeSelect`1 (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - ChildContent : RenderFragment
   - Class : String
   - Disabled : Boolean
@@ -3356,6 +3510,28 @@
   - Text : String
   - Context : PaginationContext [CascadingParameter]
 
+### BbPickList`1 (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - Class : String
+  - Disabled : Boolean
+  - Height : String
+  - ItemTemplate : RenderFragment<SelectOption<TValue>>
+  - OnMove : EventCallback<PickListMoveEventArgs<TValue>>
+  - OptionDisabled : Func<SelectOption<TValue>, Boolean>
+  - Options : IEnumerable<SelectOption<TValue>>
+  - Orientation : PickListOrientation
+  - ShowMoveAll : Boolean
+  - ShowSearch : Boolean
+  - ShowSelectAll : Boolean
+  - SourceEmptyMessage : String
+  - SourceLabel : String
+  - TargetEmptyMessage : String
+  - TargetLabel : String
+  - Values : IEnumerable<TValue>
+  - ValuesChanged : EventCallback<IEnumerable<TValue>>
+  - ValuesExpression : Expression<Func<IEnumerable<TValue>>>
+  - CascadedEditContext : EditContext [CascadingParameter]
+
 ### BbPie (BlazorBlueprint.Components)
   - ActiveIndex : Int32?
   - ChildContent : RenderFragment
@@ -3385,6 +3561,53 @@
   - OnDataPointClick : EventCallback<ChartClickEventArgs>
   - Title : String
   - Width : String
+
+### BbPivotDataGrid`1 (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AlternatingRows : Boolean
+  - AriaLabel : String
+  - BlankLabel : String
+  - Class : String
+  - Columns : RenderFragment
+  - CornerTemplate : RenderFragment
+  - Data : IEnumerable<TItem>
+  - EmptyMessage : String
+  - GridLines : PivotGridLines
+  - HeaderTemplate : RenderFragment<PivotHeaderContext>
+  - Height : String
+  - Loading : Boolean
+  - OnBuilt : EventCallback<PivotTable<TItem>>
+  - OnCellClick : EventCallback<PivotCellContext<TItem>>
+  - PageSize : Int32?
+  - PagerPosition : PivotPagerPosition
+  - Rows : RenderFragment
+  - ShowFieldPicker : Boolean
+  - TotalLabel : String
+  - Totals : PivotTotals
+  - Values : RenderFragment
+
+### BbPivotField`1 (BlazorBlueprint.Components)
+  - Comparer : IComparer<Object>
+  - Descending : Boolean
+  - Key : String
+  - Label : Func<Object, String>
+  - Title : String [EditorRequired]
+  - Value : Func<TItem, Object> [EditorRequired]
+  - Visible : Boolean
+  - Axis : PivotAxis [CascadingParameter]
+  - Parent : BbPivotDataGrid<TItem> [CascadingParameter]
+
+### BbPivotValue`1 (BlazorBlueprint.Components)
+  - Aggregate : Func<IEnumerable<TItem>, Object>
+  - Format : String
+  - Function : AggregateFunction
+  - HeaderTemplate : RenderFragment<BbPivotValue<TItem>>
+  - Key : String
+  - Template : RenderFragment<PivotCellContext<TItem>>
+  - Title : String [EditorRequired]
+  - Value : Func<TItem, Object>
+  - Visible : Boolean
+  - Parent : BbPivotDataGrid<TItem> [CascadingParameter]
 
 ### BbPopover (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -3431,6 +3654,25 @@
   - Max : Double
   - ShowLabel : Boolean
   - Value : Double
+
+### BbQrCode (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
+  - Background : String
+  - Class : String
+  - ErrorCorrection : QrErrorCorrection
+  - Foreground : String
+  - Image : String
+  - ImageBackground : String
+  - ImageSize : Double
+  - Label : String
+  - MinVersion : Int32
+  - ModuleShape : QrCodeModuleShape
+  - OnEncoded : EventCallback<QrMatrix>
+  - QuietZone : Int32
+  - ShowValue : Boolean
+  - Size : String
+  - Value : String
 
 ### BbQuantityStepper (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -3828,6 +4070,7 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - Class : String
   - Description : String
+  - HeadingLevel : Int32
   - Separator : Boolean
   - Title : String
 
@@ -3868,6 +4111,7 @@
   - ChildContent : RenderFragment
   - Class : String
   - Context : SelectContext<TValue> [CascadingParameter]
+  - ParentSelect : BbSelect<TValue> [CascadingParameter]
 
 ### BbSelectValue (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -3877,6 +4121,7 @@
 
 ### BbSelect`1 (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - ChildContent : RenderFragment
   - Class : String
   - Disabled : Boolean
@@ -4163,6 +4408,21 @@
   - OnClick : EventCallback<MouseEventArgs>
   - Context : SidebarContext [CascadingParameter]
 
+### BbSignature (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AllowTyped : Boolean
+  - Class : String
+  - Disabled : Boolean
+  - Height : String
+  - Label : String
+  - MaxWidth : Double
+  - MinWidth : Double
+  - ShowUndo : Boolean
+  - StrokeColor : String
+  - TypedFontFamily : String
+  - Value : SignatureValue
+  - ValueChanged : EventCallback<SignatureValue>
+
 ### BbSkeleton (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - Class : String
@@ -4306,9 +4566,18 @@
   - Value : String [EditorRequired]
 
 ### BbTabsList (BlazorBlueprint.Components)
+  - AddLabel : String
+  - Addable : Boolean
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - Class : String
+  - Closable : Boolean
+  - OnAdd : EventCallback
+  - OnClose : EventCallback<String>
+  - OnMove : EventCallback<TabMoveContext>
+  - OnRename : EventCallback<TabRenameContext>
+  - Renamable : Boolean
+  - Reorderable : Boolean
   - Responsive : Boolean
   - SelectClass : String
   - Context : TabsContext [CascadingParameter]
@@ -4317,8 +4586,11 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - Class : String
+  - Closable : Boolean?
   - Disabled : Boolean
   - Label : String
+  - Renamable : Boolean?
+  - Reorderable : Boolean?
   - Value : String [EditorRequired]
   - ComponentsList : BbTabsList [CascadingParameter]
 
@@ -4408,6 +4680,7 @@
 
 ### BbTimePicker (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AriaLabel : String
   - Class : String
   - Disabled : Boolean
   - Format : TimeFormat
@@ -5182,6 +5455,22 @@
   - Ascending = 1
   - None = 2
 
+### GanttChangeKind (BlazorBlueprint.Components)
+  - Move = 0
+  - ResizeStart = 1
+  - ResizeEnd = 2
+  - Progress = 3
+
+### GanttColumnAlign (BlazorBlueprint.Components)
+  - Start = 0
+  - Center = 1
+  - End = 2
+
+### GanttDropPosition (BlazorBlueprint.Components)
+  - Before = 0
+  - After = 1
+  - Inside = 2
+
 ### GradientDirection (BlazorBlueprint.Components)
   - Vertical = 0
   - Horizontal = 1
@@ -5290,6 +5579,10 @@
   - Muted = 2
   - Destructive = 3
 
+### ListBoxSelectionMode (BlazorBlueprint.Components)
+  - Single = 0
+  - Multiple = 1
+
 ### MarkerElement (BlazorBlueprint.Components)
   - Div = 0
   - Anchor = 1
@@ -5349,6 +5642,25 @@
   - Default = 0
   - Icon = 1
 
+### PickListOrientation (BlazorBlueprint.Components)
+  - Horizontal = 0
+  - Vertical = 1
+
+### PivotAxis (BlazorBlueprint.Components)
+  - Row = 0
+  - Column = 1
+
+### PivotGridLines (BlazorBlueprint.Components)
+  - Both = 0
+  - Horizontal = 1
+  - Vertical = 2
+  - None = 3
+
+### PivotPagerPosition (BlazorBlueprint.Components)
+  - Bottom = 0
+  - Top = 1
+  - Both = 2
+
 ### PrimaryColor (BlazorBlueprint.Components)
   - Default = 0
   - Blue = 1
@@ -5368,6 +5680,11 @@
   - Indigo = 15
   - Fuchsia = 16
   - Pink = 17
+
+### QrCodeModuleShape (BlazorBlueprint.Components)
+  - Square = 0
+  - Rounded = 1
+  - Dot = 2
 
 ### RadarShape (BlazorBlueprint.Components)
   - Polygon = 0
@@ -5490,6 +5807,11 @@
   - Sidebar = 0
   - Floating = 1
   - Inset = 2
+
+### SignatureKind (BlazorBlueprint.Components)
+  - None = 0
+  - Drawn = 1
+  - Typed = 2
 
 ### SkeletonShape (BlazorBlueprint.Components)
   - Rectangular = 0

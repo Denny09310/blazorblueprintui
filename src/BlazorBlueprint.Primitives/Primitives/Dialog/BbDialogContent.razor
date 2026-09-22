@@ -312,7 +312,7 @@ else if (Context.IsOpen)
             await OnEscapeKeyDown.InvokeAsync(new KeyboardEventArgs { Key = "Escape" });
         }
 
-        if (CloseOnEscape)
+        if (CloseOnEscape && Context.AllowDismiss)
         {
             await CloseNativeDialogAsync();
             Context.Close();
@@ -340,7 +340,7 @@ else if (Context.IsOpen)
     {
         if (_disposed) { return; }
 
-        if (CloseOnOverlayClick)
+        if (CloseOnOverlayClick && Context.AllowDismiss)
         {
             await CloseNativeDialogAsync();
             Context.Close();
@@ -380,7 +380,7 @@ else if (Context.IsOpen)
         }
 
         // Close dialog if configured
-        if (CloseOnEscape)
+        if (CloseOnEscape && Context.AllowDismiss)
         {
             Context.Close();
         }

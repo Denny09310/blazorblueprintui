@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Primitives.Dialog
 @using BlazorBlueprint.Primitives.Utilities
+@inject IServiceProvider Services
 
 @* Dialog trigger button - opens the dialog when clicked *@
 @if (AsChild)
@@ -59,10 +60,16 @@ else
     [Parameter]
     public bool CustomClickHandling { get; set; } = false;
 
+    private static readonly AsChildTriggerDescription Diagnostic = new("BbDialogTrigger (or BbAlertDialogTrigger, which is built on it)", "open this dialog", "<button>");
+
+    // The context the last render cascaded, kept so the first after-render can ask whether
+    // anything read it.
+    private TriggerContext? lastTriggerContext;
+
     /// <summary>
     /// Context passed to child components when AsChild is true.
     /// </summary>
-    private TriggerContext TriggerContext => new()
+    private TriggerContext TriggerContext => lastTriggerContext = new()
     {
         TriggerId = Context.TriggerId,
         IsOpen = Context.IsOpen,
@@ -100,6 +107,14 @@ else
             throw new InvalidOperationException(
                 "DialogTrigger must be used within a Dialog component. " +
                 "Ensure DialogTrigger is a child of a Dialog component.");
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            AsChildDiagnostics.WarnIfUnconsumed<BbDialogTrigger>(Services, Diagnostic, AsChild, lastTriggerContext, AdditionalAttributes);
         }
     }
 }

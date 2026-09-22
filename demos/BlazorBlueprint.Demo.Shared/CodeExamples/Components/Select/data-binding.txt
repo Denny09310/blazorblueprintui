@@ -3,7 +3,7 @@ private static readonly string[] Fruits = ["Apple", "Banana", "Blueberry", "Grap
 private readonly SelectOption<string>[] fruitOptions =
     Fruits.Select(SelectOption.FromValue).ToArray();
 
-<BbSelect TValue="string"
+<BbSelect AriaLabel="Choose an option" TValue="string"
         @bind-Value="selectedFruit"
         Options="@fruitOptions"
         Placeholder="Select a fruit"

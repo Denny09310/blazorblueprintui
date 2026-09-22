@@ -51,7 +51,7 @@
             </p>
         </div>
         <div class="max-w-md">
-            <BbFormFieldMultiSelect TValue="string"
+            <BbFormFieldMultiSelect Required="true" AriaLabel="Programming languages" TValue="string"
                                   Options="_languages"
                                   @bind-Values="_selectedLanguages"
                                   Label="Programming languages"
@@ -356,6 +356,8 @@
         </div>
         <div class="space-y-4">
             <ApiReference ComponentName="FormFieldMultiSelect&lt;TValue&gt;">
+        <ApiParameter Name="ActiveClass" Type="string?">CSS classes for the active option; forwarded to the inner MultiSelect.</ApiParameter>
+        <ApiParameter Name="Required" Type="bool" Default="false">Announces a required selection. Enforce nonempty selection with model validation.</ApiParameter>
                 <ApiParameter Name="Label" Type="string?" Default="null">
                     The label text displayed above the multi-select.
                 </ApiParameter>

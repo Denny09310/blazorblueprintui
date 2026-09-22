@@ -9,6 +9,9 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public partial class BbFormFieldDateRangePicker : FormFieldBase
 {
+    /// <summary>Identifies the bound field for EditForm validation.</summary>
+    [Parameter] public Expression<Func<DateRange?>>? ValueExpression { get; set; }
+
     /// <summary>
     /// Gets or sets the selected date range.
     /// </summary>
@@ -116,11 +119,12 @@ public partial class BbFormFieldDateRangePicker : FormFieldBase
     public string? InputClass { get; set; }
 
     /// <inheritdoc />
-    protected override LambdaExpression? GetFieldExpression() => null;
+    protected override LambdaExpression? GetFieldExpression() => ValueExpression;
 
     private async Task HandleValueChanged(DateRange? value)
     {
         Value = value;
         await ValueChanged.InvokeAsync(value);
+        NotifyFieldChanged();
     }
 }

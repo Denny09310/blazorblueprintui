@@ -28,6 +28,7 @@
                 <BlazorBlueprint.Primitives.Sortable.BbSortable TItem="string"
                                                                  Items="@_basicItems"
                                                                  AriaLabel="Sortable task list"
+                                                                 KeyboardAnnouncements="keyboardAnnouncements"
                                                                  OnUpdate="@((args) => MoveWithin(_basicItems, args))"
                                                                  class="space-y-2">
                     <ItemTemplate Context="item">
@@ -138,7 +139,7 @@
                 </AccessibilityItem>
             </AriaAttributes>
             <KeyboardNavigation>
-                <KeyboardShortcutItem Description="Drag and drop is pointer-only. Provide alternative move actions (e.g., move-up / move-down buttons) for full keyboard accessibility.">
+                <KeyboardShortcutItem Description="Space or Enter picks up and drops an item; arrow keys move it; Escape cancels. Ctrl+Left/Right transfers between connected lists.">
                     <BbKbd>Mouse / Touch</BbKbd>
                 </KeyboardShortcutItem>
             </KeyboardNavigation>
@@ -153,6 +154,7 @@
             </div>
 
             <ApiReference ComponentName="Sortable&lt;TItem&gt;">
+                <ApiParameter Name="KeyboardAnnouncements" Type="IReadOnlyDictionary&lt;string, string&gt;?" Default="null">Override Cancelled, Unchanged, MoveFailed, Transferred, TransferRejected, TransferFailed, PickedUp, Disabled and Position messages. Use {0} and {1} for position/count in PickedUp and Position. Missing keys use English defaults.</ApiParameter>
                 <ApiParameter Name="ItemTemplate" Type="RenderFragment&lt;TItem&gt;?">
                     Render fragment used to display each item. The <code>context</code> variable
                     provides the data item.
@@ -206,6 +208,12 @@
 </div>
 
 @code {
+    private static readonly IReadOnlyDictionary<string, string> keyboardAnnouncements = new Dictionary<string, string>
+    {
+        ["Cancelled"] = "Task move cancelled.",
+        ["PickedUp"] = "Picked up task {0} of {1}."
+    };
+
     // ── Shared helper ────────────────────────────────────────────────────────
 
     private static void MoveWithin<T>(List<T> list, (int OldIndex, int NewIndex) args)

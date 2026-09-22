@@ -33,7 +33,7 @@ public partial class BbMessage : ComponentBase
 
     private string CssClass => ClassNames.cn(
         "bb:group/message bb:relative bb:flex bb:w-full bb:min-w-0 bb:gap-2 bb:text-sm bb:data-[align=end]:flex-row-reverse",
-        Align == MessageAlign.End ? "bb:justify-end" : "bb:justify-start",
+        "bb:justify-start",
         Class
     );
 }

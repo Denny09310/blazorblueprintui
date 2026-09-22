@@ -49,6 +49,10 @@ namespace BlazorBlueprint.Components;
 /// </example>
 public partial class BbCombobox<TValue> : ComponentBase
 {
+    /// <summary>The accessible name of the control.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+
+
     [Inject] private IBbLocalizer Localizer { get; set; } = default!;
 
     private FieldIdentifier _fieldIdentifier;

@@ -60,12 +60,21 @@
         if (IsControlled)
         {
             await OpenChanged.InvokeAsync(open);
+            return;
         }
-        else
+
+        // Left to itself the drawer used to keep the state and say nothing, so a page listening to
+        // OpenChanged without binding Open never heard it open or close. Dialog and Sheet report in
+        // both modes; so does this now. Only a real change is reported: the drawer's own state is
+        // always current, so comparing against it cannot go stale the way a controlled value can.
+        if (_internalOpen == open)
         {
-            _internalOpen = open;
-            StateHasChanged();
+            return;
         }
+
+        _internalOpen = open;
+        StateHasChanged();
+        await OpenChanged.InvokeAsync(open);
     }
 
     protected override void OnInitialized()

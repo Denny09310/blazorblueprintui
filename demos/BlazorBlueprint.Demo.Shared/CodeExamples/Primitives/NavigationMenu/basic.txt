@@ -11,11 +11,11 @@
                 class="absolute left-0 top-full mt-1.5 z-50 w-[400px] rounded-md border bg-popover p-4 text-popover-foreground shadow-lg">
                 <div class="grid gap-3">
                     <div class="space-y-1">
-                        <h3 class="text-sm font-medium leading-none">Introduction</h3>
+                        <BlazorBlueprint.Primitives.NavigationMenu.BbNavigationMenuLink Href="/primitives" class="text-sm font-medium leading-none">Introduction</BlazorBlueprint.Primitives.NavigationMenu.BbNavigationMenuLink>
                         <p class="text-sm text-muted-foreground">Learn the basics.</p>
                     </div>
                     <div class="space-y-1">
-                        <h3 class="text-sm font-medium leading-none">Installation</h3>
+                        <BlazorBlueprint.Primitives.NavigationMenu.BbNavigationMenuLink Href="/getting-started" class="text-sm font-medium leading-none">Installation</BlazorBlueprint.Primitives.NavigationMenu.BbNavigationMenuLink>
                         <p class="text-sm text-muted-foreground">How to install and configure.</p>
                     </div>
                 </div>

@@ -1,4 +1,4 @@
-<BbMultiSelect TValue="string"
+<BbMultiSelect Required="true" AriaLabel="Choose options" TValue="string"
              Options="languages"
              @bind-Values="selectedLanguages"
              Placeholder="Select languages..."

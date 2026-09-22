@@ -21,7 +21,7 @@
                 Click the button to open the calendar popover and select a date.
             </p>
         </div>
-        <BbDatePicker @bind-Value="_basicDate" />
+        <BbDatePicker AriaLabel="Choose a date" @bind-Value="_basicDate" />
         <p class="text-sm text-muted-foreground">
             Selected: @(_basicDate?.ToString("MMMM d, yyyy") ?? "None")
         </p>
@@ -202,6 +202,12 @@
         <CodeBlock Source="Components/DatePicker/manual-entry.txt" />
     </div>
 
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Manual validation state</h2>
+        <BbDatePicker Editable IsInvalid="true" AriaLabel="Date needing correction" Placeholder="Enter a valid date" />
+        <CodeBlock Source="Components/DatePicker/invalid.txt" />
+    </section>
+
     <!-- Form Validation with EditForm -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -285,6 +291,7 @@
 
         <div class="space-y-4">
             <ApiReference ComponentName="DatePicker">
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">Accessible name forwarded to the interactive control or group.</ApiParameter>
                 <ApiParameter Name="Value" Type="DateTime?">
                     The selected date. Use @@bind-Value for two-way binding.
                 </ApiParameter>
@@ -309,6 +316,7 @@
                 <ApiParameter Name="DayClassFunc" Type="Func&lt;DateTime, string?&gt;?" Default="null">
                     Function returning additional CSS classes for a specific calendar day button.
                 </ApiParameter>
+                <ApiParameter Name="IsInvalid" Type="bool" Default="false">Marks the editable input invalid. EditForm validation and the form wrapper can also supply this state.</ApiParameter>
                 <ApiParameter Name="Editable" Type="bool" Default="false">
                     Renders the trigger as a text input so the date can be typed directly, with a calendar toggle alongside. Typed text is parsed on blur or Enter; invalid or out-of-range text reverts to the current value.
                 </ApiParameter>

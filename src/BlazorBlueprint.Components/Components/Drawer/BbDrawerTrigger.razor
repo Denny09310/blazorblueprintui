@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Primitives.Utilities
+@inject IServiceProvider Services
 
 @*
     Drawer trigger - opens the drawer when activated.
@@ -39,7 +40,10 @@ else
     /// </summary>
     /// <remarks>
     /// Use this whenever the child is already a control. Leaving it false around a control nests
-    /// a button inside a button, which no browser renders reliably.
+    /// a button inside a button, which no browser renders reliably. The child has to read the
+    /// context, though: text, an icon or a plain <c>button</c> cannot, and then nothing can
+    /// open the drawer and <c>Class</c> goes nowhere. The Development environment logs a warning
+    /// when that happens.
     /// </remarks>
     [Parameter]
     public bool AsChild { get; set; }
@@ -60,7 +64,13 @@ else
 
     private ElementReference triggerElement;
 
-    private TriggerContext TriggerContext => new()
+    private static readonly AsChildTriggerDescription Diagnostic = new("BbDrawerTrigger", "open this drawer", "<button>");
+
+    // The context the last render cascaded, kept so the first after-render can ask whether
+    // anything read it.
+    private TriggerContext? lastTriggerContext;
+
+    private TriggerContext TriggerContext => lastTriggerContext = new()
     {
         IsOpen = Context?.IsOpen ?? false,
         Toggle = () => _ = HandleClick(),
@@ -77,4 +87,19 @@ else
             await Context.SetOpen(true);
         }
     }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            AsChildDiagnostics.WarnIfUnconsumed<BbDrawerTrigger>(Services, Diagnostic, AsChild, lastTriggerContext, PageAttributes());
+        }
+    }
+
+    // What the page set that AsChild mode has no element for: the extra attributes, and Class,
+    // which is a parameter here rather than one of them.
+    private IReadOnlyDictionary<string, object>? PageAttributes() =>
+        string.IsNullOrEmpty(Class)
+            ? AdditionalAttributes
+            : new Dictionary<string, object>(AdditionalAttributes ?? new Dictionary<string, object>()) { ["class"] = Class };
 }

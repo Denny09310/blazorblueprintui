@@ -1,0 +1,5 @@
+@* A disabled option cannot be picked, and "move all" leaves it alone. *@
+<BbPickList TValue="string"
+            Options="@options"
+            OptionDisabled="@(o => o.Value == "id")"
+            @bind-Values="picked" />

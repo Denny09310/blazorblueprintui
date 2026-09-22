@@ -12,12 +12,14 @@ async function load(path) {
   return import(urlFor(source));
 }
 const slider = await load('src/BlazorBlueprint.Primitives/wwwroot/js/primitives/slider.js');
+const swipe = await load('src/BlazorBlueprint.Primitives/wwwroot/js/primitives/swipe-area.js');
+const keyboard = await load('src/BlazorBlueprint.Primitives/wwwroot/js/primitives/keyboard-nav.js');
 const range = await load('src/BlazorBlueprint.Components/wwwroot/js/range-slider.js');
 const color = await load('src/BlazorBlueprint.Components/wwwroot/js/color-picker.js');
 
 async function microtasks() { for (let i = 0; i < 15; i++) await Promise.resolve(); }
 function clock(t) {
-  const saved = Object.fromEntries(['performance', 'setTimeout', 'clearTimeout', 'requestAnimationFrame', 'document']
+  const saved = Object.fromEntries(['performance', 'setTimeout', 'clearTimeout', 'requestAnimationFrame', 'document', 'getComputedStyle']
     .map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   let now = 0;
   let nextId = 0;
@@ -27,6 +29,7 @@ function clock(t) {
   globalThis.clearTimeout = id => timers.delete(id);
   globalThis.requestAnimationFrame = fn => setTimeout(fn, 16);
   globalThis.document = { body: { style: {} } };
+  globalThis.getComputedStyle = () => ({ direction: 'ltr' });
   t.after(() => {
     for (const [key, descriptor] of Object.entries(saved)) {
       if (descriptor) Object.defineProperty(globalThis, key, descriptor);
@@ -137,6 +140,90 @@ test('disposal cancels scheduled callbacks and resolves flush waiters', async t 
   await time.advance(100);
   await queue.flush();
   assert.deepEqual(calls, [1]);
+});
+
+test('cancellation discards unsent work and permits a fresh gesture after an in-flight acknowledgement', async t => {
+  const time = clock(t);
+  const calls = [];
+  let acknowledge;
+  const queue = createDragUpdates(value => {
+    calls.push(value);
+    if (calls.length === 1) return new Promise(resolve => { acknowledge = resolve; });
+  });
+  queue.push([0]);
+  queue.cancel(); // Cancel before even the first send microtask runs.
+  await microtasks();
+  assert.deepEqual(calls, []);
+  queue.begin();
+  queue.push([1]);
+  await microtasks();
+  queue.push([2]);
+  queue.cancel();
+  acknowledge();
+  await time.advance(100);
+  assert.deepEqual(calls, [1]);
+  queue.begin();
+  queue.push([2]);
+  await queue.flush();
+  assert.deepEqual(calls, [1, 2]);
+  queue.dispose();
+});
+
+test('swipe Cancel drops queued movement without reporting completion or cancellation', async t => {
+  const time = clock(t);
+  const area = element({ 'data-report-move': 'true' });
+  const calls = [];
+  let acknowledge;
+  swipe.initialize(area, { invokeMethodAsync: (...args) => {
+    calls.push(args);
+    if (calls.length === 1) return new Promise(resolve => { acknowledge = resolve; });
+    return Promise.resolve();
+  } }, 'cancel-swipe');
+  area.fire('pointerdown', { isPrimary: true, clientX: 0, clientY: 0, timeStamp: 0 });
+  area.fire('pointermove', { clientX: 20, clientY: 0, timeStamp: 20 });
+  await microtasks();
+  area.fire('pointermove', { clientX: 40, clientY: 0, timeStamp: 40 });
+  swipe.cancel('cancel-swipe');
+  acknowledge();
+  await time.advance(100);
+  area.fire('pointerup', { clientX: 100, clientY: 0, timeStamp: 140 });
+  await microtasks();
+  assert.deepEqual(calls, [['JsSwipeMove', 20, 0]]);
+  swipe.dispose('cancel-swipe');
+  assert.equal(area.listeners.size, 0);
+});
+
+test('ListBox cancels only the current navigation key and respects disabled and multiple selection', () => {
+  const list = element();
+  const cleanup = keyboard.setupListBox(list);
+  const prevented = [];
+  const press = (key, modifiers = {}) => list.fire('keydown', {
+    key, ...modifiers, preventDefault: () => prevented.push(key)
+  });
+  press('ArrowDown');
+  press('Tab');
+  press('a', { ctrlKey: true });
+  list.attrs.set('aria-multiselectable', 'true');
+  press('a', { metaKey: true });
+  list.attrs.set('aria-disabled', 'true');
+  press('ArrowUp');
+  assert.deepEqual(prevented, ['ArrowDown', 'a']);
+  cleanup.dispose();
+  assert.equal(list.listeners.size, 0);
+});
+
+test('slider prevents navigation scrolling without swallowing subsequent Tab or typing', t => {
+  clock(t);
+  const track = element();
+  slider.initialize(track, { invokeMethodAsync: () => Promise.resolve() }, 'keyboard-slider');
+  const prevented = [];
+  for (const key of ['ArrowRight', 'Tab', 'Home', 'a']) {
+    track.fire('keydown', { key, preventDefault: () => prevented.push(key) });
+  }
+  track.attrs.set('data-disabled', 'true');
+  track.fire('keydown', { key: 'ArrowLeft', preventDefault: () => prevented.push('disabled') });
+  assert.deepEqual(prevented, ['ArrowRight', 'Home']);
+  slider.dispose('keyboard-slider');
 });
 
 test('step snapping matches .NET midpoint-to-even and clamps negative ranges', () => {

@@ -23,6 +23,10 @@ namespace BlazorBlueprint.Components;
 /// </example>
 public partial class BbDateTimePicker : ComponentBase
 {
+    /// <summary>The accessible name of the control.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+
+
     private bool _isOpen;
     private BbCalendar? _calendar;
     private bool _focusDone;
@@ -121,7 +125,7 @@ public partial class BbDateTimePicker : ComponentBase
     public bool ShowSeconds { get; set; }
 
     /// <summary>
-    /// The minute step interval.
+    /// The minute step interval, from 1 to 59. Other values throw ArgumentOutOfRangeException.
     /// </summary>
     [Parameter]
     public int MinuteStep { get; set; } = 1;
@@ -179,6 +183,10 @@ public partial class BbDateTimePicker : ComponentBase
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
+        if (MinuteStep is < 1 or > 59)
+        {
+            throw new ArgumentOutOfRangeException(nameof(MinuteStep), "MinuteStep must be between 1 and 59.");
+        }
 
         if (Value.HasValue)
         {
@@ -236,6 +244,13 @@ public partial class BbDateTimePicker : ComponentBase
 
     private async Task SetValue(DateTime? value)
     {
+        if (value is { } date && ((MinDate.HasValue && date.Date < MinDate.Value.Date)
+            || (MaxDate.HasValue && date.Date > MaxDate.Value.Date)
+            || DisabledDates?.Invoke(date.Date) == true))
+        {
+            return;
+        }
+
         Value = value;
 
         if (value.HasValue)

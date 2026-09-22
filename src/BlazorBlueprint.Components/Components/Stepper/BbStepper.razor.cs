@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -30,8 +32,71 @@ namespace BlazorBlueprint.Components;
 /// &lt;/BbStepper&gt;
 /// </code>
 /// </example>
-public partial class BbStepper : ComponentBase
+public partial class BbStepper : ComponentBase, IAsyncDisposable
 {
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+    private ElementReference root;
+    private IJSObjectReference? orderModule;
+    private DotNetObjectReference<BbStepper>? selfRef;
+    private bool disposed;
+
+    /// <summary>Synchronizes step indicators with the current child order in the DOM.</summary>
+    [JSInvokable]
+    public Task SynchronizeOrder(string[] ids) => InvokeAsync(() =>
+    {
+        if (disposed)
+        {
+            return;
+        }
+        var owners = stepOwners.Keys.ToDictionary(owner => owner.StepId, StringComparer.Ordinal);
+        if (ids.Length != owners.Count || ids.Distinct(StringComparer.Ordinal).Count() != owners.Count
+            || ids.Any(id => !owners.ContainsKey(id)))
+        {
+            return;
+        }
+        var ordered = ids.Select(id => owners[id]).ToList();
+        if (ordered.Select((owner, index) => stepOwners[owner] == index).All(same => same))
+        {
+            return;
+        }
+        var infos = ordered.Select(owner => steps[stepOwners[owner]]).ToArray();
+        steps.Clear();
+        steps.AddRange(infos);
+        for (var i = 0; i < ordered.Count; i++)
+        {
+            stepOwners[ordered[i]] = i;
+            ordered[i].SetIndex(i);
+        }
+        StateHasChanged();
+    });
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+        try
+        {
+            orderModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/stepper.js");
+            selfRef = DotNetObjectReference.Create(this);
+            await orderModule.InvokeVoidAsync("initialize", root, selfRef);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or InvalidOperationException or TaskCanceledException or ObjectDisposedException) { }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        disposed = true;
+        if (orderModule is not null)
+        {
+            try { await orderModule.InvokeVoidAsync("dispose", root); }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException) { }
+        }
+        selfRef?.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
     // --- Registration (instance-keyed, so a re-render does not duplicate a step) ---
     private readonly List<StepInfo> steps = [];
     private readonly Dictionary<BbStep, int> stepOwners = [];

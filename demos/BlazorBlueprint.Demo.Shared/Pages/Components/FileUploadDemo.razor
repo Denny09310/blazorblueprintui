@@ -19,7 +19,7 @@
                 Drag and drop files or click to browse.
             </p>
         </div>
-        <BbFileUpload @bind-Files="_basicFiles" />
+        <BbFileUpload AriaLabel="Choose files" @bind-Files="_basicFiles" />
         <p class="text-sm text-muted-foreground">
             Files: @(_basicFiles?.Count ?? 0)
         </p>
@@ -243,6 +243,7 @@
 
         <div class="space-y-4">
             <ApiReference ComponentName="FileUpload">
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">Accessible name forwarded to the interactive control or group.</ApiParameter>
                 <ApiParameter Name="Files" Type="IReadOnlyList&lt;FileUploadItem&gt;?">
                     Selected files.
                 </ApiParameter>

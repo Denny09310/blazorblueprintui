@@ -7,6 +7,10 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public partial class BbCheckboxGroup<TValue> : ComponentBase
 {
+    /// <summary>The accessible name of the control.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+
+
     /// <summary>
     /// Gets or sets the currently selected values.
     /// </summary>

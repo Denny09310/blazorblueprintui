@@ -1,7 +1,7 @@
 @namespace BlazorBlueprint.Primitives.NavigationMenu
 @implements IDisposable
 
-<button @ref="buttonRef"
+<button data-nav-trigger @ref="buttonRef"
         type="button"
         aria-haspopup="menu"
         aria-expanded="@(Item?.IsOpen == true ? "true" : "false")"

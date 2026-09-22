@@ -6,11 +6,11 @@
 <CascadingValue Value="this" IsFixed="true">
 <div class="@ContainerClass" @attributes="AdditionalAttributes">
     <BbPopover Open="_isOpen" OpenChanged="HandleOpenChanged" RestoreFocusOnClose="_restoreFocusOnClose">
-        <BbPopoverTrigger AsChild="false" role="combobox"
+        <BbPopoverTrigger AsChild="false" role="combobox" aria-label="@AriaLabel"
                         aria-expanded="@_isOpen.ToString().ToLower()"
                         aria-controls="@($"{Id}-listbox")"
                         aria-haspopup="listbox"
-                        aria-multiselectable="true"
+                        aria-multiselectable="true" aria-required="@(Required ? "true" : null)"
                         aria-describedby="@AriaDescribedBy"
                         disabled="@Disabled"
                         class="@TriggerCssClass">
@@ -23,7 +23,7 @@
                             @GetDisplayText(value)
                             <button type="button"
                                     class="@TagRemoveButtonCssClass"
-                                    aria-label="@($"Remove {GetDisplayText(value)}")"
+                                    aria-label="@Localizer["MultiSelect.Remove", GetDisplayText(value)]"
                                     @onclick="GetRemoveHandler(value)"
                                     @onclick:stopPropagation="true">
                                 <LucideIcon Name="x" Size="12" Class="bb:h-3 bb:w-3" />
@@ -34,7 +34,7 @@
                        to the right group below so it stays visible while the tags clip. *@
                     @if (OverflowCount > 0 && !SingleLine)
                     {
-                        <span class="bb:text-xs bb:text-muted-foreground">+@OverflowCount more</span>
+                        <span class="bb:text-xs bb:text-muted-foreground">@Localizer["MultiSelect.More", OverflowCount]</span>
                     }
                 }
                 else
@@ -45,7 +45,7 @@
             <div class="bb:flex bb:shrink-0 bb:items-center bb:gap-1 bb:ms-2">
                 @if (HasSelectedItems && OverflowCount > 0 && SingleLine)
                 {
-                    <span class="bb:shrink-0 bb:whitespace-nowrap bb:text-xs bb:text-muted-foreground">+@OverflowCount more</span>
+                    <span class="bb:shrink-0 bb:whitespace-nowrap bb:text-xs bb:text-muted-foreground">@Localizer["MultiSelect.More", OverflowCount]</span>
                 }
                 @if (HasSelectedItems)
                 {
@@ -98,7 +98,7 @@
             </div>
 
             @* Items list section *@
-            <div id="@($"{Id}-listbox")" @ref="_listboxScrollRef" role="listbox" aria-multiselectable="true" class="bb:max-h-[300px] bb:overflow-y-auto bb:p-1">
+            <div id="@($"{Id}-listbox")" @ref="_listboxScrollRef" role="listbox" aria-multiselectable="true" aria-required="@(Required ? "true" : null)" class="bb:max-h-[300px] bb:overflow-y-auto bb:p-1">
                 @if (IsCompositionalMode)
                 {
                     @* Compositional mode: Select All + ChildContent *@

@@ -159,7 +159,7 @@ public partial class BbDataGridHierarchyColumn<TData, TProp> : ComponentBase, ID
     public IEnumerable<SelectOption<string>>? FilterOptions { get; set; }
 
     /// <summary>
-    /// Custom cell template. Receives the item as context.
+    /// Custom cell template. Receives DataGridCellContext&lt;TData&gt;; its Item property contains the row.
     /// When set, renders this template instead of the default property value text.
     /// The template is rendered after the expand/collapse chevron and indentation.
     /// </summary>

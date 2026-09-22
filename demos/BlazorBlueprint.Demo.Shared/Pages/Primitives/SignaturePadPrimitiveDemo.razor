@@ -1,0 +1,296 @@
+@page "/primitives/signature-pad"
+@using BlazorBlueprint.Primitives.SignaturePad
+<PageTitle>Signature Pad Primitive - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Signature Pad Primitive</h1>
+            <p class="text-xl text-muted-foreground">
+                Headless, unstyled drawing surface for a handwritten signature. The ink engine runs in
+                the browser, so C# hears one call when a stroke finishes and nothing while one is
+                being drawn.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Usage</h2>
+                <p class="text-muted-foreground">
+                    The pad renders a bare <code class="text-xs bg-muted px-1 py-0.5 rounded">&lt;canvas&gt;</code>.
+                    Give it a size, a border and a colour; the ink uses the element's own CSS
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">color</code> unless you set one.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbSignaturePad @ref="basicPad"
+                                OnChange="@(empty => { basicEmpty = empty; return Task.CompletedTask; })"
+                                class="w-full h-40 rounded-md border border-dashed bg-muted/30 cursor-crosshair text-foreground" />
+                <div class="flex flex-wrap items-center gap-2">
+                    <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline"
+                              Disabled="@basicEmpty" OnClick="@(() => basicPad!.UndoAsync())">
+                        Undo
+                    </BbButton>
+                    <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Ghost"
+                              Disabled="@basicEmpty" OnClick="@(() => basicPad!.ClearAsync())">
+                        Clear
+                    </BbButton>
+                    <span class="text-sm text-muted-foreground">
+                        @(basicEmpty ? "Empty" : "Signed")
+                    </span>
+                </div>
+            </div>
+
+            <CodeBlock Source="Primitives/SignaturePad/basic.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">The Pen</h2>
+                <p class="text-muted-foreground">
+                    The stroke thins as the pen speeds up, which is what makes it read as ink rather
+                    than as a mouse track.
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">VelocityWeight</code> decides how
+                    much the newest speed reading counts: low averages over the stroke for an even
+                    line, high reacts to every flick for a sharper taper.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <div class="flex flex-wrap items-center gap-4 text-sm">
+                    <label class="flex items-center gap-2">
+                        <span class="text-muted-foreground">Max width</span>
+                        <input type="range" min="1" max="8" step="0.5" @bind="penMaxWidth" @bind:event="oninput" />
+                        <span class="font-mono w-8">@penMaxWidth</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <span class="text-muted-foreground">Velocity weight</span>
+                        <input type="range" min="0" max="1" step="0.1" @bind="penVelocityWeight" @bind:event="oninput" />
+                        <span class="font-mono w-8">@penVelocityWeight</span>
+                    </label>
+                </div>
+                <BbSignaturePad @ref="penPad"
+                                MinWidth="0.5"
+                                MaxWidth="@penMaxWidth"
+                                VelocityWeight="@penVelocityWeight"
+                                class="w-full h-40 rounded-md border border-dashed bg-muted/30 cursor-crosshair text-foreground" />
+                <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Ghost" OnClick="@(() => penPad!.ClearAsync())">
+                    Clear
+                </BbButton>
+                <p class="text-xs text-muted-foreground">
+                    A setting applies to strokes drawn after it changes. Clear the pad to see it
+                    across the whole signature.
+                </p>
+            </div>
+
+            <CodeBlock Source="Primitives/SignaturePad/pen.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Getting the Signature Out</h2>
+                <p class="text-muted-foreground">
+                    Three forms. SVG is the one to store: it scales, it stays small, and its ink is
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">currentColor</code>, so it takes
+                    its colour from wherever it is rendered. A PNG cannot defer that decision, so it is
+                    drawn in black unless you say otherwise. All three are streamed rather than returned,
+                    because a detailed signature is larger than a Blazor Server circuit will carry in one
+                    message.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbSignaturePad @ref="exportPad"
+                                OnChange="@(empty => { exportEmpty = empty; return Task.CompletedTask; })"
+                                class="w-full h-40 rounded-md border border-dashed bg-muted/30 cursor-crosshair text-foreground" />
+                <div class="flex flex-wrap gap-2">
+                    <BbButton Size="ButtonSize.Small" Disabled="@exportEmpty" OnClick="InspectAsync">
+                        Inspect the output
+                    </BbButton>
+                    <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Ghost"
+                              Disabled="@exportEmpty" OnClick="@(() => exportPad!.ClearAsync())">
+                        Clear
+                    </BbButton>
+                </div>
+                @if (exportReport is not null)
+                {
+                    <dl class="grid grid-cols-[8rem_1fr] gap-x-4 gap-y-1 text-sm">
+                        @foreach (var (name, detail) in exportReport)
+                        {
+                            <dt class="text-muted-foreground">@name</dt>
+                            <dd class="font-mono truncate">@detail</dd>
+                        }
+                    </dl>
+                }
+            </div>
+
+            <CodeBlock Source="Primitives/SignaturePad/export.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Save and Replay</h2>
+                <p class="text-muted-foreground">
+                    The raw samples are the smallest form and the only one that can be drawn again.
+                    The timings come with them, which is what a later check of how a signature was
+                    written needs.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbSignaturePad @ref="replayPad"
+                                class="w-full h-40 rounded-md border border-dashed bg-muted/30 cursor-crosshair text-foreground" />
+                <div class="flex flex-wrap items-center gap-2">
+                    <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline" OnClick="SaveStrokesAsync">
+                        Save
+                    </BbButton>
+                    <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline"
+                              Disabled="@(savedStrokes is null)" OnClick="@(() => replayPad!.SetStrokesAsync(savedStrokes))">
+                        Replay
+                    </BbButton>
+                    <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Ghost" OnClick="@(() => replayPad!.ClearAsync())">
+                        Clear
+                    </BbButton>
+                    <span class="text-sm text-muted-foreground">
+                        @(savedStrokes is null ? "Nothing saved" : $"{savedStrokes.Count} stroke(s) saved")
+                    </span>
+                </div>
+            </div>
+
+            <CodeBlock Source="Primitives/SignaturePad/replay.txt" />
+        </section>
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                <strong>A drawn signature cannot be given with a keyboard, a switch or a screen reader.</strong>
+                This primitive offers no substitute. Pair it with a typed route, as
+                <a href="/components/signature" class="underline">BbSignature</a> does.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                The canvas carries no role or label of its own. Give it
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">role="img"</code> and an
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-label</code> so it is announced
+                as a region rather than read as an empty canvas.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">touch-action: none</code> is set on the
+                canvas, because a drawing surface has to take the whole touch. The page does not scroll
+                from inside the pad; keep the pad small enough that this is not a trap.
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="None. Provide a typed route for anyone who cannot draw.">
+                <span class="text-muted-foreground">&mdash;</span>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbSignaturePad">
+                <ApiParameter Name="OnChange" Type="EventCallback&lt;bool&gt;">
+                    Invoked after a stroke finishes, and after <code class="text-xs bg-muted px-1 py-0.5 rounded">ClearAsync</code> or <code class="text-xs bg-muted px-1 py-0.5 rounded">UndoAsync</code>. The argument is whether the pad is now empty. Nothing is reported while a stroke is being drawn.
+                </ApiParameter>
+                <ApiParameter Name="StrokeColor" Type="string?">
+                    The ink colour as a CSS colour. When unset, the pad draws in its own computed <code class="text-xs bg-muted px-1 py-0.5 rounded">color</code>, so the signature follows the theme.
+                </ApiParameter>
+                <ApiParameter Name="MinWidth" Type="double" Default="0.5">
+                    The thinnest the line tapers to, in CSS pixels.
+                </ApiParameter>
+                <ApiParameter Name="MaxWidth" Type="double" Default="2.5">
+                    The thickest the line gets, in CSS pixels.
+                </ApiParameter>
+                <ApiParameter Name="VelocityWeight" Type="double" Default="0.7">
+                    How much the newest speed reading counts towards the line width, between 0 and 1.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether drawing is ignored. Whatever is already drawn stays visible.
+                </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes applied to the <code>&lt;canvas&gt;</code>. A <code class="text-xs bg-muted px-1 py-0.5 rounded">style</code> passed here is merged with the pad's own, rather than replacing it.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="Methods">
+                <ApiParameter Name="GetSvgAsync()" Type="Task&lt;string?&gt;">
+                    The signature as SVG markup, drawn in <code class="text-xs bg-muted px-1 py-0.5 rounded">currentColor</code>. Null when nothing is drawn.
+                </ApiParameter>
+                <ApiParameter Name="GetPngAsync(background, ink)" Type="Task&lt;string?&gt;">
+                    The signature as a PNG data URL. The strokes are redrawn at the given colour, which defaults to black rather than to the theme's ink. Copying the live canvas would bake in a near-white stroke from a dark theme and lose it on white paper.
+                </ApiParameter>
+                <ApiParameter Name="GetPngBytesAsync(background, ink)" Type="Task&lt;byte[]?&gt;">
+                    The same PNG as raw bytes. Prefer it when saving or uploading rather than showing.
+                </ApiParameter>
+                <ApiParameter Name="GetStrokesAsync()" Type="Task&lt;IReadOnlyList&lt;SignatureStroke&gt;&gt;">
+                    The raw samples, timings included.
+                </ApiParameter>
+                <ApiParameter Name="SetStrokesAsync(strokes)" Type="Task">
+                    Replaces the drawing with previously captured samples.
+                </ApiParameter>
+                <ApiParameter Name="ClearAsync()" Type="Task">
+                    Erases every stroke.
+                </ApiParameter>
+                <ApiParameter Name="UndoAsync()" Type="Task&lt;bool&gt;">
+                    Removes the most recent stroke. Returns whether there was one to remove.
+                </ApiParameter>
+                <ApiParameter Name="IsEmptyAsync()" Type="Task&lt;bool&gt;">
+                    Whether nothing has been drawn.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+    </div>
+</div>
+
+@code {
+    private BbSignaturePad? basicPad;
+    private bool basicEmpty = true;
+
+    private BbSignaturePad? penPad;
+    private double penMaxWidth = 2.5;
+    private double penVelocityWeight = 0.7;
+
+    private BbSignaturePad? exportPad;
+    private bool exportEmpty = true;
+    private List<(string Name, string Detail)>? exportReport;
+
+    private BbSignaturePad? replayPad;
+    private IReadOnlyList<SignatureStroke>? savedStrokes;
+
+    private async Task InspectAsync()
+    {
+        if (exportPad is null)
+        {
+            return;
+        }
+
+        var svg = await exportPad.GetSvgAsync();
+        var png = await exportPad.GetPngAsync("#ffffff");
+        var strokes = await exportPad.GetStrokesAsync();
+
+        exportReport =
+        [
+            ("SVG", $"{svg?.Length ?? 0} bytes"),
+            ("PNG", $"{png?.Length ?? 0} bytes as a data URL"),
+            ("Strokes", $"{strokes.Count} stroke(s), {strokes.Sum(s => s.Points.Count)} sample(s)")
+        ];
+    }
+
+    private async Task SaveStrokesAsync()
+    {
+        if (replayPad is not null)
+        {
+            savedStrokes = await replayPad.GetStrokesAsync();
+        }
+    }
+}

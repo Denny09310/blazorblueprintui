@@ -36,6 +36,10 @@
 </CascadingValue>
 
 @code {
+    /// <summary>The accessible name of the control.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+
+
     /// <summary>Displays options in a floating list or a modal bottom sheet.</summary>
     [Parameter] public SelectPresentation Presentation { get; set; }
     /// <summary>The title of the bottom sheet.</summary>

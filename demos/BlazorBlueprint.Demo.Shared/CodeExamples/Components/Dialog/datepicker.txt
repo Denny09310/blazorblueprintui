@@ -1,5 +1,5 @@
 <BbDialog>
-    <BbDialogTrigger>Open Dialog with DatePicker</BbDialogTrigger>
+    <BbDialogTrigger AsChild="false">Open Dialog with DatePicker</BbDialogTrigger>
     <BbDialogContent>
         <BbDialogHeader>
             <BbDialogTitle>Schedule Event</BbDialogTitle>

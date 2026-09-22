@@ -2,7 +2,7 @@
 
 <div @attributes="AdditionalAttributes" class="@ClassNames.cn("bb:flex bb:items-center bb:justify-between bb:gap-4", Separator ? "bb:border-b bb:pb-3" : null, Class)">
     <div class="bb:min-w-0">
-        <h2 class="bb:text-lg bb:font-semibold">@Title</h2>
+        @Heading
         @if (!string.IsNullOrEmpty(Description))
         {
             <p class="bb:text-sm bb:text-muted-foreground">@Description</p>
@@ -15,6 +15,20 @@
 </div>
 
 @code {
+    /// <summary>Semantic heading level, from 1 to 6. Defaults to 2.</summary>
+    [Parameter] public int HeadingLevel { get; set; } = 2;
+    protected override void OnParametersSet()
+    {
+        if (HeadingLevel is < 1 or > 6) throw new ArgumentOutOfRangeException(nameof(HeadingLevel));
+    }
+    private RenderFragment Heading => builder =>
+    {
+        builder.OpenElement(0, $"h{HeadingLevel}");
+        builder.AddAttribute(1, "class", "bb:text-lg bb:font-semibold");
+        builder.AddContent(2, Title);
+        builder.CloseElement();
+    };
+
     /// <summary>The section heading.</summary>
     [Parameter] public string? Title { get; set; }
     /// <summary>Optional supporting text.</summary>

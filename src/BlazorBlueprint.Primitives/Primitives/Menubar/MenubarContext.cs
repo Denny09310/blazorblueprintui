@@ -95,6 +95,8 @@ public class MenubarContext
 /// </summary>
 public class MenubarMenuContext
 {
+    internal Func<Task>? FocusTrigger { get; set; }
+
     private readonly MenubarContext parent;
 
     /// <summary>

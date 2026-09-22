@@ -6,6 +6,7 @@ const source = await readFile(new URL('../../src/BlazorBlueprint.Primitives/wwwr
 const { initialize, dispose } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
 test('filtered cascade nodes are skipped by keyboard navigation and keep a visible tab stop', () => {
+  globalThis.getComputedStyle = () => ({ direction: 'ltr' });
   let observer;
   let disconnected = false;
   globalThis.MutationObserver = class {

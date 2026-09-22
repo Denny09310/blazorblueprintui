@@ -3,7 +3,7 @@
 @attribute [CascadingTypeParameter(nameof(TValue))]
 
 <CascadingValue Value="context">
-    <div class="@CssClass" role="group" @attributes="AdditionalAttributes">
+    <div class="@CssClass" role="group" aria-label="@AriaLabel" @attributes="AdditionalAttributes">
         @if (ShowSelectAll)
         {
             <div class="bb:flex bb:items-center bb:gap-2 bb:pb-2 bb:mb-1 bb:border-b">

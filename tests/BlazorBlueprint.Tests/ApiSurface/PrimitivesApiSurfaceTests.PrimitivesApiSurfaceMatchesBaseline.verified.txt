@@ -740,6 +740,15 @@
   - OnClick : EventCallback<MouseEventArgs>
   - Context : SheetContext [CascadingParameter]
 
+### BbSignaturePad (BlazorBlueprint.Primitives.SignaturePad)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - Disabled : Boolean
+  - MaxWidth : Double
+  - MinWidth : Double
+  - OnChange : EventCallback<Boolean>
+  - StrokeColor : String
+  - VelocityWeight : Double
+
 ### BbSlider (BlazorBlueprint.Primitives.Slider)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
@@ -781,6 +790,7 @@
   - Id : String
   - ItemTemplate : RenderFragment<TItem>
   - Items : IList<TItem>
+  - KeyboardAnnouncements : IReadOnlyDictionary<String, String>
   - KeyboardInstructions : String
   - KeyboardSorting : Boolean
   - MoveRejectedAnnouncement : String
@@ -793,6 +803,18 @@
   - ReceivedAnnouncement : String
   - RemovedAnnouncement : String
   - Sort : Boolean
+
+### BbSwipeArea (BlazorBlueprint.Primitives.SwipeArea)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - Axis : SwipeAxis
+  - ChildContent : RenderFragment
+  - Disabled : Boolean
+  - MinVelocity : Double
+  - OnSwipe : EventCallback<SwipeEventArgs>
+  - OnSwipeCancel : EventCallback
+  - OnSwipeMove : EventCallback<SwipeMoveEventArgs>
+  - Threshold : Double
+  - TouchAction : SwipeTouchAction
 
 ### BbSwitch (BlazorBlueprint.Primitives.Switch)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -903,6 +925,9 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - Disabled : Boolean
+  - OnCloseRequested : EventCallback
+  - OnMoveRequested : EventCallback<Int32>
+  - OnRenameRequested : EventCallback
   - Value : String [EditorRequired]
   - Context : TabsContext [CascadingParameter]
   - List : BbTabsList [CascadingParameter]
@@ -1007,6 +1032,22 @@
   - Single = 0
   - Multiple = 1
 
+### BarcodeType (BlazorBlueprint.Primitives.Barcode)
+  - Code128 = 0
+  - Code39 = 1
+  - Ean13 = 2
+  - Ean8 = 3
+  - UpcA = 4
+  - Itf = 5
+  - Codabar = 6
+  - Postnet = 7
+  - Pharmacode = 8
+  - Rm4scc = 9
+  - Isbn = 10
+  - Issn = 11
+  - Msi = 12
+  - Telepen = 13
+
 ### DashboardBreakpoint (BlazorBlueprint.Primitives.DashboardGrid)
   - Large = 0
   - Medium = 1
@@ -1106,6 +1147,38 @@
   - Container = 1
   - None = 2
 
+### GanttAnchor (BlazorBlueprint.Primitives.Gantt)
+  - Start = 0
+  - End = 1
+
+### GanttDependencyType (BlazorBlueprint.Primitives.Gantt)
+  - FinishToStart = 0
+  - StartToStart = 1
+  - FinishToFinish = 2
+  - StartToFinish = 3
+
+### GanttRangeSnap (BlazorBlueprint.Primitives.Gantt)
+  - None = 0
+  - Minor = 1
+  - Major = 2
+
+### GanttZoom (BlazorBlueprint.Primitives.Gantt)
+  - Hour = 0
+  - Day = 1
+  - Week = 2
+  - Month = 3
+  - Quarter = 4
+  - Year = 5
+
+### PivotTotals (BlazorBlueprint.Primitives.Pivot)
+  - None = 0
+  - RowTotals = 1
+  - ColumnTotals = 2
+  - Grand = 3
+  - ColumnSubtotals = 4
+  - RowSubtotals = 8
+  - All = 15
+
 ### PopoverAlign (BlazorBlueprint.Primitives)
   - Start = 0
   - Center = 1
@@ -1139,6 +1212,17 @@
   - Absolute = 0
   - Fixed = 1
 
+### QrEncodingMode (BlazorBlueprint.Primitives.QrCode)
+  - Numeric = 0
+  - Alphanumeric = 1
+  - Byte = 2
+
+### QrErrorCorrection (BlazorBlueprint.Primitives.QrCode)
+  - Low = 0
+  - Medium = 1
+  - Quartile = 2
+  - High = 3
+
 ### ScrollAreaOrientation (BlazorBlueprint.Primitives.ScrollArea)
   - Vertical = 0
   - Horizontal = 1
@@ -1166,6 +1250,24 @@
   - None = 0
   - Ascending = 1
   - Descending = 2
+
+### SwipeAxis (BlazorBlueprint.Primitives.SwipeArea)
+  - Both = 0
+  - Horizontal = 1
+  - Vertical = 2
+
+### SwipeDirection (BlazorBlueprint.Primitives.SwipeArea)
+  - None = 0
+  - Left = 1
+  - Right = 2
+  - Up = 3
+  - Down = 4
+
+### SwipeTouchAction (BlazorBlueprint.Primitives.SwipeArea)
+  - Auto = 0
+  - PanX = 1
+  - PanY = 2
+  - None = 3
 
 ### SelectionMode (BlazorBlueprint.Primitives.Table)
   - None = 0

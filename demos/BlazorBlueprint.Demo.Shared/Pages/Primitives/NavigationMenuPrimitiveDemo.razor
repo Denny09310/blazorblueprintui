@@ -23,7 +23,7 @@
             </div>
 
             <div class="rounded-lg border bg-card p-6">
-                <BlazorBlueprint.Primitives.NavigationMenu.BbNavigationMenu
+                <BlazorBlueprint.Primitives.NavigationMenu.BbNavigationMenu EnableKeyboardNavigation="true"
                     class="relative flex max-w-max items-center">
                     <BlazorBlueprint.Primitives.NavigationMenu.BbNavigationMenuList
                         class="flex list-none items-center gap-1">
@@ -36,15 +36,15 @@
                                 class="absolute left-0 top-full mt-1.5 z-50 w-[400px] rounded-md border bg-popover p-4 text-popover-foreground shadow-lg">
                                 <div class="grid gap-3">
                                     <div class="space-y-1">
-                                        <h3 class="text-sm font-medium leading-none">Introduction</h3>
+                                        <BlazorBlueprint.Primitives.NavigationMenu.BbNavigationMenuLink Href="/primitives" class="text-sm font-medium leading-none">Introduction</BlazorBlueprint.Primitives.NavigationMenu.BbNavigationMenuLink>
                                         <p class="text-sm text-muted-foreground">Learn the basics of BlazorBlueprint primitives.</p>
                                     </div>
                                     <div class="space-y-1">
-                                        <h3 class="text-sm font-medium leading-none">Installation</h3>
+                                        <BlazorBlueprint.Primitives.NavigationMenu.BbNavigationMenuLink Href="/getting-started" class="text-sm font-medium leading-none">Installation</BlazorBlueprint.Primitives.NavigationMenu.BbNavigationMenuLink>
                                         <p class="text-sm text-muted-foreground">How to install and configure the library.</p>
                                     </div>
                                     <div class="space-y-1">
-                                        <h3 class="text-sm font-medium leading-none">Architecture</h3>
+                                        <BlazorBlueprint.Primitives.NavigationMenu.BbNavigationMenuLink Href="/primitives/button" class="text-sm font-medium leading-none">Architecture</BlazorBlueprint.Primitives.NavigationMenu.BbNavigationMenuLink>
                                         <p class="text-sm text-muted-foreground">Understand the two-layer component design.</p>
                                     </div>
                                 </div>

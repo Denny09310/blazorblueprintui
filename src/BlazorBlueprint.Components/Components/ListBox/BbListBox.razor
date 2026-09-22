@@ -1,0 +1,122 @@
+@namespace BlazorBlueprint.Components
+@typeparam TValue
+@using BlazorBlueprint.Icons.Lucide.Components
+@inject IBbLocalizer Localizer
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+@*
+    ListBox - an always-visible list you choose from, with no trigger and no popover.
+
+    The list itself is the tab stop and owns the arrow keys, so unlike the list inside BbSelect or
+    BbMultiSelect this one is reachable and operable by keyboard on its own.
+*@
+
+<div class="@RootClass" data-slot="listbox" @attributes="AdditionalAttributes">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <BbLabel id="@($"{listId}-label")" For="@listId" Class="bb:mb-2 bb:block">@Label</BbLabel>
+    }
+
+    <div class="@FrameClass">
+        @if (ShowSearch)
+        {
+            <div class="bb:flex bb:items-center bb:border-b bb:border-border bb:px-3">
+                <LucideIcon Name="search" Size="16" Class="bb:me-2 bb:h-4 bb:w-4 bb:shrink-0 bb:opacity-50" />
+                <input id="@($"{listId}-search")"
+                       type="text"
+                       placeholder="@EffectiveSearchPlaceholder"
+                       aria-controls="@listId"
+                       aria-label="@EffectiveSearchPlaceholder"
+                       disabled="@Disabled"
+                       value="@searchQuery"
+                       @oninput="HandleSearchInputAsync"
+                       @onkeydown="HandleSearchKeyDownAsync"
+                       class="bb:flex bb:h-10 bb:w-full bb:bg-transparent bb:py-2 bb:text-sm bb:outline-none bb:placeholder:text-muted-foreground bb:disabled:cursor-not-allowed bb:disabled:opacity-50" />
+            </div>
+        }
+
+        @if (IsMultiple && ShowSelectAll && visibleOptions.Count > 0)
+        {
+            @* Outside the listbox on purpose. A select-all row rendered as an option would be
+               announced as one of the choices and would take a place in the arrow-key order. *@
+            <div class="bb:flex bb:items-center bb:gap-2 bb:border-b bb:border-border bb:px-3 bb:py-2">
+                <BlazorBlueprint.Primitives.Checkbox.BbCheckbox Checked="@(SelectAllState == SelectAllKind.All)"
+                                                                Indeterminate="@(SelectAllState == SelectAllKind.Indeterminate)"
+                                                                Disabled="@Disabled"
+                                                                CheckedChanged="@(_ => ToggleSelectAllAsync())"
+                                                                class="@CheckboxClass"
+                                                                AriaLabel="@EffectiveSelectAllLabel">
+                    @if (SelectAllState == SelectAllKind.All)
+                    {
+                        <LucideIcon Name="check" Size="14" Class="bb:h-3.5 bb:w-3.5 bb:stroke-current" />
+                    }
+                    else if (SelectAllState == SelectAllKind.Indeterminate)
+                    {
+                        <LucideIcon Name="minus" Size="14" Class="bb:h-3.5 bb:w-3.5 bb:stroke-current" />
+                    }
+                </BlazorBlueprint.Primitives.Checkbox.BbCheckbox>
+                <span class="bb:text-sm bb:font-medium">@EffectiveSelectAllLabel</span>
+                <span class="bb:ms-auto bb:text-xs bb:text-muted-foreground">@SelectionSummary</span>
+            </div>
+        }
+
+        <ul @ref="listElement" id="@listId"
+            role="listbox"
+            tabindex="@(Disabled ? -1 : 0)"
+            aria-multiselectable="@(IsMultiple ? "true" : null)"
+            aria-activedescendant="@ActiveDescendantId"
+            aria-disabled="@(Disabled ? "true" : null)"
+            aria-label="@AriaLabel"
+            aria-labelledby="@(string.IsNullOrEmpty(AriaLabel) && !string.IsNullOrEmpty(Label) ? $"{listId}-label" : null)"
+            @onkeydown="HandleKeyDownAsync"
+            @onfocus="HandleFocus"
+            @onblur="HandleBlur"
+            style="max-height: @Height"
+            class="bb:m-0 bb:list-none bb:overflow-y-auto bb:p-1 bb:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-inset">
+            @if (visibleOptions.Count == 0)
+            {
+                <li class="bb:py-6 bb:text-center bb:text-sm bb:text-muted-foreground">@EffectiveEmptyMessage</li>
+            }
+            else
+            {
+                @for (var i = 0; i < visibleOptions.Count; i++)
+                {
+                    var index = i;
+                    var option = visibleOptions[index];
+                    var selected = IsSelected(option.Value);
+                    var optionDisabled = Disabled || IsOptionDisabled(option);
+
+                    <li @key="option.Value"
+                        id="@OptionId(index)"
+                        role="option"
+                        aria-selected="@selected.ToString().ToLowerInvariant()"
+                        aria-disabled="@(optionDisabled ? "true" : null)"
+                        data-active="@((index == activeIndex && hasFocus).ToString().ToLowerInvariant())"
+                        data-selected="@selected.ToString().ToLowerInvariant()"
+                        @onclick="@(e => HandleOptionClickAsync(index, e))"
+                        class="@OptionClass(optionDisabled)">
+                        @* A plain box, not a checkbox control: a focusable control inside an option
+                           would be a second tab stop and a second thing to announce. aria-selected
+                           on the option already carries the state. *@
+                        <span aria-hidden="true" class="@IndicatorClass(selected)">
+                            @if (selected)
+                            {
+                                <LucideIcon Name="check" Size="14" Class="bb:h-3.5 bb:w-3.5 bb:stroke-current" />
+                            }
+                        </span>
+
+                        @if (ItemTemplate is not null)
+                        {
+                            @ItemTemplate(option)
+                        }
+                        else
+                        {
+                            <span class="bb:truncate">@option.Text</span>
+                        }
+                    </li>
+                }
+            }
+        </ul>
+    </div>
+</div>

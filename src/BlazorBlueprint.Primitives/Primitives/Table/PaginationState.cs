@@ -12,7 +12,7 @@ public class PaginationState
 
     /// <summary>
     /// Gets or sets the current page number (1-based).
-    /// Automatically clamped to valid range (1 to TotalPages).
+    /// Clamped to at least 1. Use GoToPage to also clamp to TotalPages.
     /// </summary>
     public int CurrentPage
     {

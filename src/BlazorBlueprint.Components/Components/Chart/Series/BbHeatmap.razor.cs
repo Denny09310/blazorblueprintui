@@ -73,6 +73,7 @@ public partial class BbHeatmap : SeriesBase
         var series = new EChartsSeriesOption
         {
             Type = "heatmap",
+            ItemStyle = new EChartsItemStyleOption { Color = GetResolvedFillColor() ?? GetResolvedColor() },
             Name = GetResolvedName(),
             Emphasis = new EChartsEmphasisOption
             {

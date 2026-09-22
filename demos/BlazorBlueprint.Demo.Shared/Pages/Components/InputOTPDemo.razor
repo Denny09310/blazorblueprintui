@@ -21,7 +21,7 @@
                 A 6-digit OTP input with separators.
             </p>
         </div>
-        <BbInputOTP @bind-Value="_otpValue" OnComplete="HandleComplete" />
+        <BbInputOTP AriaLabel="Verification code" @bind-Value="_otpValue" OnComplete="HandleComplete" />
         <p class="text-sm text-muted-foreground">Value: @(_otpValue ?? "empty")</p>
         @if (_isComplete)
         {
@@ -285,6 +285,7 @@
         </div>
         <div class="space-y-4">
             <ApiReference ComponentName="InputOTP">
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">Accessible name forwarded to the interactive control or group.</ApiParameter>
                 <ApiParameter Name="Length" Type="int" Default="6">
                     The number of OTP digit inputs to render.
                 </ApiParameter>

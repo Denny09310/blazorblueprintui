@@ -83,6 +83,12 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
 
     internal void RegisterPanel(BbDockPanel panel)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(panel.Id);
+        if (panels.TryGetValue(panel.Id, out var existing) && !ReferenceEquals(existing, panel))
+        {
+            throw new InvalidOperationException($"A dock panel with Id '{panel.Id}' is already registered.");
+        }
+
         panels[panel.Id] = panel;
         if (!registrationOrder.Contains(panel.Id))
         {

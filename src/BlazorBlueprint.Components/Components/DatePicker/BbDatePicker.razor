@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Linq.Expressions
 @inject IBbLocalizer Localizer
+@implements IDisposable
 
 @*
     Date Picker component - combines a button trigger with a calendar popover.
@@ -12,7 +13,7 @@
     <BbPopoverTrigger AsChild="true">
         @if (Editable)
         {
-            <BbDatePickerInput Text="@_inputText"
+            <BbDatePickerInput AriaLabel="@AriaLabel" IsInvalid="@EffectiveInvalid" Text="@_inputText"
                                Placeholder="@EffectivePlaceholder"
                                Disabled="@Disabled"
                                Required="@Required"
@@ -22,7 +23,7 @@
         }
         else
         {
-            <BbButton Variant="ButtonVariant.Outline"
+            <BbButton AriaLabel="@AriaLabel" Variant="ButtonVariant.Outline"
                     Class="@ButtonCssClass"
                     aria-required="@(Required ? "true" : null)"
                     @attributes="AdditionalAttributes">
@@ -52,6 +53,15 @@
 </BbPopover>
 
 @code {
+    /// <summary>Marks the editable input as invalid, in addition to EditForm validation.</summary>
+    [Parameter] public bool IsInvalid { get; set; }
+    private bool EffectiveInvalid => IsInvalid || (CascadedEditContext is not null && ValueExpression is not null
+        && CascadedEditContext.GetValidationMessages(FieldIdentifier.Create(ValueExpression)).Any());
+
+    /// <summary>The accessible name of the control.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+
+
     private const string IsoInputFormat = "yyyy-MM-dd";
 
     private bool _isOpen;
@@ -185,9 +195,20 @@
     {
         base.OnParametersSet();
 
-        if (CascadedEditContext != null && ValueExpression != null)
+        if (!ReferenceEquals(_editContext, CascadedEditContext))
         {
+            if (_editContext is not null)
+            {
+                _editContext.OnValidationStateChanged -= HandleValidationStateChanged;
+            }
             _editContext = CascadedEditContext;
+            if (_editContext is not null)
+            {
+                _editContext.OnValidationStateChanged += HandleValidationStateChanged;
+            }
+        }
+        if (ValueExpression is not null)
+        {
             _fieldIdentifier = FieldIdentifier.Create(ValueExpression);
         }
 
@@ -199,6 +220,18 @@
             _lastSyncedValue = Value;
             _inputText = Value?.ToString(DateFormat);
         }
+    }
+
+    private void HandleValidationStateChanged(object? sender, ValidationStateChangedEventArgs args) =>
+        _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        if (_editContext is not null)
+        {
+            _editContext.OnValidationStateChanged -= HandleValidationStateChanged;
+        }
+        GC.SuppressFinalize(this);
     }
 
     private async Task HandleDateSelected(DateTime? date)

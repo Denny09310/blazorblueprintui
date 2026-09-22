@@ -120,7 +120,7 @@ These are the **breaking changes** that require code updates. Address them in or
 
 All Razor components now use a `Bb` prefix. This applies to every component tag across both `BlazorBlueprint.Components` (~300+ components) and `BlazorBlueprint.Primitives` (~65 components). Non-component types — enums, context classes, services, helper classes, interfaces, and event args — are unchanged.
 
-**Why:** Prefixed component names prevent naming collisions with standard HTML elements, user-defined components, and third-party libraries. This follows the same convention used by MudBlazor (`Mud` prefix) and Radzen (`Radzen` prefix).
+**Why:** Prefixed component names prevent naming collisions with standard HTML elements, user-defined components, and third-party libraries.
 
 **Before:**
 

@@ -112,6 +112,16 @@ internal sealed class EChartsSeriesOption
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ColorBy { get; set; }
 
+    // Map properties
+
+    [JsonPropertyName("map")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Map { get; set; }
+
+    [JsonPropertyName("roam")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? Roam { get; set; }
+
     // Funnel properties
 
     [JsonPropertyName("sort")]
@@ -277,6 +287,10 @@ internal sealed class EChartsAreaStyleOption
 
 internal sealed class EChartsItemStyleOption
 {
+    [JsonPropertyName("areaColor")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public object? AreaColor { get; set; }
+
     [JsonPropertyName("color")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object? Color { get; set; }

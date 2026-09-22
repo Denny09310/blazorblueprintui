@@ -16,7 +16,7 @@
 </BbAttachmentGroup>
 
 <BbAttachment>
-    <BbAttachmentTrigger aria-label="Open research-summary.pdf preview"
+    <BbAttachmentTrigger AriaLabel="Open research-summary.pdf preview"
                          @onclick="() => previewOpen = true" />
     <BbAttachmentMedia><LucideIcon Name="file-search" Size="18" /></BbAttachmentMedia>
     <BbAttachmentContent>
@@ -31,7 +31,7 @@
 </BbAttachment>
 
 <BbAttachment>
-    <BbAttachmentTrigger Href="#" aria-label="Open annual-report.pdf" />
+    <BbAttachmentTrigger Href="#" AriaLabel="Open annual-report.pdf" />
     <BbAttachmentMedia><LucideIcon Name="file-text" Size="18" /></BbAttachmentMedia>
     <BbAttachmentContent>
         <BbAttachmentTitle>annual-report.pdf</BbAttachmentTitle>

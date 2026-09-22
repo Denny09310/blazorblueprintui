@@ -2,7 +2,7 @@
 @using BlazorBlueprint.Icons.Lucide.Components
 @inject IBbLocalizer Localizer
 
-<div class="@CssClass" data-slot="stepper" @attributes="AdditionalAttributes">
+<div @ref="root" class="@CssClass" data-slot="stepper" @attributes="AdditionalAttributes">
     <ol class="@IndicatorCssClass" aria-label="@Localizer["Stepper.Progress"]">
         @for (var i = 0; i < steps.Count; i++)
         {

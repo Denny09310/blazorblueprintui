@@ -8,7 +8,7 @@
 
 <BbPopover Open="_isOpen" OpenChanged="HandleOpenChanged">
     <BbPopoverTrigger AsChild="true">
-        <BbButton Variant="ButtonVariant.Outline"
+        <BbButton AriaLabel="@AriaLabel" Variant="ButtonVariant.Outline"
                 Class="@ButtonCssClass"
                 Disabled="@Disabled"
                 aria-required="@(Required ? "true" : null)"
@@ -125,13 +125,13 @@
                                     class="@GetAmPmButtonClass(true)"
                                     @onclick="() => SetAmPm(true)"
                                     disabled="@Disabled">
-                                AM
+                                @Localizer["DateTimePicker.AM"]
                             </button>
                             <button type="button"
                                     class="@GetAmPmButtonClass(false)"
                                     @onclick="() => SetAmPm(false)"
                                     disabled="@Disabled">
-                                PM
+                                @Localizer["DateTimePicker.PM"]
                             </button>
                         </div>
                     </div>
@@ -140,14 +140,14 @@
 
             <!-- Action Buttons -->
             <div class="bb:flex bb:justify-between bb:gap-2">
-                <BbButton Variant="ButtonVariant.Outline"
+                <BbButton AriaLabel="@AriaLabel" Variant="ButtonVariant.Outline"
                         Size="ButtonSize.Small"
                         Class="bb:flex-1"
                         Disabled="@Disabled"
                         OnClick="SetNow">
                     @Localizer["DateTimePicker.Now"]
                 </BbButton>
-                <BbButton Variant="ButtonVariant.Outline"
+                <BbButton AriaLabel="@AriaLabel" Variant="ButtonVariant.Outline"
                         Size="ButtonSize.Small"
                         Class="bb:flex-1"
                         Disabled="@(Disabled || !Value.HasValue)"

@@ -157,6 +157,21 @@
         <CodeBlock Source="Components/Stepper/states.txt" />
     </section>
 
+    <section class="space-y-4" data-testid="conditional-steps">
+        <h2 class="text-2xl font-semibold">Conditional steps</h2>
+        <p>Steps follow their current markup order when optional steps are inserted or removed.</p>
+        <BbButton OnClick="@(() => includeReview = !includeReview)">Toggle review step</BbButton>
+<BbStepper ActiveStep="0" data-testid="conditional-stepper">
+    <BbStep Title="Details" />
+    @if (includeReview)
+    {
+        <BbStep Title="Review" />
+    }
+    <BbStep Title="Finish" />
+</BbStepper>
+        <CodeBlock Source="Components/Stepper/conditional.txt" />
+    </section>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>The indicator is an ordered list, so a screen reader announces how many steps there are and which one this is.</AccessibilityItem>
@@ -213,6 +228,7 @@
 </div>
 
 @code {
+    private bool includeReview;
     private int basicStep;
     private int clickableStep;
     private int contentStep;

@@ -54,10 +54,10 @@
 
     /// <summary>
     /// Direction for the menu content layout ("ltr" or "rtl").
-    /// Default is "ltr".
+    /// When unset, inherits the surrounding direction.
     /// </summary>
     [Parameter]
-    public string Dir { get; set; } = "ltr";
+    public string? Dir { get; set; }
 
     /// <summary>
     /// Default CSS classes to apply to all DropdownMenuItem children.

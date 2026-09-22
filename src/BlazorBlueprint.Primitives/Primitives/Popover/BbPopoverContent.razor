@@ -247,7 +247,7 @@
     // therefore no way to close it from the keyboard.
     private FloatingDismissOptions? BuildDismissOptions()
     {
-        if (!CloseOnClickOutside && !CloseOnEscape)
+        if (!Context.AllowDismiss || (!CloseOnClickOutside && !CloseOnEscape))
         {
             return null;
         }
@@ -269,7 +269,7 @@
 
     private async Task HandleEscapeDismissAsync()
     {
-        if (_disposed || !Context.IsOpen || !CloseOnEscape) return;
+        if (_disposed || !Context.IsOpen || !Context.AllowDismiss || !CloseOnEscape) return;
 
         if (OnEscapeKeyDown.HasDelegate)
         {
@@ -289,7 +289,7 @@
             await OnClickOutside.InvokeAsync();
         }
 
-        if (CloseOnClickOutside)
+        if (CloseOnClickOutside && Context.AllowDismiss)
         {
             Context.Close();
         }
@@ -339,7 +339,7 @@
             }
 
             // Close popover if configured
-            if (CloseOnEscape)
+            if (CloseOnEscape && Context.AllowDismiss)
             {
                 // Escape is an intentional dismiss — return focus to the trigger.
                 Context.Close(restoreFocus: true);

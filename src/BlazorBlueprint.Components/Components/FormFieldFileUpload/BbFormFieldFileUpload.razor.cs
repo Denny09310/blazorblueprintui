@@ -9,6 +9,9 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public partial class BbFormFieldFileUpload : FormFieldBase
 {
+    /// <summary>Identifies the bound field for EditForm validation.</summary>
+    [Parameter] public Expression<Func<IReadOnlyList<FileUploadItem>?>>? FilesExpression { get; set; }
+
     /// <summary>
     /// Gets or sets the selected files.
     /// </summary>
@@ -82,7 +85,7 @@ public partial class BbFormFieldFileUpload : FormFieldBase
     public string? InputClass { get; set; }
 
     /// <inheritdoc />
-    protected override LambdaExpression? GetFieldExpression() => null;
+    protected override LambdaExpression? GetFieldExpression() => FilesExpression;
 
     private BbFileUpload? fileUploadRef;
 
@@ -101,5 +104,6 @@ public partial class BbFormFieldFileUpload : FormFieldBase
     {
         Files = files;
         await FilesChanged.InvokeAsync(files);
+        NotifyFieldChanged();
     }
 }

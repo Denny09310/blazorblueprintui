@@ -304,6 +304,66 @@
         <CodeBlock Source="Components/Tabs/responsive.txt" />
     </div>
 
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold">Editable</h2>
+        <p class="text-sm text-muted-foreground">
+            Tabs that can be added, closed, renamed and reordered. The list never changes itself —
+            every gesture raises a callback and this page changes its own collection, so the order
+            and the names stay wherever you already keep them.
+        </p>
+        <p class="text-sm text-muted-foreground">
+            Drag a tab, or press <BbKbd>Ctrl</BbKbd> with an arrow key, to move it. Double-click a
+            tab, or press <BbKbd>F2</BbKbd>, to rename it. Click the <BbKbd>×</BbKbd>, or press
+            <BbKbd>Delete</BbKbd>, to close it. The last remaining tab cannot be closed.
+        </p>
+
+        <BbTabs @bind-Value="activeSheet">
+            <BbTabsList Responsive Closable Renamable Reorderable Addable
+                        AddLabel="New sheet"
+                        OnAdd="AddSheet"
+                        OnClose="CloseSheet"
+                        OnRename="RenameSheet"
+                        OnMove="MoveSheet">
+                @foreach (var sheet in sheets)
+                {
+                    <BbTabsTrigger @key="sheet.Id"
+                                   Value="@sheet.Id"
+                                   Label="@sheet.Name"
+                                   Closable="@(sheets.Count > 1)" />
+                }
+            </BbTabsList>
+
+            @foreach (var sheet in sheets)
+            {
+                <BbTabsContent @key="sheet.Id" Value="@sheet.Id">
+                    <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                        <h3 class="text-lg font-semibold mb-2">@sheet.Name</h3>
+                        <p class="text-sm text-muted-foreground">
+                            The panel for @sheet.Name. Its content follows the tab wherever the tab goes.
+                        </p>
+                    </div>
+                </BbTabsContent>
+            }
+        </BbTabs>
+
+        <div class="rounded-md border bg-muted/40 p-4 space-y-2">
+            <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                The collection behind the tabs
+            </p>
+            <ol class="text-sm font-mono space-y-0.5">
+                @for (var i = 0; i < sheets.Count; i++)
+                {
+                    <li>@i — <span class="text-muted-foreground">@sheets[i].Id</span> "@sheets[i].Name"</li>
+                }
+            </ol>
+            <p class="text-xs text-muted-foreground">
+                Last change: @lastChange
+            </p>
+        </div>
+
+        <CodeBlock Source="Components/Tabs/editable.txt" />
+    </div>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>Uses <code>role="tablist"</code>, <code>role="tab"</code>, and <code>role="tabpanel"</code> for proper semantics</AccessibilityItem>
@@ -311,6 +371,8 @@
             <AccessibilityItem><code>aria-controls</code> links each tab trigger to its content panel</AccessibilityItem>
             <AccessibilityItem><code>aria-orientation</code> reflects horizontal or vertical layout</AccessibilityItem>
             <AccessibilityItem>Disabled tabs are excluded from the tab sequence</AccessibilityItem>
+            <AccessibilityItem>The close affordance is an <code>aria-hidden</code> span, not a nested button — a <code>role="tab"</code> element must not contain another interactive element, so <BbKbd>Delete</BbKbd> is the keyboard route</AccessibilityItem>
+            <AccessibilityItem>The add button sits beside the tablist rather than inside it, so it is its own tab stop and never reports itself as a tab</AccessibilityItem>
         </AriaAttributes>
         <KeyboardNavigation>
             <KeyboardShortcutItem Description="Move focus between tabs">
@@ -324,6 +386,18 @@
             </KeyboardShortcutItem>
             <KeyboardShortcutItem Description="Move focus to last tab">
                 <BbKbd>End</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Close the focused tab (when Closable)">
+                <BbKbd>Delete</BbKbd> / <BbKbd>Backspace</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Rename the focused tab (when Renamable)">
+                <BbKbd>F2</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move the focused tab one place (when Reorderable)">
+                <BbKbd>Ctrl</BbKbd> + <BbKbd>Arrow Keys</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Commit or cancel a rename">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Esc</BbKbd>
             </KeyboardShortcutItem>
         </KeyboardNavigation>
     </AccessibilityList>
@@ -364,6 +438,33 @@
                 <ApiParameter Name="Responsive" Type="bool" Default="false">
                     When true, collapses tabs into a Select dropdown when they overflow their container.
                 </ApiParameter>
+                <ApiParameter Name="Closable" Type="bool" Default="false">
+                    Whether every tab carries a close affordance. Needs <code>OnClose</code>. A tab can override this for itself.
+                </ApiParameter>
+                <ApiParameter Name="Renamable" Type="bool" Default="false">
+                    Whether every tab can be renamed in place. Needs <code>OnRename</code>. Double-click or <code>F2</code>.
+                </ApiParameter>
+                <ApiParameter Name="Reorderable" Type="bool" Default="false">
+                    Whether every tab can be dragged to a new position. Needs <code>OnMove</code>. Drag, or <code>Ctrl</code> with an arrow key.
+                </ApiParameter>
+                <ApiParameter Name="Addable" Type="bool" Default="false">
+                    Whether a button for adding a tab is drawn after the last one. Needs <code>OnAdd</code>.
+                </ApiParameter>
+                <ApiParameter Name="AddLabel" Type="string?" Default="null">
+                    Accessible name and tooltip for the add button. Defaults to "New tab".
+                </ApiParameter>
+                <ApiParameter Name="OnClose" Type="EventCallback&lt;string&gt;">
+                    Invoked when a tab asks to be closed, carrying the tab's value.
+                </ApiParameter>
+                <ApiParameter Name="OnAdd" Type="EventCallback">
+                    Invoked when the add button is pressed.
+                </ApiParameter>
+                <ApiParameter Name="OnRename" Type="EventCallback&lt;TabRenameContext&gt;">
+                    Invoked when a tab has been renamed. Carries <code>Value</code>, <code>OldLabel</code> and <code>NewLabel</code>; set <code>Cancel</code> to refuse it and reopen the editor.
+                </ApiParameter>
+                <ApiParameter Name="OnMove" Type="EventCallback&lt;TabMoveContext&gt;">
+                    Invoked when a tab is moved. Carries <code>Value</code>, <code>OldIndex</code> and <code>NewIndex</code>. Apply it to your own collection, or do nothing to refuse it.
+                </ApiParameter>
                 <ApiParameter Name="SelectClass" Type="string?" Default="null">
                     Additional CSS classes for the responsive Select fallback.
                 </ApiParameter>
@@ -377,10 +478,19 @@
                     The value that identifies this tab. Must match a TabsContent Value.
                 </ApiParameter>
                 <ApiParameter Name="Label" Type="string?" Default="null">
-                    Display text for this tab in the responsive Select dropdown. Falls back to Value if not provided.
+                    Display text for this tab. Used for the responsive Select, as the starting text for a rename, and as the tab's own content where no child content is given. Falls back to Value.
                 </ApiParameter>
                 <ApiParameter Name="Disabled" Type="bool" Default="false">
                     Whether this tab trigger is disabled.
+                </ApiParameter>
+                <ApiParameter Name="Closable" Type="bool?" Default="null">
+                    Whether this tab can be closed. Null follows the list — set it to pin one tab open.
+                </ApiParameter>
+                <ApiParameter Name="Renamable" Type="bool?" Default="null">
+                    Whether this tab can be renamed in place. Null follows the list.
+                </ApiParameter>
+                <ApiParameter Name="Reorderable" Type="bool?" Default="null">
+                    Whether this tab can be dragged to a new position. Null follows the list.
                 </ApiParameter>
                 <ApiParameter Name="Class" Type="string?" Default="null">
                     Additional CSS classes for the tab trigger.
@@ -410,4 +520,77 @@
 
 @code {
     private string? activeTab = "morning";
+
+    private sealed record Sheet(string Id, string Name);
+
+    private readonly List<Sheet> sheets =
+    [
+        new("summary", "Summary"),
+        new("q1", "Q1"),
+        new("q2", "Q2"),
+    ];
+
+    private string? activeSheet = "summary";
+    private int nextSheet = 3;
+    private string lastChange = "nothing yet";
+
+    private void AddSheet()
+    {
+        nextSheet++;
+        var id = $"sheet-{nextSheet}";
+        sheets.Add(new Sheet(id, $"Sheet {nextSheet}"));
+        activeSheet = id;
+        lastChange = $"added {id}";
+    }
+
+    private void CloseSheet(string value)
+    {
+        var index = sheets.FindIndex(s => s.Id == value);
+        if (index < 0 || sheets.Count == 1)
+        {
+            return;
+        }
+
+        sheets.RemoveAt(index);
+        lastChange = $"closed {value}";
+
+        // The neighbour takes over, and the last tab in the list takes over from itself.
+        if (activeSheet == value)
+        {
+            activeSheet = sheets[Math.Min(index, sheets.Count - 1)].Id;
+        }
+    }
+
+    private void RenameSheet(TabRenameContext context)
+    {
+        var index = sheets.FindIndex(s => s.Id == context.Value);
+        if (index < 0)
+        {
+            return;
+        }
+
+        // A name already in use is refused, which is what Cancel is for.
+        if (sheets.Any(s => s.Id != context.Value && s.Name == context.NewLabel))
+        {
+            context.Cancel = true;
+            lastChange = $"refused \"{context.NewLabel}\" — that name is taken";
+            return;
+        }
+
+        sheets[index] = sheets[index] with { Name = context.NewLabel };
+        lastChange = $"renamed {context.OldLabel} to {context.NewLabel}";
+    }
+
+    private void MoveSheet(TabMoveContext context)
+    {
+        if (context.OldIndex < 0 || context.OldIndex >= sheets.Count)
+        {
+            return;
+        }
+
+        var moved = sheets[context.OldIndex];
+        sheets.RemoveAt(context.OldIndex);
+        sheets.Insert(Math.Clamp(context.NewIndex, 0, sheets.Count), moved);
+        lastChange = $"moved {moved.Name} from {context.OldIndex} to {context.NewIndex}";
+    }
 }

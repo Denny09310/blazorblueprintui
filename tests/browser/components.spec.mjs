@@ -48,11 +48,13 @@ const tests = {
         await fields.nth(0).focus();
         await page.keyboard.press("ArrowRight");
         await expect(fields.nth(1)).toBeFocused();
-        await page.evaluate(() => (document.documentElement.dir = "rtl"));
+        await page.getByRole("button", { name: "Switch to right-to-left", exact: true }).click();
+        await expect(group).toHaveCSS("direction", "rtl");
         await fields.nth(0).focus();
         await page.keyboard.press("ArrowLeft");
         await expect(fields.nth(1)).toBeFocused();
-        await page.evaluate(() => (document.documentElement.dir = "ltr"));
+        await page.getByRole("button", { name: "Switch to left-to-right", exact: true }).click();
+        await expect(group).toHaveCSS("direction", "ltr");
         const form = page.locator("form");
         await form
             .getByRole("spinbutton", { name: "Year", exact: true })
@@ -81,6 +83,7 @@ const tests = {
             exact: true,
         });
         await trigger.click();
+        await expect(page.getByRole("textbox", { name: "Search…", exact: true })).toBeFocused();
         const branch = page
             .getByRole("treeitem")
             .filter({ hasText: /Engineering/ })
@@ -102,6 +105,7 @@ const tests = {
             exact: true,
         });
         await multi.click();
+        await expect(page.getByRole("textbox", { name: "Search…", exact: true })).toBeFocused();
         const multiBranch = page
             .getByRole("treeitem")
             .filter({ hasText: /Engineering/ })
@@ -118,10 +122,9 @@ const tests = {
     async menu(page, go) {
         await go("dropdown-menu");
         for (const dir of ["ltr", "rtl"]) {
-            await page.evaluate(
-                (dir) => (document.documentElement.dir = dir),
-                dir,
-            );
+            if (dir === "rtl") {
+                await page.getByRole("button", { name: "Switch to right-to-left", exact: true }).click();
+            }
             const trigger = page.getByRole("button", {
                 name: "View and share",
                 exact: true,
@@ -285,7 +288,7 @@ const tests = {
                 "[data-scheduler-lane] > button:not([data-scheduler-event])",
             )
             .nth(20)
-            .click();
+            .dblclick();
         const dialog = page.getByRole("dialog");
         await expect(dialog).toBeVisible();
         await dialog
@@ -311,7 +314,7 @@ const tests = {
         const event = schedule
             .locator("[data-scheduler-event]")
             .filter({ hasText: "Validation appointment" });
-        await event.click();
+        await event.dblclick();
         const scope = dialog.getByRole("combobox").first();
         await scope.click();
         await page.getByRole("option", { name: /series/i }).click();

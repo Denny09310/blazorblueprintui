@@ -13,6 +13,12 @@ namespace BlazorBlueprint.Components;
 public partial class BbStep : ComponentBase, IDisposable
 {
     private int index = -1;
+    internal string StepId { get; } = Guid.NewGuid().ToString("N");
+    internal void SetIndex(int value)
+    {
+        index = value;
+        StateHasChanged();
+    }
 
     /// <summary>
     /// Gets or sets the parent stepper, received through a cascading parameter.

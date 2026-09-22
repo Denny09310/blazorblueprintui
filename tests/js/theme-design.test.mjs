@@ -55,7 +55,10 @@ test('a scoped menu inherits fonts and tokens across a portal and releases obser
   let observer; let disconnected = false;
   globalThis.MutationObserver = class { constructor(callback) { observer = callback; } observe() {} disconnect() { disconnected = true; } };
   globalThis.getComputedStyle = node => node.style;
-  const cleanup = inheritTheme({ closest: () => scope }, floating);
+  const trigger = element();
+  trigger.style.direction = 'ltr';
+  trigger.closest = () => scope;
+  const cleanup = inheritTheme(trigger, floating);
   assert.equal(floating.style.getPropertyValue('--bb-spacing'), '0.1875rem');
   assert.equal(floating.style.fontFamily, 'monospace');
   assert.equal(floating.getAttribute('data-bb-theme-scope'), '');

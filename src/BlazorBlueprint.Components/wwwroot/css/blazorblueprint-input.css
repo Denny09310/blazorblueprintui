@@ -891,6 +891,28 @@
   }
 }
 
+/* Gantt — which way time runs, and which way the arrows point.
+
+   The bars, the shading and the header are placed with logical offsets, so they
+   mirror on their own in a right-to-left page. Two things cannot. A repeating
+   gradient needs a physical direction, so the direction is named once here. And
+   an SVG coordinate system does not flip with the page, so an arrow that still
+   pointed right would be pointing backwards in time; mirroring the whole overlay
+   turns the elbows and the arrowheads round with it. */
+@layer utilities {
+  [data-slot="gantt"] {
+    --bb-gantt-flow: right;
+  }
+
+  [dir="rtl"] [data-slot="gantt"] {
+    --bb-gantt-flow: left;
+  }
+
+  [dir="rtl"] [data-slot="gantt"] [data-gantt-links] {
+    transform: scaleX(-1);
+  }
+}
+
 /* Sortable — global styles for ghost/fallback elements created outside the component tree */
 @layer utilities {
   .sortable-ghost {

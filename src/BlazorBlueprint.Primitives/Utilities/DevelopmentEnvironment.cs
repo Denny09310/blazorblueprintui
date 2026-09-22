@@ -34,11 +34,26 @@ internal static class DevelopmentEnvironment
     private static bool? cachedIsDevelopment;
 
     /// <summary>
+    /// Gets or sets an answer that replaces the host's, for tests. Null asks the host.
+    /// </summary>
+    /// <remarks>
+    /// The host's answer is cached for the process, and a test host registers no environment, so
+    /// without this a development-only diagnostic cannot be tested at all — and whichever test
+    /// asked first would decide the answer for every test after it.
+    /// </remarks>
+    internal static bool? OverrideForTests { get; set; }
+
+    /// <summary>
     /// Returns true when the host application's environment is "Development".
     /// </summary>
     /// <param name="services">The application's service provider.</param>
     public static bool IsDevelopment(IServiceProvider services)
     {
+        if (OverrideForTests is { } forced)
+        {
+            return forced;
+        }
+
         if (cachedIsDevelopment.HasValue)
         {
             return cachedIsDevelopment.Value;

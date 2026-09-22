@@ -1,0 +1,1 @@
+<BbQrCode Value="https://blazorblueprintui.com" ShowValue="true" />

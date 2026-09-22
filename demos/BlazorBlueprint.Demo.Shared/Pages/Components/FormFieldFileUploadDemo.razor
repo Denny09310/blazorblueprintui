@@ -1,4 +1,5 @@
 @page "/components/form-field-file-upload"
+@using System.ComponentModel.DataAnnotations
 
 <PageTitle>FormFieldFileUpload Component - Blazor Blueprint</PageTitle>
 
@@ -21,7 +22,7 @@
             </p>
         </div>
         <div class="max-w-md">
-            <BbFormFieldFileUpload @bind-Files="_singleFile"
+            <BbFormFieldFileUpload AriaLabel="Attachment" @bind-Files="_singleFile"
                                   Label="Attachment"
                                   HelperText="Upload a file (max 10 MB)." />
         </div>
@@ -95,6 +96,17 @@
         <CodeBlock Source="Components/FormFieldFileUpload/error.txt" />
     </div>
 
+    <section class="space-y-4" data-testid="editform-validation">
+        <h2 class="text-2xl font-semibold">EditForm validation</h2>
+        <p>Two-way binding supplies FilesExpression automatically. With explicit callbacks, supply the expression to identify the model field. ErrorText remains available for manual errors.</p>
+        <EditForm Model="validationModel" FormName="FormFieldFileUploadValidation">
+    <DataAnnotationsValidator />
+    <BbFormFieldFileUpload @bind-Files="validationModel.Files" Label="Supporting files" AriaLabel="Supporting files" />
+    <BbButton Type="ButtonType.Submit" Class="mt-3">Validate selection</BbButton>
+</EditForm>
+        <CodeBlock Source="Components/FormFieldFileUpload/editform.txt" />
+    </section>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>Label visually associated with the file upload</AccessibilityItem>
@@ -114,6 +126,8 @@
         </div>
         <div class="space-y-4">
             <ApiReference ComponentName="FormFieldFileUpload">
+                <ApiParameter Name="FilesExpression" Type="Expression&lt;Func&lt;IReadOnlyList&lt;FileUploadItem&gt;?&gt;&gt;?" Default="null">Identifies the EditForm field. Supplied by @@bind-Files; enables field notifications and validation messages.</ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">Accessible name forwarded to the interactive control or group.</ApiParameter>
                 <ApiParameter Name="Label" Type="string?" Default="null">The label text.</ApiParameter>
                 <ApiParameter Name="HelperText" Type="string?" Default="null">Helper text below the upload.</ApiParameter>
                 <ApiParameter Name="ErrorText" Type="string?" Default="null">Manual error text override.</ApiParameter>
@@ -137,6 +151,21 @@
 </div>
 
 @code {
+    private readonly ValidationModel validationModel = new();
+
+    private sealed class ValidationModel : IValidatableObject
+    {
+        public IReadOnlyList<FileUploadItem>? Files { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (Files is null || Files.Count == 0)
+            {
+                yield return new ValidationResult("Please make a selection.", [nameof(Files)]);
+            }
+        }
+    }
+
     private IReadOnlyList<FileUploadItem>? _singleFile;
     private IReadOnlyList<FileUploadItem>? _imageFiles;
     private IReadOnlyList<FileUploadItem>? _errorFiles;

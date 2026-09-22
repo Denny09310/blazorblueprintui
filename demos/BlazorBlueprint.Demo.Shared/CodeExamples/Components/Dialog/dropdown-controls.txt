@@ -1,5 +1,5 @@
 <BbDialog>
-    <BbDialogTrigger>Open Dialog with Dropdowns</BbDialogTrigger>
+    <BbDialogTrigger AsChild="false">Open Dialog with Dropdowns</BbDialogTrigger>
     <BbDialogContent>
         <BbDialogHeader>
             <BbDialogTitle>Nested Dropdown Controls</BbDialogTitle>

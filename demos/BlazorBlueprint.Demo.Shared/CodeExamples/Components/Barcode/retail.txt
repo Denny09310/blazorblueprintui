@@ -1,0 +1,5 @@
+@* Give the code without its check digit and it is worked out;
+   give it with one and it is verified. *@
+<BbBarcode Value="590123412345" Type="BarcodeType.Ean13" />
+<BbBarcode Value="9638507"      Type="BarcodeType.Ean8" />
+<BbBarcode Value="03600029145"  Type="BarcodeType.UpcA" />

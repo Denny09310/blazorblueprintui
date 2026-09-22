@@ -75,15 +75,6 @@ public partial class BbSeparator : ComponentBase
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
-    /// <summary>
-    /// Gets the computed CSS classes for the separator element.
-    /// </summary>
-    /// <remarks>
-    /// Combines:
-    /// - Base separator styles (shrink-0, bg-border)
-    /// - Orientation-specific classes (width/height)
-    /// - Custom classes from the Class parameter
-    /// </remarks>
     /// <summary>The visible line pattern.</summary>
     [Parameter] public SeparatorLineStyle LineStyle { get; set; }
 

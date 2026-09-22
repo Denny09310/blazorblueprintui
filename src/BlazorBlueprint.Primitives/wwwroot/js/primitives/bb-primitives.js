@@ -38,8 +38,10 @@ import * as portal from './portal.js';
 import * as positioning from './positioning.js';
 import * as scrollArea from './scroll-area.js';
 import * as select from './select.js';
+import * as signaturePad from './signature-pad.js';
 import * as slider from './slider.js';
 import * as sortable from './sortable.js';
+import * as swipeArea from './swipe-area.js';
 import * as tableRowNav from './table-row-nav.js';
 // Revise the dependency URL when its keyboard contract changes: a versioned
 // entry module does not invalidate relative imports already held by a browser.
@@ -83,8 +85,10 @@ assertFresh('portal.js', portal, 'setupPortal');
 assertFresh('positioning.js', positioning, 'hidePosition');
 assertFresh('scroll-area.js', scrollArea, 'initialize');
 assertFresh('select.js', select, 'scrollMarkedIntoView');
+assertFresh('signature-pad.js', signaturePad, 'initialize');
 assertFresh('slider.js', slider, 'initialize');
 assertFresh('sortable.js', sortable, 'init');
+assertFresh('swipe-area.js', swipeArea, 'initialize');
 assertFresh('table-row-nav.js', tableRowNav, 'delegateRowBehaviour');
 assertFresh('tree-keyboard.js', treeKeyboard, 'initialize');
 
@@ -103,8 +107,10 @@ export {
     positioning,
     scrollArea,
     select,
+    signaturePad,
     slider,
     sortable,
+    swipeArea,
     tableRowNav,
     treeKeyboard
 };

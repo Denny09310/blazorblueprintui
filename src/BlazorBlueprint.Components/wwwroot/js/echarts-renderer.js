@@ -2,9 +2,11 @@
 // Manages ECharts instance lifecycle: create, update, resize, dispose
 
 import { resolveThemeColors, watchThemeChanges } from './chart-theme.js';
+import { ensureWorldMap, prepareWorldMap, resizeWorldMap } from './world-map.js';
 
 /** @type {Map<string, ChartState>} */
 const instances = new Map();
+const pendingInitializations = new Map();
 
 /** @type {Promise|null} */
 let echartsLoadPromise = null;
@@ -55,7 +57,7 @@ function toClickArgs(params) {
   let value = null;
   let values = null;
 
-  if (typeof raw === 'number') {
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
     value = raw;
   } else if (Array.isArray(raw)) {
     values = raw.map((v) => (typeof v === 'number' ? v : Number(v))).map((v) => (Number.isFinite(v) ? v : 0));
@@ -64,7 +66,9 @@ function toClickArgs(params) {
   return {
     seriesName: params.seriesName ?? null,
     seriesIndex: typeof params.seriesIndex === 'number' ? params.seriesIndex : -1,
-    dataIndex: typeof params.dataIndex === 'number' ? params.dataIndex : -1,
+    dataIndex: params.seriesType === 'map'
+      ? (params.data?.bbSourceIndex ?? -1)
+      : (typeof params.dataIndex === 'number' ? params.dataIndex : -1),
     name: params.name ?? null,
     componentType: params.componentType ?? null,
     value,
@@ -88,12 +92,17 @@ export async function initialize(chartId, option, dotNetRef) {
     dispose(chartId);
   }
 
+  const initialization = {};
+  pendingInitializations.set(chartId, initialization);
   const echarts = await loadECharts();
+  await ensureWorldMap(echarts, option);
+  if (pendingInitializations.get(chartId) !== initialization || !element.isConnected) return;
+  pendingInitializations.delete(chartId);
 
   const chart = echarts.init(element, null, { renderer: 'svg' });
 
   // Resolve CSS variables and set options
-  const resolvedOption = resolveThemeColors(option, element);
+  const resolvedOption = resolveThemeColors(prepareWorldMap(option, element), element);
   applyRadarTooltipFormatter(resolvedOption);
   chart.setOption(resolvedOption);
 
@@ -101,6 +110,8 @@ export async function initialize(chartId, option, dotNetRef) {
   const resizeObserver = new ResizeObserver(() => {
     if (!chart.isDisposed()) {
       chart.resize();
+      const state = instances.get(chartId);
+      if (state) resizeWorldMap(chart, state.lastOption, element);
     }
   });
   resizeObserver.observe(element);
@@ -109,39 +120,40 @@ export async function initialize(chartId, option, dotNetRef) {
   const themeUnwatch = watchThemeChanges(() => {
     const state = instances.get(chartId);
     if (state && state.lastOption && !state.chart.isDisposed()) {
-      const reresolved = resolveThemeColors(state.lastOption, state.element);
+      const reresolved = resolveThemeColors(prepareWorldMap(state.lastOption, state.element), state.element);
       applyRadarTooltipFormatter(reresolved);
       state.chart.setOption(reresolved, { notMerge: true });
     }
   });
-
-  if (dotNetRef) {
-    // 'click' on the instance fires for data points only. Blank areas of the canvas never reach
-    // it, which is why the zrender-level handler below exists for OnChartClick.
-    chart.on('click', (params) => {
-      dotNetRef.invokeMethodAsync('HandleDataPointClick', toClickArgs(params));
-    });
-
-    // zrender sees every click on the canvas, and sets `target` only when the click landed on a
-    // rendered shape. No target means blank space, which is the one case 'click' above misses.
-    //
-    // Deliberately not chart.containPixel('grid', ...): that is true anywhere inside the plot
-    // area, including the gaps between bars, so it suppressed nearly every blank click.
-    chart.getZr().on('click', (event) => {
-      if (!event.target) {
-        dotNetRef.invokeMethodAsync('HandleChartClick');
-      }
-    });
-  }
 
   instances.set(chartId, {
     chart,
     element,
     resizeObserver,
     themeUnwatch,
-    dotNetRef,
+    dotNetRef: null,
     lastOption: option
   });
+  setClickHandler(chartId, dotNetRef);
+}
+
+// Keep subscriptions independent of chart options: callbacks can change without data changes.
+export function setClickHandler(chartId, dotNetRef) {
+  const state = instances.get(chartId);
+  if (!state || state.chart.isDisposed()) return;
+  if (state.dataClick) state.chart.off('click', state.dataClick);
+  if (state.blankClick) state.chart.getZr().off('click', state.blankClick);
+  state.dataClick = state.blankClick = null;
+  state.dotNetRef = dotNetRef;
+  if (!dotNetRef) return;
+  // ECharts reports data points here; zrender also sees blank canvas clicks.
+  state.dataClick = params => dotNetRef.invokeMethodAsync('HandleDataPointClick', toClickArgs(params));
+  state.blankClick = event => {
+    // A target is a rendered shape. containPixel('grid') would also exclude gaps between bars.
+    if (!event.target) dotNetRef.invokeMethodAsync('HandleChartClick');
+  };
+  state.chart.on('click', state.dataClick);
+  state.chart.getZr().on('click', state.blankClick);
 }
 
 /**
@@ -150,19 +162,27 @@ export async function initialize(chartId, option, dotNetRef) {
  * @param {object} option - New ECharts option
  * @param {boolean} notMerge - If true, replace entirely (default: true)
  */
-export function update(chartId, option, notMerge) {
+export async function update(chartId, option, notMerge) {
   const state = instances.get(chartId);
   if (!state || state.chart.isDisposed()) return;
 
   state.lastOption = option;
-  const resolved = resolveThemeColors(option, state.element);
+  await ensureWorldMap(echartsLib, option);
+  if (state.chart.isDisposed() || state.lastOption !== option) return;
+  const resolved = resolveThemeColors(prepareWorldMap(option, state.element), state.element);
   applyRadarTooltipFormatter(resolved);
   state.chart.setOption(resolved, { notMerge: notMerge !== false });
 }
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[char]);
+}
+
 /**
  * If the chart is a radar with rich-text indicator names (e.g. "{a|186/80}\n{b|January}"),
- * install a tooltip formatter that strips the rich-text tokens and renders clean HTML.
+ * install a tooltip formatter that strips the rich-text tokens and escapes data-derived text.
  * @param {object} option - Resolved ECharts option
  */
 function applyRadarTooltipFormatter(option) {
@@ -182,11 +202,11 @@ function applyRadarTooltipFormatter(option) {
   });
 
   option.tooltip.formatter = (params) => {
-    let html = `${params.marker} <strong>${params.seriesName}</strong>`;
+    let html = `${params.marker} <strong>${escapeHtml(params.seriesName)}</strong>`;
     if (Array.isArray(params.value)) {
       params.value.forEach((val, idx) => {
         if (idx < cleanNames.length) {
-          html += `<br/>${cleanNames[idx]}: ${val}`;
+          html += `<br/>${escapeHtml(cleanNames[idx])}: ${escapeHtml(val)}`;
         }
       });
     }
@@ -199,6 +219,7 @@ function applyRadarTooltipFormatter(option) {
  * @param {string} chartId - Chart identifier
  */
 export function dispose(chartId) {
+  pendingInitializations.delete(chartId);
   const state = instances.get(chartId);
   if (!state) return;
 

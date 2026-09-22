@@ -1,4 +1,4 @@
-<BbFormFieldCheckboxGroup TValue="string"
+<BbFormFieldCheckboxGroup AriaLabel="Favorite fruits" TValue="string"
                          @bind-Values="selectedFruits"
                          Label="Favorite fruits"
                          HelperText="Select all that apply.">

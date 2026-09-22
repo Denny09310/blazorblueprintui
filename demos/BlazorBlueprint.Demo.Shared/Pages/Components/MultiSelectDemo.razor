@@ -22,7 +22,7 @@
         </p>
 
         <div class="flex flex-col gap-2">
-            <BbMultiSelect TValue="string"
+            <BbMultiSelect Required="true" AriaLabel="Choose options" TValue="string"
                         Options="languages"
                         @bind-Values="selectedLanguages"
                         Placeholder="Select languages..."
@@ -513,6 +513,8 @@
 
         <div class="space-y-4">
             <ApiReference ComponentName="MultiSelect&lt;TValue&gt;">
+        <ApiParameter Name="Required" Type="bool" Default="false">Announces a required selection. Enforce nonempty selection with model validation.</ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">Accessible name forwarded to the interactive control or group.</ApiParameter>
                 <ApiParameter Name="Options" Type="IEnumerable&lt;SelectOption&lt;TValue&gt;&gt;?">
                     Collection of options for data-driven mode. When null, uses compositional mode with ChildContent.
                 </ApiParameter>

@@ -13,8 +13,6 @@
         disabled="@Disabled"
         tabindex="@(Disabled ? -1 : 0)"
         @onclick="HandleClick"
-        @onkeydown="HandleKeyDown"
-        @onkeydown:preventDefault="shouldPreventDefault"
         @attributes="AdditionalAttributes">
         @ChildContent
     </button>

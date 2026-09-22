@@ -1,15 +1,22 @@
 @namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
 @implements IAsyncDisposable
+@inject IBbLocalizer Localizer
 
 @*
     Styled TabsList component.
     Wraps the TabsList primitive with shadcn/ui styling.
     Supports responsive mode that collapses to a Select on overflow.
+
+    The add button sits beside the tablist, never inside it. A tablist may only hold tabs, and a
+    button that is not a tab either lies to a screen reader about being one or takes a place in
+    the arrow-key order that a reader has no reason to expect.
 *@
 
 @if (Responsive)
 {
-    <div @ref="_containerRef" class="bb:relative bb:w-full" @attributes="AdditionalAttributes">
+    <div @ref="reorderRoot" data-tabs-id="@componentId" class="bb:flex bb:w-full bb:items-center bb:gap-1" @attributes="AdditionalAttributes">
+    <div @ref="_containerRef" class="bb:relative bb:min-w-0 bb:flex-1">
         @* Tab buttons — use visibility:hidden (not display:none) when overflowing
            so the element retains its measured width for the ResizeObserver. *@
         <BlazorBlueprint.Primitives.Tabs.BbTabsList class="@ClassNames.cn(CssClass, TabListVisibilityClass)">
@@ -31,11 +38,50 @@
             </div>
         }
     </div>
+        @if (Addable && OnAdd.HasDelegate)
+        {
+            <button type="button"
+                    class="@AddCssClass"
+                    title="@EffectiveAddLabel"
+                    aria-label="@EffectiveAddLabel"
+                    @onclick="HandleAddAsync">
+                <LucideIcon Name="plus" Size="14" />
+            </button>
+        }
+    </div>
+}
+else if (NeedsWrapper)
+{
+    @* Only wrapped when one of the new behaviours is on, so an ordinary tab list keeps exactly
+       the DOM it has always had and nobody's layout moves under them. *@
+    <div @ref="reorderRoot"
+         data-tabs-id="@componentId"
+         class="bb:inline-flex bb:items-center bb:gap-1"
+         @attributes="AdditionalAttributes">
+        <BlazorBlueprint.Primitives.Tabs.BbTabsList class="@CssClass">
+            <CascadingValue Value="this" IsFixed="true">
+                @ChildContent
+            </CascadingValue>
+        </BlazorBlueprint.Primitives.Tabs.BbTabsList>
+
+        @if (Addable && OnAdd.HasDelegate)
+        {
+            <button type="button"
+                    class="@AddCssClass"
+                    title="@EffectiveAddLabel"
+                    aria-label="@EffectiveAddLabel"
+                    @onclick="HandleAddAsync">
+                <LucideIcon Name="plus" Size="14" />
+            </button>
+        }
+    </div>
 }
 else
 {
     <BlazorBlueprint.Primitives.Tabs.BbTabsList class="@CssClass"
                                              @attributes="AdditionalAttributes">
-        @ChildContent
+        <CascadingValue Value="this" IsFixed="true">
+            @ChildContent
+        </CascadingValue>
     </BlazorBlueprint.Primitives.Tabs.BbTabsList>
 }

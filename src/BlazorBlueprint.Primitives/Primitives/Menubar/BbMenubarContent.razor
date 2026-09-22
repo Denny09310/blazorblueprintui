@@ -8,10 +8,6 @@
     var isOpen = Menu?.IsOpen == true;
 }
 
-@if (isOpen)
-{
-    <div class="bb:fixed bb:inset-0 bb:z-40" @onclick="HandleOverlayClick" @onclick:stopPropagation="true"></div>
-}
 <div @ref="contentRef"
      style="@MergedContentStyle"
      data-state="@(isOpen ? "open" : "closed")"
@@ -110,11 +106,12 @@
 
     /// <summary>Called from JS when Escape is pressed.</summary>
     [JSInvokable]
-    public void JsOnEscapeKey()
+    public async Task JsOnEscapeKey()
     {
         if (!disposed)
         {
             Menu?.Close();
+            if (Menu?.FocusTrigger is { } focus) await focus();
         }
     }
 
@@ -153,23 +150,12 @@
         }
     }
 
-    private void HandleOverlayClick() =>
-        Menu?.Close();
-
     public async ValueTask DisposeAsync()
     {
         GC.SuppressFinalize(this);
         disposed = true;
 
         await CleanupKeyboardAsync();
-
-        try
-        {
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-        {
-            // Expected during circuit disconnect
-        }
 
         dotNetRef?.Dispose();
     }

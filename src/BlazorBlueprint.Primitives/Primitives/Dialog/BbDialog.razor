@@ -87,6 +87,7 @@
 
     /// <summary>
     /// Whether the dialog can be dismissed by clicking outside or pressing Escape.
+    /// This legacy parameter controls dismissal, not focus trapping or rendering strategy.
     /// Default is true.
     /// </summary>
     [Parameter]
@@ -112,6 +113,7 @@
 
     protected override void OnParametersSet()
     {
+        _context.AllowDismiss = Modal;
         rootAttributesWarningLogged = ContextRootAttributes.WarnOnce(
             Logger,
             rootAttributesWarningLogged,

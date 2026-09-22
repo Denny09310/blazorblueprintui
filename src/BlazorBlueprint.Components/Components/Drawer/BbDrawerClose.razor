@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Primitives.Utilities
+@inject IServiceProvider Services
 
 @*
     Drawer close - closes the drawer when activated.
@@ -39,7 +40,10 @@ else
     /// </summary>
     /// <remarks>
     /// Use this whenever the child is already a control. Leaving it false around a control nests
-    /// a button inside a button, which no browser renders reliably.
+    /// a button inside a button, which no browser renders reliably. The child has to read the
+    /// context, though: text, an icon or a plain <c>button</c> cannot, and then nothing can
+    /// close the drawer and <c>Class</c> goes nowhere. The Development environment logs a warning
+    /// when that happens.
     /// </remarks>
     [Parameter]
     public bool AsChild { get; set; }
@@ -58,7 +62,13 @@ else
         "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2",
         Class);
 
-    private TriggerContext TriggerContext => new()
+    private static readonly AsChildTriggerDescription Diagnostic = new("BbDrawerClose", "close this drawer", "<button>");
+
+    // The context the last render cascaded, kept so the first after-render can ask whether
+    // anything read it.
+    private TriggerContext? lastTriggerContext;
+
+    private TriggerContext TriggerContext => lastTriggerContext = new()
     {
         IsOpen = Context?.IsOpen ?? false,
         Close = () => _ = Context?.SetOpen(false),
@@ -71,4 +81,19 @@ else
             await Context.SetOpen(false);
         }
     }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            AsChildDiagnostics.WarnIfUnconsumed<BbDrawerClose>(Services, Diagnostic, AsChild, lastTriggerContext, PageAttributes());
+        }
+    }
+
+    // What the page set that AsChild mode has no element for: the extra attributes, and Class,
+    // which is a parameter here rather than one of them.
+    private IReadOnlyDictionary<string, object>? PageAttributes() =>
+        string.IsNullOrEmpty(Class)
+            ? AdditionalAttributes
+            : new Dictionary<string, object>(AdditionalAttributes ?? new Dictionary<string, object>()) { ["class"] = Class };
 }

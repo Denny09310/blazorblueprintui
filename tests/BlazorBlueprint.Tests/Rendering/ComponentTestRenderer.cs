@@ -25,6 +25,15 @@ internal sealed class ComponentTestRenderer(IServiceProvider services, ILoggerFa
         return component;
     }
 
+    internal async Task<IComponent> MountTypeAsync(Type type, Dictionary<string, object?> parameters)
+    {
+        var component = InstantiateComponent(type);
+        var id = AssignRootComponentId(component);
+        roots.Add(id);
+        await RenderRootComponentAsync(id, ParameterView.FromDictionary(parameters));
+        return component;
+    }
+
     /// <summary>
     /// Serialises the rendered tree to HTML-like markup, so tests can assert on what a component
     /// actually put in the DOM: which element an attribute landed on, whether an id was written,
