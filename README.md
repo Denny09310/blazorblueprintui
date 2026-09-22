@@ -9,7 +9,7 @@ Beautiful UI components for Blazor, built with accessibility in mind. Inspired b
 
 <p align="center">
   <a href="https://blazorblueprintui.com">
-    <img src=".github/assets/hero.png" alt="Blazor Blueprint - Beautiful Components for Blazor" />
+    <img src=".github/assets/hero.png" alt="Blazor Blueprint homepage in light mode, featuring sign-in, AI assistant, and analytics components" />
   </a>
 </p>
 
