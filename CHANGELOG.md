@@ -288,9 +288,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   total — it is handed the items, not the numbers above it.
 
   **Totals read as totals *of* the thing named.** `RowTotals` is a column at the end of every row,
-  `ColumnTotals` is a row at the bottom, and the two subtotal flags do the same one level in. That
-  naming is the opposite of at least one other library's, so it is spelled out in the parameter
-  docs and on the demo page rather than left to be discovered.
+  `ColumnTotals` is a row at the bottom, and the two subtotal flags do the same one level in. These
+  meanings are spelled out in the parameter docs and on the demo page.
 
   `Label` turns a group's value into its heading, so a field can be bucketed or formatted while
   still grouping — and therefore sorting — on the real value: the difference between Jan, Feb, Mar
@@ -603,7 +602,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   default, unlike ECharts itself, because a dragged node stays where it was dropped with no way back
   short of a reload.
 
-- **Five small components that close the last of the MudBlazor gaps.**
+- **Five new components for links, search highlighting, image fallbacks, scroll-to-top navigation, and unsaved-change prompts.**
 
   `BbLink` is the inline counterpart to `BbButton`. A button with `ButtonVariant.Link` looks like a link but keeps a button's height and padding, so it breaks the rhythm of a paragraph; this renders a bare anchor on the text baseline. Four colour treatments including one that inherits the surrounding text, underline always / on hover / never, and a focus ring that follows the text rather than a box, so a link that wraps mid-sentence reads as one link. `Target="_blank"` adds `rel="noopener noreferrer"` for you, and `ShowExternalIcon` appends an icon with a screen-reader note.
 
@@ -1351,7 +1350,7 @@ type that moved. Everything else in the surface is additive.
 
   The known `Virtualize` + `ItemsProvider` gap folded into this issue is **not** fixed. Grouping client-side needs every row, which is the thing virtualization exists to avoid, so [#411](https://github.com/blazorblueprintui/ui/issues/411)'s behaviour stands: the action is suppressed and the reason is logged. A `GroupedItemsProvider` remains the answer there, and it now understands nested levels. Changing the grouping also does not reset the page, matching the existing single-level behaviour.
 
-- **DataGrid: inline row editing** — [#497](https://github.com/blazorblueprintui/ui/issues/497), raised from the DataGrid plan as the clearest remaining gap against Radzen, Syncfusion and MudBlazor, all of which ship inline editing with validation.
+- **DataGrid: inline row editing with validation** — [#497](https://github.com/blazorblueprintui/ui/issues/497).
 
   `EditMode="DataGridEditMode.Row"` puts a whole row into edit at once: every column with an `EditTemplate` becomes an input and the changes commit or discard together. `BbDataGridEditColumn` renders Edit on a row at rest and Save and Cancel on the row being edited; `EditOnRowClick` and `StartEditAsync` are the alternatives. A column without an edit template keeps showing its normal cell, which is what an id or a computed total should do.
 
@@ -2241,7 +2240,7 @@ type that moved. Everything else in the surface is additive.
 
 > **Breaking Change** — the following change requires updates to all component references.
 
-- **BREAKING:** All Razor components across both `BlazorBlueprint.Components` (~300+ components) and `BlazorBlueprint.Primitives` (~65 components) now use a `Bb` prefix — e.g., `<Button>` → `<BbButton>`, `<Dialog>` → `<BbDialog>`, `<Select>` → `<BbSelect>`. This follows the convention used by other third-party libraries such as MudBlazor (`Mud` prefix) and Radzen (`Radzen` prefix) to prevent naming collisions with standard HTML elements, user-defined components, and third-party libraries. Non-component types (enums, context classes, services, helper classes, interfaces, event args) are unchanged. See [V3-MIGRATION-GUIDE.md](V3-MIGRATION-GUIDE.md#component-bb-prefix) for full migration instructions.
+- **BREAKING:** All Razor components across both `BlazorBlueprint.Components` (~300+ components) and `BlazorBlueprint.Primitives` (~65 components) now use a `Bb` prefix — e.g., `<Button>` → `<BbButton>`, `<Dialog>` → `<BbDialog>`, `<Select>` → `<BbSelect>`. The prefix prevents naming collisions with standard HTML elements, user-defined components, and third-party libraries. Non-component types (enums, context classes, services, helper classes, interfaces, event args) are unchanged. See [V3-MIGRATION-GUIDE.md](V3-MIGRATION-GUIDE.md#component-bb-prefix) for full migration instructions.
 - **BREAKING:** `IPortalService` redesigned with Two-Layer Portal Architecture — portals are now split into `PortalCategory.Container` (Dialog, Sheet, AlertDialog) and `PortalCategory.Overlay` (Popover, Select, Dropdown, Tooltip, HoverCard) categories. `RegisterPortal(id, content)` replaced by `RegisterPortal(id, content, category)`; `GetPortals()` replaced by `GetPortals(PortalCategory)` returning insertion-ordered results; `OnPortalsChanged` replaced by `OnPortalsCategoryChanged`. Each category has its own host, so opening a tooltip no longer causes Dialog/Sheet portals to re-render. See [V3-MIGRATION-GUIDE.md](V3-MIGRATION-GUIDE.md#iportalservice-two-layer-portal-architecture) for full migration instructions.
 
 ### Added

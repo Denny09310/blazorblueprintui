@@ -14,7 +14,7 @@ namespace BlazorBlueprint.Components;
 /// <typeparam name="TItem">The type of data items in the view.</typeparam>
 /// <remarks>
 /// <para>
-/// DataView provides a PrimeVue-like composition model: use ListTemplate and/or GridTemplate
+/// DataView provides a template-based composition model: use ListTemplate and/or GridTemplate
 /// render fragments to define how items are rendered in each layout mode.
 /// If only one template is provided the component locks into that layout and hides the
 /// layout-toggle buttons. If both are provided the user can switch freely between list and
