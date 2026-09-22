@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- The mobile DateRangePicker preset dropdown reflects the selected dates instead of defaulting to Today. Unmatched or partial selections show Custom; an empty selection shows Select date range.
 - Radar tooltips escape data-derived text, preventing HTML injection through labels or series names.
 - Signature stroke restoration waits for the drawn pad to mount and initialize, including repeated switches from typed mode.
 - Pivot parent headings and Gantt non-working-day bands redraw when their visible metadata changes. Initial Gantt build errors appear immediately.

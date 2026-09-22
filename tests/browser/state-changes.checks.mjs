@@ -6,6 +6,45 @@ test.beforeEach(async ({ page }) => {
     await expect(page.locator('#chart-callback svg')).toBeVisible();
 });
 
+test('mobile date range presets follow bound ranges, custom lists and external resets', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const trigger = page.getByRole('button', { name: 'Report dates', exact: true });
+    const select = page.locator('[data-drp-presets-select] select:visible');
+    const selected = () => select.locator('option:checked');
+    const load = async name => {
+        await page.keyboard.press('Escape');
+        await expect(page.locator('[data-drp]')).toHaveCount(0);
+        await page.getByRole('button', { name, exact: true }).click();
+        await trigger.click();
+        await expect(select).toBeVisible();
+    };
+    await trigger.click();
+    await expect(selected()).toHaveText('Custom');
+    await load('Load today');
+    await expect(selected()).toHaveText('Today');
+    await load('Load yesterday');
+    await expect(selected()).toHaveText('Yesterday');
+    await load('Load last week');
+    await expect(selected()).toHaveText('Last 7 days');
+    await load('Load stored range');
+    await expect(selected()).toHaveText('Custom');
+    await load('Use custom presets');
+    await expect(selected()).toHaveText('Stored report');
+    await load('Load today');
+    await expect(selected()).toHaveText('Today');
+    await expect(select).toHaveValue('2');
+    await load('Use default presets');
+    await expect(selected()).toHaveText('Today');
+    await expect(select).toHaveValue('0');
+    await load('Reset report');
+    await expect(page.locator('#report-range')).toHaveText('empty');
+    await expect(selected()).toHaveText('Select date range');
+    await select.selectOption({ label: 'Today' });
+    await expect(selected()).toHaveText('Today');
+    await page.locator('[data-drp]').getByRole('button', { name: 'Apply', exact: true }).click();
+    await expect(page.locator('#report-range')).not.toHaveText('empty');
+});
+
 test('restoring strokes awaits the drawn pad when starting or returning from typed mode', async ({ page }) => {
     const signature = page.locator('#signature');
     await expect(signature.locator('canvas')).toHaveCount(0);

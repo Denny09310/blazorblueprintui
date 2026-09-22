@@ -29,6 +29,7 @@ If using a separately installed compatible WebKit, set `BB_WEBKIT_EXECUTABLE` to
 Coverage includes:
 
 - Audit regressions: conditional step order, responsive tab editing, headless menu focus, EditForm field messages, and scroll completion/focus.
+- Mobile DateRangePicker preset matching, manual/custom ranges, clearing, and desktop-to-mobile preset synchronization. The state-change fixture also covers externally loaded/reset ranges and custom preset lists.
 - World-map data updates, country clicks, theme changes, mobile resizing, pan/zoom, and lazy geometry loading across all three hosts.
 - Segmented input editing and validation, nested pickers and focus return.
 - TreeSelect expansion, single selection and cascading checkbox selection.

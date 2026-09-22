@@ -36,6 +36,7 @@
 
 ### Bug Fixes
 
+- **BbDateRangePicker**: the mobile preset dropdown follows the selected calendar dates, including parent updates and desktop preset clicks. Unmatched/partial ranges show Custom, and clearing shows Select date range, so Today can always be selected when it is not the current range.
 - **Radar tooltips**: data-derived indicator names, series names and values are HTML-escaped to prevent HTML injection.
 - **BbSignature**: stroke restoration waits for the drawn pad to mount and initialize, including repeated restoration from typed mode.
 - **BbPivotDataGrid**, **BbGantt**: changed parent headings and non-working-day bands redraw immediately. Gantt also renders initial build errors without requiring another parent interaction.

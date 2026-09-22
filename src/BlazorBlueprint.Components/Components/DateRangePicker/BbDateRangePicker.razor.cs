@@ -264,11 +264,8 @@ public partial class BbDateRangePicker : ComponentBase
         if (Value != _previousValue)
         {
             _previousValue = Value;
-            if (Value != null)
-            {
-                _selectionStart = Value.Start;
-                _selectionEnd = Value.End;
-            }
+            _selectionStart = Value?.Start;
+            _selectionEnd = Value?.End;
         }
 
         // Capture culture at parameter-set time so it's stable across render cycles
@@ -394,14 +391,31 @@ public partial class BbDateRangePicker : ComponentBase
         StateHasChanged();
     }
 
-    private int _selectedPresetIndex;
-
-    private async Task OnPresetSelectChanged(int index)
+    // The calendar draft is the source of truth, including before Apply is pressed.
+    // A nullable index lets the native select show Custom/empty instead of selecting index zero.
+    private int? SelectedPresetIndex
     {
-        if (index >= 0 && index < EffectivePresets.Count)
+        get
         {
-            _selectedPresetIndex = index;
-            await ApplyPreset(EffectivePresets[index]);
+            var presets = EffectivePresets;
+            for (var i = 0; i < presets.Count; i++)
+            {
+                if (IsSelectedPreset(presets[i]))
+                {
+                    return i;
+                }
+            }
+            return null;
+        }
+    }
+
+    private async Task OnPresetSelectChanged(int? index)
+    {
+        // Reconcile the native select even if constraints reject the requested preset.
+        _parametersChanged = true;
+        if (index is int selected && selected >= 0 && selected < EffectivePresets.Count)
+        {
+            await ApplyPreset(EffectivePresets[selected]);
         }
     }
 
@@ -608,15 +622,22 @@ public partial class BbDateRangePicker : ComponentBase
         Class
     );
 
+    private bool IsSelectedPreset(DateRangeQuickPick quickPick)
+    {
+        if (!_selectionStart.HasValue || !_selectionEnd.HasValue)
+        {
+            return false;
+        }
+        var range = ResolveRange(quickPick);
+        return range != null && range.Start.Date == _selectionStart.Value.Date &&
+               range.End.Date == _selectionEnd.Value.Date;
+    }
+
     private string GetPresetButtonClass(DateRangeQuickPick quickPick)
     {
-        var range = ResolveRange(quickPick);
-        var isSelected = range != null && _selectionStart.HasValue && _selectionEnd.HasValue &&
-                         range.Start == _selectionStart.Value && range.End == _selectionEnd.Value;
-
         return ClassNames.cn(
             "bb:whitespace-nowrap bb:shrink-0 bb:justify-start",
-            isSelected ? "bb:bg-primary bb:text-primary-foreground bb:hover:bg-primary bb:hover:text-primary-foreground" : null
+            IsSelectedPreset(quickPick) ? "bb:bg-primary bb:text-primary-foreground bb:hover:bg-primary bb:hover:text-primary-foreground" : null
         );
     }
 
