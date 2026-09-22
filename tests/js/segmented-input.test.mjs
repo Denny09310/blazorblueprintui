@@ -69,3 +69,13 @@ test('disabled, readonly and composing segments are not changed; disposal remove
   dispose(root);
   assert.equal(listeners.size, 0);
 });
+
+test('ArrowUp starts an empty month at January and then advances normally', t => {
+  const { inputs: [input], key } = fixture(t);
+  input.value = '';
+  input.dataset = { min: '1', max: '12', digits: '2', step: '1' };
+  key(input, 'ArrowUp');
+  assert.equal(input.value, '01');
+  key(input, 'ArrowUp');
+  assert.equal(input.value, '02');
+});

@@ -1,0 +1,17 @@
+@* Two fields on an axis nest, the second inside the first.
+   Read the Totals names as totals OF the thing named: RowTotals is a column at the
+   end of every row, ColumnTotals is a row at the bottom. *@
+<BbPivotDataGrid TItem="Sale" Data="@sales" Totals="PivotTotals.All">
+    <Rows>
+        <BbPivotField TItem="Sale" Title="Region" Value="@(s => s.Region)" />
+        <BbPivotField TItem="Sale" Title="Country" Value="@(s => s.Country)" />
+    </Rows>
+    <Columns>
+        <BbPivotField TItem="Sale" Title="Year" Value="@(s => s.Year)" />
+        <BbPivotField TItem="Sale" Title="Quarter" Value="@(s => s.Quarter)" />
+    </Columns>
+    <Values>
+        <BbPivotValue TItem="Sale" Title="Sales" Function="AggregateFunction.Sum"
+                      Value="@(s => s.Amount)" Format="C0" />
+    </Values>
+</BbPivotDataGrid>

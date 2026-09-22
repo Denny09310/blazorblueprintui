@@ -23,24 +23,32 @@ namespace BlazorBlueprint.Components;
 /// <item>Focus management for keyboard navigation</item>
 /// </list>
 /// </para>
+/// <para>
+/// <see cref="AsChild"/> is on by default, so the trigger renders no element of its own and hands
+/// its behaviour to a child that reads it, such as a <c>BbButton</c>. Text, an icon or plain
+/// markup cannot read it: set <c>AsChild="false"</c> for those, so the trigger renders its own
+/// button around them. In AsChild mode <see cref="Class"/> and any extra attributes are ignored,
+/// because there is no element to put them on; the Development environment logs a warning when
+/// nothing inside the trigger read it.
+/// </para>
 /// </remarks>
 /// <example>
-/// Basic trigger:
+/// A button as the trigger, which is what the default expects:
 /// <code>
-/// &lt;Collapsible&gt;
-///     &lt;CollapsibleTrigger&gt;
-///         Toggle Content
-///     &lt;/CollapsibleTrigger&gt;
-///     &lt;CollapsibleContent&gt;...&lt;/CollapsibleContent&gt;
-/// &lt;/Collapsible&gt;
+/// &lt;BbCollapsible&gt;
+///     &lt;BbCollapsibleTrigger&gt;
+///         &lt;BbButton Variant="ButtonVariant.Outline"&gt;Toggle Content&lt;/BbButton&gt;
+///     &lt;/BbCollapsibleTrigger&gt;
+///     &lt;BbCollapsibleContent&gt;...&lt;/BbCollapsibleContent&gt;
+/// &lt;/BbCollapsible&gt;
 /// </code>
 ///
-/// Styled trigger with icon:
+/// Styled trigger with icon, which needs its own button:
 /// <code>
-/// &lt;CollapsibleTrigger Class="flex items-center gap-2 px-4 py-2 hover:bg-accent"&gt;
+/// &lt;BbCollapsibleTrigger AsChild="false" Class="flex items-center gap-2 px-4 py-2 hover:bg-accent"&gt;
 ///     &lt;LucideIcon Name="chevron-down" /&gt;
 ///     &lt;span&gt;Show More&lt;/span&gt;
-/// &lt;/CollapsibleTrigger&gt;
+/// &lt;/BbCollapsibleTrigger&gt;
 /// </code>
 /// </example>
 public partial class BbCollapsibleTrigger : ComponentBase

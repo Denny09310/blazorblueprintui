@@ -5,7 +5,7 @@
 {
     @if (Fallback is not null)
     {
-        <div class="@FallbackCssClass" data-slot="image-fallback" role="img" aria-label="@Alt">
+        <div class="@FallbackCssClass" data-slot="image-fallback" role="@(string.IsNullOrEmpty(Alt) ? null : "img")" aria-label="@Alt" aria-hidden="@(string.IsNullOrEmpty(Alt) ? "true" : null)" @attributes="AdditionalAttributes">
             @Fallback
         </div>
     }
@@ -21,7 +21,7 @@
     }
     else
     {
-        <div class="@FallbackCssClass" data-slot="image-fallback" role="img" aria-label="@Alt">
+        <div class="@FallbackCssClass" data-slot="image-fallback" role="@(string.IsNullOrEmpty(Alt) ? null : "img")" aria-label="@Alt" aria-hidden="@(string.IsNullOrEmpty(Alt) ? "true" : null)" @attributes="AdditionalAttributes">
             <LucideIcon Name="image-off" Class="bb:h-6 bb:w-6 bb:text-muted-foreground" />
         </div>
     }

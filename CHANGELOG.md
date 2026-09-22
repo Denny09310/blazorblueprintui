@@ -7,6 +7,566 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 
+## 2026-09-22
+
+### Fixed
+
+- The mobile DateRangePicker preset dropdown reflects the selected dates instead of defaulting to Today. Unmatched or partial selections show Custom; an empty selection shows Select date range.
+- Radar tooltips escape data-derived text, preventing HTML injection through labels or series names.
+- Signature stroke restoration waits for the drawn pad to mount and initialize, including repeated switches from typed mode.
+- Pivot parent headings and Gantt non-working-day bands redraw when their visible metadata changes. Initial Gantt build errors appear immediately.
+- ListBox, Slider and Checkbox keyboard navigation preserves Tab behavior; ListBox uses its visible label as its accessible name.
+- Chart click callbacks can be added, removed or replaced after initialization without remounting the chart.
+- Swipe cancellation discards queued movement updates. Explicitly setting FileUpload's bound `Files` to null clears the selection and releases removed file resources.
+
+## 2026-09-21
+
+### Added
+
+- Accessible names on picker, selection, OTP and upload controls; configurable
+  `BbSectionHeader.HeadingLevel`; EditForm expression support for checkbox groups,
+  date ranges and file-upload wrappers; and translatable sortable announcements.
+
+
+- **`BbMapChart` and `BbMap`**: a world choropleth for visitors, sales, and other
+  country-level datasets. Bind ISO country codes or English names to numeric
+  values, use the automatic color scale or customize it with `BbVisualMap`, and
+  enable pan/zoom with `Roam`. Missing values use a separate fill; country clicks
+  retain the source dataset index. Natural Earth boundaries ship as a lazy-loaded
+  static asset. Includes a website-visitors demo at `/charts/map`.
+
+- **`AsChildDiagnostics.WarnIfUnconsumed<TTrigger>` and `AsChildTriggerDescription`**
+  (`BlazorBlueprint.Primitives.Utilities`). The warning every AsChild trigger in the library now
+  logs, public so a trigger built outside the library can log it too. Call it from
+  `OnAfterRender` on the first render, with the `TriggerContext` the render cascaded. It is public
+  because the drawer's triggers live in Components and needed it; the other route, opening
+  Primitives' internals to Components, would break at runtime for an app that pairs Components
+  with a newer Primitives.
+
+- **`BarcodeFormatException`, in `BlazorBlueprint.Primitives.Barcode`.** An `ArgumentException`, so
+  existing catch blocks are unaffected, whose message is safe to put in front of whoever typed the
+  value. Every refusal from `BarcodeEncoder` is now one of these.
+
+### Fixed
+
+- Responsive tab adding/reordering, conditional step order, required-chip dismissal,
+  runtime upload paste options, custom calendar day names, toggle navigation after
+  disabling items, pagination template updates, and signature empty-state reporting.
+- Date/time restrictions now also apply to Now and empty-value time stepping.
+  `MinuteStep` outside 1–59 and missing/duplicate dock panel IDs fail early.
+- Primitive menus now support the documented keyboard and controlled-state behavior.
+  Dialog/Sheet close buttons activate once per native keyboard click. Dialog/Popover
+  `Modal` now gates outside/Escape dismissal as documented; its legacy name does not
+  change focus trapping. Dropdown `Dir` overrides reach portaled content; null inherits.
+- Tinted bubble contrast, message alignment, editable-date invalid semantics,
+  attachment names, decorative image fallbacks and external-link announcements.
+- ScrollToTop observes changing options and late targets, preserves keyboard focus,
+  and reports completion after reaching the top. Motion visibility changes respect
+  the selected trigger. Map, heatmap and candlestick series honor explicit fills/colors.
+- Upload text/errors, AM/PM labels and MultiSelect removal/count labels are localizable.
+
+
+- **`BbDrawer` reports `OpenChanged` when it is left to itself.** Without `Open` bound, the drawer
+  opened and closed but never raised `OpenChanged`, so a page that listened to it without binding
+  `Open` never heard anything. `BbDialog` and `BbSheet` report in both modes, and a page cannot tell
+  which kind of overlay it is listening to. The drawer now reports too, and only when its state
+  actually changed: closing a drawer that is already closed is not reported. Bound drawers are
+  unchanged.
+
+- **A trigger in AsChild mode now says so when nothing inside it can use it.** Eleven triggers
+  default `AsChild` to `true`: collapsible, popover, dialog, dialog close, sheet, sheet close,
+  dropdown menu, hover card, and the alert dialog trigger, action and cancel. In that mode the
+  trigger renders no element and no handlers, and passes its behaviour to a child that reads it —
+  `BbButton` does. Text, an icon or a plain `<span>` cannot, so the trigger did nothing, its `Class`
+  went nowhere, and nothing said why. `<BbCollapsibleTrigger Class="flex gap-1"><LucideIcon ... />
+  Details</BbCollapsibleTrigger>` looks right and cannot be clicked.
+
+  The default stays `true`, because the library and existing apps rely on it to put a `BbButton`
+  inside without nesting one button in another. What changed is that the mistake is now visible:
+  in the Development environment, every one of these triggers logs a warning through `ILogger`
+  when nothing read its context. The warning says to set `AsChild="false"` or to put a `BbButton`
+  inside, and names any class or attributes the trigger was given, since AsChild mode has no
+  element to put them on. Tooltip and hover card already had this warning; all of them now share
+  one. `BbDrawerTrigger` and `BbDrawerClose` default to `false`, and warn the same way when
+  `AsChild="true"` is set on them. Nothing is logged outside Development.
+
+  The `BbCollapsibleTrigger` XML docs taught the broken form in both of their examples, and so did
+  six Dialog code samples on the demo site and the Getting Started page. All of them are fixed.
+
+- **`OnBuilt` no longer rebuilds forever when the page that declares the chart handles it.**
+  `BbGantt` and `BbPivotDataGrid` both guarded the callback on a reference comparison against the
+  previous build, and both build a brand new object every time — so the guard was never once true.
+  `EventCallback.InvokeAsync` calls `StateHasChanged` on whoever handles it; where that is the page
+  the chart is written on, its re-render sets the chart's parameters again, which marks it stale,
+  which rebuilds, which reports again. Nothing in that circle stopped it, and it hung the circuit
+  on Server and the tab on WebAssembly.
+
+  Both now compare what was built. The Gantt walks its rows, the pivot checks its headings and then
+  its cells, and both stop at the first difference — one more pass over something the rebuild has
+  just worked out, rather than a second build. Compared exactly rather than through a hash, because
+  a hash costs the same and brings a small chance of calling two different charts the same: a
+  missed report is a silent wrong answer where an extra one is only wasted work.
+
+  The Gantt demo's first example now uses `OnBuilt`, which is both the missing demonstration of the
+  parameter and the exact arrangement that used to hang.
+
+- **`BbGantt` no longer wires up JavaScript against an element that is not there.** The chart is
+  built in `OnAfterRender`, so on the pass that builds it the document still shows whatever came
+  before — on the very first pass, the empty message, which has no chart element in it at all.
+  JavaScript setup ran anyway and was handed something that was not an element, which is the red
+  error banner that appeared under the charts. The charts still drew, because the gesture handlers
+  are attached later.
+
+  Setup now waits for the render after a rebuild, and refuses to run at all while a spinner, an
+  empty message or an error is what is actually on screen. Checking only that a chart had been
+  built was the mistake: a chart can exist in C# while the markup shows something else entirely.
+
+  **And then it asks the element reference itself**, because every one of those checks only
+  *infers* that the element exists. A `BbGanttColumn` registers during the chart's own render and
+  invalidates it afterwards, so with columns declared a further pass can land between the build and
+  the draw — an interleaving no amount of state-reading can see. An `ElementReference` that no
+  render has assigned has a null `Id`, and that is a direct test which cannot be raced. It defers
+  rather than disables: the next render wires everything up, and a test holds both halves of that
+  so a future guard cannot quietly turn the gestures off instead of fixing them.
+
+  The JavaScript setup also now catches `JSException`. A wiring problem should leave a chart with
+  degraded gestures and a readable plan, not a red banner over a chart that drew perfectly well.
+
+- **A Gantt's tree column shows the task name again when the chart declares its own `Columns`.**
+  Seven of nine charts on the docs page had a completely empty first column — expander, indent and
+  bars all correct, no text. Only the two that declared no columns at all were right, because the
+  built-in default column sets `IsTree` on itself.
+
+  The column was reading its own `IsTree` parameter to decide whether to fall back to the task's
+  name. But which column carries the tree is the *chart's* decision: with `IsTree` unset on every
+  column the first declared one gets the job, and the markup drew its expander and indent while the
+  column itself still believed it was an ordinary column. The render call site already knew the
+  answer, so it now passes it in.
+
+  Only the tree column falls back. A declared column with nothing to read stays empty, or every
+  unconfigured column would print the task's name — a test holds that half too. Sorting was never
+  affected; it had the right fallback already.
+
+- **A Gantt's column resize handles are wired on the first mount.** They were drawn but never
+  connected on eight of nine charts, so a column edge simply did not drag; changing the zoom, or
+  anything else that rebuilt the chart, wired that one up and it worked from then on. No console
+  error, no banner — the failure was silent, which is why the element fix above looked complete.
+
+  The redraw signal was being consumed before the element check could run. A pass that bailed out
+  waiting for the element threw the flag away, and the pass that finally had an element no longer
+  knew a full wiring was owed. Bar drag, resize and progress were unaffected because `initialize`
+  is not gated on that flag. The flag is now cleared only once the setup has actually used it, so
+  no bail-out can lose it — and the first mount rides the same flag rather than a separate one.
+
+  It still wires only after a redraw. Doing it on every render would trade a silent bug for a slow
+  one: on Blazor Server each of those calls is a circuit round trip. Both halves are held by tests,
+  so neither can be traded away by accident.
+
+- **`BbBarcode` no longer prints `Arg_ParamName_Name` instead of an error on WebAssembly.** It
+  showed `ArgumentException.Message` with the parameter-name suffix stripped off by searching for
+  the English wording of that suffix. The wording comes from a framework resource string, and on
+  WebAssembly those are routinely trimmed away — what comes back in their place is the resource
+  key, the search misses it, and the key lands on the page.
+
+  The encoder now throws `BarcodeFormatException`, whose `Message` is the sentence it was given and
+  nothing else, so there is no framework text involved at any point. The parameter name is still on
+  `ParamName` for anything that wants it; it is only kept out of what a reader sees. A null value is
+  still an `ArgumentNullException`, because that is a mistake in the calling code rather than
+  something to show anyone.
+
+---
+
+## 2026-09-20
+
+### Added
+
+- **`BbGantt`, a plan drawn against a timeline: a task list down the side, a bar for every task
+  across from it, and arrows for what has to happen first.** The task list and the timeline are one
+  table, not two panes kept in step. A Gantt is read across the row — this name, that bar — and two
+  scrolling panes can only ever agree about where a row is by measuring each other; sharing the row
+  means they cannot disagree. Every position is worked out in C# from the column widths and the slot
+  width, so the chart draws the same on Server, on WebAssembly and in print, and nothing has to be
+  measured in the browser.
+
+  **Positions are counted in slots, not in days.** Every minor slot is drawn the same width whatever
+  it holds, so February and March are the same size at month zoom and a bar's position is worked out
+  *inside* its slot. That is what lets one multiplication place a bar at any of the six zoom levels —
+  hours under days, days under months, weeks under months, months under years, quarters under years,
+  and years on their own — and what lets the grid lines be a repeating gradient rather than one
+  element per boundary, which an hour zoom over a quarter would turn into thousands of empty divs.
+
+  **A task with children is a summary and takes its dates and its progress from them.** Progress is
+  weighted by how long each child runs, so a fortnight half done outweighs an afternoon finished; a
+  summary of nothing but milestones has no length to weigh, so they count equally. It is drawn as a
+  bracket rather than a bar, because a summary is the span of what is under it and not a task in its
+  own right. A task with no length is a milestone, and so is one whose end is before its start —
+  which is a marker rather than a bar running backwards. `RollUpSummaries` turns the lot off where a
+  summary carries a baseline agreed separately from the work beneath it.
+
+  **A dependency is drawn, not enforced.** All four types are there — finish to start, start to
+  start, finish to finish and start to finish, each named for the two ends it ties — but moving a
+  task does not move what depends on it, because rescheduling a plan is a decision about float,
+  calendars and who is free rather than something a chart should do behind the reader's back. An
+  arrow reaching a task whose row has been folded away is re-tied to the summary now standing in for
+  it, and one whose two ends fold into the same row is dropped rather than drawn as a loop. Where the
+  two ends face each other the route is three segments; where they do not it goes around the row in
+  five, clear of the row's own border line, since drawing the long run on top of the border makes the
+  arrow read as going nowhere.
+
+  **Every gesture asks rather than writes.** `AllowDrag` moves a bar, `AllowResize` pulls its edges
+  and `AllowProgressDrag` puts a grip on the fill for how far along a task is; all three come back
+  through one `OnTaskChange` with `Kind` saying which, carrying all four values so a handler stores
+  them the same way whichever fired. `Cancel` snaps the bar straight back. The gesture itself stays
+  in the browser, because a pointermove per frame over a Blazor Server circuit is a bar that lags
+  behind the pointer; only the finished drag crosses. `SnapToSlot` keeps a plan agreed in days from
+  coming back with a start at 09:47.
+
+  **`AllowLinking` draws a dependency by dragging between two bars.** A dot at each end of a bar,
+  and the two ends the gesture touched decide the type — leave from the end, drop on a start, and
+  that is a finish to start. There is no menu asking which of the four was meant, because the
+  gesture has already said it. `OnDependencyCreate` can refuse, which is where a plan puts its loop
+  detection; clicking an arrow raises `OnDependencyClick`, which is how one gets deleted. The arrow
+  only becomes clickable while linking is on, because an arrow nobody can change is an arrow nobody
+  should be able to hit by accident — and a one-and-a-half pixel line is not a target, so a wide
+  transparent twin is what the pointer actually finds.
+
+  **The chart says what its shapes mean.** A filled bar is a task, the solid part being what is
+  done. A summary is a bracket — a thin line with a leg hanging at each end — because a summary is
+  the span of what is under it rather than a task in its own right, and a slightly thinner bar was a
+  difference nobody noticed. A milestone is a diamond. `ShowLegend` names them under the chart and
+  lists only what that chart actually draws: no milestone entry where there are none, no shading
+  entry where nothing is shaded. `ShowTooltip` puts a card on every bar with its dates, its length
+  and how far along it is, `TooltipTemplate` replaces the lines. The card is plain markup shown by
+  CSS rather than a floating overlay, because a plan can hold hundreds of bars and on Blazor Server
+  asking the circuit what to show on every pointer-over is a card that arrives after the pointer has
+  moved on.
+
+  **`AllowRowDrag` reorders the task list, and re-parents with the same gesture.** Drop between two
+  rows and the task becomes their sibling; drop onto the middle of one and it becomes that task's
+  child. `OnTaskMove` carries the target, the position and the `NewParentId` already worked out, so
+  a handler that only stores a parent identifier does not have to reason about the two cases. A task
+  dropped into its own branch is refused by the chart rather than handed back as a tree that is no
+  longer a tree.
+
+  **Adding, deleting and renaming need nothing from the chart.** A column's content is the caller's
+  markup over the caller's own task, and the tree column hands the template its whole cell rather
+  than wrapping it in a truncating span — so the name can be an input and the last column can be a
+  delete button. The chart draws whatever the collection says on the next render.
+
+  **Time runs the way the page reads.** In a right-to-left page the task list moves to the right,
+  the timeline starts at the right edge, and the bars, the shading, the today line and the arrows
+  all turn round with it. Nothing is configured: everything is placed with logical offsets, which
+  mirror on their own. Two things cannot and are handled off `[dir="rtl"]` in the stylesheet — a
+  repeating gradient needs a physical direction, and an SVG coordinate system does not flip with the
+  page, so an arrow that still pointed right would be pointing backwards in time. A drag reads the
+  direction at the moment of the gesture, so dragging towards the right edge moves a task earlier.
+
+  A `BbGanttColumn` carries a width in pixels rather than a share of the space, because the chart
+  has to know how wide the task list is before it can place the first bar. `Value` reads the task and is what a sort
+  compares — sorting reorders siblings and never moves a child out of its branch — while a column's
+  content reads the row, which is the task after roll-up, so a date in the list agrees with the bar
+  beside it. `CollapsedIds` names the closed set rather than the open one, unlike `BbDataGrid`'s
+  `ExpandedNodes`: a plan is read open, so empty is the state a reader wants first.
+
+  `GanttBuilder` in `BlazorBlueprint.Primitives` is the engine on its own — the tree, the roll-up,
+  the timeline and the resolved arrows, with no markup — for drawing a plan somewhere that is not a
+  screen.
+
+- **`BbPivotDataGrid`, a cross-tabulation: one field down the side, another across the top, and a
+  worked-out value where they cross.** This is the one grid whose columns come from the data rather
+  than from a declaration, which is the whole difference between it and grouping in `BbDataGrid` —
+  a grouped grid still has the columns you wrote down, where a pivot grows a column for every value
+  it finds. A `BbPivotField` goes in `Rows` or `Columns` and a `BbPivotValue` in `Values`, and which
+  axis a field belongs to comes from the fragment it is written in, so moving a field between them
+  is moving it in the markup.
+
+  **A total is worked out from every item under it, not from the cells it covers.** Items are
+  bucketed in one pass and each bucket keeps its items, so a subtotal or a grand total re-runs the
+  aggregate over everything beneath it. For a sum the two answers agree and nobody notices; for an
+  average they do not, and an average of averages is wrong in a way that is invisible until someone
+  checks. The same mechanism is what lets a custom `Aggregate` report a rate or a median for a
+  total — it is handed the items, not the numbers above it.
+
+  **Totals read as totals *of* the thing named.** `RowTotals` is a column at the end of every row,
+  `ColumnTotals` is a row at the bottom, and the two subtotal flags do the same one level in. That
+  naming is the opposite of at least one other library's, so it is spelled out in the parameter
+  docs and on the demo page rather than left to be discovered.
+
+  `Label` turns a group's value into its heading, so a field can be bucketed or formatted while
+  still grouping — and therefore sorting — on the real value: the difference between Jan, Feb, Mar
+  and Apr, Aug, Dec. `OnCellClick` makes the cells buttons and hands over the items behind one,
+  including behind a total. `ShowFieldPicker` turns declared fields and values on and off without
+  the markup changing, and refuses to remove the last value, because a pivot with nothing in its
+  cells is not a table. Paging counts outermost row groups rather than rows, so a group is never
+  split across a boundary and its subtotal always lands with it.
+
+  `PivotBuilder` in `BlazorBlueprint.Primitives` is the engine on its own — two trees of headings
+  and the values where they cross, with no markup — for rendering somewhere that is not a screen.
+
+- **`BbBarcode`, fourteen linear symbologies drawn as SVG, on encoders written from scratch in C#.**
+  Code 128, Code 39, EAN-13, EAN-8, UPC-A, Interleaved 2 of 5, Codabar, ISBN, ISSN, MSI, Telepen,
+  Pharmacode, POSTNET and the Royal Mail 4-state code. No JavaScript, no image request, no
+  dependency: the symbol is part of the rendered markup, which matters more here than for a QR code
+  because a barcode is usually printed and a vector stays sharp at whatever size the label turns
+  out to be.
+
+  **Checked twice, against two independent implementations.** Every symbol matches zint bar for
+  bar — position, width and height, in modules — and every symbology a reader library supports was
+  decoded back to its original text by zxing-cpp. That found four real errors along the way: two
+  wrong Code 39 punctuation patterns, a reversed two-of-four table in the Royal Mail code, and both
+  the start and the stop pattern of MSI. Telepen was nearly dropped, because its bit-to-bar rule
+  resisted a confident reading; it went in once each character turned out to be a context-free
+  block of sixteen modules, which made the table derivable and then verifiable.
+
+  **The value is a rule, not a string.** Each symbology has its own alphabet, its own length rule
+  and its own check digit, and the encoder enforces all three rather than producing a symbol no
+  reader will accept. Give EAN-13 twelve digits and the check digit is worked out; give it thirteen
+  and it is verified. `BarcodeSymbol.Value` reports what was actually encoded, which is what a
+  scanner will report back. `BarcodeEncoder` in `BlazorBlueprint.Primitives` is the encoders on
+  their own, handing back bar geometry rather than pixels, for printing somewhere that is not a
+  screen. A value that breaks a rule renders a message naming the problem
+  character or the expected length, rather than throwing — which on Blazor Server would take the
+  circuit down.
+
+  **Two of them carry their data in the bar heights.** POSTNET and the Royal Mail code put every
+  bar on the same pitch and vary the shape instead, which survives a sorting conveyor far better.
+  The practical consequence is that squashing one destroys the data rather than just making it
+  harder to aim at, so `IsHeightModulated` says which you are holding.
+
+  **The printed line is HTML, not SVG text.** The bars stretch freely, because a barcode's width
+  comes from its data while its height is a free choice — and stretching SVG text along with them
+  turned the digits into unreadable slivers. As HTML the line stays legible at any shape, and it is
+  selectable, which is what someone does when the scan fails and they have to key the number in.
+  On the retail codes its position either side of the guard bars is part of the standard.
+  `GetSvg()` returns a different document for a file: fixed proportions, text drawn inside, colours
+  baked in.
+
+  The colours are dark on white in both themes, and there is less room to play than with a QR code:
+  a scanner measures the contrast between a bar and the space beside it, and an inverted symbol
+  reads as no symbol at all on most hardware. `AddChecksum` adds the optional check character on
+  Code 39, ITF, Codabar and MSI, off by default because a reader that is not expecting one reports
+  it as data; `ShowChecksum` decides whether it also appears in the printed line. `QuietZone`
+  defaults to whatever the symbology asks for, because too little margin is the most common reason
+  a printed barcode will not read.
+
+- **`BbQrCode`, a scannable code drawn as SVG, on a QR encoder written from scratch in C#.** No
+  JavaScript, no image request, no dependency: the code is part of the rendered markup, so it
+  scales, prints and copies like any other vector, and it works the same on Server, WASM and Auto.
+  `QrEncoder` in `BlazorBlueprint.Primitives` is the whole of ISO/IEC 18004 — every version from 1
+  to 40, all four error correction levels, numeric, alphanumeric and UTF-8 byte modes, Reed-Solomon
+  over GF(256), block interleaving, and the eight mask patterns scored by the specification's own
+  penalty rules.
+
+  **It was checked against an independent implementation and then against a real reader.** Every
+  module of every test vector matches matrices produced by segno — which turned out to pad a
+  spurious byte when the bit stream already ends on a codeword boundary, so the reference had that
+  one line corrected. Then 161 codes spanning versions 1 to 40 were rasterised and decoded back to
+  their original text, and the demo page is checked the same way in a browser: each rendered SVG is
+  drawn to a canvas and read back through `BarcodeDetector`. The tests carry the reference matrices
+  so a future change that breaks a corner of the spec fails loudly.
+
+  **The colours do not follow the theme, and that is the point.** A reader expects a dark code on a
+  light field, and enough of them refuse an inverted one that tracking a dark theme would trade a
+  working code for a tidier page. The default is therefore dark on white in both themes, with
+  `Foreground` and `Background` there for when that trade is worth making.
+
+  **A QR code is text only a camera can read, so there are two ways to reach it without one.**
+  `ShowValue` writes the value out as selectable text; `AriaLabel` says what scanning the code does
+  and defaults to the value where the value is short enough to read aloud. Someone using a screen
+  reader cannot point a phone at their own screen.
+
+  `ModuleShape` draws rounded or dotted modules, and keeps the three finder squares solid whichever
+  shape is chosen, because a reader finds those before it reads anything else. `Image` puts a logo
+  in the middle and raises the error correction level to Quartile on its own, since the image is
+  damage the code has to absorb; `ImageSize` is clamped to 30% of the width. `GetSvg()` hands back
+  the rendered markup as a standalone document with an intrinsic pixel size, which is all a
+  download needs. A value past the version 40 capacity renders a message rather than throwing,
+  which on Blazor Server would take the circuit down. `OnEncoded` reports the finished grid —
+  `Matrix` is also there, but a parent builds its markup before its children re-render, so reading
+  it from markup gives the previous grid.
+
+- **`BbPickList`, two lists and the buttons that move options between them.** Pick rows and press
+  a button rather than dragging. On a list long enough to need a scrollbar that is the difference
+  between a usable control and a frustrating one — and unlike a drag, it works from the keyboard.
+  Each pane is a `BbListBox`, so the whole listbox keyboard pattern comes with it: arrows, `Space`,
+  `Shift` to extend a range, `Ctrl+A`, typeahead.
+
+  **One binding, not two.** `Options` holds every option and `@bind-Values` holds the ones picked;
+  the available pane is whatever is left. Two bound collections — a `Source` and a `Target`, as
+  most pick lists take — can drift out of step with each other, putting an option in both panes or
+  in neither, and nothing can be asked to reconcile that afterwards. The picked order is kept as
+  moved rather than as listed, because a pick list is usually building an ordered thing: a set of
+  columns, a playlist, a sequence of steps.
+
+  **The move-everything buttons move what a search has left visible, not the hidden rest.** That
+  needed `BbListBox` to expose its search term, which it now does through a bindable `SearchText`,
+  so the pick list can tell what is actually on screen rather than guessing. Both sides share one
+  definition of what a search matches, because two copies of that rule would drift and the symptom
+  would be a button quietly moving rows nobody could see. A button that would do nothing is
+  disabled rather than silently inert.
+
+  `OptionDisabled` marks an option that cannot move, and the move-everything buttons leave it
+  where it is — which is how a required column stays put. `Orientation` stacks the panes with up
+  and down arrows for a narrow screen; the horizontal layout already stacks on small screens and
+  turns its button column into a row when it does. `OnMove` reports which values moved and which
+  way.
+
+- **`BbListBox`, an always-visible list of options.** No trigger, no popover: the choices stay on
+  screen, which is what a settings panel, a transfer list or a filter pane wants. `SelectionMode`
+  picks between one (`@bind-Value`) and many (`@bind-Values`), and it takes the same
+  `SelectOption<TValue>` that `BbSelect` and `BbMultiSelect` already take, so options move between
+  them unchanged.
+
+  **The list is the keyboard control the popover ones are not.** The list inside `BbSelect` and
+  `BbMultiSelect` has no arrow-key handling of its own — it does not need any, because the popover
+  owns focus. A listbox has no popover, so it carries the whole ARIA pattern itself: one tab stop
+  rather than one per option, an active option tracked through `aria-activedescendant` and scrolled
+  into view as it moves, arrows, `Home`/`End`, `PageUp`/`PageDown`, `Space` to toggle, `Shift` with
+  an arrow or a click to extend a range from the last option touched, `Ctrl+A` to take everything,
+  and typeahead — where pressing one letter repeatedly walks through the options starting with it
+  rather than searching for "ccc" and finding nothing. Single selection selects as it moves, the
+  way a native list does; multiple selection moves without selecting until you say so.
+
+  **Select-all sits above the list, not inside it,** because an option that selects the other
+  options gets announced as one of the choices and takes a place in the arrow-key order. It covers
+  what the search box has left visible rather than the hidden rest — a control that quietly
+  selected rows the person could not see would be worse than no shortcut at all. The per-option
+  indicator is a drawn box rather than a real checkbox for the same class of reason: a focusable
+  control inside every option would be a second tab stop and a second thing to announce, when
+  `aria-selected` already carries the state.
+
+  `OptionDisabled` takes the whole option rather than a value, so the rule can read either; the
+  arrow keys step over a disabled row instead of stopping dead on it. `ItemTemplate` owns the row
+  content while the indicator is still drawn. `ShowSearch`, `Height`, `EmptyMessage`, `Label`,
+  `AriaLabel` and `Disabled` round it out, and `ValueExpression`/`ValuesExpression` wire it to
+  `EditForm` validation.
+
+- **`BbSignature`, a signing field, on the new `BbSignaturePad` primitive.** Sign by drawing or by
+  typing a name. `@bind-Value` gives back a `SignatureValue` carrying `Kind` (`Drawn` or `Typed`),
+  the signature as `Svg`, and the typed `Text`. `GetPngAsync` and `GetStrokesAsync` pull the other
+  two forms on demand, because neither belongs in an event that fires on every stroke.
+
+  **The typed route is on by default and it is the accessible one.** A drawn signature cannot be
+  given with a keyboard, a switch or a screen reader. `AllowTyped="false"` removes it, and the demo
+  says plainly what that costs: only do it where a drawn mark is a legal requirement and another
+  route exists outside the field. No font is bundled for the typed signature — it uses the
+  handwriting families that ship with the common systems, ending in the generic `cursive`.
+
+  **The ink engine is ours, about 300 lines, no new dependency.** A signature drawn as straight
+  lines between pointer samples looks like a mouse scribble. Two things make it read as ink: the
+  path is a cubic Bezier through the samples rather than a polyline, and the stroke thins as the
+  pen speeds up. `MinWidth`, `MaxWidth` and `VelocityWeight` tune the second. All of it runs in the
+  browser — C# hears one call when a stroke finishes and nothing while one is being drawn, so a
+  Blazor Server circuit carries a handful of messages per signature rather than one per pointer
+  move. Pointer events are coalesced where the browser offers them, so a high-rate pen produces a
+  smooth curve rather than a faceted one.
+
+  **Only geometry is stored, so the ink follows the theme.** Colour is resolved from the element at
+  render time and the pad repaints when the theme changes, rather than leaving a white signature on
+  a page that just went light. The samples are kept in CSS pixels and replayed after a resize or a
+  move between monitors, which is also how `UndoAsync` and `SetStrokesAsync` work.
+
+  **The three output forms differ in what they can defer.** SVG is the one to store: one path per
+  curve rather than the thousands of dots the canvas draws, so it stays small and keeps the taper,
+  and its ink is `currentColor`, so the same markup renders dark on paper and light on a dark page.
+  It carries an intrinsic width and height for an `<img>` tag and a PDF, plus `max-width:100%`, so
+  dropping a signature drawn on a wide pad into a narrow column shrinks it instead of cutting it
+  off. PNG has nowhere to defer the colour to, so it is redrawn at an explicit colour — defaulting
+  to black, deliberately not to the theme's ink, because exporting a dark theme's near-white stroke
+  onto the white background a PDF wants produces a blank page. `GetPngBytesAsync` returns the same
+  image without the data-URL padding, for saving and uploading. The raw samples are the smallest
+  form and the only replayable one, and they carry the timings, which is what a later check of how
+  a signature was written needs.
+
+  **Every export is streamed rather than returned.** A Blazor Server circuit caps an incoming hub
+  message at 32KB by default, and a real signature clears that on all three forms at once — a
+  300-sample scrawl is roughly 22KB of SVG and 41KB of PNG. Returning one tore the circuit down
+  mid-call, so the component never got its answer and the page stopped responding with nothing on
+  screen to say why. Streams are chunked by the framework and are not subject to the cap, so no
+  host has to raise a limit it could not have known about.
+
+- **`BbSwipeArea`, a headless swipe gesture primitive.** Wrap any content and hear about swipes
+  across it: `OnSwipe` reports a completed gesture with its `Direction`, `DeltaX`, `DeltaY`,
+  `Distance` and `Velocity`; `OnSwipeMove` follows the pointer while it is down; `OnSwipeCancel`
+  fires when a gesture that reported movement ends without committing, which is the signal to
+  spring back whatever `OnSwipeMove` was drawing. `CancelAsync()` abandons a gesture when something
+  else takes over mid-swipe.
+
+  **The gesture maths stays in the browser.** A swipe costs one call into C#, not one per pointer
+  move, which on Blazor Server is the difference between a handful of circuit messages and a
+  message per mouse move for the length of the drag. `OnSwipeMove` is the exception and it is
+  opt-in twice over: with no handler attached the browser sends nothing at all, and with one it
+  sends at most a call every 50ms with a single call in flight, so a slow circuit drops
+  intermediate positions rather than queueing them behind the finger.
+
+  **A swipe commits on distance or on speed.** `Threshold` (50px) is the distance; `MinVelocity`
+  (0.5 px/ms) lets a shorter flick through, because a quick 30px flick reads as a swipe to the
+  person making it and a distance-only test throws it away. The velocity path carries a 16px floor
+  of its own: a 3px tap wobble over 5ms computes to 0.6 px/ms and would otherwise clear any
+  velocity bar worth setting. Velocity is measured over the last 100ms of travel rather than the
+  whole gesture, so a drag that stalls before the finger lifts does not report the speed it started
+  with. Set `MinVelocity` to `double.PositiveInfinity` to judge on distance alone.
+
+  **`TouchAction` maps to the CSS `touch-action` property** — `Auto`, `PanX`, `PanY` or `None` —
+  rather than calling `preventDefault` on pointer events. It is the difference between telling the
+  browser which directions it may scroll before the gesture starts and asking it to undo a scroll
+  it has already handed to the compositor, which arrives too late and is ignored outright on a
+  passive listener. A horizontal swipe in a page that scrolls vertically wants `PanY`.
+
+  `Axis` (`Both`, `Horizontal`, `Vertical`) decides which directions are reported, so a
+  mostly-vertical drag on a horizontal area is judged on how far it went sideways rather than
+  firing something unintended. Directions are physical — `Left` means the pointer moved left — and
+  do not flip in a right-to-left layout; a component that means "forward" maps that itself, next to
+  the thing being navigated. The gesture takes pointer capture, so a swipe that runs off the edge
+  of the element still counts.
+
+  **A swipe is never reachable by keyboard.** Whatever the gesture does needs a second, visible
+  route as well. The demo page says so where it cannot be missed.
+
+### Changed
+
+- **`BbTabsList` can now add, close, rename and reorder its tabs.** Four flags — `Addable`,
+  `Closable`, `Renamable` and `Reorderable` — each paired with a callback. Every one is off by
+  default, and a flag without its callback draws nothing at all: an affordance that does nothing
+  when it is used is worse than no affordance. `BbTabsTrigger` can override any of the three
+  per-tab flags for itself, which is how one tab stays pinned while the rest close.
+
+  **None of the four changes the tabs.** Each asks, and the caller changes the collection the tabs
+  are written from — the same bargain `BbGantt` makes, and for the same reason: the order and the
+  names live wherever the caller keeps them, and a component that wrote to its own markup would be
+  guessing. `OnMove` therefore has no `Cancel` flag, because nothing has moved to put back;
+  declining to apply it is the refusal. `OnRename` does have one, because there *is* something to
+  undo — a refused rename reopens the editor with what was typed still in it, rather than making
+  someone retype a long name because one character clashed.
+
+  **Every gesture has a keyboard route**, which decided the markup. The close affordance is an
+  `aria-hidden` span rather than a nested button, because a `role="tab"` element must not contain
+  another interactive element; the keyboard closes with `Delete` instead, announced on the tab
+  itself rather than as a second stop inside it. The add button sits *beside* the tablist rather
+  than in it, so it is its own tab stop and never reports itself as a tab. `F2` renames, `Enter`
+  commits, `Escape` cancels, and an empty box is a cancel rather than a request for a nameless tab.
+  `Ctrl` with an arrow key moves a tab one place and does not wrap at either end — a tab that
+  jumped from last place to first would read as a bug whichever way the move was meant.
+
+  **A move reads its position from the DOM, not from the component tree.** Reordering a keyed list
+  changes no parameter, so Blazor moves the existing components without running any child
+  lifecycle: an order held in C# from registration time is wrong from the first move onwards. One
+  interop call per keypress is the price of an index that cannot drift, and a keypress is not a
+  per-frame event.
+
+  The wrapper element these need is only rendered when one of the behaviours is actually on, so a
+  plain tab list keeps exactly the markup it has always had.
+
+- **`datagrid-columns.js` is now `table-columns.js`, shared by `BbDataGrid` and `BbGantt`.** It was
+  already generic — it works off `data-column-id`, a `colgroup` and one callback — and only the name
+  said otherwise. Two things had to give for a second caller: columns are matched to their `<col>` by
+  identifier rather than by position, because a Gantt's `colgroup` also holds one entry per timeline
+  slot and those are not columns anyone can drag; and the table's locked width is seeded from what
+  the table actually measures rather than from the sum of the draggable columns, so a table with
+  columns this file does not manage is not squashed down to the ones it does. No public API changed.
+
+---
+
 ## 2026-09-19
 
 ### Added
@@ -98,6 +658,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`BbScheduler.ToolbarContent`.** The toolbar is rendered inside the component, so there was no way to restyle or rearrange it. Render `@context.DefaultContent` to keep the built-in toolbar and add around it, or leave it out to replace it. The context carries read state plus the three commands that cannot be expressed from outside: `Navigate` knows the step size for the current view (one day, seven days, one month), and `GoToToday` resolves today in the schedule's time zone rather than the server's. `Date`, `View`, `FirstDayOfWeek` and `VisibleResourceIds` stay ordinary bindable parameters.
 
 ### Changed
+
+- **Quill 2.0.3 now ships inside the package, so `BbRichTextEditor` needs no setup.** The host page no longer needs a `<script>` and a `<link>` for Quill — until this change, forgetting them left the editor dead with nothing but a console error to say why, which was the one component in the library that did not just work on install. The interop loads `lib/quill/quill.js` and `lib/quill/quill.core.css` from the package's own static assets on first use, with the same lazy single-flight shape the ECharts renderer already uses: nothing is fetched on a page with no editor, and fourteen editors on one page still fetch once. Quill's dist build is UMD rather than ESM, so it is loaded through a `<script>` tag rather than a dynamic `import()`, which is the only way the two loaders differ. A host that wants a different Quill build keeps full control: `window.Quill` is checked first, so loading your own copy before the first editor renders leaves the bundled one untouched. The stylesheet is injected unlayered, exactly where a host's own `<link>` put it, so the themed overrides in `blazorblueprint.css` — which are `!important` inside `@layer components` — still win as before. Quill's BSD 3-Clause notice is in `THIRD-PARTY-NOTICES.txt` alongside the ECharts and Tailwind ones. This adds roughly 214 KB of static assets to the package.
 
 - **Clicking a scheduler event highlights it instead of opening the editor.** Double-click it, press Enter while it is focused, or use the context menu's Edit event. This matches what an empty slot already does, and it stops a stray click on the way to a drag throwing the editor in your face. Highlighting is exclusive: selecting an event clears a highlighted slot or day, and vice versa. Two occurrences of one series highlight independently.
 

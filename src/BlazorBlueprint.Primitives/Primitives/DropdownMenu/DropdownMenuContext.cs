@@ -40,6 +40,8 @@ public class DropdownMenuState
 /// </summary>
 public class DropdownMenuContext : PrimitiveContextWithEvents<DropdownMenuState>
 {
+    internal string? Dir { get; set; }
+
     /// <summary>
     /// Initializes a new instance of the DropdownMenuContext.
     /// </summary>

@@ -5,7 +5,7 @@
 
 <BbPopover @bind-Open="_isOpen">
     <BbPopoverTrigger AsChild="true">
-        <BbButton Variant="ButtonVariant.Outline"
+        <BbButton AriaLabel="@AriaLabel" Variant="ButtonVariant.Outline"
                 Class="@ButtonCssClass"
                 Disabled="@Disabled"
                 aria-required="@(Required ? "true" : null)"
@@ -152,6 +152,10 @@
 </BbPopover>
 
 @code {
+    /// <summary>The accessible name of the control.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+
+
     private bool _isOpen;
     private int _internalHour = 12;
     private int _internalMinute = 0;

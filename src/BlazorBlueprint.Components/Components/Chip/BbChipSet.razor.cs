@@ -245,6 +245,11 @@ public partial class BbChipSet<TValue> : ComponentBase
 
     private async Task DismissCoreAsync(object? value)
     {
+        if (Disabled || (Required && IsSelectedCore(value)
+            && (SelectionMode == ChipSelectionMode.Single || currentValues.Count == 1)))
+        {
+            return;
+        }
         if (value is not TValue typed)
         {
             return;

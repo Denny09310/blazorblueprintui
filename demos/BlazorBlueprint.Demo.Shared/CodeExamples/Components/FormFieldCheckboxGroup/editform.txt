@@ -1,0 +1,27 @@
+@using System.ComponentModel.DataAnnotations
+
+<EditForm Model="validationModel" FormName="FormFieldCheckboxGroupValidation">
+    <DataAnnotationsValidator />
+    <BbFormFieldCheckboxGroup TValue="string" @bind-Values="validationModel.Values" Label="Topics" AriaLabel="Topics">
+        <BbCheckboxGroupItem Value="@("news")" Label="News" />
+        <BbCheckboxGroupItem Value="@("events")" Label="Events" />
+    </BbFormFieldCheckboxGroup>
+    <BbButton Type="ButtonType.Submit" Class="mt-3">Validate selection</BbButton>
+</EditForm>
+
+@code {
+    private readonly ValidationModel validationModel = new();
+
+    private sealed class ValidationModel : IValidatableObject
+    {
+        public IReadOnlyCollection<string> Values { get; set; } = Array.Empty<string>();
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (Values.Count == 0)
+            {
+                yield return new ValidationResult("Please make a selection.", [nameof(Values)]);
+            }
+        }
+    }
+}

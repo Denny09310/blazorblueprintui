@@ -18,7 +18,7 @@
         @foreach (var selection in inputSelections)
         {
             var active = selection == inputSelections[^1];
-            <InputFile @key="selection.Id" @ref="selection.Input"
+            <InputFile aria-label="@AriaLabel" @key="selection.Id" @ref="selection.Input"
                        OnChange="@(e => HandleFileSelected(e, selection))" accept="@Accept" multiple="@Multiple"
                        disabled="@(!active || Disabled)" hidden="@(!active)" tabindex="@(active ? 0 : -1)"
                        class="bb:absolute bb:inset-0 bb:w-full bb:h-full bb:opacity-0 bb:cursor-pointer"
@@ -40,28 +40,28 @@
                     <p class="bb:text-sm bb:font-medium">
                         @if (_isDragging)
                         {
-                            <span>Drop files here</span>
+                            <span>@Localizer["FileUpload.Drop"]</span>
                         }
                         else
                         {
-                            <span>Drag and drop files here</span>
+                            <span>@Localizer["FileUpload.Drag"]</span>
                         }
                     </p>
                     <p class="bb:text-xs bb:text-muted-foreground bb:mt-1">
-                        or <span class="bb:text-primary bb:underline">browse</span> to upload
+                        <span class="bb:text-primary bb:underline">@Localizer["FileUpload.Browse"]</span>
                     </p>
                 </div>
                 @if (!string.IsNullOrEmpty(Accept))
                 {
                     <p class="bb:text-xs bb:text-muted-foreground">
-                        Accepted: @Accept
+                        @Localizer["FileUpload.Accepted", Accept]
                     </p>
                 }
                 <p class="bb:text-xs bb:text-muted-foreground">
-                    Max size: @FormatSize(MaxFileSize)
+                    @Localizer["FileUpload.MaxSize", FormatSize(MaxFileSize)]
                     @if (Multiple)
                     {
-                        <span> | Max files: @MaxFileCount</span>
+                        <span> | @Localizer["FileUpload.MaxFiles", MaxFileCount]</span>
                     }
                 </p>
             </div>
@@ -118,7 +118,7 @@
                             Class="bb:h-8 bb:w-8 bb:flex-shrink-0"
                             OnClick="@(() => RemoveFile(file))"
                             Disabled="@Disabled"
-                            AriaLabel="@($"Remove {file.Name}")">
+                            AriaLabel="@Localizer["FileUpload.Remove", file.Name]">
                         <LucideIcon Name="x" Class="bb:h-4 bb:w-4" />
                     </BbButton>
                 </div>
@@ -142,6 +142,10 @@
 </div>
 
 @code {
+    /// <summary>The accessible name of the control.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+
+
     private InputFile? _inputFile => inputSelections[^1].Input;
     private IJSObjectReference? _pasteCleanup;
     private ElementReference _dropzoneRef;
@@ -261,17 +265,27 @@
     [Parameter]
     public string? Class { get; set; }
 
+    private bool filesParameterSupplied;
+
+    /// <inheritdoc />
+    public override Task SetParametersAsync(ParameterView parameters)
+    {
+        filesParameterSupplied = parameters.TryGetValue<IReadOnlyList<FileUploadItem>?>(nameof(Files), out _);
+        return base.SetParametersAsync(parameters);
+    }
+
     protected override void OnParametersSet()
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxFileSize);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxFileCount);
-        if (Files != null && !ReferenceEquals(Files, _files))
+        if (filesParameterSupplied && !ReferenceEquals(Files, _files))
         {
-            foreach (var removed in _files.Where(f => !Files.Contains(f)))
+            var supplied = Files ?? Array.Empty<FileUploadItem>();
+            foreach (var removed in _files.Where(f => !supplied.Contains(f)))
             {
                 ReleaseFile(removed);
             }
-            _files = Files.ToList();
+            _files = supplied.ToList();
         }
     }
 
@@ -287,12 +301,6 @@
                 _jsCleanup = await _jsModule.InvokeAsync<IJSObjectReference>(
                     "initializeDropZone", _dropzoneRef, _inputFile.Element);
 
-                if (AllowPaste)
-                {
-                    _pasteCleanup = await _jsModule.InvokeAsync<IJSObjectReference>(
-                        "initializePaste", _dropzoneRef, _inputFile.Element);
-                }
-
                 _jsInitialized = true;
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
@@ -302,6 +310,27 @@
             catch (InvalidOperationException)
             {
                 // JS interop not available during prerendering
+            }
+        }
+        if (_jsInitialized && _jsModule is not null && _inputFile is not null)
+        {
+            try
+            {
+                if (AllowPaste && _pasteCleanup is null)
+                {
+                    _pasteCleanup = await _jsModule.InvokeAsync<IJSObjectReference>(
+                        "initializePaste", _dropzoneRef, _inputFile.Element);
+                }
+                else if (!AllowPaste && _pasteCleanup is not null)
+                {
+                    await _pasteCleanup.InvokeVoidAsync("dispose");
+                    await _pasteCleanup.DisposeAsync();
+                    _pasteCleanup = null;
+                }
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect.
             }
         }
     }
@@ -378,7 +407,7 @@
                 {
                     FileName = file.Name,
                     ErrorType = FileValidationErrorType.TooManyFiles,
-                    Message = $"Maximum {MaxFileCount} files allowed"
+                    Message = Localizer["FileUpload.TooMany", MaxFileCount]
                 };
                 _errors.Add(error);
                 await OnValidationError.InvokeAsync(error);
@@ -439,7 +468,7 @@
             {
                 FileName = file.Name,
                 ErrorType = FileValidationErrorType.FileTooLarge,
-                Message = $"{file.Name} exceeds {FormatSize(MaxFileSize)} limit"
+                Message = Localizer["FileUpload.TooLarge", file.Name, FormatSize(MaxFileSize)]
             };
         }
 
@@ -462,7 +491,7 @@
                 {
                     FileName = file.Name,
                     ErrorType = FileValidationErrorType.InvalidType,
-                    Message = $"{file.Name} is not an accepted file type"
+                    Message = Localizer["FileUpload.InvalidType", file.Name]
                 };
             }
         }

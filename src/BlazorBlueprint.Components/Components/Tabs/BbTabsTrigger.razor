@@ -1,79 +1,62 @@
 @namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
 @implements IDisposable
+@inject IBbLocalizer Localizer
 
 @*
     Styled TabsTrigger component.
     Wraps the TabsTrigger primitive with shadcn/ui styling.
+
+    The close affordance is a span, not a button. A role="tab" element must not contain another
+    interactive element, so the pointer gets an icon with a click handler and the keyboard gets
+    Delete — which the primitive raises. Two routes to the same callback, one of them valid HTML.
 *@
 
-<BlazorBlueprint.Primitives.Tabs.BbTabsTrigger Value="@Value"
-                                            Disabled="@Disabled"
-                                            class="@CssClass"
-                                            @attributes="AdditionalAttributes">
-    @ChildContent
-</BlazorBlueprint.Primitives.Tabs.BbTabsTrigger>
+@if (isRenaming)
+{
+    @* The editor replaces the tab rather than sitting inside it. A text box inside a role="tab"
+       is the same nesting problem as the close button, and an input that is also a tab stop
+       fights the roving tabindex the list depends on. *@
+    <input @ref="renameInput"
+           type="text"
+           value="@renameText"
+           @oninput="@(e => renameText = e.Value?.ToString() ?? string.Empty)"
+           @onkeydown="HandleRenameKeyDownAsync"
+           @onblur="CommitRenameAsync"
+           aria-label="@Localizer["Tabs.RenameLabel", EffectiveLabel]"
+           class="@RenameCssClass" />
+}
+else
+{
+    <BlazorBlueprint.Primitives.Tabs.BbTabsTrigger Value="@Value"
+                                                Disabled="@Disabled"
+                                                OnCloseRequested="@RequestCloseAsync"
+                                                OnRenameRequested="@BeginRenameAsync"
+                                                OnMoveRequested="@HandleKeyboardMoveAsync"
+                                                class="@CssClass"
+                                                data-tab-value="@Value"
+                                                draggable="@(IsReorderable ? "true" : null)"
+                                                @ondblclick="HandleDoubleClickAsync"
+                                                @attributes="AdditionalAttributes">
+        @if (ChildContent is not null)
+        {
+            @ChildContent
+        }
+        else
+        {
+            @EffectiveLabel
+        }
 
-@code {
-    /// <summary>
-    /// The value that identifies this tab.
-    /// Used to match with TabsContent components.
-    /// </summary>
-    [Parameter, EditorRequired]
-    public string Value { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Display text for this tab in the responsive Select dropdown.
-    /// Falls back to Value if not provided.
-    /// </summary>
-    [Parameter]
-    public string? Label { get; set; }
-
-    /// <summary>
-    /// Whether this tab trigger is disabled.
-    /// </summary>
-    [Parameter]
-    public bool Disabled { get; set; }
-
-    /// <summary>
-    /// The child content to render within the tab trigger.
-    /// </summary>
-    [Parameter]
-    public RenderFragment? ChildContent { get; set; }
-
-    /// <summary>
-    /// Additional CSS classes to apply to the tab trigger.
-    /// </summary>
-    [Parameter]
-    public string? Class { get; set; }
-
-    /// <summary>
-    /// Gets or sets additional HTML attributes to apply to the root element.
-    /// </summary>
-    [Parameter(CaptureUnmatchedValues = true)]
-    public Dictionary<string, object>? AdditionalAttributes { get; set; }
-
-    /// <summary>
-    /// The parent Components-layer BbTabsList, if responsive mode is enabled.
-    /// </summary>
-    [CascadingParameter]
-    public BbTabsList? ComponentsList { get; set; }
-
-    protected override void OnInitialized()
-    {
-        ComponentsList?.RegisterResponsiveTrigger(Value, Label ?? Value);
-    }
-
-    private string CssClass => ClassNames.cn(
-        "bb:inline-flex bb:items-center bb:justify-center bb:whitespace-nowrap bb:rounded-sm bb:px-3 bb:py-1.5",
-        "bb:text-sm bb:font-medium bb:ring-offset-background bb:transition-all",
-        "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2",
-        "bb:disabled:pointer-events-none bb:disabled:opacity-50",
-        "bb:data-[state=active]:bg-background bb:data-[state=active]:text-foreground bb:data-[state=active]:shadow-sm",
-        Class
-    );
-
-    public void Dispose()
-    {
-        ComponentsList?.UnregisterResponsiveTrigger(Value);
-    }
+        @if (IsClosable && !Disabled)
+        {
+            <span role="presentation"
+                  aria-hidden="true"
+                  class="@CloseCssClass"
+                  title="@Localizer["Tabs.Close"]"
+                  @onclick="HandleCloseClickAsync"
+                  @onclick:stopPropagation="true">
+                <LucideIcon Name="x" Size="12" />
+            </span>
+        }
+    </BlazorBlueprint.Primitives.Tabs.BbTabsTrigger>
 }

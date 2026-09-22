@@ -1,7 +1,10 @@
 @namespace BlazorBlueprint.Components
 
+@* In AsChild mode the primitive renders no element, so the trigger's own styling has nowhere to
+   go. Only what the page set is handed down, so the development warning names that and nothing
+   else. *@
 <BlazorBlueprint.Primitives.Collapsible.BbCollapsibleTrigger AsChild="@AsChild"
-                                                          class="@CssClass"
+                                                          class="@(AsChild ? Class : CssClass)"
                                                           @attributes="AdditionalAttributes">
     @ChildContent
 </BlazorBlueprint.Primitives.Collapsible.BbCollapsibleTrigger>

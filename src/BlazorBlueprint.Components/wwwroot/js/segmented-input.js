@@ -25,9 +25,10 @@ export function initialize(root) {
     const min = Number(input.dataset.min);
     const max = Number(input.dataset.max);
     const step = Number(input.dataset.step || 1);
-    const current = input.value === '' ? min : Number(input.value);
+    const empty = input.value === '';
+    const current = empty ? min : Number(input.value);
     let next = event.key === 'Home' ? min : event.key === 'End' ? max
-      : (Number.isFinite(current) ? current : min) + (event.key === 'ArrowUp' ? step : -step);
+      : empty ? min : (Number.isFinite(current) ? current : min) + (event.key === 'ArrowUp' ? step : -step);
     next = Math.min(max, Math.max(min, next));
     input.value = String(next).padStart(Number(input.dataset.digits), '0');
     input.dispatchEvent(new Event('input', { bubbles: true }));

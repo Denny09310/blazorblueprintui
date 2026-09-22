@@ -10,6 +10,9 @@ namespace BlazorBlueprint.Components;
 /// <typeparam name="TValue">The type of each checkbox value.</typeparam>
 public partial class BbFormFieldCheckboxGroup<TValue> : FormFieldBase
 {
+    /// <summary>Identifies the bound field for EditForm validation.</summary>
+    [Parameter] public Expression<Func<IReadOnlyCollection<TValue>>>? ValuesExpression { get; set; }
+
     /// <summary>
     /// Gets or sets the currently selected values.
     /// </summary>
@@ -53,11 +56,12 @@ public partial class BbFormFieldCheckboxGroup<TValue> : FormFieldBase
     public string? InputClass { get; set; }
 
     /// <inheritdoc />
-    protected override LambdaExpression? GetFieldExpression() => null;
+    protected override LambdaExpression? GetFieldExpression() => ValuesExpression;
 
     private async Task HandleValuesChanged(IReadOnlyCollection<TValue> values)
     {
         Values = values;
         await ValuesChanged.InvokeAsync(values);
+        NotifyFieldChanged();
     }
 }

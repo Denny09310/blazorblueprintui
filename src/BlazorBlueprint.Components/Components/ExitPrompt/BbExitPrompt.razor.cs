@@ -114,8 +114,8 @@ public partial class BbExitPrompt : ComponentBase, IAsyncDisposable
     protected override async Task OnAfterRenderAsync(bool firstRender) => await SyncBrowserPromptAsync();
 
     /// <summary>
-    /// Arms or disarms the browser's own prompt to match <see cref="Enabled"/>. Called after every
-    /// render rather than only on change, because a circuit that reconnects loses the listener.
+    /// Arms or disarms the browser's own prompt when <see cref="Enabled"/> changes.
+    /// Called after rendering so interop is available; unchanged state preserves the listener.
     /// </summary>
     private async Task SyncBrowserPromptAsync()
     {

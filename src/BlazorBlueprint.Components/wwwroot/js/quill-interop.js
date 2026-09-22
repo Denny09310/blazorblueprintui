@@ -4,6 +4,64 @@
 let editorStates = new Map();
 let attributorsRegistered = false;
 
+/** @type {any} */
+let Quill = null;
+
+/** @type {Promise|null} */
+let quillLoadPromise = null;
+
+/**
+ * Lazily load the Quill library that ships with this package.
+ *
+ * Same single-flight shape as the ECharts loader, but Quill's dist build is UMD rather
+ * than ESM: a dynamic import() would leave an empty module namespace. A classic <script>
+ * tag runs the UMD wrapper the way it expects and lands the library on window.Quill.
+ *
+ * A host that already loads its own Quill keeps it — the global is checked first, so the
+ * bundled copy is never fetched and the two cannot both register blots.
+ *
+ * @returns {Promise<any>}
+ */
+async function loadQuill() {
+    if (Quill) return Quill;
+
+    if (window.Quill) {
+        Quill = window.Quill;
+        return Quill;
+    }
+
+    if (!quillLoadPromise) {
+        quillLoadPromise = (async () => {
+            // Resolve relative to this module's own URL
+            const base = new URL('../lib/quill/', import.meta.url);
+
+            // Quill needs its core stylesheet to lay the editor out. It stays unlayered,
+            // as it is when a host loads it: the themed overrides in blazorblueprint.css
+            // are !important inside @layer components, which beats unlayered either way.
+            const cssHref = new URL('quill.core.css', base).href;
+            if (!document.querySelector(`link[href="${cssHref}"]`)) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = cssHref;
+                document.head.appendChild(link);
+            }
+
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = new URL('quill.js', base).href;
+                script.onload = resolve;
+                script.onerror = () => reject(new Error('Failed to load quill.js'));
+                document.head.appendChild(script);
+            });
+
+            return window.Quill;
+        })();
+    }
+
+    Quill = await quillLoadPromise;
+    return Quill;
+}
+
 /**
  * Quill's default align attributor writes ql-align-* classes, which only mean something
  * where Quill's stylesheet is loaded. The style attributor writes text-align inline, so
@@ -32,14 +90,16 @@ function historyState(quill) {
  * @param {string} editorId - Unique identifier for the editor
  * @param {Object} options - Editor configuration options
  */
-export function initializeEditor(element, dotNetRef, editorId, options) {
+export async function initializeEditor(element, dotNetRef, editorId, options) {
     if (!element || !dotNetRef) {
         console.error('initializeEditor: missing required parameters');
         return;
     }
 
-    if (typeof Quill === 'undefined') {
-        console.error('Quill is not loaded. Please include Quill.js in your page.');
+    try {
+        await loadQuill();
+    } catch (err) {
+        console.error('Failed to load Quill:', err);
         return;
     }
 

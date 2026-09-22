@@ -4,6 +4,7 @@
 <div id="@Id"
      role="list"
      aria-label="@AriaLabel"
+     data-sortable-announcements="@System.Text.Json.JsonSerializer.Serialize(KeyboardAnnouncements)"
      data-keyboard-sorting="@(KeyboardSorting ? "true" : "false")"
      data-sortable-order="@(Sort ? "true" : "false")"
      @attributes="AdditionalAttributes">

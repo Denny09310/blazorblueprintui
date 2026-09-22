@@ -154,7 +154,7 @@ public partial class BbTablePagination<TData> : ComponentBase, IDisposable
     /// <summary>
     /// Initializes the component and creates the pagination context.
     /// </summary>
-    protected override void OnInitialized()
+    protected override void OnParametersSet()
     {
         _context = new PaginationContext
         {

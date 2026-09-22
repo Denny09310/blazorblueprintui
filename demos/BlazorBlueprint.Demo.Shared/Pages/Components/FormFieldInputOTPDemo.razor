@@ -22,7 +22,7 @@
             </p>
         </div>
         <div class="max-w-md">
-            <BbFormFieldInputOTP @bind-Value="_otpCode"
+            <BbFormFieldInputOTP AriaLabel="Verification code" @bind-Value="_otpCode"
                                 Label="Verification code"
                                 HelperText="Enter the 6-digit code sent to your phone." />
         </div>
@@ -117,6 +117,7 @@
         </div>
         <div class="space-y-4">
             <ApiReference ComponentName="FormFieldInputOTP">
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">Accessible name forwarded to the interactive control or group.</ApiParameter>
                 <ApiParameter Name="Label" Type="string?" Default="null">The label text.</ApiParameter>
                 <ApiParameter Name="HelperText" Type="string?" Default="null">Helper text below the input.</ApiParameter>
                 <ApiParameter Name="ErrorText" Type="string?" Default="null">Manual error text override.</ApiParameter>

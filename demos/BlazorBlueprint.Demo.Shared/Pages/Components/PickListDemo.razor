@@ -1,0 +1,330 @@
+@page "/components/pick-list"
+@using BlazorBlueprint.Primitives
+<PageTitle>Pick List - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Pick List</h1>
+            <p class="text-xl text-muted-foreground">
+                Two lists and the buttons that move options between them. Pick rows and press a
+                button, rather than dragging — which is what makes it work on a long list, and from
+                the keyboard.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Usage</h2>
+                <p class="text-muted-foreground">
+                    One binding, not two.
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Options</code> holds every
+                    option and <code class="text-xs bg-muted px-1 py-0.5 rounded">Values</code> holds
+                    the ones picked; the available pane is whatever is left. Two bound collections
+                    could drift apart — the same option in both panes, or in neither — and nothing
+                    could be asked to reconcile that.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbPickList TValue="string" Options="@columnOptions" @bind-Values="basicPicked" />
+                <p class="text-sm text-muted-foreground">
+                    Picked, in order:
+                    <span class="font-mono text-foreground">@Describe(basicPicked)</span>
+                </p>
+            </div>
+
+            <CodeBlock Source="Components/PickList/basic.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Order Is Kept</h2>
+                <p class="text-muted-foreground">
+                    The selected pane keeps the order things were moved in, not the order they are
+                    listed in. A pick list is usually building an ordered thing — a set of columns, a
+                    playlist, a sequence of steps.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbPickList TValue="string"
+                            Options="@stepOptions"
+                            SourceLabel="Steps"
+                            TargetLabel="Your sequence"
+                            Height="12rem"
+                            @bind-Values="orderPicked" />
+                <p class="text-sm text-muted-foreground">
+                    Sequence:
+                    <span class="font-mono text-foreground">@Describe(orderPicked)</span>
+                </p>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Search</h2>
+                <p class="text-muted-foreground">
+                    Each pane gets its own search box. With a search active, the move-everything
+                    buttons move what the search has left visible, not the hidden rest — a button
+                    that quietly moved rows you could not see would be worse than no button.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbPickList TValue="string"
+                            Options="@countryOptions"
+                            ShowSearch="true"
+                            SourceLabel="All countries"
+                            TargetLabel="Shipping to"
+                            Height="12rem"
+                            @bind-Values="countryPicked" />
+                <p class="text-sm text-muted-foreground">
+                    Picked: <span class="font-mono text-foreground">@(countryPicked?.Count() ?? 0) of @countryOptions.Length</span>
+                </p>
+            </div>
+
+            <CodeBlock Source="Components/PickList/search.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Vertical</h2>
+                <p class="text-muted-foreground">
+                    Stacked panes with up and down arrows. Better on a narrow screen, where two panes
+                    side by side leave neither wide enough to read. The horizontal layout already
+                    stacks on small screens, and turns its buttons into a row when it does.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BbPickList TValue="string"
+                            Options="@columnOptions"
+                            Orientation="PickListOrientation.Vertical"
+                            Height="10rem"
+                            @bind-Values="verticalPicked" />
+            </div>
+
+            <CodeBlock Source="Components/PickList/vertical.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Locked Options</h2>
+                <p class="text-muted-foreground">
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">OptionDisabled</code> marks an
+                    option that cannot move. The move-everything buttons leave it where it is, so a
+                    required column stays put.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbPickList TValue="string"
+                            Options="@columnOptions"
+                            OptionDisabled="@(o => o.Value == "id")"
+                            @bind-Values="lockedPicked" />
+                <p class="text-sm text-muted-foreground">
+                    <strong>ID</strong> is locked. Try <em>Move all</em>.
+                </p>
+            </div>
+
+            <CodeBlock Source="Components/PickList/locked.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Reacting to a Move</h2>
+                <p class="text-muted-foreground">
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">OnMove</code> reports which
+                    values moved and which way, after the binding has been updated.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbPickList TValue="string"
+                            Options="@columnOptions"
+                            @bind-Values="movePicked"
+                            OnMove="HandleMove" />
+                <p class="text-sm text-muted-foreground">
+                    Last move: <span class="font-mono text-foreground">@(lastMove ?? "none yet")</span>
+                </p>
+            </div>
+
+            <CodeBlock Source="Components/PickList/on-move.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Disabled</h2>
+                <p class="text-muted-foreground">
+                    Both panes and every button are out of action.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BbPickList TValue="string" Options="@columnOptions" Values="@(new[] { "name" })" Disabled="true" />
+            </div>
+        </section>
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                Each pane is a <a href="/components/list-box" class="underline">List Box</a>, so it
+                carries the full <code class="text-xs bg-muted px-1 py-0.5 rounded">role="listbox"</code>
+                pattern: one tab stop, an active option through
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-activedescendant</code>, and
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-selected</code> on every option.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <strong>Everything here works from the keyboard.</strong> That is the reason to prefer
+                this over dragging between two lists: a drag has no keyboard equivalent worth the name.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Each move button is icon-only and carries a matching
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-label</code> and
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">title</code>, so it is announced and
+                shows a tooltip on hover.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                A button that would do nothing is disabled rather than silently inert — the selected
+                arrows need a selection, and the move-all arrows need a non-empty pane.
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between the panes, their search boxes and the buttons">
+                <BbKbd>Tab</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move the active option inside a pane">
+                <BbKbd>&uarr;</BbKbd> / <BbKbd>&darr;</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Pick or unpick the active option">
+                <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Extend the selection, then move the lot in one press">
+                <BbKbd>Shift</BbKbd> + <BbKbd>&uarr;</BbKbd> / <BbKbd>&darr;</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Select everything visible in the pane">
+                <BbKbd>Ctrl</BbKbd> + <BbKbd>A</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Press the focused move button">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbPickList">
+                <ApiParameter Name="Options" Type="IEnumerable&lt;SelectOption&lt;TValue&gt;&gt;?">
+                    Every option, in the order the available pane shows them. The same <code class="text-xs bg-muted px-1 py-0.5 rounded">SelectOption&lt;TValue&gt;</code> the other list components take.
+                </ApiParameter>
+                <ApiParameter Name="Values" Type="IEnumerable&lt;TValue&gt;?">
+                    The picked values, in the order they were moved. Use with <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Values</code>. A value with no matching option is dropped.
+                </ApiParameter>
+                <ApiParameter Name="ValuesChanged" Type="EventCallback&lt;IEnumerable&lt;TValue&gt;?&gt;">
+                    Invoked when the picked values change.
+                </ApiParameter>
+                <ApiParameter Name="OnMove" Type="EventCallback&lt;PickListMoveEventArgs&lt;TValue&gt;&gt;">
+                    Invoked after options move, with the values that moved and which way.
+                </ApiParameter>
+                <ApiParameter Name="SourceLabel" Type="string?" Default="Available">
+                    The label above the pane of options not yet picked.
+                </ApiParameter>
+                <ApiParameter Name="TargetLabel" Type="string?" Default="Selected">
+                    The label above the pane of picked options.
+                </ApiParameter>
+                <ApiParameter Name="SourceEmptyMessage" Type="string?">
+                    The message shown when the available pane is empty.
+                </ApiParameter>
+                <ApiParameter Name="TargetEmptyMessage" Type="string?">
+                    The message shown when the selected pane is empty.
+                </ApiParameter>
+                <ApiParameter Name="ShowSearch" Type="bool" Default="false">
+                    Whether each pane has a search box.
+                </ApiParameter>
+                <ApiParameter Name="ShowSelectAll" Type="bool" Default="true">
+                    Whether each pane has a select-all checkbox.
+                </ApiParameter>
+                <ApiParameter Name="ShowMoveAll" Type="bool" Default="true">
+                    Whether the move-everything buttons are shown. With a search active they move only what it left visible.
+                </ApiParameter>
+                <ApiParameter Name="Orientation" Type="PickListOrientation" Default="Horizontal">
+                    Whether the panes sit side by side or stacked.
+                </ApiParameter>
+                <ApiParameter Name="OptionDisabled" Type="Func&lt;SelectOption&lt;TValue&gt;, bool&gt;?">
+                    A predicate marking options that cannot move. The move-everything buttons leave them alone.
+                </ApiParameter>
+                <ApiParameter Name="ItemTemplate" Type="RenderFragment&lt;SelectOption&lt;TValue&gt;&gt;?">
+                    A template for an option's content, used in both panes.
+                </ApiParameter>
+                <ApiParameter Name="Height" Type="string" Default="16rem">
+                    The height of each pane's scrolling area, as a CSS length.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether the whole control is disabled.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?">
+                    Additional CSS classes for the root element.
+                </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes applied to the root element.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+    </div>
+</div>
+
+@code {
+    private IEnumerable<string>? basicPicked = ["name"];
+    private IEnumerable<string>? orderPicked;
+    private IEnumerable<string>? countryPicked;
+    private IEnumerable<string>? verticalPicked;
+    private IEnumerable<string>? lockedPicked;
+    private IEnumerable<string>? movePicked;
+    private string? lastMove;
+
+    private readonly SelectOption<string>[] columnOptions =
+    [
+        new("id", "ID"),
+        new("name", "Name"),
+        new("email", "Email"),
+        new("role", "Role"),
+        new("created", "Created"),
+        new("status", "Status"),
+    ];
+
+    private readonly SelectOption<string>[] stepOptions =
+    [
+        new("gather", "Gather requirements"),
+        new("design", "Design"),
+        new("build", "Build"),
+        new("review", "Review"),
+        new("ship", "Ship"),
+    ];
+
+    private readonly SelectOption<string>[] countryOptions =
+    [
+        new("au", "Australia"), new("br", "Brazil"), new("ca", "Canada"),
+        new("cn", "China"), new("de", "Germany"), new("es", "Spain"),
+        new("fr", "France"), new("id", "Indonesia"), new("in", "India"),
+        new("it", "Italy"), new("jp", "Japan"), new("ke", "Kenya"),
+        new("mx", "Mexico"), new("ng", "Nigeria"), new("nz", "New Zealand"),
+        new("pt", "Portugal"), new("se", "Sweden"), new("sg", "Singapore"),
+        new("uk", "United Kingdom"), new("us", "United States"),
+    ];
+
+    private string Describe(IEnumerable<string>? values) =>
+        values is null || !values.Any() ? "none" : string.Join(" → ", columnOptions.Concat(stepOptions).GetTexts(values));
+
+    private void HandleMove(PickListMoveEventArgs<string> e) =>
+        lastMove = $"{e.Values.Count} {(e.ToTarget ? "picked" : "returned")}";
+}

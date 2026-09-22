@@ -1,0 +1,53 @@
+@namespace BlazorBlueprint.Components
+@inject IBbLocalizer Localizer
+
+@*
+    Barcode - a linear barcode drawn as SVG, encoded in C# with no JavaScript and no dependency.
+
+    The bars are SVG and stretch freely, because a barcode's width comes from its data and its
+    height is a free choice. The human-readable line is HTML rather than SVG text: it has to stay
+    legible whatever aspect ratio the bars end up at, and as HTML it is also selectable, which is
+    what someone does when the scan fails and they have to key the number in.
+*@
+
+<div class="@RootClass" data-slot="barcode" @attributes="AdditionalAttributes">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <BbLabel Class="bb:mb-2 bb:block">@Label</BbLabel>
+    }
+
+    @if (encodeError is not null)
+    {
+        <p role="alert" class="bb:text-sm bb:text-destructive">@encodeError</p>
+    }
+    else if (symbol is not null && svg is not null)
+    {
+        <div class="bb:inline-block bb:max-w-full"
+             style="width: @SymbolWidthStyle; background: @Background; color: @Foreground">
+
+            @if (AboveGroup is { } above)
+            {
+                <div class="bb:text-center bb:font-mono bb:leading-tight"
+                     style="font-size: @TextSizeStyle; padding-bottom: 0.2em">
+                    @above.Text
+                </div>
+            }
+
+            @((MarkupString)svg)
+
+            @if (BelowGroups.Count > 0)
+            {
+                <div class="bb:relative bb:font-mono bb:leading-tight"
+                     style="font-size: @TextSizeStyle; height: 1.2em; margin-top: 0.2em">
+                    @foreach (var group in BelowGroups)
+                    {
+                        <span class="bb:absolute bb:top-0 bb:text-center bb:whitespace-nowrap"
+                              style="left: @Percent(group.Start); width: @Percent(group.End - group.Start, span: true)">
+                            @group.Text
+                        </span>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>

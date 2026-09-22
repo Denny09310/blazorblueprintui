@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Primitives.DropdownMenu
 @using BlazorBlueprint.Primitives.Utilities
+@inject IServiceProvider Services
 
 @* DropdownMenu trigger - opens the dropdown menu when clicked *@
 @if (AsChild)
@@ -75,10 +76,16 @@ else
     /// </summary>
     private ElementReference? _asChildTriggerRef;
 
+    private static readonly AsChildTriggerDescription Diagnostic = new("BbDropdownMenuTrigger", "open this menu", "<button>");
+
+    // The context the last render cascaded, kept so the first after-render can ask whether
+    // anything read it.
+    private TriggerContext? lastTriggerContext;
+
     /// <summary>
     /// Context passed to child components when AsChild is true.
     /// </summary>
-    private TriggerContext TriggerContext => new()
+    private TriggerContext TriggerContext => lastTriggerContext = new()
     {
         TriggerId = Context.TriggerId,
         IsOpen = Context.IsOpen,
@@ -191,6 +198,11 @@ else
             // _asChildTriggerRef via TriggerContext.SetTriggerElement. We need to
             // propagate this to the context so Content can position relative to it.
             Context.SetTriggerElement(_asChildTriggerRef.Value);
+        }
+
+        if (firstRender)
+        {
+            AsChildDiagnostics.WarnIfUnconsumed<BbDropdownMenuTrigger>(Services, Diagnostic, AsChild, lastTriggerContext, AdditionalAttributes);
         }
     }
 }

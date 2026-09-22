@@ -1,0 +1,257 @@
+@page "/primitives/swipe-area"
+@using System.Globalization
+@using BlazorBlueprint.Primitives.SwipeArea
+<PageTitle>Swipe Area Primitive - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Swipe Area Primitive</h1>
+            <p class="text-xl text-muted-foreground">
+                Headless, unstyled swipe gesture detection. The gesture maths runs in the browser, so
+                a swipe costs one call into C# rather than one per pointer move.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Usage</h2>
+                <p class="text-muted-foreground">
+                    Drag across the box with a mouse or a finger. A swipe is reported when it travels
+                    50 pixels, or when a shorter flick is fast enough.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbSwipeArea OnSwipe="HandleBasicSwipe"
+                             class="select-none rounded-md border border-dashed bg-muted/40 p-10 text-center text-sm text-muted-foreground cursor-grab active:cursor-grabbing">
+                    Swipe in any direction
+                </BbSwipeArea>
+                <p class="text-sm text-muted-foreground">
+                    Last swipe:
+                    <span class="font-mono text-foreground">@BasicResult</span>
+                </p>
+            </div>
+
+            <CodeBlock Source="Primitives/SwipeArea/basic.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Axis and Browser Scrolling</h2>
+                <p class="text-muted-foreground">
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Axis</code> decides which
+                    directions are reported. <code class="text-xs bg-muted px-1 py-0.5 rounded">TouchAction</code>
+                    decides what the browser keeps for itself — it maps straight to the CSS
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">touch-action</code> property, so the
+                    browser is told before the gesture starts rather than asked to undo a scroll it
+                    already began.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbSwipeArea Axis="SwipeAxis.Horizontal"
+                             TouchAction="SwipeTouchAction.PanY"
+                             OnSwipe="HandleAxisSwipe"
+                             class="select-none rounded-md border border-dashed bg-muted/40 p-10 text-center text-sm text-muted-foreground cursor-grab active:cursor-grabbing">
+                    Swipe left or right. On a touch screen the page still scrolls up and down.
+                </BbSwipeArea>
+                <p class="text-sm text-muted-foreground">
+                    Last swipe:
+                    <span class="font-mono text-foreground">@AxisResult</span>
+                </p>
+            </div>
+
+            <CodeBlock Source="Primitives/SwipeArea/axis-and-touch-action.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Following the Gesture</h2>
+                <p class="text-muted-foreground">
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">OnSwipeMove</code> reports the
+                    current offset while the pointer is down, throttled to one call every 50 ms.
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">OnSwipeCancel</code> is the signal
+                    to spring back when the gesture ends without committing. Without a handler on
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">OnSwipeMove</code>, no position
+                    updates are sent at all.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbSwipeArea Axis="SwipeAxis.Horizontal"
+                             TouchAction="SwipeTouchAction.PanY"
+                             OnSwipeMove="HandleFollowMove"
+                             OnSwipe="HandleFollowSwipe"
+                             OnSwipeCancel="HandleFollowCancel"
+                             class="select-none overflow-hidden rounded-md border border-dashed bg-muted/40 p-4">
+                    <div class="rounded-md border bg-card p-6 text-center text-sm cursor-grab active:cursor-grabbing"
+                         style="@FollowCardStyle">
+                        @(followDismissed ? "Dismissed. Swipe again to reset." : "Drag me sideways")
+                    </div>
+                </BbSwipeArea>
+                <p class="text-sm text-muted-foreground">
+                    Offset: <span class="font-mono text-foreground">@followOffset.ToString("F0", CultureInfo.InvariantCulture)px</span>
+                </p>
+            </div>
+
+            <CodeBlock Source="Primitives/SwipeArea/follow-the-gesture.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Thresholds</h2>
+                <p class="text-muted-foreground">
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Threshold</code> is the distance a
+                    swipe must cover. <code class="text-xs bg-muted px-1 py-0.5 rounded">MinVelocity</code>
+                    lets a short, fast flick through anyway — it still needs 16 pixels of travel, so
+                    the jitter of a tap cannot trip it. Set it to
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">double.PositiveInfinity</code> to
+                    judge on distance alone.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbSwipeArea Threshold="150"
+                             MinVelocity="double.PositiveInfinity"
+                             OnSwipe="HandleThresholdSwipe"
+                             class="select-none rounded-md border border-dashed bg-muted/40 p-10 text-center text-sm text-muted-foreground cursor-grab active:cursor-grabbing">
+                    A deliberate 150 pixel drag. A flick does nothing here.
+                </BbSwipeArea>
+                <p class="text-sm text-muted-foreground">
+                    Last swipe:
+                    <span class="font-mono text-foreground">@ThresholdResult</span>
+                </p>
+            </div>
+
+            <CodeBlock Source="Primitives/SwipeArea/thresholds.txt" />
+        </section>
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                The area renders a plain <code class="text-xs bg-muted px-1 py-0.5 rounded">&lt;div&gt;</code>
+                with no role of its own, so it does not change how the content inside it is announced.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <strong>A swipe is never reachable by keyboard.</strong> Every action offered by a swipe
+                needs a second, visible route — a button, a menu item or a keyboard shortcut. Treat the
+                gesture as a shortcut for people who can use it, never as the only way in.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">TouchAction</code> set to
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">None</code> also removes the page's own
+                scrolling from inside the area. Prefer
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">PanX</code> or
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">PanY</code>, which give up one axis only.
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="None. Provide your own keyboard equivalent for whatever the swipe does.">
+                <span class="text-muted-foreground">&mdash;</span>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbSwipeArea">
+                <ApiParameter Name="OnSwipe" Type="EventCallback&lt;SwipeEventArgs&gt;">
+                    Invoked once when a gesture ends far enough or fast enough to count as a swipe. The arguments carry <code class="text-xs bg-muted px-1 py-0.5 rounded">Direction</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">DeltaX</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">DeltaY</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">Distance</code> and <code class="text-xs bg-muted px-1 py-0.5 rounded">Velocity</code>.
+                </ApiParameter>
+                <ApiParameter Name="OnSwipeMove" Type="EventCallback&lt;SwipeMoveEventArgs&gt;">
+                    Invoked while the pointer is down, with the current offset from where the gesture started. Throttled to one call every 50 ms with a single call in flight. No handler means no position updates are sent.
+                </ApiParameter>
+                <ApiParameter Name="OnSwipeCancel" Type="EventCallback">
+                    Invoked when a gesture that reported movement ends without becoming a swipe, or when the browser takes the pointer away. A plain tap raises nothing.
+                </ApiParameter>
+                <ApiParameter Name="Threshold" Type="double" Default="50">
+                    How far the pointer must travel along the reported axis, in CSS pixels.
+                </ApiParameter>
+                <ApiParameter Name="MinVelocity" Type="double" Default="0.5">
+                    The speed, in CSS pixels per millisecond, at which a shorter flick still counts. Requires at least 16 pixels of travel.
+                </ApiParameter>
+                <ApiParameter Name="Axis" Type="SwipeAxis" Default="SwipeAxis.Both">
+                    Which axis swipes are reported on: <code class="text-xs bg-muted px-1 py-0.5 rounded">Both</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">Horizontal</code> or <code class="text-xs bg-muted px-1 py-0.5 rounded">Vertical</code>.
+                </ApiParameter>
+                <ApiParameter Name="TouchAction" Type="SwipeTouchAction" Default="SwipeTouchAction.Auto">
+                    What the browser may still do with a touch inside the area: <code class="text-xs bg-muted px-1 py-0.5 rounded">Auto</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">PanX</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">PanY</code> or <code class="text-xs bg-muted px-1 py-0.5 rounded">None</code>. Maps to the CSS property of the same name.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether gestures are ignored.
+                </ApiParameter>
+                <ApiParameter Name="ChildContent" Type="RenderFragment?">
+                    The content the gesture is detected over.
+                </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes applied to the root <code>&lt;div&gt;</code>. A <code class="text-xs bg-muted px-1 py-0.5 rounded">style</code> passed here is merged with the area's own, rather than replacing it.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="Methods">
+                <ApiParameter Name="CancelAsync()" Type="Task">
+                    Abandons a gesture in progress without reporting it, and without raising <code class="text-xs bg-muted px-1 py-0.5 rounded">OnSwipeCancel</code>. For when something else takes over mid-gesture.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+    </div>
+</div>
+
+@code {
+    private SwipeEventArgs? basicSwipe;
+    private SwipeEventArgs? axisSwipe;
+    private SwipeEventArgs? thresholdSwipe;
+
+    private double followOffset;
+    private bool followDismissed;
+
+    private string BasicResult => Describe(basicSwipe);
+    private string AxisResult => Describe(axisSwipe);
+    private string ThresholdResult => Describe(thresholdSwipe);
+
+    private static string Describe(SwipeEventArgs? swipe) => swipe is { } e
+        ? $"{e.Direction} — {e.Distance.ToString("F0", CultureInfo.InvariantCulture)}px at {e.Velocity.ToString("F2", CultureInfo.InvariantCulture)}px/ms"
+        : "none yet";
+
+    private string FollowCardStyle
+    {
+        get
+        {
+            var transform = $"transform: translateX({followOffset.ToString("F0", CultureInfo.InvariantCulture)}px)";
+            // The spring back is an animation; following the finger is not.
+            return followOffset == 0 ? $"{transform}; transition: transform 200ms ease-out" : transform;
+        }
+    }
+
+    private void HandleBasicSwipe(SwipeEventArgs e) => basicSwipe = e;
+
+    private void HandleAxisSwipe(SwipeEventArgs e) => axisSwipe = e;
+
+    private void HandleThresholdSwipe(SwipeEventArgs e) => thresholdSwipe = e;
+
+    private void HandleFollowMove(SwipeMoveEventArgs e)
+    {
+        followDismissed = false;
+        followOffset = e.DeltaX;
+    }
+
+    private void HandleFollowSwipe(SwipeEventArgs e)
+    {
+        followDismissed = true;
+        followOffset = 0;
+    }
+
+    private void HandleFollowCancel()
+    {
+        followOffset = 0;
+    }
+}

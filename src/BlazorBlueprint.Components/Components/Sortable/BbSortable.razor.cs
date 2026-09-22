@@ -22,6 +22,19 @@ namespace BlazorBlueprint.Components;
 /// <typeparam name="TItem">The type of items in the sortable list.</typeparam>
 public partial class BbSortable<TItem> : ComponentBase
 {
+    private IReadOnlyDictionary<string, string> LocalizedKeyboardAnnouncements => new Dictionary<string, string>
+    {
+        ["Cancelled"] = Localizer["Sortable.Cancelled"],
+        ["Unchanged"] = Localizer["Sortable.Unchanged"],
+        ["MoveFailed"] = Localizer["Sortable.MoveFailed"],
+        ["Transferred"] = Localizer["Sortable.Transferred"],
+        ["TransferRejected"] = Localizer["Sortable.TransferRejected"],
+        ["TransferFailed"] = Localizer["Sortable.TransferFailed"],
+        ["PickedUp"] = Localizer["Sortable.PickedUp"],
+        ["Disabled"] = Localizer["Sortable.Disabled"],
+        ["Position"] = Localizer["Sortable.Position"],
+    };
+
     /// <summary>
     /// Gets or sets the render fragment used to display each item.
     /// The <c>context</c> parameter provides the data item of type <typeparamref name="TItem"/>.
@@ -110,7 +123,7 @@ public partial class BbSortable<TItem> : ComponentBase
 
     /// <summary>Accessible instructions for keyboard sorting handles.</summary>
     [Parameter]
-    public string KeyboardInstructions { get; set; } = "Press Space or Enter to pick up. Use arrows to reorder, Control plus Left or Right to transfer to a connected list, Space or Enter to drop, or Escape to cancel.";
+    public string? KeyboardInstructions { get; set; }
 
     /// <summary>Optional predicate evaluated before an in-list move is accepted.</summary>
     [Parameter]

@@ -22,7 +22,7 @@
             </p>
         </div>
         <div class="w-[280px]">
-            <BbNativeSelect TValue="string" @bind-Value="_selectedFruit" Placeholder="Select a fruit">
+            <BbNativeSelect AriaLabel="Choose an option" TValue="string" @bind-Value="_selectedFruit" Placeholder="Select a fruit">
                 <option value="apple">Apple</option>
                 <option value="banana">Banana</option>
                 <option value="orange">Orange</option>
@@ -226,6 +226,7 @@
         </div>
         <div class="space-y-4">
             <ApiReference ComponentName="NativeSelect&lt;TValue&gt;">
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">Accessible name forwarded to the interactive control or group.</ApiParameter>
                 <ApiParameter Name="TValue" Type="type parameter">
                     The type of the selected value (e.g., string, int).
                 </ApiParameter>

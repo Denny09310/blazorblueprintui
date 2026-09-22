@@ -28,21 +28,24 @@ You need:
    ```
 
    Create the key at https://www.nuget.org/account/apikeys with "Push" permission, scoped to `BlazorBlueprint.*`.
-3. **To be on the `develop` branch**, up to date with origin. The scripts enforce this and open the `develop` → `main` PR for you at the end.
+3. **The appropriate release branch**, up to date with origin. Stable and icon releases run from `develop` and open the `develop` → `main` PR. Prereleases use `release-beta.sh --branch NAME`, refuse `main`, and do not open a merge PR.
 
 ## Quick Start
 
-Both scripts are interactive — they show you what changed, prompt for versions, and summarise before doing anything.
+The scripts are interactive — they show you what changed, prompt for versions, and summarise before doing anything.
 
 ```bash
 # Primitives and/or Components
 ./devkit/scripts/release.sh
 
+# Prerelease from the v4.1.0 branch
+./devkit/scripts/release-beta.sh --branch v4.1.0
+
 # Icon packages (Lucide, Heroicons, Feather, Font Awesome)
 ./devkit/scripts/release-icons.sh
 ```
 
-Use `--dry-run` on either to walk through every step without executing any git, build, NuGet, or PR operation. It is the safest way to check what a release would do:
+Use `--dry-run` on any release script to walk through every step without executing any git, build, NuGet, or PR operation. It is the safest way to check what a release would do:
 
 ```bash
 ./devkit/scripts/release-icons.sh --dry-run
@@ -60,8 +63,22 @@ Flags:
 |------|--------|
 | `--dry-run` | Walk through all steps without executing any |
 | `--skip-notes` | Use existing `RELEASE_NOTES.md` as-is instead of regenerating |
-| `--skip-tests` | Skip API surface tests (for re-releases where code hasn't changed) |
+| `--skip-tests` | Skip .NET and JavaScript tests (for re-releases where code has not changed) |
 | `--clear-cache` | Clear the NuGet HTTP cache before building, when a freshly published package isn't resolving |
+
+### `release-beta.sh` — Primitives and Components prereleases
+
+Runs from the branch named by `--branch` (default `v4`; pass `--branch v4.1.0` for this branch). Select a base such as `4.1.0` and an identifier such as `beta`; the script derives the next number from local tags. It refuses stable versions and releases from `main`.
+
+The script runs the .NET and JavaScript suites, prepares release notes, tags and publishes Primitives, waits for NuGet availability, then updates Components to use that Primitives version and publishes Components. It pushes the release branch and package tags without opening a PR to `main`.
+
+It supports the same flags as `release.sh`, plus `--branch NAME`. `--skip-tests` skips both the .NET and JavaScript suites. `--skip-notes` uses the existing package notes as written, so check their version headings before using it for publication. Browser checks run separately as described in [tests/browser/README.md](tests/browser/README.md).
+
+For a local rehearsal that does not build, tag, push or publish:
+
+```bash
+./devkit/scripts/release-beta.sh --branch v4.1.0 --dry-run --skip-notes
+```
 
 ### `release-icons.sh` — Icon packages
 
@@ -140,9 +157,9 @@ Follow [Semantic Versioning](https://semver.org/):
 
 Before releasing a package:
 
-1. ✅ **On `develop`, up to date** - the scripts refuse to run otherwise
+1. ✅ **On the correct branch, up to date** — `develop` for stable/icon releases, or the explicit `--branch` for prereleases
 2. ✅ **All changes committed** - no uncommitted files
-3. ✅ **Tests passing** - `./scripts/run-tests.sh`
+3. ✅ **Tests passing** — `./scripts/run-tests.sh` for .NET and JavaScript; run the browser suite separately before publication
 4. ✅ **README updated** - document new features/changes
 5. ✅ **`NUGET_API_KEY` exported** - required for every release, not just the first
 

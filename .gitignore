@@ -55,6 +55,7 @@ devkit/
 
 # External libs
 pro/
+/addons/
 /.vscode-ai-images/
 
 # Internal documentation belongs in the private development toolkit

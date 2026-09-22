@@ -20,7 +20,7 @@ Beautiful UI components for Blazor, built with accessibility in mind. Inspired b
 </p>
 
 <p align="center">
-  <strong>Styled Components</strong> · <strong>Headless Primitives</strong> · <strong>13 Chart Types</strong> · <strong>5,300+ Icons</strong>
+  <strong>Styled Components</strong> · <strong>Headless Primitives</strong> · <strong>14 Chart Types</strong> · <strong>5,300+ Icons</strong>
 </p>
 
 ## Table of Contents
@@ -59,7 +59,7 @@ See the [changelog](CHANGELOG.md#2026-09-19) for the full list and the [migratio
 - **Right-to-left support** — Wrap the layout in `BbDirectionProvider` and the library mirrors for Arabic or Hebrew. Layout mirrors through logical CSS properties rather than through C#, a convention test keeps it that way, overlays inherit the direction across the portal boundary, and the components that place content with pixel maths read the direction at the moment of the gesture. Parameters that name a physical side — `SheetSide`, `ToastPosition` and the rest — keep their promise, by design. See the [Right-to-Left guide](demos/BlazorBlueprint.Demo.Shared/Pages/Guides/RtlGuide.razor).
 - **Scheduler** — Day, Week, Monday–Friday WorkWeek and Month views, resource lanes, overlapping appointments, drag to move and resize either time boundary. All-day events draw as bars in a band above the time grid, and a multi-day run is one bar rather than a chip per day. `ActiveHours` mutes or refuses the parts of a day the schedule is not about. Recurring series support individual exceptions; IANA time zones include daylight-saving validation, and `TimeZones` lets you name your own. Derive from `SchedulerEvent` to carry your own fields into the editor, filter the visible resources, replace the toolbar, and right-click a slot or an appointment for a context menu.
 - **DataGrid cell and batch editing** — Isolated drafts, validation, rejected-save recovery and keyboard save/cancel. Inline editors preserve column widths, support custom Bb input controls, and reapply sorting after accepted edits. Applications supply a deep-copy `EditItemFactory` and persistence callbacks.
-- **Charts** — 13 types on Apache ECharts with a declarative composition API: Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Rose, Sankey and Scatter. Colours resolve from your theme's CSS variables at runtime and re-render on a theme change, and `OnDataPointClick` maps a click straight back to the position in the collection you bound.
+- **Charts** — 14 types on Apache ECharts with a declarative composition API: Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Map, Pie, Radar, Radial Bar, Rose, Sankey and Scatter. Colours resolve from your theme's CSS variables at runtime and re-render on a theme change, and `OnDataPointClick` maps a click straight back to the position in the collection you bound.
 - **Ten more components** — `BbChip` and `BbChipSet` for selectable, dismissible pills; `BbFab` for a screen's one main action; `BbStepper` and `BbStep` for progress through a sequence; `BbLink` for a link that sits on the text baseline; `BbHighlighter` to mark what matched a search; `BbImage` with a fallback for a source that will not load; `BbScrollToTop`; and `BbExitPrompt`, which holds a navigation while there is unsaved work.
 - **Mobile components** — `BbAppBar`, `BbBottomNav`, `BbNotificationBadge`, `BbQuantityStepper` and `BbSectionHeader`, plus Drawer snap points with pointer and keyboard resizing, Select as a bottom sheet, and a DataView mobile toolbar that puts sorting and filters in one.
 - **Reusable motion** — `BbMotion` presets and custom keyframes with viewport, hover, press and manual triggers; `BbHeightAnimation`, `BbSelectionIndicator`, `BbPageTransition` and `BbScreenTransition`. Animations honour a reduced-motion preference, cancel stale work, and keep prerendered content usable.
@@ -68,7 +68,7 @@ See the [changelog](CHANGELOG.md#2026-09-19) for the full list and the [migratio
 - **TreeSelect and Cascader** — Searchable hierarchy selection with form bindings and keyboard navigation. TreeSelect supports cascading parent checkboxes and indeterminate states; Cascader reveals the selected path and scrolls to newly opened levels.
 - **Menu families** — DropdownMenu, ContextMenu and Menubar gain shared submenu and radio-item families, and ContextMenu gains checkbox items, so the three stay consistent with each other.
 - **FileUpload lifecycle** — Supply an `UploadHandler` for progress, cancellation and retry, with browser file references retained across selections.
-- **Localizable throughout** — Every piece of component chrome reads from `IBbLocalizer`; the built-in English defaults cover all 470 strings.
+- **Localizable throughout** — Every piece of component chrome reads from `IBbLocalizer`; the built-in English defaults cover all 546 strings.
 - **Browser regression coverage** — A Playwright suite runs against Server, WebAssembly and Interactive Auto in Chromium and WebKit, covering keyboard navigation, mobile overlays, scoped themes, scheduler editing and Auto's hand-off to WebAssembly.
 
 Try these features in the [source demos](#demo-applications).
@@ -217,7 +217,24 @@ If you also run your own Tailwind build, load its output before or after `blazor
 
 ## Components
 
-Blazor Blueprint includes the styled component families below, with composable subcomponents and headless primitives. See the [changelog](CHANGELOG.md) for the v4 additions and changes.
+Blazor Blueprint includes the styled component families below, with composable subcomponents and headless primitives. See the [changelog](CHANGELOG.md) for the additions and changes in each release.
+
+### New in v4.1
+
+Eight components, none of which takes a runtime dependency of its own.
+
+| Component | What it is | Demo |
+|-----------|------------|------|
+| `BbQrCode` | A scannable code drawn as SVG, on a from-scratch ISO/IEC 18004 encoder: all 40 versions, four error-correction levels, numeric, alphanumeric and UTF-8 byte modes, module shapes and a centre logo. No JavaScript and no image request. | `/components/qr-code` |
+| `BbBarcode` | Fourteen linear symbologies drawn as SVG, on encoders written in C#: Code 128, Code 39, EAN-13, EAN-8, UPC-A, ITF, Codabar, ISBN, ISSN, MSI, Telepen, Pharmacode, POSTNET and the Royal Mail 4-state code. Every symbol was checked bar for bar against zint and decoded back with zxing-cpp. | `/components/barcode` |
+| `BbListBox` | An always-visible list of options: no trigger and no popover, with the full listbox keyboard pattern, search and range selection. | `/components/list-box` |
+| `BbPickList` | Two lists and the buttons that move options between them, with reordering, search and keyboard support. Each pane is a `BbListBox`. | `/components/pick-list` |
+| `BbSignature` | A signing field on the `BbSignaturePad` primitive: sign by drawing or by typing a name, with SVG, PNG and raw stroke output. | `/components/signature` |
+| `BbPivotDataGrid` | A cross-tabulation whose columns come from the data: nested fields on both axes, subtotals and grand totals worked out from the items rather than the cells, custom aggregates, drill-down, a field picker and group-aware paging. | `/components/pivot-data-grid` |
+| `BbGantt` | A plan against a timeline, with the task list and the bars in one table so a row cannot drift. Six zoom levels, summary roll-up, milestones, all four dependency types with routed arrows, drag to move, resize, set progress and draw a dependency, drag a row to reorder or re-parent, a hover card and a legend, non-working days, a today marker and right-to-left support. | `/components/gantt` |
+| `BbMapChart` | A world choropleth for country-level data such as visitors or sales. Bind ISO country codes or English names to values, colour them on an automatic or custom scale with `BbVisualMap`, and turn on pan and zoom with `Roam`. A click reports the index in the collection you bound. The Natural Earth boundaries load only when a page draws a map. | `/charts/map` |
+
+The QR and barcode symbols stay dark on a light field in both themes. A reader expects that, and enough of them refuse an inverted symbol that tracking a dark theme would trade a working code for a tidier page.
 
 ### New in v4
 
@@ -272,6 +289,8 @@ Production-ready components for complex data-driven applications:
 |-----------|-------------|
 | **Dashboard Grid** | Drag-and-drop, resizable widget layout for composing dashboards. Built on CSS Grid with responsive breakpoints, state persistence, keyboard accessibility, and loading/empty states. |
 | **Scheduler** | Day/week/work-week scheduling with Monday/Sunday week starts, configurable slots, resource lanes, drag/resize, event editing, confirmed deletion, recurrence and optional per-event IANA time zones |
+| **Gantt** | A plan against a timeline: task list and bars in one table, six zoom levels, summary roll-up, milestones, all four dependency types with routed arrows, drag/resize/progress editing, dependency drawing, row drag to reorder and re-parent, hover cards, a legend, non-working days and a today marker. `GanttBuilder` is the same engine without markup. |
+| **Pivot Data Grid** | Cross-tabulation whose columns come from the data: nested row and column fields, subtotals and grand totals worked out from the items rather than the cells, custom aggregates, drill-down, a field picker and group-aware paging. `PivotBuilder` is the same engine without markup. |
 | **TreeSelect** | Searchable single/multiple hierarchy selection with cascading checkboxes, indeterminate states, leaf-only selection and form binding |
 | **Cascader** | Hierarchy columns, path search, leaf/branch selection, keyboard/RTL navigation and automatic scrolling to the active level |
 | **FileUpload** | Optional transport callback with progress, cancellation, retries and preserved browser files |
@@ -279,7 +298,7 @@ Production-ready components for complex data-driven applications:
 | **Dynamic Form** | Schema-driven form rendering — define fields, validation rules, and layout in a schema object, and the component generates the complete form with appropriate inputs, conditional visibility, and error display. |
 | **Filter Builder** | Visual query builder for constructing complex filter expressions with AND/OR logic, nested condition groups, and type-aware operators. Pairs with DataGrid for interactive data exploration. |
 | **Form Wizard** | Multi-step form wizard with progress indicators, per-step validation, optional/skippable steps, and navigation controls. |
-| **Chart** | 13 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Rose, Sankey, Scatter) built on Apache ECharts with a declarative composition API and automatic theme integration. |
+| **Chart** | 14 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Map, Pie, Radar, Radial Bar, Rose, Sankey, Scatter) built on Apache ECharts with a declarative composition API and automatic theme integration. |
 | **Dock** | IDE-style docking layout — drag-and-drop panels between regions, pinning, maximize, close/reopen, pop-out floating panels, and tab-strip overflow. |
 | **Event Calendar** | Agenda/event calendar with Month, Week, and Agenda views, generic over your own event model, with per-event templates and styling. |
 | **Rich Text Editor** | WYSIWYG editor on Quill 2 — headings, lists and checklists, links, images with an upload hook, tables, text colour and highlight, alignment, inline and block code, undo/redo — with sanitised HTML and Delta output. |
@@ -294,6 +313,7 @@ Production-ready components for complex data-driven applications:
 | **Calendar** | Interactive calendar with date constraints, range selection, and per-day templates/styling |
 | **Checkbox** | Checkbox with indeterminate state and ARIA attributes |
 | **Checkbox Group** | Group of checkboxes with select-all support |
+| **Pick List** | Two lists and the buttons that move options between them, with reordering, search and keyboard support |
 | **Color Picker** | Color selection with swatches and custom input |
 | **Combobox** | Searchable autocomplete dropdown |
 | **Currency Input** | Currency-formatted numeric input with locale support |
@@ -336,6 +356,7 @@ Production-ready components for complex data-driven applications:
 | **Input Group** | Enhanced inputs with icons, buttons, and addons |
 | **Input OTP** | One-time password input with individual digit fields |
 | **Label** | Form labels with control association |
+| **List Box** | Always-visible list of options with the full listbox keyboard pattern, search, and single, multiple or range selection |
 | **Masked Input** | Input with format masks (phone, SSN, etc.) |
 | **MultiSelect** | Searchable multi-selection with tags, checkboxes, custom footer and programmatic close |
 | **Native Select** | Browser-native select with consistent styling |
@@ -344,6 +365,7 @@ Production-ready components for complex data-driven applications:
 | **Range Slider** | Dual-handle slider for selecting value ranges, horizontal or vertical |
 | **Rating** | Star/icon rating input |
 | **Select** | Keyboard-accessible selection with popover or bottom-sheet presentation |
+| **Signature** | Signing field that captures a drawn or typed signature, with SVG, PNG and raw stroke output |
 | **Slider** | Range input with drag support, horizontal or vertical |
 | **Sortable** | Pointer and keyboard sortable lists/grids, connected-list transfer, move/drop permissions, reusable handles and custom drag previews |
 | **Split Button** | Primary action with dropdown for secondary actions |
@@ -375,7 +397,7 @@ Production-ready components for complex data-driven applications:
 | **Scroll Area** | Custom scrollable area with styled scrollbars |
 | **Separator** | Horizontal/vertical dividers with solid, dashed and dotted line styles |
 | **Sidebar** | Responsive icon/pill collapse modes, animated navigation indicators, inset/floating variants and mobile sheets |
-| **Tabs** | Tabbed interfaces with controlled/uncontrolled modes |
+| **Tabs** | Tabbed interfaces with controlled/uncontrolled modes, and tabs the user can add, close, rename and reorder |
 | **Timeline** | Vertical timeline with alignment, connector styles, loading states, and collapsible items |
 
 ### Overlay
@@ -399,13 +421,15 @@ Production-ready components for complex data-driven applications:
 
 | Component            | Description                                                                                                        |
 |----------------------|--------------------------------------------------------------------------------------------------------------------|
-| **Chart**            | 13 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Rose, Sankey, Scatter) with theme integration |
+| **Chart**            | 14 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Map, Pie, Radar, Radial Bar, Rose, Sankey, Scatter) with theme integration |
 | **Dashboard Grid**   | Drag-and-drop, resizable widget layout for dashboards with responsive breakpoints, state persistence, and keyboard accessibility |
 | **DataGrid**         | Enterprise data grid with row/cell/batch editing, validation, sorting, per-column filtering, row grouping with aggregates, hierarchical tree data, selection, expandable rows, row virtualization, context menu, pinned columns, column reordering/resizing/visibility, and state persistence |
 | **DataTable**        | Tables with sorting, filtering, pagination, and row selection                                                      |
 | **DataView**         | Templated grid/list layouts, selection, grouping, list virtualization, mobile sorting/filtering, pagination and infinite scrolling |
 | **Event Calendar**   | Month, Week, and Agenda views over your own event model with per-event templates, styling, and click callbacks    |
+| **Gantt**            | Task list and timeline in one table, six zoom levels, summary roll-up, milestones, dependency arrows, drag/resize/progress editing, row reordering and re-parenting, and right-to-left support |
 | **Markdown Editor**  | Toolbar formatting with live preview                                                                               |
+| **Pivot Data Grid**  | Cross-tabulation with nested groups, totals worked out from the items, custom aggregates, drill-down and a field picker |
 | **Rich Text Editor** | WYSIWYG editor on Quill 2 with headings, lists and checklists, links, images with an upload hook, tables, colour, alignment, code, and undo/redo |
 | **Scheduler**        | Day/week/work-week appointments with resource lanes, configurable week starts and slots, drag/resize, recurring events and time-zone handling |
 | **Tree View**        | Hierarchical data display with selection, checkboxes, lazy loading, drag-and-drop, search filtering, and data-driven or declarative modes |
@@ -416,12 +440,14 @@ Production-ready components for complex data-driven applications:
 |-----------|-------------|
 | **Alert** | Callout messages with dismissible variants |
 | **Avatar** | User avatars with fallback and group support |
+| **Barcode** | Fourteen linear symbologies drawn as SVG on encoders written in C# — Code 128/39, EAN-13/8, UPC-A, ITF, Codabar, ISBN, ISSN, MSI, Telepen, Pharmacode, POSTNET and Royal Mail 4-state |
 | **Badge** | Semantic/soft status variants and composable decorative icons |
 | **Copy Text** | Click-to-copy text with tooltip feedback and copied-state indicator |
 | **Dark Mode Toggle** | Button that toggles light/dark mode with customizable icons and optional label |
 | **Empty** | Empty state placeholder with icon, title, and description |
 | **Kbd** | Keyboard shortcut display |
 | **Progress** | Progress bar indicator |
+| **QR Code** | Scannable code drawn as SVG on a from-scratch ISO/IEC 18004 encoder — all 40 versions, four error-correction levels, module shapes and a centre logo |
 | **Skeleton** | Loading placeholders |
 | **Spinner** | Loading spinner with size variants |
 | **Theme Switcher** | Theme customization popover — light/dark mode, independent base and primary colors, and radius, with persistence |
@@ -440,7 +466,7 @@ Building blocks for chat and AI-agent interfaces:
 
 ## Primitives
 
-Blazor Blueprint's **29 headless primitives** provide behavior, ARIA attributes, and keyboard support without any styling. They handle all the complex interaction logic — focus trapping, ARIA attributes, keyboard shortcuts, portal rendering — while giving you complete control over appearance.
+Blazor Blueprint's **35 headless primitives** provide behavior, ARIA attributes, and keyboard support without any styling. They handle all the complex interaction logic — focus trapping, ARIA attributes, keyboard shortcuts, portal rendering — while giving you complete control over appearance.
 
 Use primitives when you need full design freedom or are building a custom design system.
 
@@ -448,6 +474,7 @@ Use primitives when you need full design freedom or are building a custom design
 |-----------|----------------|
 | **Accordion** | Expand/collapse logic, single/multiple mode, keyboard navigation |
 | **Alert Dialog** | Modal requiring explicit acknowledgement, no dismiss via overlay or Escape |
+| **Barcode** | Fourteen linear symbology encoders, each with its own alphabet, length rule and check digit, producing bar geometry rather than pixels |
 | **Checkbox** | Checked/unchecked/indeterminate state, ARIA attributes |
 | **Collapsible** | Open/close state, animated transitions |
 | **Context Menu** | Right-click menu with keyboard navigation and positioning |
@@ -456,19 +483,24 @@ Use primitives when you need full design freedom or are building a custom design
 | **Dialog** | Focus trapping, escape to close, scroll locking, portal rendering |
 | **Direction** | Writing direction for everything inside it, cascaded as a context and written as a `dir` attribute |
 | **Dropdown Menu** | Open/close, keyboard navigation, click-outside dismissal |
+| **Gantt** | Task tree, summary roll-up, the timeline's two tiers and dependencies resolved against the rows on screen, with no markup |
 | **Hover Card** | Hover intent, delay timing, portal positioning |
 | **Label** | Label-control association |
 | **Menubar** | Application-style menu bar with roving focus, submenus and typeahead |
 | **Navigation Menu** | Site navigation with hoverable panels, pointer intent and keyboard access |
+| **Pivot** | Cross-tabulation: nested headings on both axes, and totals worked out from the items rather than from the cells |
 | **Popover** | Floating positioning, portal rendering, click-outside |
 | **Progress** | Accessible progress bar with determinate and indeterminate states |
+| **QR Code** | The whole of ISO/IEC 18004: every version and error-correction level, Reed-Solomon over GF(256), block interleaving and the eight masks, producing a module matrix |
 | **Radio Group** | Single selection, arrow key navigation, ARIA roles |
 | **Scroll Area** | Custom scrollbar with accessible ARIA scrollbar role and drag support |
 | **Select** | Dropdown behavior, typeahead, keyboard navigation |
 | **Separator** | Semantic or decorative divider with orientation support |
 | **Sheet** | Side panel, focus trapping, scroll locking |
+| **Signature Pad** | Stroke capture from pointer, touch or stylus, keeping the raw points behind a signature |
 | **Slider** | Range input with keyboard navigation and pointer drag support |
 | **Sortable** | Drag-and-drop sortable lists with SortableJS interop, ARIA live announcements, and connected multi-list support |
+| **Swipe Area** | Swipe gestures with a distance threshold, an axis to judge them on, and pointer capture so a swipe off the edge still counts |
 | **Switch** | Toggle state, keyboard support, ARIA switch role |
 | **Table** | Sorting, pagination, row selection, keyboard row navigation |
 | **Tabs** | Tab selection, arrow key navigation, ARIA tab roles |
@@ -538,7 +570,7 @@ Apply the `.dark` class to your `<html>` element. All components automatically s
 
 ## Localization
 
-All component chrome strings (button labels, placeholders, ARIA labels, status messages) are localizable via the `IBbLocalizer` interface. The built-in `DefaultBbLocalizer` provides English defaults for all 470 strings.
+All component chrome strings (button labels, placeholders, ARIA labels, status messages) are localizable via the `IBbLocalizer` interface. The built-in `DefaultBbLocalizer` provides English defaults for all 546 strings.
 
 ### Quick Start
 
@@ -644,9 +676,13 @@ Blazor Blueprint implements components in Blazor and C#, drawing on the design o
 - [Floating UI](https://floating-ui.com/) — Bundled positioning engine for floating elements; MIT License.
 - [Apache ECharts](https://echarts.apache.org/) — Bundled charting engine; Apache License 2.0.
 - [SortableJS](https://sortablejs.github.io/Sortable/) — Bundled drag-and-drop sorting library; MIT License.
-- [Quill](https://quilljs.com/) — Rich text editing engine, loaded by the host application; BSD 3-Clause License.
+- [Quill](https://quilljs.com/) — Bundled rich text editing engine; BSD 3-Clause License.
 - [Markdig](https://github.com/xoofx/markdig) — Markdown parsing and HTML rendering; BSD 2-Clause License.
 - [HtmlSanitizer](https://github.com/mganss/HtmlSanitizer) — HTML sanitization for the rich text and Markdown editors; MIT License.
+
+**Map data**
+
+- [Natural Earth](https://www.naturalearthdata.com/) — World map boundaries for `BbMapChart`, derived from Natural Earth v5.1.2; public domain.
 
 **Icons**
 

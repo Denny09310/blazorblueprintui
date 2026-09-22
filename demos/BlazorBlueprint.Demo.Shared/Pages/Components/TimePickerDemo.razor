@@ -21,7 +21,7 @@
                 Standard 12-hour format with AM/PM toggle.
             </p>
         </div>
-        <BbTimePicker @bind-Value="_time12" />
+        <BbTimePicker AriaLabel="Choose a time" @bind-Value="_time12" />
         <p class="text-sm text-muted-foreground">
             Selected: @(_time12.HasValue ? FormatTime12(_time12.Value) : "None")
         </p>
@@ -240,6 +240,7 @@
 
         <div class="space-y-4">
             <ApiReference ComponentName="TimePicker">
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">Accessible name forwarded to the interactive control or group.</ApiParameter>
                 <ApiParameter Name="Value" Type="TimeSpan?">
                     Selected time value.
                 </ApiParameter>

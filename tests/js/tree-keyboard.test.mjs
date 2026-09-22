@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 const source = await readFile(new URL('../../src/BlazorBlueprint.Primitives/wwwroot/js/primitives/tree-keyboard.js', import.meta.url), 'utf8');
 const { initialize, dispose } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 let serial = 0;
+globalThis.getComputedStyle = () => ({ direction: 'ltr' });
 
 function tree({ picker = true, checkable = false, branch = true, disabled = false } = {}) {
   const handlers = new Map(), calls = [];

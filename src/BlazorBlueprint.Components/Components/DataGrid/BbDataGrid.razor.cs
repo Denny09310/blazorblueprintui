@@ -329,7 +329,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     /// <summary>
     /// CSS classes applied to even rows when <see cref="Striped"/> is <c>true</c>.
-    /// Defaults to <c>"even:bg-muted/30 even:hover:bg-muted/70"</c>.
+    /// Defaults to <c>"bb:even:bg-muted/30 bb:even:hover:bg-muted/70"</c>.
     /// </summary>
     [Parameter]
     public string StripeClass { get; set; } = "bb:even:bg-muted/30 bb:even:hover:bg-muted/70";
@@ -998,7 +998,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         {
             if (!jsInitialized)
             {
-                columnsModule = await JsModules.GetAsync(Js, "./_content/BlazorBlueprint.Components/js/datagrid-columns.js");
+                columnsModule = await JsModules.GetAsync(Js, "./_content/BlazorBlueprint.Components/js/table-columns.js");
                 selfRef = DotNetObjectReference.Create(this);
                 jsInitialized = true;
 

@@ -88,9 +88,9 @@ public partial class BbCandlestick : SeriesBase
             BarWidth = BarWidth,
             ItemStyle = new EChartsItemStyleOption
             {
-                Color = BullColor,
+                Color = GetResolvedFillColor() ?? GetResolvedColor() ?? BullColor,
                 Color0 = BearColor,
-                BorderColor = BullColor,
+                BorderColor = GetResolvedColor() ?? BullColor,
                 BorderColor0 = BearColor
             },
             Emphasis = new EChartsEmphasisOption { Disabled = true }

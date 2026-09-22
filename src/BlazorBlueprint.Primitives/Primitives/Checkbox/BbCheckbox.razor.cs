@@ -57,9 +57,6 @@ namespace BlazorBlueprint.Primitives.Checkbox;
 /// </example>
 public partial class BbCheckbox : ComponentBase
 {
-    private bool shouldPreventDefault;
-    private bool toggledFromKeyDown;
-
     /// <summary>
     /// Gets or sets whether the checkbox is checked.
     /// </summary>
@@ -198,43 +195,10 @@ public partial class BbCheckbox : ComponentBase
     /// </remarks>
     private async Task HandleClick(MouseEventArgs args)
     {
-        // Skip if this click was a browser-synthesized click from a keyboard event
-        // that we already handled in HandleKeyDown.
-        if (toggledFromKeyDown)
-        {
-            toggledFromKeyDown = false;
-            return;
-        }
-
         if (!Disabled)
         {
             await ToggleChecked();
         }
-    }
-
-    /// <summary>
-    /// Handles keyboard events for accessibility.
-    /// </summary>
-    /// <param name="args">The keyboard event arguments.</param>
-    /// <remarks>
-    /// Toggles the checkbox on Space or Enter. We must toggle here rather than
-    /// relying on the browser's synthetic click because Blazor's
-    /// <c>@onkeydown:preventDefault</c> is evaluated at render time — once set to
-    /// <c>true</c> (to prevent Space from scrolling the page), subsequent Space
-    /// presses have their default action suppressed before the handler runs,
-    /// which blocks the synthetic click entirely.
-    /// </remarks>
-    private async Task HandleKeyDown(KeyboardEventArgs args)
-    {
-        if (!Disabled && (args.Key == " " || args.Key == "Enter"))
-        {
-            shouldPreventDefault = args.Key == " ";
-            toggledFromKeyDown = true;
-            await ToggleChecked();
-            return;
-        }
-
-        shouldPreventDefault = false;
     }
 
     /// <summary>

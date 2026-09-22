@@ -7,6 +7,9 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public partial class BbAttachmentTrigger : ComponentBase
 {
+    /// <summary>The accessible action name; defaults to the localized Open attachment label.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+
     /// <summary>
     /// Gets or sets the element type to render. Defaults to Button, but automatically switches to Anchor when <see cref="Href"/> is provided.
     /// </summary>

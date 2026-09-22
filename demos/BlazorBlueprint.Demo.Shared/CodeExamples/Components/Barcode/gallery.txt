@@ -1,0 +1,14 @@
+<BbBarcode Value="BB-2026-0917"      Type="BarcodeType.Code128" />
+<BbBarcode Value="ABC-123"           Type="BarcodeType.Code39" />
+<BbBarcode Value="590123412345"      Type="BarcodeType.Ean13" />
+<BbBarcode Value="9638507"           Type="BarcodeType.Ean8" />
+<BbBarcode Value="03600029145"       Type="BarcodeType.UpcA" />
+<BbBarcode Value="1234567890"        Type="BarcodeType.Itf" />
+<BbBarcode Value="A123456A"          Type="BarcodeType.Codabar" />
+<BbBarcode Value="978-0-306-40615-7" Type="BarcodeType.Isbn" />
+<BbBarcode Value="0378-5955"         Type="BarcodeType.Issn" />
+<BbBarcode Value="1234567"           Type="BarcodeType.Msi" />
+<BbBarcode Value="Telepen 123"       Type="BarcodeType.Telepen" />
+<BbBarcode Value="1234"              Type="BarcodeType.Pharmacode" />
+<BbBarcode Value="555551237"         Type="BarcodeType.Postnet" />
+<BbBarcode Value="SN34RD1A"          Type="BarcodeType.Rm4scc" />

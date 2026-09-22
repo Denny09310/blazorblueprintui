@@ -17,7 +17,6 @@
          data-orientation="@Orientation.ToString().ToLower()"
          data-disabled="@(Disabled ? "true" : null)"
          @onkeydown="HandleKeyDown"
-         @onkeydown:preventDefault="shouldPreventDefault"
          @attributes="AdditionalAttributes">
         @ChildContent
     </div>
@@ -36,7 +35,6 @@
     private string sliderId = Guid.NewGuid().ToString("N");
     private bool jsInitialized;
     private bool disposed;
-    private bool shouldPreventDefault;
 
     /// <summary>
     /// Gets or sets the current value (controlled mode).
@@ -117,7 +115,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && !Disabled)
+        if (!jsInitialized && !disposed && !Disabled)
         {
             await InitializeJsAsync();
         }
@@ -201,41 +199,32 @@
         switch (e.Key)
         {
             case "ArrowUp":
-                shouldPreventDefault = true;
                 await SetValueAsync(CurrentValue + stepSize);
                 break;
             case "ArrowDown":
-                shouldPreventDefault = true;
                 await SetValueAsync(CurrentValue - stepSize);
                 break;
             // The horizontal arrows move along the track as it is drawn, so they swap in a
             // right-to-left slider. Up and Down keep their meaning either way.
             case "ArrowRight":
-                shouldPreventDefault = true;
                 await SetValueAsync(CurrentValue + (IsRtl ? -stepSize : stepSize));
                 break;
             case "ArrowLeft":
-                shouldPreventDefault = true;
                 await SetValueAsync(CurrentValue + (IsRtl ? stepSize : -stepSize));
                 break;
             case "PageUp":
-                shouldPreventDefault = true;
                 await SetValueAsync(CurrentValue + largeStep);
                 break;
             case "PageDown":
-                shouldPreventDefault = true;
                 await SetValueAsync(CurrentValue - largeStep);
                 break;
             case "Home":
-                shouldPreventDefault = true;
                 await SetValueAsync(Min);
                 break;
             case "End":
-                shouldPreventDefault = true;
                 await SetValueAsync(Max);
                 break;
             default:
-                shouldPreventDefault = false;
                 break;
         }
     }

@@ -46,18 +46,23 @@
 @code {
     private string _searchValue = string.Empty;
 
+    /// <summary>Current global search text.</summary>
     [Parameter]
     public string GlobalSearchValue { get; set; } = string.Empty;
 
+    /// <summary>Reports edits to the global search text.</summary>
     [Parameter]
     public EventCallback<string> OnGlobalSearchChanged { get; set; }
 
+    /// <summary>Columns offered by the visibility chooser.</summary>
     [Parameter]
     public List<BbDataTable<TData>.ColumnData> Columns { get; set; } = new();
 
+    /// <summary>Optional synchronous visibility callback. Update the owning table and request its render from the handler.</summary>
     [Parameter]
-    public Action<string, bool> OnColumnVisibilityChanged { get; set; } = null!;
+    public Action<string, bool>? OnColumnVisibilityChanged { get; set; }
 
+    /// <summary>Additional toolbar actions.</summary>
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 

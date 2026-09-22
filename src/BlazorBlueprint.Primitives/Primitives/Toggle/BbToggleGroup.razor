@@ -20,8 +20,6 @@
     private bool IsRtl => DirectionContext.Resolve(Direction);
 
     private ToggleGroupContext<TValue> context = new();
-    private List<BbToggleGroupItem<TValue>>? cachedEnabledItems;
-    private int lastItemsVersion;
     private BbToggleGroupItem<TValue>? lastFocusedItem;
 
     /// <summary>
@@ -237,16 +235,8 @@
         }
     }
 
-    private List<BbToggleGroupItem<TValue>> GetEnabledItems()
-    {
-        var currentVersion = context.Items.Count;
-        if (cachedEnabledItems == null || lastItemsVersion != currentVersion)
-        {
-            cachedEnabledItems = context.Items.Where(i => !i.Disabled).ToList();
-            lastItemsVersion = currentVersion;
-        }
-        return cachedEnabledItems;
-    }
+    private List<BbToggleGroupItem<TValue>> GetEnabledItems() =>
+        context.Items.Where(item => !item.Disabled).ToList();
 
     private async Task NavigateNext(List<BbToggleGroupItem<TValue>> enabledItems)
     {

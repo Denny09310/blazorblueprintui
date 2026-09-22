@@ -219,7 +219,7 @@
             </BbAttachmentGroup>
 
             <BbAttachment>
-                <BbAttachmentTrigger aria-label="Open research-summary.pdf preview"
+                <BbAttachmentTrigger AriaLabel="Open research-summary.pdf preview"
                                      @onclick="() => previewOpen = true"/>
                 <BbAttachmentMedia>
                     <LucideIcon Name="file-search" Size="18"/>
@@ -236,7 +236,7 @@
             </BbAttachment>
 
             <BbAttachment>
-                <BbAttachmentTrigger Href="#" aria-label="Open annual-report.pdf"/>
+                <BbAttachmentTrigger Href="#" AriaLabel="Open annual-report.pdf"/>
                 <BbAttachmentMedia>
                     <LucideIcon Name="file-text" Size="18"/>
                 </BbAttachmentMedia>
@@ -267,7 +267,7 @@
                 Label icon-only attachment actions with descriptive <code>aria-label</code> values.
             </AccessibilityItem>
             <AccessibilityItem>
-                <code>BbAttachmentTrigger</code> should always include an <code>aria-label</code> because it has no
+                <code>BbAttachmentTrigger</code> uses a localized default name. Set <code>AriaLabel</code> to identify the individual file because it has no
                 visible text.
             </AccessibilityItem>
             <AccessibilityItem>
@@ -319,6 +319,7 @@
         </ApiReference>
 
         <ApiReference ComponentName="AttachmentTrigger">
+        <ApiParameter Name="AriaLabel" Type="string?" Default="null">Accessible name; defaults to the localized Open attachment action.</ApiParameter>
             <ApiParameter Name="AsChild" Type="AttachmentTriggerElement" Default="Button">
                 Element type to render. Options: Button, Anchor. Automatically switches to Anchor when Href is set.
             </ApiParameter>

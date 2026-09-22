@@ -1,4 +1,4 @@
-<BbCombobox TValue="string"
+<BbCombobox AriaLabel="Choose an option" TValue="string"
          Options="frameworks"
          @bind-Value="selectedFramework"
          Placeholder="Select framework..."

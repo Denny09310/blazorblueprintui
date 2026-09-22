@@ -179,6 +179,40 @@
         return _triggers.Select(t => t.Value);
     }
 
+    /// <summary>
+    /// Turns a Ctrl-arrow press into a move of one place, resolved against the writing direction.
+    /// </summary>
+    /// <remarks>
+    /// Only the direction is resolved here, because this is where the <c>DirectionContext</c>
+    /// already is. The tab's position is deliberately not read from the registered triggers:
+    /// registration order is not render order once a keyed list has been reordered, because a
+    /// pure permutation changes no parameter and so runs no child lifecycle at all. The styled
+    /// layer reads the position from the DOM instead, which cannot drift.
+    /// </remarks>
+    internal void HandleMoveRequest(string currentValue, string key)
+    {
+        var trigger = _triggers.Find(t => t.Value == currentValue);
+        if (trigger is null)
+        {
+            return;
+        }
+
+        var isRtl = DirectionContext.Resolve(Direction);
+        var delta = key switch
+        {
+            "ArrowLeft" => isRtl ? 1 : -1,
+            "ArrowRight" => isRtl ? -1 : 1,
+            "ArrowUp" => -1,
+            "ArrowDown" => 1,
+            _ => 0,
+        };
+
+        if (delta != 0)
+        {
+            _ = trigger.RequestMoveAsync(delta);
+        }
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)

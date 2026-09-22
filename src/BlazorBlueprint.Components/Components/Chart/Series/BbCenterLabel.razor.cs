@@ -25,13 +25,13 @@ public partial class BbCenterLabel : ComponentBase
     private SeriesBase? ParentSeries { get; set; }
 
     /// <summary>
-    /// Gets or sets the title text displayed above the value in the center.
+    /// Gets or sets the title text displayed below the value in the center.
     /// </summary>
     [Parameter]
     public string? Title { get; set; }
 
     /// <summary>
-    /// Gets or sets the value text displayed below the title in the center.
+    /// Gets or sets the value text displayed above the title in the center.
     /// </summary>
     [Parameter]
     public string? Value { get; set; }

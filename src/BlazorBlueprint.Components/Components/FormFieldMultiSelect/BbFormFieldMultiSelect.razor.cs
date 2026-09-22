@@ -10,6 +10,11 @@ namespace BlazorBlueprint.Components;
 /// <typeparam name="TValue">The type of the selected values.</typeparam>
 public partial class BbFormFieldMultiSelect<TValue> : FormFieldBase
 {
+    /// <summary>Whether this selection is required.</summary>
+    [Parameter] public bool Required { get; set; }
+    /// <summary>Classes applied to the open trigger.</summary>
+    [Parameter] public string? ActiveClass { get; set; } = "bb:bg-accent bb:text-accent-foreground";
+
     /// <summary>
     /// Gets or sets the collection of options to display in the multiselect.
     /// When provided, uses Options mode. When null, uses Compositional mode (ChildContent).

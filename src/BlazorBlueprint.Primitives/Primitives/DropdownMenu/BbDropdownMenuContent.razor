@@ -158,7 +158,7 @@
 
     private RenderFragment RenderDropdownContent() => __builder =>
     {
-        <div @ref="_contentRef"
+        <div @ref="_contentRef" dir="@Context.Dir"
              id="@Context.ContentId"
              role="menu"
              aria-labelledby="@Context.TriggerId"

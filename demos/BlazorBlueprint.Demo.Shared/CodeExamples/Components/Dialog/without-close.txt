@@ -1,5 +1,5 @@
 <BbDialog>
-    <BbDialogTrigger>Open Dialog</BbDialogTrigger>
+    <BbDialogTrigger AsChild="false">Open Dialog</BbDialogTrigger>
     <BbDialogContent ShowClose="false">
         <BbDialogHeader>
             <BbDialogTitle>Confirm Action</BbDialogTitle>
@@ -8,8 +8,8 @@
             </BbDialogDescription>
         </BbDialogHeader>
         <BbDialogFooter>
-            <BbDialogClose>Cancel</BbDialogClose>
-            <BbDialogClose>Confirm</BbDialogClose>
+            <BbDialogClose AsChild="false">Cancel</BbDialogClose>
+            <BbDialogClose AsChild="false">Confirm</BbDialogClose>
         </BbDialogFooter>
     </BbDialogContent>
 </BbDialog>

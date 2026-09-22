@@ -1,0 +1,3 @@
+<BbQrCode Value="https://blazorblueprintui.com" ModuleShape="QrCodeModuleShape.Square" />
+<BbQrCode Value="https://blazorblueprintui.com" ModuleShape="QrCodeModuleShape.Rounded" />
+<BbQrCode Value="https://blazorblueprintui.com" ModuleShape="QrCodeModuleShape.Dot" />

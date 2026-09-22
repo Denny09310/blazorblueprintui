@@ -13,6 +13,13 @@ namespace BlazorBlueprint.Components;
 /// <typeparam name="TValue">The type of the selected values.</typeparam>
 public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
 {
+    /// <summary>Marks this selection as required for assistive technology. Use model validation to enforce a nonempty selection.</summary>
+    [Parameter] public bool Required { get; set; }
+
+    /// <summary>The accessible name of the control.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+
+
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
 

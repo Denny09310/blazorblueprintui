@@ -4,7 +4,7 @@
 @using System.Linq.Expressions
 @using System.Globalization
 
-<select id="@EffectiveId"
+<select aria-label="@AriaLabel" id="@EffectiveId"
         class="@CssClass"
         name="@EffectiveName"
         value="@CurrentStringValue"
@@ -21,6 +21,10 @@
 </select>
 
 @code {
+    /// <summary>The accessible name of the control.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+
+
     private FieldIdentifier _fieldIdentifier;
     private EditContext? _editContext;
 

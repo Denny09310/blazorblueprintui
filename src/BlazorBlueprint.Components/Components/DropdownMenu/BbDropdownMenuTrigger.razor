@@ -1,7 +1,10 @@
 @namespace BlazorBlueprint.Components
 
 @* Styled DropdownMenuTrigger - passthrough wrapper without layout interference *@
-<BlazorBlueprint.Primitives.DropdownMenu.BbDropdownMenuTrigger class="@CssClass"
+@* In AsChild mode the primitive renders no element, so the trigger's own styling has nowhere to
+   go. Only what the page set is handed down, so the development warning names that and nothing
+   else. *@
+<BlazorBlueprint.Primitives.DropdownMenu.BbDropdownMenuTrigger class="@(AsChild ? Class : CssClass)"
                                                             AsChild="@AsChild"
                                                             Disabled="@Disabled"
                                                             OnClick="@OnClick"

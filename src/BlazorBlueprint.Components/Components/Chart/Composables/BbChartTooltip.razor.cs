@@ -9,7 +9,7 @@ namespace BlazorBlueprint.Components;
 /// <para>
 /// ChartTooltip is named to avoid collision with the existing Primitives Tooltip component.
 /// It auto-detects the trigger type based on the chart's series type: "item" for the charts that
-/// have no axis to hang a pointer off — pie, rose, radar, funnel, gauge and sankey — and "axis"
+/// have no axis to hang a pointer off — pie, rose, radar, funnel, gauge, sankey and map — and "axis"
 /// for all other chart types.
 /// </para>
 /// <para>
@@ -116,7 +116,7 @@ public partial class BbChartTooltip : ComponentBase, IChartComponent, IDisposabl
         }
 
         var seriesType = ParentChart.SeriesType;
-        if (seriesType is "pie" or "radar" or "funnel" or "gauge" or "sankey")
+        if (seriesType is "pie" or "radar" or "funnel" or "gauge" or "sankey" or "map")
         {
             return "item";
         }

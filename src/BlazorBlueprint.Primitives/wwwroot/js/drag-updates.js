@@ -1,6 +1,7 @@
 // Drag feedback stays in the browser. Only the latest distinct value crosses interop,
 // at most every 50 ms, with one callback in flight even on a slow Server circuit.
 export function createDragUpdates(send, interval = 50) {
+  let generation = 0;
   let pending = null;
   let lastSent = null;
   let lastSentAt = -Infinity;
@@ -32,7 +33,8 @@ export function createDragUpdates(send, interval = 50) {
     lastSent = args;
     lastSentAt = performance.now();
     inFlight = true;
-    Promise.resolve().then(() => { if (!disposed) return send(...args); })
+    const current = generation;
+    Promise.resolve().then(() => { if (!disposed && current === generation) return send(...args); })
       .catch(() => {}) // A disconnected circuit must not leave a drag queue running.
       .finally(() => { inFlight = false; drain(); settle(); });
   };
@@ -51,6 +53,15 @@ export function createDragUpdates(send, interval = 50) {
       drain();
       settle();
       return completion;
+    },
+    cancel() {
+      generation++;
+      pending = null;
+      lastSent = null;
+      lastSentAt = -Infinity;
+      if (timer != null) clearTimeout(timer);
+      timer = null;
+      settle();
     },
     dispose() {
       disposed = true;

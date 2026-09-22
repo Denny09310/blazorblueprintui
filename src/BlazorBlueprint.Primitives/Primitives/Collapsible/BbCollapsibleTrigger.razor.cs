@@ -49,6 +49,12 @@ namespace BlazorBlueprint.Primitives.Collapsible;
 /// </example>
 public partial class BbCollapsibleTrigger : ComponentBase
 {
+    private static readonly AsChildTriggerDescription Diagnostic = new("BbCollapsibleTrigger", "toggle this collapsible", "<button>");
+
+    // The context the last render cascaded, kept so the first after-render can ask whether
+    // anything read it.
+    private TriggerContext? lastTriggerContext;
+
     protected override void OnInitialized()
     {
         if (Context == null)
@@ -97,11 +103,22 @@ public partial class BbCollapsibleTrigger : ComponentBase
     /// <summary>
     /// Context passed to child components when AsChild is true.
     /// </summary>
-    private TriggerContext TriggerContext => new()
+    private TriggerContext TriggerContext => lastTriggerContext = new()
     {
         IsOpen = Context?.Open ?? false,
         Toggle = () => Context?.Toggle?.Invoke()
     };
+
+    [Inject]
+    private IServiceProvider Services { get; set; } = default!;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            AsChildDiagnostics.WarnIfUnconsumed<BbCollapsibleTrigger>(Services, Diagnostic, AsChild, lastTriggerContext, AdditionalAttributes);
+        }
+    }
 
     /// <summary>
     /// Handles click events on the trigger to toggle the collapsible state.

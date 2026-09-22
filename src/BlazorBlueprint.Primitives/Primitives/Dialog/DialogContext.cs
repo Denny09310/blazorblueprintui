@@ -25,6 +25,8 @@ public class DialogState
 /// </summary>
 public class DialogContext : PrimitiveContextWithEvents<DialogState>
 {
+    internal bool AllowDismiss { get; set; } = true;
+
     /// <summary>
     /// Initializes a new instance of the DialogContext.
     /// </summary>

@@ -1,0 +1,13 @@
+<BbButton OnClick="@(() => includeReview = !includeReview)">Toggle review step</BbButton>
+<BbStepper ActiveStep="0" data-testid="conditional-stepper">
+    <BbStep Title="Details" />
+    @if (includeReview)
+    {
+        <BbStep Title="Review" />
+    }
+    <BbStep Title="Finish" />
+</BbStepper>
+
+@code {
+    private bool includeReview;
+}

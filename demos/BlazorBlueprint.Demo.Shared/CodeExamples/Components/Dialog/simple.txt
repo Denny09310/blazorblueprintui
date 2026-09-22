@@ -1,5 +1,5 @@
 <BbDialog>
-    <BbDialogTrigger>Open Dialog</BbDialogTrigger>
+    <BbDialogTrigger AsChild="false">Open Dialog</BbDialogTrigger>
     <BbDialogContent>
         <BbDialogHeader>
             <BbDialogTitle>Are you absolutely sure?</BbDialogTitle>

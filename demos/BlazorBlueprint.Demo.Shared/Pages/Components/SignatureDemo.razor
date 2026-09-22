@@ -1,0 +1,303 @@
+@page "/components/signature"
+@using BlazorBlueprint.Primitives.SignaturePad
+<PageTitle>Signature - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Signature</h1>
+            <p class="text-xl text-muted-foreground">
+                Sign by hand or by typing a name. The ink follows the theme, and the value comes out
+                as SVG that can be recoloured wherever it is shown.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Usage</h2>
+                <p class="text-muted-foreground">
+                    Draw with a mouse, a finger or a pen. The line thins as you move faster, which is
+                    what makes it read as ink rather than as a mouse track. Switch to
+                    <strong>Type</strong> to sign with a name instead.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbSignature Label="Signature" @bind-Value="basicValue" />
+                <p class="text-sm text-muted-foreground">
+                    Value:
+                    <span class="font-mono text-foreground">@DescribeBasic</span>
+                </p>
+            </div>
+
+            <CodeBlock Source="Components/Signature/basic.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Getting the Signature Out</h2>
+                <p class="text-muted-foreground">
+                    SVG arrives with the value, so it is there the moment the signature changes. PNG
+                    and the raw strokes are pulled on demand, because neither belongs in an event
+                    that fires on every stroke. The PNG is rendered in black by default, not in the
+                    theme's ink, which is why the image below is readable on white.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BbSignature @ref="exportField" Label="Signature" @bind-Value="exportValue" />
+                <div class="flex flex-wrap gap-2">
+                    <BbButton Size="ButtonSize.Small" Disabled="@(exportValue is null or { IsEmpty: true })" OnClick="InspectAsync">
+                        Inspect the output
+                    </BbButton>
+                </div>
+                @if (exportReport is not null)
+                {
+                    <dl class="grid grid-cols-[8rem_1fr] gap-x-4 gap-y-1 text-sm">
+                        @foreach (var (name, detail) in exportReport)
+                        {
+                            <dt class="text-muted-foreground">@name</dt>
+                            <dd class="font-mono truncate">@detail</dd>
+                        }
+                    </dl>
+                }
+                @if (exportValue?.Svg is not null)
+                {
+                    <div class="space-y-2">
+                        <p class="text-sm text-muted-foreground">
+                            The same SVG on two backgrounds. Its ink is
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">currentColor</code>, so it
+                            takes the text colour of whatever it is placed in:
+                        </p>
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <div class="rounded-md border bg-white text-black p-2 overflow-hidden">
+                                @((MarkupString)exportValue.Svg)
+                            </div>
+                            <div class="rounded-md border bg-slate-900 text-amber-300 p-2 overflow-hidden">
+                                @((MarkupString)exportValue.Svg)
+                            </div>
+                        </div>
+                    </div>
+                }
+                @if (exportPng is not null)
+                {
+                    <div class="space-y-2">
+                        <p class="text-sm text-muted-foreground">
+                            The PNG. Its ink is fixed at render time, so it is black here whatever the
+                            page theme is:
+                        </p>
+                        <img src="@exportPng" alt="The signature as a PNG" class="rounded-md border bg-white max-w-full" />
+                    </div>
+                }
+            </div>
+
+            <CodeBlock Source="Components/Signature/export.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Appearance</h2>
+                <p class="text-muted-foreground">
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">MaxWidth</code> is the thickest
+                    the line gets and <code class="text-xs bg-muted px-1 py-0.5 rounded">MinWidth</code>
+                    the thinnest it tapers to. Leave
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">StrokeColor</code> unset and the
+                    ink follows the theme, including a change of theme after the signature is drawn.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BbSignature Label="Signature"
+                             Height="14rem"
+                             StrokeColor="#1d4ed8"
+                             MinWidth="1"
+                             MaxWidth="4"
+                             TypedFontFamily="'Brush Script MT', cursive"
+                             @bind-Value="styledValue" />
+            </div>
+
+            <CodeBlock Source="Components/Signature/appearance.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Drawn Only</h2>
+                <p class="text-muted-foreground">
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">AllowTyped="false"</code> removes
+                    the typed route. Read the warning below before you use it.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-3">
+                <BbAlert Variant="AlertVariant.Warning">
+                    <BbAlertTitle>This locks some people out</BbAlertTitle>
+                    <BbAlertDescription>
+                        A drawn signature cannot be given with a keyboard, a switch or a screen reader.
+                        Only turn the typed route off where a drawn mark is a legal requirement, and
+                        where another way to sign exists outside this field.
+                    </BbAlertDescription>
+                </BbAlert>
+                <BbSignature Label="Signature" AllowTyped="false" @bind-Value="drawnOnlyValue" />
+            </div>
+
+            <CodeBlock Source="Components/Signature/drawn-only.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Disabled</h2>
+                <p class="text-muted-foreground">
+                    Drawing and typing are both ignored. Whatever was already signed stays visible.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BbSignature Label="Signature" Disabled="true" />
+            </div>
+        </section>
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                <strong>The typed route is the accessible one, and it is on by default.</strong> A drawn
+                signature cannot be given with a keyboard, a switch or a screen reader. Leave
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">AllowTyped</code> alone unless a drawn
+                mark is a legal requirement and another route exists elsewhere.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                The drawing surface carries <code class="text-xs bg-muted px-1 py-0.5 rounded">role="img"</code>
+                and a label, so it is announced as a region rather than read as an empty canvas.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">Label</code> is tied to the typed input
+                with <code class="text-xs bg-muted px-1 py-0.5 rounded">for</code>, so clicking it focuses
+                the field.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                The route switch is a toggle group with an accessible name, so the two ways to sign are
+                reachable and announced.
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between the route switch, the typed field and the buttons">
+                <BbKbd>Tab</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Switch between drawing and typing">
+                <BbKbd>&larr;</BbKbd> / <BbKbd>&rarr;</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Clear, or undo the last stroke">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd> on the button
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbSignature">
+                <ApiParameter Name="Value" Type="SignatureValue?">
+                    The captured signature. Carries <code class="text-xs bg-muted px-1 py-0.5 rounded">Kind</code> (<code class="text-xs bg-muted px-1 py-0.5 rounded">None</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">Drawn</code> or <code class="text-xs bg-muted px-1 py-0.5 rounded">Typed</code>), <code class="text-xs bg-muted px-1 py-0.5 rounded">Svg</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">Text</code> and <code class="text-xs bg-muted px-1 py-0.5 rounded">IsEmpty</code>.
+                </ApiParameter>
+                <ApiParameter Name="ValueChanged" Type="EventCallback&lt;SignatureValue?&gt;">
+                    Invoked when the signature changes. Use with <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Value</code>.
+                </ApiParameter>
+                <ApiParameter Name="Label" Type="string?">
+                    The label shown above the field.
+                </ApiParameter>
+                <ApiParameter Name="AllowTyped" Type="bool" Default="true">
+                    Whether the typed route is offered. Turning it off leaves keyboard and screen reader users unable to sign.
+                </ApiParameter>
+                <ApiParameter Name="Height" Type="string" Default="10rem">
+                    The height of the signing area, as a CSS length.
+                </ApiParameter>
+                <ApiParameter Name="StrokeColor" Type="string?">
+                    The ink colour as a CSS colour. When unset, the signature uses the theme's foreground colour and follows a theme change.
+                </ApiParameter>
+                <ApiParameter Name="MinWidth" Type="double" Default="0.7">
+                    The thinnest the drawn line tapers to, in CSS pixels.
+                </ApiParameter>
+                <ApiParameter Name="MaxWidth" Type="double" Default="2.5">
+                    The thickest the drawn line gets, in CSS pixels.
+                </ApiParameter>
+                <ApiParameter Name="TypedFontFamily" Type="string" Default="handwriting stack">
+                    The CSS font stack a typed signature is drawn in. No font is bundled, so nothing is downloaded.
+                </ApiParameter>
+                <ApiParameter Name="ShowUndo" Type="bool" Default="true">
+                    Whether an undo button is shown beside the drawing area.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether the field is disabled.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?">
+                    Additional CSS classes for the root element.
+                </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes applied to the root element.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="Methods">
+                <ApiParameter Name="GetPngAsync(background, ink)" Type="Task&lt;string?&gt;">
+                    The drawn signature as a PNG data URL. The ink defaults to black, not to the theme's colour: a signature drawn in a dark theme is near-white and would vanish on white paper. A PNG has nowhere to defer the colour to, so it is fixed here rather than inherited by accident.
+                </ApiParameter>
+                <ApiParameter Name="GetPngBytesAsync(background, ink)" Type="Task&lt;byte[]?&gt;">
+                    The same PNG as raw bytes. Prefer it when saving or uploading rather than showing: a data URL is a third larger for no benefit outside an <code class="text-xs bg-muted px-1 py-0.5 rounded">img</code> tag.
+                </ApiParameter>
+                <ApiParameter Name="GetStrokesAsync()" Type="Task&lt;IReadOnlyList&lt;SignatureStroke&gt;&gt;">
+                    The raw samples behind a drawn signature, timings included.
+                </ApiParameter>
+                <ApiParameter Name="SetStrokesAsync(strokes)" Type="Task">
+                    Replaces the drawing with previously captured samples and switches to the drawn route.
+                </ApiParameter>
+                <ApiParameter Name="ClearAsync()" Type="Task">
+                    Clears the signature on whichever route is showing.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+    </div>
+</div>
+
+@code {
+    private SignatureValue? basicValue;
+    private SignatureValue? styledValue;
+    private SignatureValue? drawnOnlyValue;
+
+    private BbSignature? exportField;
+    private SignatureValue? exportValue;
+    private List<(string Name, string Detail)>? exportReport;
+    private string? exportPng;
+
+    private string DescribeBasic => basicValue switch
+    {
+        null or { IsEmpty: true } => "not signed",
+        { Kind: SignatureKind.Typed } typed => $"Typed — \"{typed.Text}\"",
+        var drawn => $"Drawn — {drawn.Svg?.Length ?? 0} bytes of SVG"
+    };
+
+    private async Task InspectAsync()
+    {
+        if (exportField is null || exportValue is null or { IsEmpty: true })
+        {
+            return;
+        }
+
+        var strokes = await exportField.GetStrokesAsync();
+        exportPng = await exportField.GetPngAsync("#ffffff");
+
+        exportReport =
+        [
+            ("Kind", exportValue.Kind.ToString()),
+            ("SVG", $"{exportValue.Svg?.Length ?? 0} bytes"),
+            ("PNG", $"{exportPng?.Length ?? 0} bytes as a data URL"),
+            ("Strokes", $"{strokes.Count} stroke(s), {strokes.Sum(s => s.Points.Count)} sample(s)")
+        ];
+    }
+}

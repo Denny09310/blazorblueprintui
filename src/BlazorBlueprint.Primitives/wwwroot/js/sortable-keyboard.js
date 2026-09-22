@@ -1,3 +1,14 @@
+const defaults = {
+  "Cancelled": "Move cancelled.",
+  "Unchanged": "Item dropped in its original position.",
+  "MoveFailed": "Unable to move the item. Try again.",
+  "Transferred": "Item transferred to the connected list.",
+  "TransferRejected": "The transfer was not allowed or no connected list is available.",
+  "TransferFailed": "Unable to transfer the item. Try again.",
+  "PickedUp": "Picked up item {0} of {1}. Use arrow keys to move.",
+  "Disabled": "Reordering is disabled. Control plus Left or Right transfers to a connected list.",
+  "Position": "Position {0} of {1}. Press Space or Enter to drop."
+};
 // Keep a keyboard preview in the DOM, restore it before Blazor applies a committed
 // change, and leave the consumer's collection untouched on Escape.
 export function attachKeyboardSorting(root, handle, filter, commit, transfer) {
@@ -8,6 +19,11 @@ export function attachKeyboardSorting(root, handle, filter, commit, transfer) {
   const items = () => [...root.children].filter(e => e.hasAttribute('data-bb-sortable-item'));
   const enabled = () => root.dataset.keyboardSorting === 'true';
   const status = () => document.getElementById(`${root.id}-status`);
+  const message = (key, ...args) => {
+    const overrides = JSON.parse(root.dataset.sortableAnnouncements || 'null');
+    const template = overrides?.[key] ?? defaults[key];
+    return template.replace(/\{(\d+)\}/g, (_, index) => String(args[Number(index)] ?? ''));
+  };
   const announce = text => { const region = status(); if (region) region.textContent = text; };
   const own = (element, name, value) => {
     let attributes = ownedAttributes.get(element);
@@ -46,7 +62,7 @@ export function attachKeyboardSorting(root, handle, filter, commit, transfer) {
     const state = active;
     active = null;
     restoreOrder(state);
-    if (!disposed) { state.target.focus(); announce('Move cancelled.'); }
+    if (!disposed) { state.target.focus(); announce(message('Cancelled')); }
   }
   const finish = async () => {
     const state = active;
@@ -57,9 +73,9 @@ export function attachKeyboardSorting(root, handle, filter, commit, transfer) {
     restoreOrder(state);
     try {
       if (newIndex !== state.oldIndex) await commit(state.oldIndex, newIndex);
-      else announce('Item dropped in its original position.');
+      else announce(message('Unchanged'));
     } catch {
-      announce('Unable to move the item. Try again.');
+      announce(message('MoveFailed'));
     } finally {
       pending = false;
       if (!disposed && state.target.isConnected) state.target.focus();
@@ -74,8 +90,8 @@ export function attachKeyboardSorting(root, handle, filter, commit, transfer) {
     let moved = false;
     try {
       moved = await transfer(state.oldIndex, direction);
-      announce(moved ? 'Item transferred to the connected list.' : 'The transfer was not allowed or no connected list is available.');
-    } catch { announce('Unable to transfer the item. Try again.'); }
+      announce(moved ? message('Transferred') : message('TransferRejected'));
+    } catch { announce(message('TransferFailed')); }
     finally {
       pending = false;
       if (!disposed && !moved && state.target.isConnected) state.target.focus();
@@ -103,14 +119,14 @@ export function attachKeyboardSorting(root, handle, filter, commit, transfer) {
       const original = items();
       active = { item, target, original, oldIndex: original.indexOf(item) };
       item.dataset.keyboardDragging = 'true';
-      announce(`Picked up item ${active.oldIndex + 1} of ${original.length}. Use arrow keys to move.`);
+      announce(message('PickedUp', active.oldIndex + 1, original.length));
     } else if (active && event.key === 'Escape') {
       event.preventDefault(); cancel();
     } else if (active && event.key === 'Tab') {
       cancel(); // Preserve native tab navigation without committing a move.
     } else if (active && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
       event.preventDefault();
-      if (root.dataset.sortableOrder === 'false') { announce('Reordering is disabled. Control plus Left or Right transfers to a connected list.'); return; }
+      if (root.dataset.sortableOrder === 'false') { announce(message('Disabled')); return; }
       const list = items();
       const current = list.indexOf(active.item);
       const rtl = getComputedStyle(root).direction === 'rtl';
@@ -121,7 +137,7 @@ export function attachKeyboardSorting(root, handle, filter, commit, transfer) {
       if (next !== current) {
         root.insertBefore(active.item, next > current ? list[next].nextSibling : list[next]);
         active.target.focus();
-        announce(`Position ${next + 1} of ${list.length}. Press Space or Enter to drop.`);
+        announce(message('Position', next + 1, list.length));
       }
     }
   };

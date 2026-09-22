@@ -162,7 +162,7 @@
                         <colgroup>
                             @foreach (var col in _cachedVisibleColumns)
                             {
-                                <col style="@GetColumnWidthStyle(col)" />
+                                <col data-column-id="@col.ColumnId" style="@GetColumnWidthStyle(col)" />
                             }
                         </colgroup>
                     }

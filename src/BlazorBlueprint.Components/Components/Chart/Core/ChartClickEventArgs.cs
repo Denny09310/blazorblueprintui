@@ -25,6 +25,7 @@ public sealed record ChartClickEventArgs
     /// Zero-based index of the point within its series, or <c>-1</c> if the chart did not report
     /// one. This is the field to key a drill-down on: it maps straight back to the position in the
     /// collection you bound.
+    /// For maps, a country absent from the source dataset reports <c>-1</c>.
     /// </summary>
     public int DataIndex { get; init; } = -1;
 

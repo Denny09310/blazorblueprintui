@@ -1,1 +1,1 @@
-<BbFileUpload @bind-Files="files" />
+<BbFileUpload AriaLabel="Choose files" @bind-Files="files" />

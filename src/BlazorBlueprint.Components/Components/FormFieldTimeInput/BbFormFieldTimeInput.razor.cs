@@ -68,6 +68,7 @@ public partial class BbFormFieldTimeInput : FormFieldBase
     /// <summary>
     /// Gets or sets whether a clock picker button is shown beside the segments.
     /// </summary>
+    /// <remarks>Defaults to false for compact form rows; set true to match the standalone input.</remarks>
     [Parameter]
     public bool ShowPicker { get; set; }
 

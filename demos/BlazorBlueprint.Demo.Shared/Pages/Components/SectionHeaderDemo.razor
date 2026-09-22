@@ -10,14 +10,14 @@
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Title and description</h2>
         <div class="rounded-lg border p-6 space-y-4">
-<BbSectionHeader Title="Recent documents" Description="Files edited by your team this week." />
+<BbSectionHeader HeadingLevel="3" Title="Recent documents" Description="Files edited by your team this week." />
         </div>
         <CodeBlock Source="Components/SectionHeader/basic.txt" />
     </section>
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Actions and separator</h2>
         <div class="rounded-lg border p-6 space-y-4">
-<BbSectionHeader Title="Saved collections" Description="Organize references for your next project." Separator="true">
+<BbSectionHeader HeadingLevel="3" Title="Saved collections" Description="Organize references for your next project." Separator="true">
     <Actions><BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => collections++)">New collection</BbButton></Actions>
 </BbSectionHeader>
 <p role="status" class="text-sm text-muted-foreground">@collections collections</p>
@@ -26,7 +26,7 @@
     </section>
     <AccessibilityList>
         <AriaAttributes>
-            <AccessibilityItem>Title renders as a level-two heading. Place the component within an appropriate page heading hierarchy.</AccessibilityItem>
+            <AccessibilityItem>Title defaults to a level-two heading. Set HeadingLevel from 1 to 6 to fit the page hierarchy; these nested examples use level three.</AccessibilityItem>
             <AccessibilityItem>The separator is visual. Custom actions retain their native semantics and must have accessible names.</AccessibilityItem>
         </AriaAttributes>
         <KeyboardNavigation>
@@ -37,6 +37,7 @@
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">API Reference</h2>
 <ApiReference Since="v4" ComponentName="SectionHeader">
+        <ApiParameter Name="HeadingLevel" Type="int" Default="2">Heading level from 1 to 6.</ApiParameter>
         <ApiParameter Name="Title / Description / Actions / Separator" Type="string? / string? / RenderFragment? / bool">Heading text, secondary copy, trailing actions and bottom separator.</ApiParameter>
     <ApiParameter Name="Class / AdditionalAttributes" Type="string? / Dictionary&lt;string, object&gt;?">Additional root CSS classes and HTML attributes.</ApiParameter>
     </ApiReference>

@@ -49,6 +49,15 @@
 
     private bool disposed;
 
+    protected override void OnParametersSet()
+    {
+        if (Open is { } open)
+        {
+            NeedsFocus = open && !IsOpen;
+            IsOpen = open;
+        }
+    }
+
     /// <summary>
     /// Opens the context menu at the specified coordinates.
     /// </summary>
@@ -59,7 +68,7 @@
         IsOpen = true;
         NeedsFocus = true;
 
-        if (Open.HasValue)
+        if (OpenChanged.HasDelegate)
         {
             await OpenChanged.InvokeAsync(true);
         }
@@ -74,7 +83,7 @@
     {
         IsOpen = false;
 
-        if (Open.HasValue)
+        if (OpenChanged.HasDelegate)
         {
             await OpenChanged.InvokeAsync(false);
         }

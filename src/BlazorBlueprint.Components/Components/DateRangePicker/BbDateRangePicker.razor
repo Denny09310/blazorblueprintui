@@ -3,7 +3,7 @@
 
 <BbPopover @bind-Open="_isOpen">
     <BbPopoverTrigger AsChild="true">
-        <BbButton Variant="ButtonVariant.Outline"
+        <BbButton AriaLabel="@AriaLabel" Variant="ButtonVariant.Outline"
                 Class="@ButtonCssClass"
                 Disabled="@Disabled"
                 @attributes="AdditionalAttributes">
@@ -26,10 +26,11 @@
                     <div class="bb:p-3 bb:border-b" data-drp-presets>
                         @* Mobile: native select *@
                         <div data-drp-presets-select>
-                            <BbNativeSelect TValue="int"
-                                            Value="_selectedPresetIndex"
+                            <BbNativeSelect TValue="int?"
+                                            Value="SelectedPresetIndex"
                                             ValueChanged="OnPresetSelectChanged"
-                                            Placeholder="@Localizer["DateRangePicker.QuickSelect"]"
+                                            AriaLabel="@Localizer["DateRangePicker.QuickSelect"]"
+                                            Placeholder="@Localizer[_selectionStart.HasValue || _selectionEnd.HasValue ? "DateRangePicker.Custom" : "DateRangePicker.Placeholder"]"
                                             Size="NativeSelectSize.Small">
                                 @for (var i = 0; i < EffectivePresets.Count; i++)
                                 {

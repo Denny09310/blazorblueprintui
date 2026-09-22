@@ -1,0 +1,19 @@
+@* A QR code only carries text. The prefix is what makes a phone act on it. *@
+<BbQrCode Value="https://blazorblueprintui.com" />
+<BbQrCode Value="WIFI:T:WPA;S:Guest network;P:welcome123;;" />
+<BbQrCode Value="mailto:hello@example.com?subject=Hello" />
+<BbQrCode Value="tel:+441234567890" />
+<BbQrCode Value="SMSTO:+441234567890:Send me the docs" />
+<BbQrCode Value="geo:51.5074,-0.1278?q=London" />
+<BbQrCode Value="@vCard" />
+
+@code {
+    private const string vCard = """
+        BEGIN:VCARD
+        VERSION:3.0
+        N:Taylor;Mathew
+        ORG:Blazor Blueprint
+        URL:https://blazorblueprintui.com
+        END:VCARD
+        """;
+}

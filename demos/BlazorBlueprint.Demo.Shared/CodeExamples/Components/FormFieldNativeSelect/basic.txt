@@ -1,4 +1,4 @@
-<BbFormFieldNativeSelect TValue="string"
+<BbFormFieldNativeSelect AriaLabel="Country" TValue="string"
                         @bind-Value="country"
                         Label="Country"
                         Placeholder="Select a country..."

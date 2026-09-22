@@ -46,7 +46,7 @@ function pointerFixture(initialScrollTop) {
   const calls = [];
   const root = { ...handlers(), dataset: { allowDrag: 'true', allowResize: 'true', slotMinutes: '30', timeZone: 'UTC', revision: '1' } };
   if (initialScrollTop != null) root.dataset.initialScrollTop = String(initialScrollTop);
-  const viewport = { scrollTop: 0, scrollLeft: 0, getBoundingClientRect: () => ({ left: 0, right: 500, top: 0, bottom: 800 }) };
+  const viewport = { ...handlers(), scrollTop: 0, scrollLeft: 0, getBoundingClientRect: () => ({ left: 0, right: 500, top: 0, bottom: 800 }) };
   const sourceLane = { dataset: { start: lane.start, end: lane.end, schedulerLane: '0' }, getBoundingClientRect: () => ({ left: 0, top: 0, width: 500 }), closest: () => sourceLane };
   const card = { dataset: { start: event.start, end: event.end, schedulerEvent: 'test' }, isConnected: true,
     closest: selector => selector === '[data-scheduler-lane]' ? sourceLane : selector === '[data-scheduler-event]' ? card : null,
@@ -54,6 +54,7 @@ function pointerFixture(initialScrollTop) {
     cloneNode: () => ({ style: {}, removeAttribute() {}, setAttribute() {}, querySelectorAll: () => [], querySelector: () => null, remove() {} })
   };
   root.querySelector = () => viewport;
+  root.querySelectorAll = () => [];
   root.contains = node => node === card || node === sourceLane;
   globalThis.document = { ...handlers(), body: { append() {} }, documentElement: {}, elementFromPoint: () => sourceLane };
   globalThis.window = handlers();

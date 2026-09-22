@@ -1,12 +1,41 @@
+@inject IJSRuntime JSRuntime
+@using BlazorBlueprint.Primitives.Services
 @namespace BlazorBlueprint.Primitives.Menubar
+@implements IAsyncDisposable
 
-<div role="menubar" @attributes="AdditionalAttributes">
+<div @ref="root" role="menubar" @attributes="AdditionalAttributes">
     <CascadingValue Value="context" IsFixed="false">
         @ChildContent
     </CascadingValue>
 </div>
 
 @code {
+
+    private ElementReference root;
+    private IJSObjectReference? keyboardModule;
+    private bool disposed;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            keyboardModule ??= await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Primitives/js/menu-triggers.js");
+            await keyboardModule.InvokeVoidAsync("initialize", root, false, true);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or InvalidOperationException or TaskCanceledException or ObjectDisposedException) { }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (disposed) return;
+        disposed = true;
+        if (keyboardModule is not null)
+        {
+            try { await keyboardModule.InvokeVoidAsync("dispose", root); }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException) { }
+        }
+        GC.SuppressFinalize(this);
+    }
+
     private MenubarContext context = null!;
 
     /// <summary>

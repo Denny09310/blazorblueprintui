@@ -19,11 +19,40 @@ public class DefaultBbLocalizer : IBbLocalizer
 {
     private readonly Dictionary<string, string> defaults = new(StringComparer.Ordinal)
     {
+        ["Attachment.Open"] = "Open attachment",
+        ["Sortable.Handle"] = "Reorder item",
+        ["FileUpload.Drop"] = "Drop files here",
+        ["FileUpload.Drag"] = "Drag and drop files here",
+        ["FileUpload.Browse"] = "Browse to upload",
+        ["FileUpload.Accepted"] = "Accepted: {0}",
+        ["FileUpload.MaxSize"] = "Max size: {0}",
+        ["FileUpload.MaxFiles"] = "Max files: {0}",
+        ["FileUpload.Remove"] = "Remove {0}",
+        ["FileUpload.TooMany"] = "Maximum {0} files allowed",
+        ["FileUpload.TooLarge"] = "{0} exceeds {1} limit",
+        ["FileUpload.InvalidType"] = "{0} is not an accepted file type",
+        ["MultiSelect.More"] = "+{0} more",
+        ["MultiSelect.Remove"] = "Remove {0}",
+        ["DateTimePicker.AM"] = "AM",
+        ["DateTimePicker.PM"] = "PM",
+        ["Sortable.Cancelled"] = "Move cancelled.",
+        ["Sortable.Unchanged"] = "Item dropped in its original position.",
+        ["Sortable.MoveFailed"] = "Unable to move the item. Try again.",
+        ["Sortable.Transferred"] = "Item transferred to the connected list.",
+        ["Sortable.TransferRejected"] = "The transfer was not allowed or no connected list is available.",
+        ["Sortable.TransferFailed"] = "Unable to transfer the item. Try again.",
+        ["Sortable.PickedUp"] = "Picked up item {0} of {1}. Use arrow keys to move.",
+        ["Sortable.Disabled"] = "Reordering is disabled. Control plus Left or Right transfers to a connected list.",
+        ["Sortable.Position"] = "Position {0} of {1}. Press Space or Enter to drop.",
+
         // Alert
         ["Alert.Dismiss"] = "Dismiss",
 
         // AppBar
         ["AppBar.Back"] = "Go back",
+
+        // Barcode
+        ["Barcode.AriaLabel"] = "{0} barcode for {1}",
 
         // BottomNav
         ["BottomNav.Label"] = "Primary navigation",
@@ -332,6 +361,47 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["FormWizard.Skip"] = "Skip",
         ["FormWizard.Complete"] = "Complete",
 
+        // Gantt
+        ["Gantt.Task"] = "Task",
+        ["Gantt.Today"] = "Today",
+        ["Gantt.ExpandAll"] = "Expand all",
+        ["Gantt.CollapseAll"] = "Collapse all",
+        ["Gantt.Expand"] = "Show the tasks under {0}",
+        ["Gantt.Collapse"] = "Hide the tasks under {0}",
+        ["Gantt.Zoom"] = "Zoom",
+        ["Gantt.ZoomHour"] = "Hour",
+        ["Gantt.ZoomDay"] = "Day",
+        ["Gantt.ZoomWeek"] = "Week",
+        ["Gantt.ZoomMonth"] = "Month",
+        ["Gantt.ZoomQuarter"] = "Quarter",
+        ["Gantt.ZoomYear"] = "Year",
+        ["Gantt.Week"] = "W{0}",
+        ["Gantt.Quarter"] = "Q{0}",
+        ["Gantt.Loading"] = "Loading...",
+        ["Gantt.Empty"] = "Nothing to schedule",
+        ["Gantt.Dependencies"] = "Task dependencies",
+        ["Gantt.FinishToStart"] = "{0} finishes before {1} starts",
+        ["Gantt.StartToStart"] = "{0} starts when {1} starts",
+        ["Gantt.FinishToFinish"] = "{0} finishes when {1} finishes",
+        ["Gantt.StartToFinish"] = "{0} starts before {1} finishes",
+        ["Gantt.BarLabel"] = "{0}, {1} to {2}, {3}% done",
+        ["Gantt.MilestoneLabel"] = "{0}, milestone on {1}",
+        ["Gantt.ProgressHandle"] = "Drag to set how far along {0} is",
+        ["Gantt.LinkFromStart"] = "Draw a dependency from the start of {0}",
+        ["Gantt.LinkFromEnd"] = "Draw a dependency from the end of {0}",
+        ["Gantt.DragRow"] = "Drag to move {0}",
+        ["Gantt.TooltipRange"] = "{0} \u2013 {1}",
+        ["Gantt.TooltipDays"] = "{0} days",
+        ["Gantt.TooltipHours"] = "{0} hours",
+        ["Gantt.TooltipDone"] = "{0}% done",
+        ["Gantt.Legend"] = "What the shapes mean",
+        ["Gantt.LegendTask"] = "Task",
+        ["Gantt.LegendDone"] = "Done",
+        ["Gantt.LegendSummary"] = "Summary, rolled up from its children",
+        ["Gantt.LegendMilestone"] = "Milestone",
+        ["Gantt.LegendToday"] = "Today",
+        ["Gantt.LegendNonWorking"] = "Non-working day",
+
         // Link
         ["Link.OpensInNewTab"] = "(opens in a new tab)",
 
@@ -376,6 +446,19 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["NumericInput.IncreaseValue"] = "Increase value",
         ["NumericInput.DecreaseValue"] = "Decrease value",
 
+        // PivotDataGrid
+        ["PivotDataGrid.Total"] = "Total",
+        ["PivotDataGrid.Blank"] = "(blank)",
+        ["PivotDataGrid.Empty"] = "Nothing to cross-tabulate",
+        ["PivotDataGrid.Loading"] = "Loading...",
+        ["PivotDataGrid.Fields"] = "Fields",
+        ["PivotDataGrid.RowFields"] = "Rows",
+        ["PivotDataGrid.ColumnFields"] = "Columns",
+        ["PivotDataGrid.ValueFields"] = "Values",
+        ["PivotDataGrid.PageOf"] = "Page {0} of {1}",
+        ["PivotDataGrid.PreviousPage"] = "Previous page",
+        ["PivotDataGrid.NextPage"] = "Next page",
+
         // Pagination
         ["Pagination.Pagination"] = "Pagination",
         ["Pagination.Previous"] = "Previous",
@@ -393,6 +476,11 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["QuantityStepper.Remove"] = "Remove item",
         ["QuantityStepper.Increase"] = "Increase quantity",
         ["QuantityStepper.Decrease"] = "Decrease quantity",
+
+        // QrCode
+        ["QrCode.AriaLabel"] = "QR code",
+        ["QrCode.AriaLabelWithValue"] = "QR code for {0}",
+        ["QrCode.TooLong"] = "This value is too long to fit in a QR code.",
 
         // Rating
         ["Rating.Rating"] = "Rating",
@@ -526,11 +614,36 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Scheduler.SaveRejected"] = "These changes were rejected. Your edits have been retained.",
         ["Scheduler.SaveFailed"] = "Unable to save. Your edits have been retained; please try again.",
 
+        // ListBox
+        ["ListBox.SearchPlaceholder"] = "Search...",
+        ["ListBox.SelectAll"] = "Select all",
+        ["ListBox.Empty"] = "No options",
+        ["ListBox.NoMatches"] = "No matches",
+        ["ListBox.SelectedCount"] = "{0} selected",
+
+        // PickList
+        ["PickList.Available"] = "Available",
+        ["PickList.Selected"] = "Selected",
+        ["PickList.MoveSelectedToTarget"] = "Move selected",
+        ["PickList.MoveAllToTarget"] = "Move all",
+        ["PickList.MoveSelectedToSource"] = "Remove selected",
+        ["PickList.MoveAllToSource"] = "Remove all",
+
         // Select
         ["Select.ChooseOption"] = "Choose an option",
 
         // Sheet
         ["Sheet.Close"] = "Close",
+
+        // Signature
+        ["Signature.Draw"] = "Draw",
+        ["Signature.Type"] = "Type",
+        ["Signature.DrawHint"] = "Sign here",
+        ["Signature.TypeHint"] = "Type your full name",
+        ["Signature.Clear"] = "Clear",
+        ["Signature.Undo"] = "Undo last stroke",
+        ["Signature.Canvas"] = "Signature drawing area",
+        ["Signature.MethodLabel"] = "How to sign",
 
         // Sidebar
         ["Sidebar.PillNavigation"] = "Primary navigation",
@@ -544,6 +657,11 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Sortable.Moved"] = "Item moved from position {0} to position {1}.",
         ["Sortable.Removed"] = "Item removed from position {0} and placed at position {1} in another list.",
         ["Sortable.Received"] = "Item received at position {0}.",
+
+        // Tabs
+        ["Tabs.Add"] = "New tab",
+        ["Tabs.Close"] = "Close",
+        ["Tabs.RenameLabel"] = "Rename {0}",
 
         // TagInput
         ["TagInput.Placeholder"] = "Add tag...",

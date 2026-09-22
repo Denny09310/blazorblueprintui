@@ -76,7 +76,7 @@ export function motion(element, config) {
     state.key = key;
     state.settle = () => { element.hidden = !state.config.visible; };
     state.settle();
-    if (previous && previous.visible !== config.visible) { runMotion(element, state, !config.visible); }
+    if (config.trigger === 'Visibility' && previous && previous.visible !== config.visible) { runMotion(element, state, !config.visible); }
     else if (config.visible && config.trigger === 'Visibility' && config.first && !previous) { runMotion(element, state); }
     if (config.trigger === 'InView' && typeof IntersectionObserver !== 'undefined') {
         const observer = new IntersectionObserver(entries => {

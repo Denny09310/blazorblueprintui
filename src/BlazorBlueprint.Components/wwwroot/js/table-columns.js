@@ -1,6 +1,8 @@
-// DataGrid column resize and reorder handler
-// Resize: pure JS pointer-capture drag on resize handles (no Blazor round-trip)
-// Reorder: HTML5 Drag and Drop API with event delegation on the table
+// Column resize and reorder for any table whose columns carry data-column-id.
+// Shared by BbDataGrid and BbGantt: both keep their widths in C# and both want the drag itself
+// to happen without a Blazor round-trip, which is the whole of what this file is for.
+// Resize: pure JS pointer-capture drag on resize handles.
+// Reorder: HTML5 Drag and Drop API with event delegation on the table.
 
 // ─── Shared state ───────────────────────────────────────────────────────────
 
@@ -77,30 +79,28 @@ export function setupResizeHandles(gridId) {
 
       if (state.isDragging) return;
 
-      // Snapshot all column widths and freeze them on <col> elements
+      // Snapshot the managed column widths and freeze them on their <col> elements.
+      // Matched by data-column-id rather than by position: a Gantt's colgroup also holds one
+      // <col> per timeline slot, and those are not columns anyone can drag.
       const ths = Array.from(table.querySelectorAll('thead th[data-column-id]'));
-      const cols = table.querySelectorAll('colgroup col');
+      const colFor = id => table.querySelector(`colgroup col[data-column-id="${CSS.escape(id)}"]`);
 
-      let totalWidth = 0;
-      ths.forEach((th, i) => {
-        const w = Math.round(th.getBoundingClientRect().width);
-        if (cols[i]) {
-          cols[i].style.width = w + 'px';
+      ths.forEach(th => {
+        const col = colFor(th.getAttribute('data-column-id'));
+        if (col) {
+          col.style.width = Math.round(th.getBoundingClientRect().width) + 'px';
         }
-        totalWidth += w;
       });
 
-      // Lock the table width to the sum of column widths.
-      // This prevents table-fixed + width:100% from proportionally
-      // scaling other columns when one is resized.
+      // Lock the table width to what it currently measures, including any columns this file does
+      // not manage. Without the lock, table-fixed + width:100% scales every other column to make
+      // room for the one being dragged.
+      let totalWidth = Math.round(table.getBoundingClientRect().width);
       table.style.width = totalWidth + 'px';
 
-      // Find the active column index
-      const thIndex = ths.findIndex(th => th.getAttribute('data-column-id') === columnId);
-      const startWidth = thIndex >= 0 && ths[thIndex]
-        ? ths[thIndex].getBoundingClientRect().width
-        : 150;
-      const activeCol = thIndex >= 0 ? cols[thIndex] : null;
+      const activeTh = ths.find(th => th.getAttribute('data-column-id') === columnId);
+      const startWidth = activeTh ? activeTh.getBoundingClientRect().width : 150;
+      const activeCol = colFor(columnId);
       const startX = e.clientX;
 
       state.isDragging = true;
@@ -135,10 +135,11 @@ export function setupResizeHandles(gridId) {
 
         // Commit all column widths to Blazor
         const widths = {};
-        ths.forEach((th, i) => {
+        ths.forEach(th => {
           const id = th.getAttribute('data-column-id');
-          if (id && cols[i]) {
-            widths[id] = parseFloat(cols[i].style.width) || th.getBoundingClientRect().width;
+          const col = id ? colFor(id) : null;
+          if (id && col) {
+            widths[id] = parseFloat(col.style.width) || th.getBoundingClientRect().width;
           }
         });
 

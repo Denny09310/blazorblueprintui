@@ -2,9 +2,11 @@
 @implements IDisposable
 
 @* DropdownMenu primitive root component - headless, unstyled behavior only *@
+<div dir="@Dir" style="display:contents">
 <CascadingValue Value="@_context" IsFixed="false">
     @ChildContent
 </CascadingValue>
+</div>
 
 @code {
     private DropdownMenuContext _context = new();
@@ -67,10 +69,10 @@
     /// <summary>
     /// Direction for the menu content layout.
     /// Can be "ltr" (left-to-right) or "rtl" (right-to-left).
-    /// Default is "ltr".
+    /// When unset, inherits the surrounding direction.
     /// </summary>
     [Parameter]
-    public string Dir { get; set; } = "ltr";
+    public string? Dir { get; set; }
 
     /// <summary>
     /// Default CSS classes to apply to all DropdownMenuItem children.
@@ -99,6 +101,7 @@
 
     protected override void OnParametersSet()
     {
+        _context.Dir = Dir;
         // Update controlled value if it changed
         if (_state.IsControlled && Open.HasValue)
         {

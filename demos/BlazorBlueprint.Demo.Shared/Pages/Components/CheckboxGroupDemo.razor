@@ -20,7 +20,7 @@
             </p>
         </div>
         <div class="max-w-sm">
-            <BbCheckboxGroup TValue="string" @bind-Values="basicValues">
+            <BbCheckboxGroup AriaLabel="Choose options" TValue="string" @bind-Values="basicValues">
                 <BbCheckboxGroupItem TValue="string" Value="@("email")" Label="Email notifications" />
                 <BbCheckboxGroupItem TValue="string" Value="@("sms")" Label="SMS notifications" />
                 <BbCheckboxGroupItem TValue="string" Value="@("push")" Label="Push notifications" />
@@ -106,6 +106,7 @@
 
         <div class="space-y-4">
             <ApiReference ComponentName="CheckboxGroup">
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">Accessible name forwarded to the interactive control or group.</ApiParameter>
                 <ApiParameter Name="Values" Type="IReadOnlyCollection&lt;TValue&gt;">
                     The currently selected values. Supports two-way binding with <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Values</code>.
                 </ApiParameter>
