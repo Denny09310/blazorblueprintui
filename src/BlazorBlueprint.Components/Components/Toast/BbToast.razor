@@ -1,12 +1,16 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Icons.Lucide.Components
+@inject IJSRuntime JS
+@implements IDisposable
 
 @*
     Individual Toast component - displays a single toast notification.
 *@
 
-<div class="@CssClass" role="alert"
-     data-state="open"
+<div @ref="_contentRef"
+     class="@CssClass"
+     role="alert"
+     data-state="@(Data.IsDismissing ? "closed" : "open")"
      @onmouseenter="HandleMouseEnter"
      @onmouseleave="HandleMouseLeave"
      @attributes="AdditionalAttributes">
@@ -101,6 +105,57 @@
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private bool isPaused;
+    private ElementReference _contentRef;
+    private bool _exitWaitStarted;
+    private bool _disposed;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Data.IsDismissing && !_exitWaitStarted)
+        {
+            _exitWaitStarted = true;
+            await WaitForExitThenCompleteAsync();
+        }
+    }
+
+    /// <summary>Longest a C# fallback may wait after JS interop fails for the CSS exit animation
+    /// to play. Matches the 150ms default of tw-animate; the animation module's backstop is 1000ms.</summary>
+    private static readonly TimeSpan ExitFallbackDelay = TimeSpan.FromMilliseconds(200);
+
+    private async Task WaitForExitThenCompleteAsync()
+    {
+        try
+        {
+            var module = await PrimitiveModules.GetAsync(JS);
+            await module.InvokeVoidAsync("animation.waitForExit", _contentRef);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
+        {
+            // Interop unavailable (prerendering, reconnect drop). Fall back to a fixed wait so the
+            // toast still dismisses instead of hanging mounted forever.
+            try
+            {
+                await Task.Delay(ExitFallbackDelay);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Component disposed while waiting
+            }
+        }
+
+        if (_disposed)
+        {
+            return;
+        }
+
+        await OnDismiss.InvokeAsync();
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        _disposed = true;
+    }
 
     private async Task HandleClose()
     {
