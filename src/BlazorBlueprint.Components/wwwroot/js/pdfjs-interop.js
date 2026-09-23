@@ -130,9 +130,7 @@ export async function loadData(canvas, streamReference, options) {
     clearCanvas(canvas);
 
     try {
-        const data = new Uint8Array(
-            await new Response(streamReference && streamReference.dotnetStream).arrayBuffer());
-
+        const data = await streamReference?.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data }).promise;
 
         const viewer = {
