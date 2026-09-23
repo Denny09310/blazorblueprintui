@@ -990,9 +990,18 @@
     border: 0 solid var(--border);
   }
 
-  dialog[data-state="open"]::backdrop {
+  dialog[data-state]::backdrop {
     background: rgb(0 0 0 / 0.8);
     backdrop-filter: blur(2px);
+    /* Fade the scrim out alongside the dialog's animate-out: data-state="closed" is set while
+       the element waits in the top layer for its exit animation, and this transition carries the
+       background back to transparent over the same window. */
+    transition: background 0.2s ease, backdrop-filter 0.2s ease;
+  }
+
+  dialog[data-state="closed"]::backdrop {
+    background: rgb(0 0 0 / 0);
+    backdrop-filter: none;
   }
 
   dialog[data-state="open"] {
