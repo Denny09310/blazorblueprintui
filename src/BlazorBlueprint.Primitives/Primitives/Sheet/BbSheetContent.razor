@@ -9,7 +9,7 @@
     Handles focus trap, escape key, scroll lock, side-specific positioning, and ARIA attributes.
 *@
 
-@if (Context.IsOpen)
+@if (Context.IsPresent)
 {
     <div @ref="_contentRef"
          id="@Context.ContentId"
@@ -19,7 +19,7 @@
          aria-describedby="@Context.DescriptionId"
          tabindex="-1"
          @attributes="AdditionalAttributes"
-         data-state="open"
+         data-state="@(Context.IsOpen ? "open" : "closed")"
          data-side="@Context.Side.ToString().ToLower()">
         @ChildContent
     </div>
@@ -96,6 +96,7 @@
     private DotNetObjectReference<BbSheetContent>? _dotNetRef;
     private string _instanceId = Guid.NewGuid().ToString("N");
     private bool _isInitialized = false;
+    private bool _exitWaitStarted;
     private bool _disposed;
 
     protected override void OnInitialized()
@@ -116,6 +117,7 @@
         if (Context.IsOpen && !_isInitialized)
         {
             _isInitialized = true;
+            _exitWaitStarted = false;
 
             // Set up focus trap
             if (TrapFocus)
@@ -168,10 +170,59 @@
                 // JS interop not available during prerendering
             }
         }
-        else if (!Context.IsOpen && _isInitialized)
+        else if (!Context.IsOpen)
         {
-            await CleanupAsync();
+            // Closing (or already closed but still mounted). The context keeps IsPresent set until
+            // the exit animation finishes, so the overlay and content are unmounted only after the
+            // close render has played. Cleanup is idempotent — HandleContextStateChanged may already
+            // have run it, in which case _isInitialized is false and nothing repeats.
+            if (_isInitialized)
+            {
+                await CleanupAsync();
+            }
+
+            if (Context.IsPresent && !_exitWaitStarted)
+            {
+                _exitWaitStarted = true;
+                await WaitForExitThenCompleteAsync();
+            }
         }
+    }
+
+    /// <summary>
+    /// Longest a C# fallback may wait after JS interop fails for the CSS exit animation to play.
+    /// Matches the 150ms default of tw-animate; the animation module's own backstop is 1000ms.
+    /// </summary>
+    private static readonly TimeSpan ExitFallbackDelay = TimeSpan.FromMilliseconds(200);
+
+    private async Task WaitForExitThenCompleteAsync()
+    {
+        try
+        {
+            var module = await PrimitiveModules.GetAsync(JSRuntime);
+            await module.InvokeVoidAsync("animation.waitForExit", _contentRef);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
+        {
+            // Interop unavailable (prerendering, reconnect drop). Fall back to a fixed wait so the
+            // sheet still unmounts instead of hanging with its content mounted forever.
+            try
+            {
+                await Task.Delay(ExitFallbackDelay);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Component disposed while waiting
+            }
+        }
+
+        if (_disposed || Context.IsOpen)
+        {
+            return;
+        }
+
+        Context.CompleteClose();
+        StateHasChanged();
     }
 
     private void HandleContextStateChanged()

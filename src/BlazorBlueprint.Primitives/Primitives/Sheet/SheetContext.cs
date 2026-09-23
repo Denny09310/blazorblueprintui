@@ -73,6 +73,18 @@ public class SheetContext : PrimitiveContextWithEvents<SheetState>
     public bool IsOpen => State.IsOpen;
 
     /// <summary>
+    /// Gets whether the sheet is playing its closed-state exit animation. While set, the
+    /// overlay and content stay mounted with <c>data-state="closed"</c> so their animate-out
+    /// classes get a window to run in, then <see cref="CompleteClose"/> clears it to unmount.
+    /// </summary>
+    internal bool IsAnimatingOut { get; private set; }
+
+    /// <summary>
+    /// Gets whether the sheet should be present in the DOM: open, or playing its exit animation.
+    /// </summary>
+    internal bool IsPresent => State.IsOpen || IsAnimatingOut;
+
+    /// <summary>
     /// Gets the side from which the sheet slides in.
     /// </summary>
     public SheetSide Side => State.Side;
@@ -88,6 +100,7 @@ public class SheetContext : PrimitiveContextWithEvents<SheetState>
     /// <param name="triggerElement">Optional element that triggered the sheet.</param>
     public void Open(object? triggerElement = null)
     {
+        IsAnimatingOut = false;
         UpdateState(state =>
         {
             state.IsOpen = true;
@@ -96,10 +109,54 @@ public class SheetContext : PrimitiveContextWithEvents<SheetState>
     }
 
     /// <summary>
-    /// Closes the sheet.
+    /// Closes the sheet, keeping the overlay and content mounted for their exit animation.
     /// </summary>
-    public void Close() =>
+    public void Close()
+    {
+        if (!State.IsOpen)
+        {
+            return;
+        }
+
+        IsAnimatingOut = true;
         UpdateState(state => state.IsOpen = false);
+    }
+
+    /// <summary>
+    /// Advances the state in response to a controlled <c>Open</c> parameter change, running the
+    /// same open/close transition logic as the unmanaged methods.
+    /// </summary>
+    internal void SetIsOpen(bool isOpen)
+    {
+        if (State.IsOpen == isOpen)
+        {
+            return;
+        }
+
+        if (isOpen)
+        {
+            Open();
+        }
+        else
+        {
+            Close();
+        }
+    }
+
+    /// <summary>
+    /// Ends the exit animation, allowing the overlay and content to unmount. No-op while the
+    /// sheet is open, so a reopen that beats the animation to the punch keeps the sheet mounted.
+    /// </summary>
+    internal void CompleteClose()
+    {
+        if (!IsAnimatingOut || State.IsOpen)
+        {
+            return;
+        }
+
+        IsAnimatingOut = false;
+        NotifyStateChanged();
+    }
 
     /// <summary>
     /// Toggles the sheet open/closed state.
