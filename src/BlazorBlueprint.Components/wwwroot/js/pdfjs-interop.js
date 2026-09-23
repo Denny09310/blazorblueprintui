@@ -28,6 +28,17 @@ function defaultOptions() {
     return { initialScale: 1.25, minScale: 0.5, maxScale: 3 };
 }
 
+function normalizeOptions(options) {
+    const minScale = Number(options && options.minScale) > 0 ? options.minScale : defaultOptions().minScale;
+    const maxScale = Number(options && options.maxScale) > 0 ? options.maxScale : defaultOptions().maxScale;
+    const initialScale = clamp(
+        Number(options && options.initialScale) > 0 ? options.initialScale : defaultOptions().initialScale,
+        minScale,
+        maxScale
+    );
+    return { initialScale, minScale, maxScale };
+}
+
 function stateFor(canvas) {
     const viewer = viewers.get(canvas);
     return {
@@ -60,13 +71,7 @@ function clearCanvas(canvas) {
 export async function load(canvas, url, options) {
     await dispose(canvas);
 
-    const minScale = Number(options && options.minScale) > 0 ? options.minScale : defaultOptions().minScale;
-    const maxScale = Number(options && options.maxScale) > 0 ? options.maxScale : defaultOptions().maxScale;
-    const initialScale = clamp(
-        Number(options && options.initialScale) > 0 ? options.initialScale : defaultOptions().initialScale,
-        minScale,
-        maxScale
-    );
+    const { initialScale, minScale, maxScale } = normalizeOptions(options);
 
     clearCanvas(canvas);
 
@@ -75,6 +80,65 @@ export async function load(canvas, url, options) {
 
         const viewer = {
             pdf,
+            url,
+            data: null,
+            pageCount: pdf.numPages,
+            currentPage: 1,
+            scale: initialScale,
+            minScale,
+            maxScale,
+            pageCache: new Map(),
+            renderTask: null
+        };
+        viewers.set(canvas, viewer);
+
+        await renderPage(canvas, 1);
+
+        return {
+            ok: true,
+            currentPage: viewer.currentPage,
+            pageCount: viewer.pageCount,
+            scale: viewer.scale
+        };
+    } catch (err) {
+        clearCanvas(canvas);
+        return {
+            ok: false,
+            currentPage: 0,
+            pageCount: 0,
+            scale: initialScale,
+            error: err && err.message ? err.message : String(err)
+        };
+    }
+}
+
+/**
+ * Loads a document from an in-memory byte stream. The .NET side sends a
+ * DotNetStreamReference, whose `dotnetStream` property is a ReadableStream that
+ * is consumed directly here, so PDF.js renders from the local bytes and there is
+ * no second web request. Replaces whatever the viewer was showing before.
+ * @param {HTMLCanvasElement} canvas
+ * @param {{dotnetStream: ReadableStream}} streamReference
+ * @param {{initialScale?: number, minScale?: number, maxScale?: number}} [options]
+ * @returns {Promise<{ok: boolean, currentPage: number, pageCount: number, scale: number, error?: string}>}
+ */
+export async function loadData(canvas, streamReference, options) {
+    await dispose(canvas);
+
+    const { initialScale, minScale, maxScale } = normalizeOptions(options);
+
+    clearCanvas(canvas);
+
+    try {
+        const data = new Uint8Array(
+            await new Response(streamReference && streamReference.dotnetStream).arrayBuffer());
+
+        const pdf = await pdfjsLib.getDocument({ data }).promise;
+
+        const viewer = {
+            pdf,
+            url: null,
+            data,
             pageCount: pdf.numPages,
             currentPage: 1,
             scale: initialScale,
@@ -325,6 +389,62 @@ export function getPageCount(canvas) {
  */
 export function getScale(canvas) {
     return stateFor(canvas).scale;
+}
+
+function defaultFileName(viewer) {
+    if (viewer.url) {
+        const path = viewer.url.split("#")[0].split("?")[0];
+        const name = path.substring(path.lastIndexOf("/") + 1);
+        if (name) {
+            return name;
+        }
+    }
+    return "document.pdf";
+}
+
+/**
+ * Saves the open document as a PDF file. Documents loaded from bytes are down-
+ * loaded straight from memory; URL-loaded documents are re-fetched and saved as
+ * a blob, so a cross-origin page is downloaded instead of being navigated to.
+ * If the source cannot be fetched (for example no CORS on the server), the URL
+ * is opened in a new tab as a fallback.
+ * @param {HTMLCanvasElement} canvas
+ * @param {string|null} [fileName]
+ */
+export async function download(canvas, fileName) {
+    const viewer = viewers.get(canvas);
+    if (!viewer) {
+        return;
+    }
+
+    let data = viewer.data;
+    if (!data) {
+        if (!viewer.url) {
+            return;
+        }
+        try {
+            const response = await fetch(viewer.url);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            data = new Uint8Array(await response.arrayBuffer());
+        } catch (err) {
+            window.open(viewer.url, "_blank");
+            return;
+        }
+    }
+
+    const blob = new Blob([data], { type: "application/pdf" });
+    const objectUrl = URL.createObjectURL(blob);
+
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = fileName || defaultFileName(viewer);
+    anchor.style.display = "none";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
 }
 
 /**
