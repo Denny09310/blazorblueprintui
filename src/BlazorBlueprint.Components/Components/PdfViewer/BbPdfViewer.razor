@@ -79,9 +79,8 @@
 
             <BbButton Variant="ButtonVariant.Ghost"
                       Size="ButtonSize.IconSmall"
-                      Href="@Url"
-                      download="@DownloadAttribute"
-                      Disabled="@(string.IsNullOrWhiteSpace(Url))"
+                      OnClick="DownloadPdf"
+                      Disabled="@(!IsDocumentReady)"
                       title="@Localizer["PdfViewer.Download"]"
                       aria-label="@Localizer["PdfViewer.Download"]">
                 <LucideIcon Name="download" Size="16" />

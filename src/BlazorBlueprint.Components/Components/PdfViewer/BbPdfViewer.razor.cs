@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 using BlazorBlueprint.Primitives.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -47,9 +48,11 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
 
     /// <summary>
     /// Gets or sets the URL of the PDF document to display. Set a new value to
-    /// replace the document; set <c>null</c> or empty to clear the viewer.
+    /// replace the document; set <c>null</c> or empty to clear the viewer. Omit
+    /// it entirely and call <see cref="LoadDataAsync(byte[])"/> instead to show
+    /// a document from local bytes.
     /// </summary>
-    [Parameter, EditorRequired]
+    [Parameter]
     public string? Url { get; set; }
 
     // === Parameters - Appearance ===
@@ -363,6 +366,100 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
     /// <summary>Fits the current page to the width of its scroll area.</summary>
     public Task FitToWidthAsync() => ZoomAsync("fitToWidth");
 
+    /// <summary>
+    /// Loads a PDF document from a byte array (for example bytes read from an
+    /// <c>InputFile</c>), replacing whatever document was showing. The bytes are
+    /// streamed to the browser, so no URL or web request is involved.
+    /// </summary>
+    /// <remarks>
+    /// A subsequent <see cref="Url"/> change replaces the byte-loaded document.
+    /// </remarks>
+    public async Task LoadDataAsync(byte[] data)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+
+        using var stream = new MemoryStream(data, writable: false);
+        await LoadDataAsync(stream);
+    }
+
+    /// <summary>
+    /// Loads a PDF document from a stream (for example
+    /// <c>IBrowserFile.OpenReadStream()</c>), replacing whatever document was
+    /// showing. The stream is streamed to the browser, so no URL or web request
+    /// is involved. The stream is consumed and disposed by the transfer, so pass
+    /// a fresh stream per load.
+    /// </summary>
+    /// <remarks>
+    /// A subsequent <see cref="Url"/> change replaces the byte-loaded document.
+    /// </remarks>
+    public async Task LoadDataAsync(Stream data)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+
+        if (jsModule is null || !jsInitialized)
+        {
+            return;
+        }
+
+        // A programmatic load replaces the current document; keep the Url marker
+        // in sync so an unchanged Url parameter does not reload it afterwards.
+        lastKnownUrl = Url;
+        isLoading = true;
+        loadError = null;
+        pageCount = 0;
+        currentPage = 0;
+        scale = ClampScale(DefaultScale);
+        pageInput = "1";
+        StateHasChanged();
+
+        try
+        {
+            using (var streamReference = new DotNetStreamReference(data))
+            {
+                var state = await jsModule.InvokeAsync<PdfViewerState>(
+                    "loadData", canvas, streamReference, BuildOptions());
+
+                ApplyState(state);
+
+                if (state is { Ok: true })
+                {
+                    await OnDocumentLoaded.InvokeAsync(state.PageCount);
+                }
+            }
+        }
+        catch (Exception ex) when (
+            ex is JSDisconnectedException
+            or JSException
+            or TaskCanceledException
+            or ObjectDisposedException
+            or InvalidOperationException)
+        {
+            isLoading = false;
+            loadError = Localizer["PdfViewer.LoadFailed"];
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Saves the open document as a PDF file. Byte-loaded documents are saved
+    /// straight from memory; URL-loaded documents are saved as a blob so a
+    /// cross-origin source is downloaded rather than navigated to. No-op before
+    /// a document is loaded.
+    /// </summary>
+    /// <param name="fileName">
+    /// The suggested file name. When null, it is derived from the source URL or
+    /// defaults to "document.pdf".
+    /// </param>
+    public async Task DownloadAsync(string? fileName = null)
+    {
+        if (jsModule is null || !jsInitialized || pageCount == 0)
+        {
+            return;
+        }
+
+        await jsModule.InvokeVoidAsync("download", canvas, fileName);
+    }
+
     /// <summary>Gets the currently visible page (1-based), or 0 before a document loads.</summary>
     public async Task<int> GetCurrentPageAsync()
     {
@@ -393,6 +490,8 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
         return scale;
     }
 
+    private Task DownloadPdf() => DownloadAsync();
+
     // === Render Helpers ===
 
     private int PageCount => pageCount;
@@ -406,8 +505,6 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
     private bool CanZoomIn => IsDocumentReady && scale < MaxScale - ScaleEpsilon;
 
     private string EffectiveAriaLabel => AriaLabel ?? Localizer["PdfViewer.AriaLabel"];
-
-    private string? DownloadAttribute => string.IsNullOrWhiteSpace(Url) ? null : "";
 
     /// <summary>
     /// Determines whether the component needs to re-render, comparing the current

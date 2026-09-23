@@ -3522,7 +3522,7 @@
   - OnDocumentLoaded : EventCallback<Int32>
   - OnPageChanged : EventCallback<PdfViewerPageChangeEventArgs>
   - Toolbar : Boolean
-  - Url : String [EditorRequired]
+  - Url : String
 
 ### BbPickList`1 (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
