@@ -42,6 +42,29 @@
         <CodeBlock Source="Components/PdfViewer/toolbar.txt" />
     </section>
 
+    @* Load a Local File *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Load a Local File</h2>
+            <p class="text-muted-foreground">
+                Load a document from bytes instead of a URL. The
+                <code class="bg-muted px-1 rounded">LoadDataAsync</code> method takes a
+                <code class="bg-muted px-1 rounded">byte[]</code> or a <code class="bg-muted px-1 rounded">Stream</code> and
+                streams it to the browser through a <code class="bg-muted px-1 rounded">DotNetStreamReference</code>, so no
+                web request is involved. Pick a file below and its stream is passed straight through.
+            </p>
+        </div>
+
+        <div class="space-y-4">
+            <div class="flex flex-wrap items-center gap-2">
+                <InputFile OnChange="@LoadLocalPdf" Accept=".pdf" />
+                <span class="text-sm text-muted-foreground">@localPdfStatus</span>
+            </div>
+            <BbPdfViewer @ref="localViewer" Height="440px" />
+        </div>
+        <CodeBlock Source="Components/PdfViewer/local-file.txt" />
+    </section>
+
     @* Height and Zoom Bounds *@
     <section class="space-y-6">
         <div class="space-y-2">
@@ -127,7 +150,11 @@
                 <h3 class="font-semibold">Changing the Document</h3>
                 <p class="text-sm text-muted-foreground">
                     Set a new <code class="bg-muted px-1 rounded">Url</code> to replace the document, or pass
-                    <code class="bg-muted px-1 rounded">null</code> / an empty string to clear the viewer.
+                    <code class="bg-muted px-1 rounded">null</code> / an empty string to clear the viewer. For documents
+                    that exist only in the browser (from an <code class="bg-muted px-1 rounded">InputFile</code> or a generated
+                    byte stream), call <code class="bg-muted px-1 rounded">LoadDataAsync(byte[])</code> or
+                    <code class="bg-muted px-1 rounded">LoadDataAsync(Stream)</code> instead — no URL or network request is needed,
+                    and a later <code class="bg-muted px-1 rounded">Url</code> change replaces the bytes.
                 </p>
             </div>
 
@@ -137,6 +164,8 @@
                     <li><code class="text-xs bg-muted px-1 py-0.5 rounded">PreviousPageAsync()</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">NextPageAsync()</code> - step through the document</li>
                     <li><code class="text-xs bg-muted px-1 py-0.5 rounded">GoToPageAsync(page)</code> - jump to a page; out-of-range values are clamped</li>
                     <li><code class="text-xs bg-muted px-1 py-0.5 rounded">ZoomInAsync()</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">ZoomOutAsync()</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">SetScaleAsync(scale)</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">FitToWidthAsync()</code> - adjust zoom</li>
+                    <li><code class="text-xs bg-muted px-1 py-0.5 rounded">LoadDataAsync(byte[])</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">LoadDataAsync(Stream)</code> - load a document from local bytes</li>
+                    <li><code class="text-xs bg-muted px-1 py-0.5 rounded">DownloadAsync(fileName?)</code> - save the open document as a PDF</li>
                     <li><code class="text-xs bg-muted px-1 py-0.5 rounded">GetCurrentPageAsync()</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">GetPageCountAsync()</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">GetScaleAsync()</code> - read live state</li>
                 </ul>
             </div>
@@ -147,7 +176,7 @@
                     <li>Rendering powered by PDF.js, bundled in the package</li>
                     <li>Page navigation with a direct jump-to-page input</li>
                     <li>Zoom with in/out buttons, inner and outer bounds, and fit-to-width</li>
-                    <li>Download button for the source document</li>
+                    <li>Download button saves the document as a file instead of navigating to it</li>
                     <li>Hi-DPI aware rendering for crisp text on retina displays</li>
                     <li>Page cache with render cancellation for fast, flicker-free paging</li>
                 </ul>
@@ -252,7 +281,9 @@
 
 @code {
     private BbPdfViewer? viewer;
+    private BbPdfViewer? localViewer;
     private string demoStatus = "No document loaded";
+    private string localPdfStatus = "No file selected";
 
     private void OnDemoDocumentLoaded(int pageCount)
     {
@@ -262,5 +293,16 @@
     private void OnDemoPageChanged(PdfViewerPageChangeEventArgs args)
     {
         demoStatus = "Page " + args.Page + " of " + args.PageCount;
+    }
+
+    private async Task LoadLocalPdf(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        localPdfStatus = "Loading " + file.Name + "…";
+        if (localViewer is not null)
+        {
+            await localViewer.LoadDataAsync(file.OpenReadStream(maxAllowedSize: 25 * 1024 * 1024));
+        }
+        localPdfStatus = "Loaded " + file.Name;
     }
 }
