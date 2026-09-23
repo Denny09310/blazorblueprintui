@@ -1,9 +1,11 @@
 using System.Globalization;
+using System.IO;
 using System.Reflection;
 using BlazorBlueprint.Components;
 using BlazorBlueprint.Tests.Performance;
 using BlazorBlueprint.Tests.Rendering;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -203,11 +205,74 @@ public class PdfViewerTests
         {
             // The stub returns null by default, so the load has no state to report.
             Assert.Contains("Unable to load the PDF document.", renderer.Markup(), StringComparison.Ordinal);
-            // Five toolbar buttons depend on the document; the download link stays usable
-            // because a Url was provided.
-            Assert.Equal(5, CountOf(renderer.Markup(), "aria-disabled=\"true\""));
+            // No document means every toolbar action, download included, is disabled.
+            Assert.Equal(6, CountOf(renderer.Markup(), "aria-disabled=\"true\""));
             Assert.Equal(0, ComponentProbe.Field<int>(viewer, "pageCount"));
         }, parameters => parameters[nameof(BbPdfViewer.Url)] = "missing.pdf");
+    }
+
+    [Fact]
+    public async Task LoadDataAsyncStreamsBytesToTheInteropModuleAndRaisesOnDocumentLoaded()
+    {
+        var loaded = 0;
+        await RunAsync(
+            async (renderer, viewer, js) =>
+            {
+                await viewer.LoadDataAsync(new byte[] { 0x25, 0x50, 0x44, 0x46 });
+
+                var call = Assert.Single(js.Calls, call => call.Identifier == "loadData");
+                Assert.IsType<DotNetStreamReference>(call.Args![1]);
+                Assert.Equal(1.25, Property(call.Args![2]!, "initialScale"));
+                Assert.Equal(14, loaded);
+
+                var markup = renderer.Markup();
+                Assert.Contains("value=\"3\"", markup, StringComparison.Ordinal);
+                Assert.Contains(">14</span>", markup, StringComparison.Ordinal);
+                Assert.Equal(0, CountOf(markup, "aria-disabled=\"true\""));
+            },
+            setupJs: js => js.Results["loadData"] = _ => State(ok: true, pageCount: 14, currentPage: 3, scale: 1.25),
+            documentLoaded: value => loaded = value);
+    }
+
+    [Fact]
+    public async Task LoadDataAsyncAcceptsACallerOwnedStream()
+    {
+        await RunAsync(
+            async (renderer, viewer, js) =>
+            {
+                using var stream = new MemoryStream(new byte[] { 0x25, 0x50, 0x44, 0x46 });
+                await viewer.LoadDataAsync(stream);
+
+                // The stream is handed to the interop layer as a DotNetStreamReference.
+                Assert.Single(js.Calls, call => call.Identifier == "loadData");
+                Assert.Contains(">1</span>", renderer.Markup(), StringComparison.Ordinal);
+            },
+            setupJs: js => js.Results["loadData"] = _ => State(ok: true, pageCount: 1, currentPage: 1, scale: 1.0));
+    }
+
+    [Fact]
+    public async Task DownloadButtonSavesTheOpenDocument()
+    {
+        await RunAsync(
+            async (renderer, viewer, js) =>
+            {
+                // Six toolbar buttons carry onclick handlers; download is the sixth.
+                await renderer.DispatchAsync("onclick", new MouseEventArgs(), occurrence: 5);
+
+                Assert.Equal(1, js.Calls.Count(call => call.Identifier == "download"));
+            },
+            parameters => parameters[nameof(BbPdfViewer.Url)] = "a.pdf",
+            setupJs: js => js.Results["load"] = _ => State(ok: true, pageCount: 14, currentPage: 3, scale: 0.75));
+    }
+
+    [Fact]
+    public async Task DownloadAsyncNoOpsWithoutADocument()
+    {
+        await RunAsync(async (renderer, viewer, js) =>
+        {
+            await viewer.DownloadAsync();
+            Assert.DoesNotContain(js.Calls, call => call.Identifier == "download");
+        });
     }
 
     [Fact]
