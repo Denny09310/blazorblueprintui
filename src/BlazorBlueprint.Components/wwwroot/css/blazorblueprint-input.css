@@ -286,6 +286,21 @@
    declarations (base/components/utilities) become sublayers of bb. */
 @layer bb {
 
+/* tw-animate's animate-in/animate-out compile with `animation-fill-mode` defaulting to
+   none. Without it an overlay that finishes its exit early (overlay fades in 150ms, panel
+   slides 300ms) snaps back to full visibility, and a component whose unmount waits on the
+   exit (waitForExit) pops back fully visible for the unmount render's round-trip on Blazor
+   Server. Holding the final keyframe keeps both invisible until they are actually removed.
+   Enter gets the same treatment so the first frame holds the 0% keyframe instead of
+   flashing the natural (fully visible) state before the fade-in starts.
+   `both` here is shorthand-forwards/backwards; an animation with only 0% or only 100%
+   keyframes resolves its missing end/start keyframe to the element's natural style, so
+   nothing is left permanently hidden. */
+[data-state="open"],
+[data-state="closed"] {
+  animation-fill-mode: both;
+}
+
 /* Required for keyboard navigation visual feedback in Select/Combobox/DropdownMenu */
 @layer components {
   [role="option"][data-focused="true"] {
