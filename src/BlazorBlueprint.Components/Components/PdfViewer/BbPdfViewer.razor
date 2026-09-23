@@ -79,7 +79,7 @@
 
             <BbButton Variant="ButtonVariant.Ghost"
                       Size="ButtonSize.IconSmall"
-                      OnClick="DownloadPdf"
+                      OnClick="@(() => DownloadAsync())"
                       Disabled="@(!IsDocumentReady)"
                       title="@Localizer["PdfViewer.Download"]"
                       aria-label="@Localizer["PdfViewer.Download"]">

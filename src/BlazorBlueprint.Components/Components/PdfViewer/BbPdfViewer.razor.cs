@@ -490,8 +490,6 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
         return scale;
     }
 
-    private Task DownloadPdf() => DownloadAsync();
-
     // === Render Helpers ===
 
     private int PageCount => pageCount;
