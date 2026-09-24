@@ -47,14 +47,20 @@
                     <code class="text-xs bg-muted px-1 py-0.5 rounded">Longitude</code> and an optional
                     <code class="text-xs bg-muted px-1 py-0.5 rounded">Color</code>. Markers stay ordinary
                     children of the map container while the interop layer keeps them pinned to the
-                    geography with CSS transforms.
+                    geography with CSS transforms. Add content to a marker to show a popup card
+                    above it when clicked.
                 </p>
             </div>
 
             <div class="rounded-lg border bg-card p-6 space-y-3">
                 <BbMapLibre Center="new BbMapCoordinate(40.7128, -74.0060)" Zoom="11" Style="height: 400px; width: 100%;">
-                    <BbMapLibreMarker Latitude="40.7128" Longitude="-74.0060" />
-                    <BbMapLibreMarker Latitude="40.7580" Longitude="-73.9855" Color="var(--chart-2)" />
+                    <BbMapLibreMarker Latitude="40.7128" Longitude="-74.0060">
+                        <div class="font-medium">New York City</div>
+                        <p class="text-xs text-muted-foreground">Lat 40.7128, Lng -74.0060</p>
+                    </BbMapLibreMarker>
+                    <BbMapLibreMarker Latitude="40.7580" Longitude="-73.9855" Color="var(--chart-2)">
+                        <div class="font-medium">Times Square</div>
+                    </BbMapLibreMarker>
                 </BbMapLibre>
             </div>
 
@@ -117,6 +123,10 @@
             CSS color used for the marker dot, e.g. <code
             class="text-xs bg-muted px-1 py-0.5 rounded">var(--chart-2)</code>. Defaults to
             <code class="text-xs bg-muted px-1 py-0.5 rounded">var(--color-primary)</code>.
+        </ApiParameter>
+        <ApiParameter Name="ChildContent" Type="RenderFragment?">
+            Optional popup content shown in a card above the dot when it is clicked. When omitted,
+            the marker is a plain dot with no popup interaction.
         </ApiParameter>
     </ApiReference>
 

@@ -7,6 +7,8 @@ namespace BlazorBlueprint.Components;
 /// A colored dot pinned to a geographic position on top of a <see cref="BbMapLibre"/> map.
 /// The interop layer projects the coordinate to pixels and moves the element with CSS
 /// transforms as the camera moves, so Blazor keeps ownership of its markup.
+/// When <see cref="ChildContent"/> is provided, clicking the dot toggles a popup card
+/// anchored above the marker; the popup travels with the marker as the map moves.
 /// </summary>
 public partial class BbMapLibreMarker : ComponentBase, IAsyncDisposable
 {
@@ -14,6 +16,7 @@ public partial class BbMapLibreMarker : ComponentBase, IAsyncDisposable
 
     private readonly string markerId = Guid.NewGuid().ToString("N");
     private bool registered;
+    private bool popupOpen;
     private double? lastLatitude;
     private double? lastLongitude;
 
@@ -29,8 +32,32 @@ public partial class BbMapLibreMarker : ComponentBase, IAsyncDisposable
     [Parameter]
     public string Color { get; set; } = "var(--color-primary)";
 
-    private string MarkerStyle =>
-        $"background-color:{Color}; visibility:hidden; transform:translate(0,0);";
+    /// <summary>
+    /// Popup content shown above the dot when it is clicked. When omitted the marker
+    /// behaves as a plain dot with no popup interaction.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private static string MarkerStyle =>
+        "visibility:hidden; transform:translate(0,0);";
+
+    private string DotStyle =>
+        $"background-color:{Color};";
+
+    // The wrapper stacks above the other markers while its popup is open so the
+    // popup never renders underneath a neighbouring dot.
+    private string zIndexClass => popupOpen && ChildContent is not null ? "bb:z-50" : "bb:z-[1]";
+
+    private void TogglePopup()
+    {
+        if (ChildContent is null)
+        {
+            return;
+        }
+
+        popupOpen = !popupOpen;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -57,9 +84,9 @@ public partial class BbMapLibreMarker : ComponentBase, IAsyncDisposable
     }
 
     private bool CoordinatesChanged() =>
-        (lastLatitude is not { } latitude || lastLongitude is not { } longitude ||
+        lastLatitude is not { } latitude || lastLongitude is not { } longitude ||
          Math.Abs(latitude - Latitude) > CoordinateTolerance ||
-         Math.Abs(longitude - Longitude) > CoordinateTolerance);
+         Math.Abs(longitude - Longitude) > CoordinateTolerance;
 
     public async ValueTask DisposeAsync()
     {

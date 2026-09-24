@@ -3079,6 +3079,7 @@
   - ZoomChanged : EventCallback<Double>
 
 ### BbMapLibreMarker (BlazorBlueprint.Components)
+  - ChildContent : RenderFragment
   - Color : String
   - Latitude : Double
   - Longitude : Double

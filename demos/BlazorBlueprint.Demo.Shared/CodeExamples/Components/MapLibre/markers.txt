@@ -1,4 +1,9 @@
 <BbMapLibre Center="new BbMapCoordinate(40.7128, -74.0060)" Zoom="11" Style="height: 400px; width: 100%;">
-    <BbMapLibreMarker Latitude="40.7128" Longitude="-74.0060" />
-    <BbMapLibreMarker Latitude="40.7580" Longitude="-73.9855" Color="var(--chart-2)" />
+    <BbMapLibreMarker Latitude="40.7128" Longitude="-74.0060">
+        <div class="font-medium">New York City</div>
+        <p class="text-xs text-muted-foreground">Lat 40.7128, Lng -74.0060</p>
+    </BbMapLibreMarker>
+    <BbMapLibreMarker Latitude="40.7580" Longitude="-73.9855" Color="var(--chart-2)">
+        <div class="font-medium">Times Square</div>
+    </BbMapLibreMarker>
 </BbMapLibre>
