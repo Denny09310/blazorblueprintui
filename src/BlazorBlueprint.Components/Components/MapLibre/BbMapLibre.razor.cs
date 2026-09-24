@@ -9,8 +9,9 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
     private const double CoordinateTolerance = 0.0000001;
     private const double ZoomTolerance = 0.0001;
 
+    private readonly string mapId = Guid.NewGuid().ToString("N");
+
     private IJSObjectReference? jsModule;
-    private string mapId = Guid.NewGuid().ToString("N");
     private bool jsInitialized;
     private DotNetObjectReference<BbMapLibre>? dotNetRef;
     private double? lastLatitude;
