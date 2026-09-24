@@ -1,0 +1,19 @@
+<BbMapLibre Center="new BbMapCoordinate(40.7359, -74.0013)" Zoom="12" Style="height: 400px; width: 100%;">
+    <ChildContent>
+        <BbMapLibreMarker Latitude="40.7128" Longitude="-74.0060">
+            <div class="font-medium">Start</div>
+        </BbMapLibreMarker>
+
+        <BbMapLibreRoute Points="new BbMapCoordinate[]
+        {
+            new(40.7128, -74.0060),
+            new(40.7273, -74.0014),
+            new(40.7484, -73.9857),
+            new(40.7580, -73.9855)
+        }" />
+
+        <BbMapLibreMarker Latitude="40.7580" Longitude="-73.9855" Color="var(--chart-2)">
+            <div class="font-medium">End</div>
+        </BbMapLibreMarker>
+    </ChildContent>
+</BbMapLibre>

@@ -3086,6 +3086,13 @@
   - Longitude : Double
   - Map : BbMapLibre [CascadingParameter]
 
+### BbMapLibreRoute (BlazorBlueprint.Components)
+  - Color : String
+  - Opacity : Double
+  - Points : IReadOnlyList<BbMapCoordinate>
+  - Width : Double
+  - Map : BbMapLibre [CascadingParameter]
+
 ### BbMarkdownEditor (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaDescribedBy : String

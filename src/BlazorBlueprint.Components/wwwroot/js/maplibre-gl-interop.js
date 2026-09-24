@@ -20,12 +20,21 @@ const DOT_REACH = 6;
  * @property {Function} stopWatchingTheme - Unsubscribes from theme changes
  * @property {Map<string, MarkerState>} markers - Blazor-owned marker elements
  * @property {Set<string>} popups - Marker ids whose popup is currently open
+ * @property {Map<string, RouteState>} routes - Lines drawn as native MapLibre style layers
  */
 
 /**
  * @typedef {Object} MarkerState
  * @property {number} lng - Longitude of the marker
  * @property {number} lat - Latitude of the marker
+ */
+
+/**
+ * @typedef {Object} RouteState
+ * @property {Array<Array<number>>} coordinates - GeoJSON [lng, lat] pairs of the route line
+ * @property {string} color - CSS color of the line
+ * @property {number} width - Line width in pixels
+ * @property {number} opacity - Line opacity from 0 to 1
  */
 
 /** @type {Map<string, MapState>} */
@@ -143,12 +152,13 @@ export async function initializeMapLibre(mapId, dotNetRef, options = {}) {
     });
 
     const stopWatchingTheme = watchThemeChanges(() => applyStyle(mapId));
-    mapStates.set(mapId, { map, dotNetRef, stopWatchingTheme, markers: new Map(), popups: new Set() });
+    mapStates.set(mapId, { map, dotNetRef, stopWatchingTheme, markers: new Map(), popups: new Set(), routes: new Map() });
 
     map.on('moveend', () => notifyViewChanged(mapId));
     map.on('load', () => notifyViewChanged(mapId));
     map.on('move', () => updateMarkers(mapId));
     map.on('load', () => updateMarkers(mapId));
+    map.on('load', () => redrawRoutes(mapId));
 
     applyStyle(mapId);
 
@@ -338,6 +348,142 @@ export function unregisterMarker(mapId, markerId) {
 
     state.markers.delete(markerId);
     state.popups.delete(markerId);
+}
+
+/**
+ * Builds the GeoJSON Feature a route's line source points at.
+ * @param {RouteState} route
+ * @returns {Object}
+ */
+function routeData(route) {
+    return {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'LineString', coordinates: route.coordinates }
+    };
+}
+
+/**
+ * Adds a route's GeoJSON line source and layer, or refreshes them in place when they already
+ * exist. Routes are native map layers rather than DOM, so MapLibre projects, clips and draws
+ * them for free. The style is not always ready (the map may still be loading, or a theme switch
+ * may be mid-flight), in which case the map's 'load' handler retries for every route at once.
+ * @param {string} mapId
+ * @param {string} routeId
+ */
+function ensureRouteLayer(mapId, routeId) {
+    const state = mapStates.get(mapId);
+    const route = state && state.routes.get(routeId);
+    if (!state || !route) {
+        return;
+    }
+
+    const map = state.map;
+    if (!map.isStyleLoaded()) {
+        return;
+    }
+
+    const layerId = `${routeId}-layer`;
+    const sourceId = `${routeId}-source`;
+    const data = routeData(route);
+
+    if (map.getSource(sourceId)) {
+        map.getSource(sourceId).setData(data);
+    } else {
+        map.addSource(sourceId, { type: 'geojson', data });
+        map.addLayer({
+            id: layerId,
+            type: 'line',
+            source: sourceId,
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: {
+                'line-color': route.color,
+                'line-width': route.width,
+                'line-opacity': route.opacity
+            }
+        });
+        return;
+    }
+
+    // Style-only changes still need the paint properties refreshed.
+    map.setPaintProperty(layerId, 'line-color', route.color);
+    map.setPaintProperty(layerId, 'line-width', route.width);
+    map.setPaintProperty(layerId, 'line-opacity', route.opacity);
+}
+
+/**
+ * Re-adds every registered route to the current style. A theme switch replaces the style,
+ * taking all custom layers with it, so routes are restored from their tracked state instead.
+ * @param {string} mapId
+ */
+function redrawRoutes(mapId) {
+    const state = mapStates.get(mapId);
+    if (!state) {
+        return;
+    }
+
+    state.routes.forEach((route, routeId) => ensureRouteLayer(mapId, routeId));
+}
+
+/**
+ * Registers a route line on the map. The coordinates are GeoJSON [lng, lat] pairs.
+ * @param {string} mapId
+ * @param {string} routeId
+ * @param {Array<Array<number>>} coordinates
+ * @param {Object} [options] - Route appearance: color, width, opacity
+ */
+export function registerRoute(mapId, routeId, coordinates, options = {}) {
+    const state = mapStates.get(mapId);
+    if (!state) {
+        return;
+    }
+
+    state.routes.set(routeId, {
+        coordinates,
+        color: options.color ?? '#3b82f6',
+        width: options.width ?? 3,
+        opacity: options.opacity ?? 1
+    });
+
+    ensureRouteLayer(mapId, routeId);
+}
+
+/**
+ * Updates an already registered route's path and appearance.
+ * @param {string} mapId
+ * @param {string} routeId
+ * @param {Array<Array<number>>} coordinates
+ * @param {Object} [options] - Route appearance: color, width, opacity
+ */
+export function updateRoute(mapId, routeId, coordinates, options = {}) {
+    registerRoute(mapId, routeId, coordinates, options);
+}
+
+/**
+ * Removes a route's layer and source from the map and stops tracking it.
+ * @param {string} mapId
+ * @param {string} routeId
+ */
+export function unregisterRoute(mapId, routeId) {
+    const state = mapStates.get(mapId);
+    if (!state) {
+        return;
+    }
+
+    state.routes.delete(routeId);
+
+    const map = state.map;
+    const layerId = `${routeId}-layer`;
+    const sourceId = `${routeId}-source`;
+
+    // Safe no-ops while the style is still loading.
+    if (map.getLayer(layerId)) {
+        map.removeLayer(layerId);
+    }
+
+    if (map.getSource(sourceId)) {
+        map.removeSource(sourceId);
+    }
 }
 
 /**

@@ -147,6 +147,46 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
     }
 
     /// <summary>
+    /// Registers a route (a line over the map) drawn from a list of geographic points. Routes
+    /// are native MapLibre style layers, so the interop module is always available here.
+    /// </summary>
+    internal async Task RegisterRouteAsync(string routeId, IReadOnlyList<BbMapCoordinate> points, string color, double width, double opacity)
+    {
+        if (jsModule is null)
+        {
+            return;
+        }
+
+        await jsModule.InvokeVoidAsync("registerRoute", mapId, routeId, ToCoordinates(points), ToRouteOptions(color, width, opacity));
+    }
+
+    /// <summary>
+    /// Updates an already registered route's path and appearance.
+    /// </summary>
+    internal async Task UpdateRouteAsync(string routeId, IReadOnlyList<BbMapCoordinate> points, string color, double width, double opacity)
+    {
+        if (jsModule is null)
+        {
+            return;
+        }
+
+        await jsModule.InvokeVoidAsync("updateRoute", mapId, routeId, ToCoordinates(points), ToRouteOptions(color, width, opacity));
+    }
+
+    /// <summary>
+    /// Removes a route from the map.
+    /// </summary>
+    internal async Task UnregisterRouteAsync(string routeId)
+    {
+        if (jsModule is null)
+        {
+            return;
+        }
+
+        await jsModule.InvokeVoidAsync("unregisterRoute", mapId, routeId);
+    }
+
+    /// <summary>
     /// Tells the interop layer whether a marker's popup is open, so it is kept inside the map
     /// viewport while the dot is visible and follows the dot once it leaves the map.
     /// </summary>
@@ -188,6 +228,23 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
             lastZoom = zoom;
         }
     }
+
+    /// <summary>
+    /// Serializes route points into the GeoJSON [lng, lat] pairs the interop layer expects.
+    /// </summary>
+    private static double[][] ToCoordinates(IReadOnlyList<BbMapCoordinate> points) =>
+        points.Select(point => new[] { point.Longitude, point.Latitude }).ToArray();
+
+    /// <summary>
+    /// Bundles a route's appearance into the options object the interop layer understands.
+    /// </summary>
+    private static Dictionary<string, object?> ToRouteOptions(string color, double width, double opacity) =>
+        new()
+        {
+            ["color"] = color,
+            ["width"] = width,
+            ["opacity"] = opacity,
+        };
 
     /// <summary>
     /// Receives the camera position from the map after a user pan, zoom or rotation.

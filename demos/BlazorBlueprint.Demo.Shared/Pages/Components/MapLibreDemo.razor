@@ -14,7 +14,9 @@
             <p class="text-muted-foreground">
                 Pins stay ordinary children of the map container, so Blazor keeps ownership of
                 their markup. The interop layer moves them around with CSS transforms as the camera
-                moves and hands drag events back to .NET through <code>OnMoved</code>.
+                moves and hands drag events back to .NET through <code>OnMoved</code>. Routes, by
+                contrast, are drawn natively by the engine as line layers, so they pan, zoom and
+                clip with the map automatically.
             </p>
         </div>
     </div>
@@ -81,6 +83,43 @@
             </div>
 
             <CodeBlock Source="Components/MapLibre/markers.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Routes</h2>
+                <p class="text-muted-foreground">
+                    Add a <code class="text-xs bg-muted px-1 py-0.5 rounded">BbMapLibreRoute</code>
+                    with an ordered list of <code class="text-xs bg-muted px-1 py-0.5 rounded">Points</code>
+                    to draw a line over the map. The route is painted by the map engine as a native
+                    line layer, so it pans, zooms and clips with the map &mdash; and is redrawn
+                    automatically after a theme switch restyles the map. Style the line with
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Color</code>,
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Width</code> and
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Opacity</code>. Because the
+                    line is painted to a canvas, <code
+                    class="text-xs bg-muted px-1 py-0.5 rounded">Color</code> must be a concrete CSS
+                    color &mdash; CSS variables cannot be resolved.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-3">
+                <BbMapLibre Center="new BbMapCoordinate(40.7359, -74.0013)" Zoom="12" Style="height: 400px; width: 100%;">
+                    <ChildContent>
+                        <BbMapLibreMarker Latitude="40.7128" Longitude="-74.0060">
+                            <div class="font-medium">Start</div>
+                        </BbMapLibreMarker>
+
+                        <BbMapLibreRoute Points="routePoints" />
+
+                        <BbMapLibreMarker Latitude="40.7580" Longitude="-73.9855" Color="var(--chart-2)">
+                            <div class="font-medium">End</div>
+                        </BbMapLibreMarker>
+                    </ChildContent>
+                </BbMapLibre>
+            </div>
+
+            <CodeBlock Source="Components/MapLibre/routes.txt" />
         </section>
 
         <section class="space-y-4">
@@ -153,9 +192,35 @@
         </ApiParameter>
     </ApiReference>
 
+    <ApiReference ComponentName="BbMapLibreRoute">
+        <ApiParameter Name="Points" Type="IReadOnlyList&lt;BbMapCoordinate&gt;">
+            The geographic points of the route line, in the order they are drawn. Two or more
+            points draw a polyline; passing fewer draws nothing.
+        </ApiParameter>
+        <ApiParameter Name="Color" Type="string">
+            CSS color of the route line. Defaults to <code
+            class="text-xs bg-muted px-1 py-0.5 rounded">#3b82f6</code>. Unlike DOM-rendered
+            elements, canvas paints cannot resolve CSS variables, so pass a concrete color.
+        </ApiParameter>
+        <ApiParameter Name="Width" Type="double">
+            Line width in pixels. Defaults to 3.
+        </ApiParameter>
+        <ApiParameter Name="Opacity" Type="double">
+            Line opacity from 0 (fully transparent) to 1 (fully opaque). Defaults to 1.
+        </ApiParameter>
+    </ApiReference>
+
 </div>
 
 @code {
+    private static readonly BbMapCoordinate[] routePoints =
+    [
+        new(40.7128, -74.0060),
+        new(40.7273, -74.0014),
+        new(40.7484, -73.9857),
+        new(40.7580, -73.9855),
+    ];
+
     private BbMapCoordinate center = new(40.7128, -74.0060);
     private double zoom = 10;
 }
