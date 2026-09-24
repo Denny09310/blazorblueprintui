@@ -127,10 +127,6 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
     [JSInvokable]
     public async Task OnMapViewChanged(double latitude, double longitude, double zoom)
     {
-        lastLatitude = latitude;
-        lastLongitude = longitude;
-        lastZoom = zoom;
-
         if (Center is { } center &&
             (Math.Abs(center.Latitude - latitude) > CoordinateTolerance ||
              Math.Abs(center.Longitude - longitude) > CoordinateTolerance))
