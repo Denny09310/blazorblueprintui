@@ -8,7 +8,7 @@ const LIGHT_STYLE = "https://tiles.openfreemap.org/styles/positron";
 const DARK_STYLE = "https://tiles.openfreemap.org/styles/dark";
 
 /** Gap between the marker dot and its popup, in pixels. */
-const POPUP_OFFSET = 6;
+const POPUP_OFFSET = 12;
 
 /** Half the marker dot's size, used to judge when the dot has fully left the viewport. */
 const DOT_REACH = 6;

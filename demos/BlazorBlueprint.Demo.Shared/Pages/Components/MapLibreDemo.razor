@@ -50,19 +50,33 @@
                     geography with CSS transforms. Add content to a marker to show a popup card when
                     its dot is clicked. The card is kept inside the map viewport while the dot is on
                     screen &mdash; flipping to the other side of the marker near an edge &mdash; and
-                    follows the dot if the marker is panned off the map.
+                    follows the dot if the marker is panned off the map. While the map loads, a
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">LoadingContent</code> fragment
+                    is shown (or a built-in spinner when one is not supplied), and the markers render
+                    only once the map is ready.
                 </p>
             </div>
 
             <div class="rounded-lg border bg-card p-6 space-y-3">
                 <BbMapLibre Center="new BbMapCoordinate(40.7128, -74.0060)" Zoom="11" Style="height: 400px; width: 100%;">
-                    <BbMapLibreMarker Latitude="40.7128" Longitude="-74.0060">
-                        <div class="font-medium">New York City</div>
-                        <p class="text-xs text-muted-foreground">Lat 40.7128, Lng -74.0060</p>
-                    </BbMapLibreMarker>
-                    <BbMapLibreMarker Latitude="40.7580" Longitude="-73.9855" Color="var(--chart-2)">
-                        <div class="font-medium">Times Square</div>
-                    </BbMapLibreMarker>
+                    <LoadingContent>
+                        <div class="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
+                            <svg class="size-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25" />
+                                <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
+                            </svg>
+                            Loading map&hellip;
+                        </div>
+                    </LoadingContent>
+                    <ChildContent>
+                        <BbMapLibreMarker Latitude="40.7128" Longitude="-74.0060">
+                            <div class="font-medium">New York City</div>
+                            <p class="text-xs text-muted-foreground">Lat 40.7128, Lng -74.0060</p>
+                        </BbMapLibreMarker>
+                        <BbMapLibreMarker Latitude="40.7580" Longitude="-73.9855" Color="var(--chart-2)">
+                            <div class="font-medium">Times Square</div>
+                        </BbMapLibreMarker>
+                    </ChildContent>
                 </BbMapLibre>
             </div>
 
@@ -111,6 +125,11 @@
         <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
             Additional HTML attributes applied to the map container, e.g. <code
             class="text-xs bg-muted px-1 py-0.5 rounded">AriaLabel</code>.
+        </ApiParameter>
+        <ApiParameter Name="LoadingContent" Type="RenderFragment?">
+            Content shown inside the map container while the map is loading. When omitted a built-in
+            spinner is shown. The map's child content (markers) is only rendered once the map is
+            ready.
         </ApiParameter>
     </ApiReference>
 

@@ -3074,6 +3074,7 @@
   - Center : BbMapCoordinate?
   - CenterChanged : EventCallback<BbMapCoordinate>
   - ChildContent : RenderFragment
+  - LoadingContent : RenderFragment
   - Style : String
   - Zoom : Double?
   - ZoomChanged : EventCallback<Double>

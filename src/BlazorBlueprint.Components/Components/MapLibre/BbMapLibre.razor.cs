@@ -17,12 +17,19 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
     private double? lastLatitude;
     private double? lastLongitude;
     private double? lastZoom;
-    private readonly List<(string markerId, double lng, double lat)> pendingMarkers = new();
 
     public IJSObjectReference? Map { get; private set; }
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Content shown inside the map container while the map is loading. When omitted, a default
+    /// loading indicator is shown. Once the map is ready the child content (typically the
+    /// markers) is rendered in its place.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? LoadingContent { get; set; }
 
     [Parameter]
     public BbMapCoordinate? Center { get; set; }
@@ -91,12 +98,7 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
 
             jsInitialized = true;
 
-            foreach (var (markerId, lng, lat) in pendingMarkers)
-            {
-                await jsModule.InvokeVoidAsync("registerMarker", mapId, markerId, lng, lat);
-            }
-
-            pendingMarkers.Clear();
+            StateHasChanged();
         }
         catch (Exception ex)
         {
@@ -105,13 +107,13 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
     }
 
     /// <summary>
-    /// Registers a marker with the map. Registration is deferred until the map's JS is ready.
+    /// Registers a marker with the map. Markers are only rendered once the map's JS is ready, so
+    /// the interop module is always available here.
     /// </summary>
     internal async Task RegisterMarkerAsync(string markerId, double lng, double lat)
     {
-        if (!jsInitialized || jsModule is null)
+        if (jsModule is null)
         {
-            pendingMarkers.Add((markerId, lng, lat));
             return;
         }
 
@@ -123,17 +125,8 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
     /// </summary>
     internal async Task UpdateMarkerAsync(string markerId, double lng, double lat)
     {
-        if (!jsInitialized || jsModule is null)
+        if (jsModule is null)
         {
-            for (var i = 0; i < pendingMarkers.Count; i++)
-            {
-                if (pendingMarkers[i].markerId == markerId)
-                {
-                    pendingMarkers[i] = (markerId, lng, lat);
-                    break;
-                }
-            }
-
             return;
         }
 
@@ -145,9 +138,7 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
     /// </summary>
     internal async Task UnregisterMarkerAsync(string markerId)
     {
-        pendingMarkers.RemoveAll(marker => marker.markerId == markerId);
-
-        if (!jsInitialized || jsModule is null)
+        if (jsModule is null)
         {
             return;
         }
