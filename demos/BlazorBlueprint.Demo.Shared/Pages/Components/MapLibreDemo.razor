@@ -1,0 +1,52 @@
+@page "/components/maplibre"
+<PageTitle>MapLibre - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">MapLibre</h1>
+            <p class="text-xl text-muted-foreground">
+                Vector maps powered by MapLibre GL JS, hosted inside a Blazor container. The map
+                itself is drawn by the engine; everything on top of it &mdash; the
+                <strong>BbMapLibreMarker</strong> pins, their popups, tooltips, labels and dragging
+                &mdash; is Blazor.
+            </p>
+            <p class="text-muted-foreground">
+                Pins stay ordinary children of the map container, so Blazor keeps ownership of
+                their markup. The interop layer moves them around with CSS transforms as the camera
+                moves and hands drag events back to .NET through <code>OnMoved</code>.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Usage</h2>
+                <p class="text-muted-foreground">
+                    Place a <code class="text-xs bg-muted px-1 py-0.5 rounded">BbMapLibreMarker</code>
+                    with <code class="text-xs bg-muted px-1 py-0.5 rounded">Latitude</code> and
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Longitude</code>. Without
+                    content the marker renders its default pin.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-3">
+                <BbMapLibre Style="height: 400px; width: 100%;" />
+            </div>
+
+            <CodeBlock Source="Components/MapLibre/basic.txt" />
+        </section>
+    </div>
+
+    <ApiReference ComponentName="BbMapLibre">
+        <ApiParameter Name="Style" Type="string?">
+            Inline styles for the map container &mdash; the map needs a height.
+        </ApiParameter>
+        <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+            Additional HTML attributes applied to the map container, e.g. <code
+            class="text-xs bg-muted px-1 py-0.5 rounded">AriaLabel</code>.
+        </ApiParameter>
+    </ApiReference>
+
+</div>

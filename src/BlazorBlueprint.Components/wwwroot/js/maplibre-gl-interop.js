@@ -4,12 +4,12 @@ import { watchThemeChanges } from './chart-theme.js'
 const LIGHT_STYLE = "https://tiles.openfreemap.org/styles/positron";
 const DARK_STYLE = "https://tiles.openfreemap.org/styles/dark";
 
-/** @type {maplibregl.Map} */
-let map = null;
+/** @type {WeakMap<maplibregl.Map, {}>} */
+let maps = new WeakMap();
 
 export function initialize(container, options = {}) {
     importCss()
-    map = new maplibregl.Map({
+    const map = new maplibregl.Map({
         container,
         style: LIGHT_STYLE,
         ...options
