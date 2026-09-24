@@ -201,6 +201,71 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
     }
 
     /// <summary>
+    /// Zooms the map in one level.
+    /// </summary>
+    internal async Task ZoomInAsync()
+    {
+        if (jsModule is null)
+        {
+            return;
+        }
+
+        await jsModule.InvokeVoidAsync("zoomIn", mapId);
+    }
+
+    /// <summary>
+    /// Zooms the map out one level.
+    /// </summary>
+    internal async Task ZoomOutAsync()
+    {
+        if (jsModule is null)
+        {
+            return;
+        }
+
+        await jsModule.InvokeVoidAsync("zoomOut", mapId);
+    }
+
+    /// <summary>
+    /// Rotates the map back to north (zero bearing).
+    /// </summary>
+    internal async Task ResetNorthAsync()
+    {
+        if (jsModule is null)
+        {
+            return;
+        }
+
+        await jsModule.InvokeVoidAsync("resetNorth", mapId);
+    }
+
+    /// <summary>
+    /// Locates the device and eases the camera to it at street level.
+    /// </summary>
+    internal async Task LocateUserAsync()
+    {
+        if (jsModule is null)
+        {
+            return;
+        }
+
+        await jsModule.InvokeVoidAsync("locateUser", mapId);
+    }
+
+    /// <summary>
+    /// Toggles the map container between filling the viewport and its normal size.
+    /// </summary>
+    internal async Task ToggleFullscreenAsync()
+    {
+        if (jsModule is null)
+        {
+            return;
+        }
+
+        await jsModule.InvokeVoidAsync("toggleFullscreen", mapId);
+    }
+
+    /// <summary>
     /// Pushes parameter-driven camera changes down to the map.
     /// </summary>
     private async Task SyncViewAsync()
@@ -264,6 +329,19 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
             await ZoomChanged.InvokeAsync(zoom);
         }
     }
+
+    /// <summary>
+    /// Raised when the map container enters or leaves browser fullscreen.
+    /// </summary>
+    internal event Action<bool>? FullscreenChanged;
+
+    /// <summary>
+    /// Receives the container's browser fullscreen state after a fullscreenchange event, so the
+    /// toolbar can swap its maximize/minimize icon, including when the user exits via Esc.
+    /// </summary>
+    [JSInvokable]
+    public void OnMapFullscreenChanged(bool isFullscreen) =>
+        FullscreenChanged?.Invoke(isFullscreen);
 
     public async ValueTask DisposeAsync()
     {

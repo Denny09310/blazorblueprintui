@@ -124,6 +124,37 @@
 
         <section class="space-y-4">
             <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Toolbar</h2>
+                <p class="text-muted-foreground">
+                    Drop a <code class="text-xs bg-muted px-1 py-0.5 rounded">BbMapLibreToolbar</code>
+                    inside the map for floating zoom in/out, compass (reset north), GPS (locate the
+                    device) and fullscreen controls. Anchor it to any corner with
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Position</code> and lay the
+                    buttons out with <code class="text-xs bg-muted px-1 py-0.5 rounded">Orientation</code>.
+                    Like markers, the toolbar stays an ordinary child of the map container &mdash;
+                    the buttons drive the camera and the container's fullscreen through the interop
+                    layer.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-3">
+                <BbMapLibre Center="new BbMapCoordinate(40.7128, -74.0060)" Zoom="11" Style="height: 400px; width: 100%;">
+                    <ChildContent>
+                        <BbMapLibreToolbar Position="BbMapLibreToolbarPosition.BottomRight"
+                                           Orientation="BbMapLibreToolbarOrientation.Vertical" />
+
+                        <BbMapLibreMarker Latitude="40.7128" Longitude="-74.0060">
+                            <div class="font-medium">New York City</div>
+                        </BbMapLibreMarker>
+                    </ChildContent>
+                </BbMapLibre>
+            </div>
+
+            <CodeBlock Source="Components/MapLibre/toolbar.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
                 <h2 class="text-2xl font-semibold">Two-Way Binding</h2>
                 <p class="text-muted-foreground">
                     Bind <code class="text-xs bg-muted px-1 py-0.5 rounded">Center</code> (latitude,
@@ -207,6 +238,17 @@
         </ApiParameter>
         <ApiParameter Name="Opacity" Type="double">
             Line opacity from 0 (fully transparent) to 1 (fully opaque). Defaults to 1.
+        </ApiParameter>
+    </ApiReference>
+
+    <ApiReference ComponentName="BbMapLibreToolbar">
+        <ApiParameter Name="Position" Type="BbMapLibreToolbarPosition">
+            The corner of the map the toolbar is anchored to. Defaults to
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">BbMapLibreToolbarPosition.TopRight</code>.
+        </ApiParameter>
+        <ApiParameter Name="Orientation" Type="BbMapLibreToolbarOrientation">
+            Layout direction of the buttons. Defaults to
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">BbMapLibreToolbarOrientation.Horizontal</code>.
         </ApiParameter>
     </ApiReference>
 

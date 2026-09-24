@@ -159,6 +159,7 @@ export async function initializeMapLibre(mapId, dotNetRef, options = {}) {
     map.on('move', () => updateMarkers(mapId));
     map.on('load', () => updateMarkers(mapId));
     map.on('load', () => redrawRoutes(mapId));
+    element.addEventListener('fullscreenchange', () => handleFullscreenChange(mapId));
 
     applyStyle(mapId);
 
@@ -483,6 +484,130 @@ export function unregisterRoute(mapId, routeId) {
 
     if (map.getSource(sourceId)) {
         map.removeSource(sourceId);
+    }
+}
+
+/**
+ * Zooms the map in one level.
+ * @param {string} mapId
+ */
+export function zoomIn(mapId) {
+    const state = mapStates.get(mapId);
+    if (!state) {
+        return;
+    }
+
+    state.map.zoomIn();
+}
+
+/**
+ * Zooms the map out one level.
+ * @param {string} mapId
+ */
+export function zoomOut(mapId) {
+    const state = mapStates.get(mapId);
+    if (!state) {
+        return;
+    }
+
+    state.map.zoomOut();
+}
+
+/**
+ * Rotates the map back to north (zero bearing).
+ * @param {string} mapId
+ */
+export function resetNorth(mapId) {
+    const state = mapStates.get(mapId);
+    if (!state) {
+        return;
+    }
+
+    state.map.resetNorth();
+}
+
+/**
+ * Locates the device and eases the camera to it at street level. The browser's permission
+ * prompt gates the user consent; failures are logged and leave the camera untouched.
+ * @param {string} mapId
+ */
+export function locateUser(mapId) {
+    const state = mapStates.get(mapId);
+    if (!state) {
+        return;
+    }
+
+    if (!('geolocation' in navigator)) {
+        console.error('This browser does not support geolocation.');
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        position => {
+            const { longitude, latitude } = position.coords;
+            state.map.easeTo({
+                center: [longitude, latitude],
+                zoom: Math.max(state.map.getZoom(), 15)
+            });
+        },
+        error => console.error('Geolocation failed:', error.message),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+}
+
+/**
+ * Toggles the map container between filling the viewport and its normal size. The actual
+ * state change arrives through the container's fullscreenchange event (handleFullscreenChange),
+ * which does the size swap, the map resize, and the .NET notification - so exiting with Esc
+ * stays in sync too.
+ * @param {string} mapId
+ */
+export function toggleFullscreen(mapId) {
+    const state = mapStates.get(mapId);
+    if (!state) {
+        return;
+    }
+
+    const container = state.map.getContainer();
+    const isFullscreen = document.fullscreenElement === container;
+
+    if (isFullscreen) {
+        document.exitFullscreen();
+    } else {
+        container.requestFullscreen()
+            .catch(error => console.error('Fullscreen request failed:', error));
+    }
+}
+
+/**
+ * Handles the map container entering or leaving browser fullscreen. The container's inline
+ * size is overridden so the map fills the screen (the fullscreen element is sized to the
+ * viewport), then restored on exit. The map is resized so the engine re-measures its canvas,
+ * and .NET is notified so the toolbar can swap its maximize/minimize icon.
+ * @param {string} mapId
+ */
+function handleFullscreenChange(mapId) {
+    const state = mapStates.get(mapId);
+    if (!state) {
+        return;
+    }
+
+    const container = state.map.getContainer();
+    const isFullscreen = document.fullscreenElement === container;
+
+    if (isFullscreen) {
+        container.dataset.bbMapStyle = container.style.cssText;
+        container.style.width = '100vw';
+        container.style.height = '100vh';
+    } else if (container.dataset.bbMapStyle !== undefined) {
+        container.style.cssText = container.dataset.bbMapStyle;
+        delete container.dataset.bbMapStyle;
+    }
+
+    state.map.resize();
+
+    if (state.dotNetRef) {
+        state.dotNetRef.invokeMethodAsync('OnMapFullscreenChanged', isFullscreen);
     }
 }
 

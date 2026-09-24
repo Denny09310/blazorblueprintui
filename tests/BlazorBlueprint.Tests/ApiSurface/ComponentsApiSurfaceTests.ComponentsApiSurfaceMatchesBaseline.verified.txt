@@ -3093,6 +3093,11 @@
   - Width : Double
   - Map : BbMapLibre [CascadingParameter]
 
+### BbMapLibreToolbar (BlazorBlueprint.Components)
+  - Orientation : BbMapLibreToolbarOrientation
+  - Position : BbMapLibreToolbarPosition
+  - Map : BbMapLibre [CascadingParameter]
+
 ### BbMarkdownEditor (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaDescribedBy : String
@@ -5205,6 +5210,16 @@
   - Gray = 2
   - Neutral = 3
   - Stone = 4
+
+### BbMapLibreToolbarOrientation (BlazorBlueprint.Components)
+  - Horizontal = 0
+  - Vertical = 1
+
+### BbMapLibreToolbarPosition (BlazorBlueprint.Components)
+  - TopLeft = 0
+  - TopRight = 1
+  - BottomLeft = 2
+  - BottomRight = 3
 
 ### BubbleAlign (BlazorBlueprint.Components)
   - Start = 0

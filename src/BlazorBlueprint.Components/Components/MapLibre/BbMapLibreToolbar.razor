@@ -1,0 +1,107 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+@implements IDisposable
+
+<div class="bb:pointer-events-none bb:absolute @PositionClass bb:z-20">
+    <div class="bb:pointer-events-auto bb:flex @OrientationClass bb:items-center bb:gap-1 bb:rounded-lg bb:border bb:bg-background/95 bb:p-1 bb:shadow-md bb:backdrop-blur">
+        @ToolbarButton("zoom-in", "Zoom in", OnZoomInAsync)
+        @ToolbarButton("zoom-out", "Zoom out", OnZoomOutAsync)
+        @ToolbarButton("compass", "Reset north", OnResetNorthAsync)
+        @ToolbarButton("locate-fixed", "Locate me", OnLocateUserAsync)
+
+        <button type="button"
+                class="@ToolbarButtonClass"
+                title="@FullScreenLabel"
+                aria-label="@FullScreenLabel"
+                @onclick="OnToggleFullscreenAsync"
+                @onclick:stopPropagation="true">
+            <LucideIcon Name="@FullScreenIcon" Class="bb:h-4 bb:w-4" />
+        </button>
+    </div>
+</div>
+
+@code {
+    private const string ToolbarButtonClass =
+        "bb:inline-flex bb:size-7 bb:shrink-0 bb:items-center bb:justify-center bb:rounded-md bb:text-muted-foreground bb:transition-colors bb:hover:bg-accent bb:hover:text-accent-foreground bb:focus-visible:outline-none bb:focus-visible:ring-1 bb:focus-visible:ring-ring";
+
+    private bool fullscreen;
+
+    [CascadingParameter]
+    private BbMapLibre? Map { get; set; }
+
+    /// <summary>
+    /// The corner of the map the toolbar is anchored to. Defaults to
+    /// <see cref="BbMapLibreToolbarPosition.TopRight"/>.
+    /// </summary>
+    [Parameter]
+    public BbMapLibreToolbarPosition Position { get; set; } = BbMapLibreToolbarPosition.TopRight;
+
+    /// <summary>
+    /// Layout direction of the buttons. Defaults to
+    /// <see cref="BbMapLibreToolbarOrientation.Horizontal"/>.
+    /// </summary>
+    [Parameter]
+    public BbMapLibreToolbarOrientation Orientation { get; set; } = BbMapLibreToolbarOrientation.Horizontal;
+
+    private string PositionClass => Position switch
+    {
+        BbMapLibreToolbarPosition.TopLeft => "bb:top-2 bb:start-2",
+        BbMapLibreToolbarPosition.TopRight => "bb:top-2 bb:end-2",
+        BbMapLibreToolbarPosition.BottomLeft => "bb:bottom-2 bb:start-2",
+        _ => "bb:bottom-2 bb:end-2",
+    };
+
+    private string OrientationClass =>
+        Orientation == BbMapLibreToolbarOrientation.Vertical ? "bb:flex-col" : "bb:flex-row";
+
+    private string FullScreenIcon => fullscreen ? "minimize" : "maximize";
+
+    private string FullScreenLabel => fullscreen ? "Exit fullscreen" : "Enter fullscreen";
+
+    protected override void OnInitialized()
+    {
+        if (Map is not null)
+        {
+            Map.FullscreenChanged += HandleFullscreenChanged;
+        }
+    }
+
+    private RenderFragment ToolbarButton(string icon, string label, Func<Task> onClick) => __builder =>
+    {
+        <button type="button"
+                class="@ToolbarButtonClass"
+                title="@label"
+                aria-label="@label"
+                @onclick="onClick"
+                @onclick:stopPropagation="true">
+            <LucideIcon Name="@icon" Class="bb:h-4 bb:w-4" />
+        </button>
+    };
+
+    private Task OnZoomInAsync() => Map?.ZoomInAsync() ?? Task.CompletedTask;
+
+    private Task OnZoomOutAsync() => Map?.ZoomOutAsync() ?? Task.CompletedTask;
+
+    private Task OnResetNorthAsync() => Map?.ResetNorthAsync() ?? Task.CompletedTask;
+
+    private Task OnLocateUserAsync() => Map?.LocateUserAsync() ?? Task.CompletedTask;
+
+    private Task OnToggleFullscreenAsync() => Map?.ToggleFullscreenAsync() ?? Task.CompletedTask;
+
+    private void HandleFullscreenChanged(bool isFullscreen)
+    {
+        fullscreen = isFullscreen;
+        InvokeAsync(StateHasChanged);
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (Map is not null)
+        {
+            Map.FullscreenChanged -= HandleFullscreenChanged;
+        }
+
+        GC.SuppressFinalize(this);
+    }
+}
