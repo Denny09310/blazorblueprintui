@@ -11,7 +11,6 @@ namespace BlazorBlueprint.Components;
 public partial class BbMapLibreMarker : ComponentBase, IAsyncDisposable
 {
     private const double CoordinateTolerance = 0.0000001;
-    private const int DotSize = 12;
 
     private readonly string markerId = Guid.NewGuid().ToString("N");
     private bool registered;
@@ -31,9 +30,7 @@ public partial class BbMapLibreMarker : ComponentBase, IAsyncDisposable
     public string Color { get; set; } = "var(--color-primary)";
 
     private string MarkerStyle =>
-        $"position:absolute; top:0; left:0; z-index:1; width:{DotSize}px; height:{DotSize}px; " +
-        $"border-radius:9999px; background-color:{Color}; margin:-{DotSize / 2}px 0 0 -{DotSize / 2}px; " +
-        "transform:translate(0,0); visibility:hidden;";
+        $"background-color:{Color}; visibility:hidden; transform:translate(0,0);";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
