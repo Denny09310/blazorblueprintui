@@ -11,7 +11,9 @@
 
     @if (popupOpen && ChildContent is not null)
     {
-        <div class="bb:absolute bb:bottom-full bb:start-1/2 bb:-translate-x-1/2 bb:mb-1.5 bb:min-w-40 bb:whitespace-nowrap bb:rounded-md bb:border bb:bg-popover bb:text-popover-foreground bb:px-3 bb:py-2 bb:text-sm bb:shadow-md"
+        <div id="@($"{markerId}-popup")"
+             class="bb:absolute bb:min-w-40 bb:whitespace-nowrap bb:rounded-md bb:border bb:bg-popover bb:text-popover-foreground bb:px-3 bb:py-2 bb:text-sm bb:shadow-md"
+             style="@PopupStyle"
              @onclick:stopPropagation="true">
             @ChildContent
         </div>

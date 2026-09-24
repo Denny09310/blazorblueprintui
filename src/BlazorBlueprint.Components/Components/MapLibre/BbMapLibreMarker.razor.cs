@@ -17,6 +17,7 @@ public partial class BbMapLibreMarker : ComponentBase, IAsyncDisposable
     private readonly string markerId = Guid.NewGuid().ToString("N");
     private bool registered;
     private bool popupOpen;
+    private bool lastPopupOpen;
     private double? lastLatitude;
     private double? lastLongitude;
 
@@ -41,6 +42,9 @@ public partial class BbMapLibreMarker : ComponentBase, IAsyncDisposable
 
     private static string MarkerStyle =>
         "visibility:hidden; transform:translate(0,0);";
+
+    private static string PopupStyle =>
+        "visibility:hidden;";
 
     private string DotStyle =>
         $"background-color:{Color};";
@@ -80,6 +84,12 @@ public partial class BbMapLibreMarker : ComponentBase, IAsyncDisposable
             lastLongitude = Longitude;
 
             await Map.UpdateMarkerAsync(markerId, Longitude, Latitude);
+        }
+
+        if (popupOpen != lastPopupOpen)
+        {
+            lastPopupOpen = popupOpen;
+            await Map.SetMarkerPopupOpenAsync(markerId, popupOpen);
         }
     }
 

@@ -156,6 +156,20 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
     }
 
     /// <summary>
+    /// Tells the interop layer whether a marker's popup is open, so it is kept inside the map
+    /// viewport while the dot is visible and follows the dot once it leaves the map.
+    /// </summary>
+    internal async Task SetMarkerPopupOpenAsync(string markerId, bool open)
+    {
+        if (!jsInitialized || jsModule is null)
+        {
+            return;
+        }
+
+        await jsModule.InvokeVoidAsync("setMarkerPopupOpen", mapId, markerId, open);
+    }
+
+    /// <summary>
     /// Pushes parameter-driven camera changes down to the map.
     /// </summary>
     private async Task SyncViewAsync()

@@ -2,9 +2,16 @@
 // Handles map initialization, theme switching, and teardown
 
 import { watchThemeChanges } from './theme.js'
+import { computePosition as computeFloatingPosition, applyPosition as applyFloatingPosition } from '../../BlazorBlueprint.Primitives/js/primitives/positioning.js'
 
 const LIGHT_STYLE = "https://tiles.openfreemap.org/styles/positron";
 const DARK_STYLE = "https://tiles.openfreemap.org/styles/dark";
+
+/** Gap between the marker dot and its popup, in pixels. */
+const POPUP_OFFSET = 6;
+
+/** Half the marker dot's size, used to judge when the dot has fully left the viewport. */
+const DOT_REACH = 6;
 
 /**
  * @typedef {Object} MapState
@@ -12,6 +19,7 @@ const DARK_STYLE = "https://tiles.openfreemap.org/styles/dark";
  * @property {any} dotNetRef - The .NET object reference to notify about view changes
  * @property {Function} stopWatchingTheme - Unsubscribes from theme changes
  * @property {Map<string, MarkerState>} markers - Blazor-owned marker elements
+ * @property {Set<string>} openPopups - Marker ids whose popup is currently open
  */
 
 /**
@@ -135,7 +143,7 @@ export async function initializeMapLibre(mapId, dotNetRef, options = {}) {
     });
 
     const stopWatchingTheme = watchThemeChanges(() => applyStyle(mapId));
-    mapStates.set(mapId, { map, dotNetRef, stopWatchingTheme, markers: new Map() });
+    mapStates.set(mapId, { map, dotNetRef, stopWatchingTheme, markers: new Map(), openPopups: new Set() });
 
     map.on('moveend', () => notifyViewChanged(mapId));
     map.on('load', () => notifyViewChanged(mapId));
@@ -201,7 +209,86 @@ function updateMarkers(mapId) {
 
         element.style.transform = `translate(${point.x}px, ${point.y}px)`;
         element.style.visibility = 'visible';
+
+        if (state.openPopups.has(markerId)) {
+            positionMarkerPopup(mapId, markerId);
+        }
     });
+}
+
+/**
+ * Keeps an open marker popup inside the map viewport while the marker's dot is on screen,
+ * using the same flip + shift logic the Popover primitive applies via Floating UI. Once the
+ * dot has left the map, the popup parks at its natural spot relative to the dot instead, so
+ * it follows the marker off-screen rather than staying pinned to the map edge.
+ * @param {string} mapId
+ * @param {string} markerId
+ */
+function positionMarkerPopup(mapId, markerId) {
+    const state = mapStates.get(mapId);
+    const marker = state && state.markers.get(markerId);
+    const wrapper = document.getElementById(markerId);
+    const popup = document.getElementById(`${markerId}-popup`);
+    if (!state || !marker || !wrapper || !popup) {
+        return;
+    }
+
+    const container = state.map.getContainer();
+    const point = state.map.project([marker.lng, marker.lat]);
+    if (!point || point.x === undefined || point.y === undefined) {
+        return;
+    }
+
+    const dotInView =
+        point.x >= -DOT_REACH && point.x <= container.clientWidth + DOT_REACH &&
+        point.y >= -DOT_REACH && point.y <= container.clientHeight + DOT_REACH;
+
+    if (!dotInView) {
+        // Dot has left the map. Anchor the popup above the dot with no viewport clamping, so
+        // the marker's transform carries it off-screen alongside the dot.
+        const rect = popup.getBoundingClientRect();
+        applyFloatingPosition(popup, {
+            x: -(rect.width / 2),
+            y: -(rect.height + POPUP_OFFSET),
+            strategy: 'absolute'
+        }, true);
+        return;
+    }
+
+    computeFloatingPosition(wrapper, popup, {
+        placement: 'top',
+        offset: POPUP_OFFSET,
+        flip: true,
+        shift: true,
+        padding: POPUP_OFFSET,
+        strategy: 'absolute'
+    }).then(result => {
+        applyFloatingPosition(popup, result, true);
+    }).catch(() => {
+        // Elements not ready yet - the next camera move retries.
+    });
+}
+
+/**
+ * Toggles popup tracking for a marker and positions it immediately. While the popup stays
+ * open, the camera-move handler keeps repositioning it so it remains inside the map viewport
+ * for as long as the dot is visible.
+ * @param {string} mapId
+ * @param {string} markerId
+ * @param {boolean} open
+ */
+export function setMarkerPopupOpen(mapId, markerId, open) {
+    const state = mapStates.get(mapId);
+    if (!state) {
+        return;
+    }
+
+    if (open) {
+        state.openPopups.add(markerId);
+        positionMarkerPopup(mapId, markerId);
+    } else {
+        state.openPopups.delete(markerId);
+    }
 }
 
 /**
@@ -250,6 +337,7 @@ export function unregisterMarker(mapId, markerId) {
     }
 
     state.markers.delete(markerId);
+    state.openPopups.delete(markerId);
 }
 
 /**

@@ -47,8 +47,10 @@
                     <code class="text-xs bg-muted px-1 py-0.5 rounded">Longitude</code> and an optional
                     <code class="text-xs bg-muted px-1 py-0.5 rounded">Color</code>. Markers stay ordinary
                     children of the map container while the interop layer keeps them pinned to the
-                    geography with CSS transforms. Add content to a marker to show a popup card
-                    above it when clicked.
+                    geography with CSS transforms. Add content to a marker to show a popup card when
+                    its dot is clicked. The card is kept inside the map viewport while the dot is on
+                    screen &mdash; flipping to the other side of the marker near an edge &mdash; and
+                    follows the dot if the marker is panned off the map.
                 </p>
             </div>
 
@@ -125,8 +127,10 @@
             <code class="text-xs bg-muted px-1 py-0.5 rounded">var(--color-primary)</code>.
         </ApiParameter>
         <ApiParameter Name="ChildContent" Type="RenderFragment?">
-            Optional popup content shown in a card above the dot when it is clicked. When omitted,
-            the marker is a plain dot with no popup interaction.
+            Optional popup content shown in a card when the dot is clicked. The card is kept
+            inside the map viewport while the dot is on screen, flipping to the other side of the
+            marker near an edge, and follows the dot if the marker is panned off the map. When
+            omitted, the marker is a plain dot with no popup interaction.
         </ApiParameter>
     </ApiReference>
 
