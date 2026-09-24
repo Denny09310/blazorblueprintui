@@ -19,7 +19,7 @@ const DOT_REACH = 6;
  * @property {any} dotNetRef - The .NET object reference to notify about view changes
  * @property {Function} stopWatchingTheme - Unsubscribes from theme changes
  * @property {Map<string, MarkerState>} markers - Blazor-owned marker elements
- * @property {Set<string>} openPopups - Marker ids whose popup is currently open
+ * @property {Set<string>} popups - Marker ids whose popup is currently open
  */
 
 /**
@@ -143,7 +143,7 @@ export async function initializeMapLibre(mapId, dotNetRef, options = {}) {
     });
 
     const stopWatchingTheme = watchThemeChanges(() => applyStyle(mapId));
-    mapStates.set(mapId, { map, dotNetRef, stopWatchingTheme, markers: new Map(), openPopups: new Set() });
+    mapStates.set(mapId, { map, dotNetRef, stopWatchingTheme, markers: new Map(), popups: new Set() });
 
     map.on('moveend', () => notifyViewChanged(mapId));
     map.on('load', () => notifyViewChanged(mapId));
@@ -210,7 +210,7 @@ function updateMarkers(mapId) {
         element.style.transform = `translate(${point.x}px, ${point.y}px)`;
         element.style.visibility = 'visible';
 
-        if (state.openPopups.has(markerId)) {
+        if (state.popups.has(markerId)) {
             positionMarkerPopup(mapId, markerId);
         }
     });
@@ -284,10 +284,10 @@ export function setMarkerPopupOpen(mapId, markerId, open) {
     }
 
     if (open) {
-        state.openPopups.add(markerId);
+        state.popups.add(markerId);
         positionMarkerPopup(mapId, markerId);
     } else {
-        state.openPopups.delete(markerId);
+        state.popups.delete(markerId);
     }
 }
 
@@ -337,7 +337,7 @@ export function unregisterMarker(mapId, markerId) {
     }
 
     state.markers.delete(markerId);
-    state.openPopups.delete(markerId);
+    state.popups.delete(markerId);
 }
 
 /**
