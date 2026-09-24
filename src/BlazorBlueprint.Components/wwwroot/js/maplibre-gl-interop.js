@@ -1,10 +1,17 @@
 // MapLibre GL JS interop for MapLibre component
 // Handles map initialization, theme switching, and teardown
 
-import { watchThemeChanges } from './chart-theme.js'
+import { watchThemeChanges } from './theme.js'
 
 const LIGHT_STYLE = "https://tiles.openfreemap.org/styles/positron";
 const DARK_STYLE = "https://tiles.openfreemap.org/styles/dark";
+
+/**
+ * @typedef {Object} MapState
+ * @property {Object} map - The MapLibre map instance
+ * @property {any} dotNetRef - The .NET object reference to notify about view changes
+ * @property {Function} stopWatchingTheme - Unsubscribes from theme changes
+ */
 
 /** @type {Map<string, MapState>} */
 const mapStates = new Map();
@@ -72,6 +79,22 @@ function applyStyle(mapId) {
 }
 
 /**
+ * Handles a camera change (pan, zoom, rotate) coming from the map engine by
+ * reporting the new position back to .NET, which surfaces it through the
+ * @bind-Center and @bind-Zoom callbacks.
+ * @param {string} mapId
+ */
+function notifyViewChanged(mapId) {
+    const state = mapStates.get(mapId);
+    if (!state || !state.dotNetRef) {
+        return;
+    }
+
+    const center = state.map.getCenter();
+    state.dotNetRef.invokeMethodAsync('OnMapViewChanged', center.lat, center.lng, state.map.getZoom());
+}
+
+/**
  * Initializes a MapLibre map instance.
  * @param {string} mapId - Unique identifier for the map; also the container element's id
  * @param {Object} options - Additional MapLibre Map options
@@ -97,18 +120,53 @@ export async function initializeMapLibre(mapId, options = {}) {
         return null;
     }
 
+    // dotNetRef is interop plumbing, not a Map option.
+    const { dotNetRef, ...mapOptions } = options;
+
     const map = new mod.Map({
         container: element,
         style: LIGHT_STYLE,
-        ...options
+        ...mapOptions
     });
 
     const stopWatchingTheme = watchThemeChanges(() => applyStyle(mapId));
+    mapStates.set(mapId, { map, dotNetRef, stopWatchingTheme });
+
+    map.on('moveend', () => notifyViewChanged(mapId));
+    map.on('load', () => notifyViewChanged(mapId));
+
     applyStyle(mapId);
 
-    mapStates.set(mapId, { map, stopWatchingTheme });
-
     return map;
+}
+
+/**
+ * Moves the map camera so the given position becomes the center.
+ * @param {string} mapId
+ * @param {number} lng
+ * @param {number} lat
+ */
+export function setCenter(mapId, lng, lat) {
+    const state = mapStates.get(mapId);
+    if (!state) {
+        return;
+    }
+
+    state.map.setCenter([lng, lat]);
+}
+
+/**
+ * Sets the map zoom level.
+ * @param {string} mapId
+ * @param {number} zoom
+ */
+export function setZoom(mapId, zoom) {
+    const state = mapStates.get(mapId);
+    if (!state) {
+        return;
+    }
+
+    state.map.setZoom(zoom);
 }
 
 /**
@@ -120,6 +178,10 @@ export function disposeMap(mapId) {
     if (!state) {
         return;
     }
+
+    // Drop the .NET reference before tearing down so no view callback is
+    // delivered during remove() - it may outlive the owning component.
+    state.dotNetRef = null;
 
     // Stop reacting to theme changes, then tear down the map itself
     state.stopWatchingTheme();

@@ -1,0 +1,6 @@
+<BbMapLibre @bind-Center="center" @bind-Zoom="zoom" Style="height: 400px; width: 100%;" />
+
+@code {
+    private BbMapCoordinate center;
+    private double zoom = 8;
+}

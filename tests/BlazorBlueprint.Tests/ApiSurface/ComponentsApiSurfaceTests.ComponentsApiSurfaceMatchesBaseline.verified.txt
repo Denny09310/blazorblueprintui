@@ -3069,6 +3069,14 @@
   - Title : String
   - Width : String
 
+### BbMapLibre (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - Center : BbMapCoordinate?
+  - CenterChanged : EventCallback<BbMapCoordinate>
+  - Style : String
+  - Zoom : Double?
+  - ZoomChanged : EventCallback<Double>
+
 ### BbMarkdownEditor (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaDescribedBy : String

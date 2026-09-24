@@ -194,45 +194,9 @@ function oklchToRgb(oklchStr) {
 }
 
 /**
- * Watch for theme changes (dark/light mode toggle) via MutationObserver
- * and custom 'bb-theme-changed' events.
- *
- * Observes the <html> element for class or data-theme attribute changes.
- * Also listens for 'bb-theme-changed' custom events on <html>, allowing
- * developers to trigger chart color updates after programmatically changing
- * CSS variables (e.g., dynamic theming, theme builders).
- *
- * Usage:
- *   document.documentElement.dispatchEvent(new CustomEvent('bb-theme-changed'));
- *
+ * Theme change detection now lives in the shared theme module; re-exported here so the
+ * chart modules keep importing from the file that has always provided it.
  * @param {Function} callback - Called when theme changes
  * @returns {Function} - Cleanup function to stop watching
  */
-export function watchThemeChanges(callback) {
-  const target = document.documentElement;
-
-  const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      if (mutation.type === 'attributes' &&
-        (mutation.attributeName === 'class' || mutation.attributeName === 'data-theme')) {
-        // Delay to let CSS variables update
-        requestAnimationFrame(() => callback());
-        break;
-      }
-    }
-  });
-
-  observer.observe(target, {
-    attributes: true,
-    attributeFilter: ['class', 'data-theme']
-  });
-
-  // Listen for custom theme change events (e.g., from dynamic theme editors)
-  const onThemeChanged = () => requestAnimationFrame(() => callback());
-  target.addEventListener('bb-theme-changed', onThemeChanged);
-
-  return () => {
-    observer.disconnect();
-    target.removeEventListener('bb-theme-changed', onThemeChanged);
-  };
-}
+export { watchThemeChanges } from './theme.js';
