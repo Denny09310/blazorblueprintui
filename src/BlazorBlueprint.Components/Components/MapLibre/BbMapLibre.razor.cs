@@ -16,8 +16,12 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
     private double? lastLatitude;
     private double? lastLongitude;
     private double? lastZoom;
+    private readonly List<(string markerId, double lng, double lat)> pendingMarkers = new();
 
     public IJSObjectReference? Map { get; private set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
 
     [Parameter]
     public BbMapCoordinate? Center { get; set; }
@@ -85,11 +89,69 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
             lastZoom = Zoom;
 
             jsInitialized = true;
+
+            foreach (var (markerId, lng, lat) in pendingMarkers)
+            {
+                await jsModule.InvokeVoidAsync("registerMarker", mapId, markerId, lng, lat);
+            }
+
+            pendingMarkers.Clear();
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Failed to initialize MapLibre JS: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Registers a marker with the map. Registration is deferred until the map's JS is ready.
+    /// </summary>
+    internal async Task RegisterMarkerAsync(string markerId, double lng, double lat)
+    {
+        if (!jsInitialized || jsModule is null)
+        {
+            pendingMarkers.Add((markerId, lng, lat));
+            return;
+        }
+
+        await jsModule.InvokeVoidAsync("registerMarker", mapId, markerId, lng, lat);
+    }
+
+    /// <summary>
+    /// Moves an already registered marker to a new position.
+    /// </summary>
+    internal async Task UpdateMarkerAsync(string markerId, double lng, double lat)
+    {
+        if (!jsInitialized || jsModule is null)
+        {
+            for (var i = 0; i < pendingMarkers.Count; i++)
+            {
+                if (pendingMarkers[i].markerId == markerId)
+                {
+                    pendingMarkers[i] = (markerId, lng, lat);
+                    break;
+                }
+            }
+
+            return;
+        }
+
+        await jsModule.InvokeVoidAsync("updateMarker", mapId, markerId, lng, lat);
+    }
+
+    /// <summary>
+    /// Removes a marker from the map.
+    /// </summary>
+    internal async Task UnregisterMarkerAsync(string markerId)
+    {
+        pendingMarkers.RemoveAll(marker => marker.markerId == markerId);
+
+        if (!jsInitialized || jsModule is null)
+        {
+            return;
+        }
+
+        await jsModule.InvokeVoidAsync("unregisterMarker", mapId, markerId);
     }
 
     /// <summary>

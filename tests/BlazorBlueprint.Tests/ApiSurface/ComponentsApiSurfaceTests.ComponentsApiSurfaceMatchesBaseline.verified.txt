@@ -3073,9 +3073,16 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - Center : BbMapCoordinate?
   - CenterChanged : EventCallback<BbMapCoordinate>
+  - ChildContent : RenderFragment
   - Style : String
   - Zoom : Double?
   - ZoomChanged : EventCallback<Double>
+
+### BbMapLibreMarker (BlazorBlueprint.Components)
+  - Color : String
+  - Latitude : Double
+  - Longitude : Double
+  - Map : BbMapLibre [CascadingParameter]
 
 ### BbMarkdownEditor (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]

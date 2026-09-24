@@ -1,6 +1,11 @@
 @namespace BlazorBlueprint.Components
 @inject IJSRuntime JS
 
-<div id="@mapId" 
-     style="@Style" 
-     @attributes="InlineStyleMerge.WithoutStyle(AdditionalAttributes)"></div>
+<CascadingValue Value="this" IsFixed="true">
+    <div id="@mapId"
+         class="bb-maplibre"
+         style="@Style"
+         @attributes="InlineStyleMerge.WithoutStyle(AdditionalAttributes)">
+        @ChildContent
+    </div>
+</CascadingValue>

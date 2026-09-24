@@ -1,0 +1,4 @@
+<BbMapLibre Center="new BbMapCoordinate(40.7128, -74.0060)" Zoom="11" Style="height: 400px; width: 100%;">
+    <BbMapLibreMarker Latitude="40.7128" Longitude="-74.0060" />
+    <BbMapLibreMarker Latitude="40.7580" Longitude="-73.9855" Color="var(--chart-2)" />
+</BbMapLibre>

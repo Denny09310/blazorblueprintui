@@ -40,6 +40,29 @@
 
         <section class="space-y-4">
             <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Markers</h2>
+                <p class="text-muted-foreground">
+                    Place a <code class="text-xs bg-muted px-1 py-0.5 rounded">BbMapLibreMarker</code>
+                    inside the map with <code class="text-xs bg-muted px-1 py-0.5 rounded">Latitude</code>,
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Longitude</code> and an optional
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Color</code>. Markers stay ordinary
+                    children of the map container while the interop layer keeps them pinned to the
+                    geography with CSS transforms.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-3">
+                <BbMapLibre Center="new BbMapCoordinate(40.7128, -74.0060)" Zoom="11" Style="height: 400px; width: 100%;">
+                    <BbMapLibreMarker Latitude="40.7128" Longitude="-74.0060" />
+                    <BbMapLibreMarker Latitude="40.7580" Longitude="-73.9855" Color="var(--chart-2)" />
+                </BbMapLibre>
+            </div>
+
+            <CodeBlock Source="Components/MapLibre/markers.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
                 <h2 class="text-2xl font-semibold">Two-Way Binding</h2>
                 <p class="text-muted-foreground">
                     Bind <code class="text-xs bg-muted px-1 py-0.5 rounded">Center</code> (latitude,
@@ -80,6 +103,20 @@
         <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
             Additional HTML attributes applied to the map container, e.g. <code
             class="text-xs bg-muted px-1 py-0.5 rounded">AriaLabel</code>.
+        </ApiParameter>
+    </ApiReference>
+
+    <ApiReference ComponentName="BbMapLibreMarker">
+        <ApiParameter Name="Latitude" Type="double">
+            The marker's latitude.
+        </ApiParameter>
+        <ApiParameter Name="Longitude" Type="double">
+            The marker's longitude.
+        </ApiParameter>
+        <ApiParameter Name="Color" Type="string?">
+            CSS color used for the marker dot, e.g. <code
+            class="text-xs bg-muted px-1 py-0.5 rounded">var(--chart-2)</code>. Defaults to
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">var(--color-primary)</code>.
         </ApiParameter>
     </ApiReference>
 

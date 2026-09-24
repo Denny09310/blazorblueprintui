@@ -11,6 +11,13 @@ const DARK_STYLE = "https://tiles.openfreemap.org/styles/dark";
  * @property {Object} map - The MapLibre map instance
  * @property {any} dotNetRef - The .NET object reference to notify about view changes
  * @property {Function} stopWatchingTheme - Unsubscribes from theme changes
+ * @property {Map<string, MarkerState>} markers - Blazor-owned marker elements
+ */
+
+/**
+ * @typedef {Object} MarkerState
+ * @property {number} lng - Longitude of the marker
+ * @property {number} lat - Latitude of the marker
  */
 
 /** @type {Map<string, MapState>} */
@@ -128,10 +135,12 @@ export async function initializeMapLibre(mapId, dotNetRef, options = {}) {
     });
 
     const stopWatchingTheme = watchThemeChanges(() => applyStyle(mapId));
-    mapStates.set(mapId, { map, dotNetRef, stopWatchingTheme });
+    mapStates.set(mapId, { map, dotNetRef, stopWatchingTheme, markers: new Map() });
 
     map.on('moveend', () => notifyViewChanged(mapId));
     map.on('load', () => notifyViewChanged(mapId));
+    map.on('move', () => updateMarkers(mapId));
+    map.on('load', () => updateMarkers(mapId));
 
     applyStyle(mapId);
 
@@ -165,6 +174,82 @@ export function setZoom(mapId, zoom) {
     }
 
     state.map.setZoom(zoom);
+}
+
+/**
+ * Projects every registered marker's coordinate into pixel space and moves its element
+ * there with a CSS transform. Called on every camera move so markers stay glued to the
+ * geography while the map pans and zooms.
+ * @param {string} mapId
+ */
+function updateMarkers(mapId) {
+    const state = mapStates.get(mapId);
+    if (!state) {
+        return;
+    }
+
+    state.markers.forEach((marker, markerId) => {
+        const point = state.map.project([marker.lng, marker.lat]);
+        if (!point || point.x === undefined || point.y === undefined) {
+            return;
+        }
+
+        const element = document.getElementById(markerId);
+        if (!element) {
+            return;
+        }
+
+        element.style.transform = `translate(${point.x}px, ${point.y}px)`;
+        element.style.visibility = 'visible';
+    });
+}
+
+/**
+ * Registers a Blazor-rendered marker element with a map so it follows the camera.
+ * @param {string} mapId
+ * @param {string} markerId - The id of the marker element in the DOM
+ * @param {number} lng
+ * @param {number} lat
+ */
+export function registerMarker(mapId, markerId, lng, lat) {
+    const state = mapStates.get(mapId);
+    if (!state) {
+        return;
+    }
+
+    state.markers.set(markerId, { lng, lat });
+    updateMarkers(mapId);
+}
+
+/**
+ * Moves an already registered marker to a new coordinate.
+ * @param {string} mapId
+ * @param {string} markerId
+ * @param {number} lng
+ * @param {number} lat
+ */
+export function updateMarker(mapId, markerId, lng, lat) {
+    const state = mapStates.get(mapId);
+    if (!state || !state.markers.has(markerId)) {
+        return;
+    }
+
+    state.markers.set(markerId, { lng, lat });
+    updateMarkers(mapId);
+}
+
+/**
+ * Stops tracking a marker element so the map ignores it on the next camera move.
+ * @param {string} mapId
+ * @param {string} markerId
+ */
+export function unregisterMarker(mapId, markerId) {
+    const state = mapStates.get(mapId);
+    if (!state) {
+        return;
+    }
+
+    state.markers.delete(markerId);
 }
 
 /**
