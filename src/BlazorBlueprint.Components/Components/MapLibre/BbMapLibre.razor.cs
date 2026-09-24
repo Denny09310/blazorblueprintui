@@ -66,7 +66,7 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
 
             dotNetRef = DotNetObjectReference.Create(this);
 
-            var options = new Dictionary<string, object?> { ["dotNetRef"] = dotNetRef };
+            var options = new Dictionary<string, object?>();
 
             if (Center is { } center)
             {
@@ -78,7 +78,7 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
                 options["zoom"] = zoom;
             }
 
-            Map = await jsModule.InvokeAsync<IJSObjectReference>("initializeMapLibre", mapId, options);
+            Map = await jsModule.InvokeAsync<IJSObjectReference>("initializeMapLibre", mapId, dotNetRef, options);
 
             lastLatitude = Center?.Latitude;
             lastLongitude = Center?.Longitude;

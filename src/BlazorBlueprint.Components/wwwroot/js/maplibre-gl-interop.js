@@ -97,10 +97,11 @@ function notifyViewChanged(mapId) {
 /**
  * Initializes a MapLibre map instance.
  * @param {string} mapId - Unique identifier for the map; also the container element's id
+ * @param {any} dotNetRef - The .NET object reference to notify about view changes
  * @param {Object} options - Additional MapLibre Map options
  * @returns {Promise<Object|null>} The MapLibre map instance, or null on failure
  */
-export async function initializeMapLibre(mapId, options = {}) {
+export async function initializeMapLibre(mapId, dotNetRef, options = {}) {
     if (!mapId) {
         console.error('initializeMapLibre: missing required parameters');
         return null;
@@ -120,13 +121,10 @@ export async function initializeMapLibre(mapId, options = {}) {
         return null;
     }
 
-    // dotNetRef is interop plumbing, not a Map option.
-    const { dotNetRef, ...mapOptions } = options;
-
     const map = new mod.Map({
         container: element,
         style: LIGHT_STYLE,
-        ...mapOptions
+        ...options
     });
 
     const stopWatchingTheme = watchThemeChanges(() => applyStyle(mapId));
