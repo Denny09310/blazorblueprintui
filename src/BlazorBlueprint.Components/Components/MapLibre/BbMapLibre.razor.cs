@@ -6,9 +6,9 @@ namespace BlazorBlueprint.Components;
 
 public partial class BbMapLibre : ComponentBase, IAsyncDisposable
 {
-    private ElementReference _mapEl;
-    private IJSObjectReference? _jsModule;
-    private bool _jsInitialized;
+    private IJSObjectReference? jsModule;
+    private string mapId = Guid.NewGuid().ToString("N");
+    private bool jsInitialized;
 
     public IJSObjectReference? Map { get; private set; }
 
@@ -28,25 +28,34 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
 
     private async Task InitializeJsAsync()
     {
-        if (_jsInitialized)
+        if (jsInitialized)
         {
             return;
         }
 
-        _jsModule = await JsModules.GetAsync(JS, "./_content/BlazorBlueprint.Components/js/maplibre-gl-interop.js");
+        try
+        {
+            jsModule = await JsModules.GetAsync(JS, "./_content/BlazorBlueprint.Components/js/maplibre-gl-interop.js");
 
-        Map = await _jsModule.InvokeAsync<IJSObjectReference>("initialize", _mapEl);
+            Map = await jsModule.InvokeAsync<IJSObjectReference>("initializeMapLibre", mapId);
 
-        _jsInitialized = true;
+            jsInitialized = true;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Failed to initialize MapLibre JS: {ex.Message}");
+        }
     }
 
     public async ValueTask DisposeAsync()
     {
-        if (_jsModule != null && _jsInitialized)
+        GC.SuppressFinalize(this);
+
+        if (jsModule != null && jsInitialized)
         {
             try
             {
-                // call js-side dispose
+                await jsModule.InvokeVoidAsync("disposeMap", mapId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
@@ -61,7 +70,5 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
                 // JS interop not available (prerendering) - safe to ignore
             }
         }
-
-        GC.SuppressFinalize(this);
     }
 }
