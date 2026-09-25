@@ -1,21 +1,22 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Icons.Lucide.Components
+@inject IBbLocalizer Localizer
 @implements IDisposable
 
 <div class="bb:pointer-events-none bb:absolute @PositionClass bb:z-20" @onclick:stopPropagation="true">
     <div class="bb:pointer-events-auto bb:flex @OrientationClass bb:items-center bb:gap-1">
-        <BbButtonGroup Orientation="@GroupOrientation" AriaLabel="Zoom controls">
+        <BbButtonGroup Orientation="@GroupOrientation" AriaLabel="@Localizer["MapLibre.Toolbar.ZoomControls"]">
             <BbButton Variant="ButtonVariant.Outline"
                       Size="ButtonSize.IconSmall"
-                      AriaLabel="Zoom in"
-                      AdditionalAttributes='Title("Zoom in")'
+                      AriaLabel="@Localizer["MapLibre.Toolbar.ZoomIn"]"
+                      AdditionalAttributes='Title(Localizer["MapLibre.Toolbar.ZoomIn"])'
                       OnClick="OnZoomInAsync">
                 <LucideIcon Name="zoom-in" Class="bb:h-4 bb:w-4" />
             </BbButton>
             <BbButton Variant="ButtonVariant.Outline"
                       Size="ButtonSize.IconSmall"
-                      AriaLabel="Zoom out"
-                      AdditionalAttributes='Title("Zoom out")'
+                      AriaLabel="@Localizer["MapLibre.Toolbar.ZoomOut"]"
+                      AdditionalAttributes='Title(Localizer["MapLibre.Toolbar.ZoomOut"])'
                       OnClick="OnZoomOutAsync">
                 <LucideIcon Name="zoom-out" Class="bb:h-4 bb:w-4" />
             </BbButton>
@@ -23,16 +24,16 @@
 
         <BbButton Variant="ButtonVariant.Outline"
                   Size="ButtonSize.IconSmall"
-                  AriaLabel="Reset north"
-                  AdditionalAttributes='Title("Reset north")'
+                  AriaLabel="@Localizer["MapLibre.Toolbar.ResetNorth"]"
+                  AdditionalAttributes='Title(Localizer["MapLibre.Toolbar.ResetNorth"])'
                   OnClick="OnResetNorthAsync">
             <LucideIcon Name="compass" Class="bb:h-4 bb:w-4" />
         </BbButton>
 
         <BbButton Variant="ButtonVariant.Outline"
                   Size="ButtonSize.IconSmall"
-                  AriaLabel="Locate me"
-                  AdditionalAttributes='Title("Locate me")'
+                  AriaLabel="@Localizer["MapLibre.Toolbar.LocateMe"]"
+                  AdditionalAttributes='Title(Localizer["MapLibre.Toolbar.LocateMe"])'
                   OnClick="OnLocateUserAsync">
             <LucideIcon Name="locate-fixed" Class="bb:h-4 bb:w-4" />
         </BbButton>
@@ -90,7 +91,9 @@
 
     private string FullScreenIcon => fullscreen ? "minimize" : "maximize";
 
-    private string FullScreenLabel => fullscreen ? "Exit fullscreen" : "Enter fullscreen";
+    private string FullScreenLabel => fullscreen
+        ? Localizer["MapLibre.Toolbar.ExitFullscreen"]
+        : Localizer["MapLibre.Toolbar.EnterFullscreen"];
 
     protected override void OnInitialized()
     {

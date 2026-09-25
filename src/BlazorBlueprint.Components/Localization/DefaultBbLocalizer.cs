@@ -621,6 +621,16 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["ListBox.NoMatches"] = "No matches",
         ["ListBox.SelectedCount"] = "{0} selected",
 
+        // MapLibre
+        ["MapLibre.Loading"] = "Loading map…",
+        ["MapLibre.Toolbar.ZoomControls"] = "Zoom controls",
+        ["MapLibre.Toolbar.ZoomIn"] = "Zoom in",
+        ["MapLibre.Toolbar.ZoomOut"] = "Zoom out",
+        ["MapLibre.Toolbar.ResetNorth"] = "Reset north",
+        ["MapLibre.Toolbar.LocateMe"] = "Locate me",
+        ["MapLibre.Toolbar.EnterFullscreen"] = "Enter fullscreen",
+        ["MapLibre.Toolbar.ExitFullscreen"] = "Exit fullscreen",
+
         // PickList
         ["PickList.Available"] = "Available",
         ["PickList.Selected"] = "Selected",

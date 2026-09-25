@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @inject IJSRuntime JS
+@inject IBbLocalizer Localizer
 
 <CascadingValue Value="this" IsFixed="true">
     <div id="@mapId"
@@ -20,7 +21,7 @@
                     <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="bb:opacity-25" />
                     <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
                 </svg>
-                <span>Loading map&hellip;</span>
+                <span>@Localizer["MapLibre.Loading"]</span>
             </div>
         }
     </div>
