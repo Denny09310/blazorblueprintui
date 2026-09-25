@@ -168,10 +168,6 @@ export async function initializeMapLibre(mapId, dotNetRef, options = {}) {
     mapStates.set(mapId, { map, dotNetRef, stopWatchingTheme, lastStyle, markers: new Map(), popups: new Set(), routes: new Map() });
 
     map.on('moveend', () => notifyViewChanged(mapId));
-    // The map-level 'load' is the one signal that reliably follows the first style being
-    // applied and painted. setStyle() (a theme switch) does not re-fire it, so routes and
-    // markers are also restored from 'style.load', which fires on every style swap. Listen
-    // to both: without the first, a fresh map would never draw its routes.
     map.on('load', () => {
         notifyViewChanged(mapId);
         updateMarkers(mapId);
@@ -402,8 +398,15 @@ function routeData(route) {
 /**
  * Adds a route's GeoJSON line source and layer, or refreshes them in place when they already
  * exist. Routes are native map layers rather than DOM, so MapLibre projects, clips and draws
- * them for free. The style is not always ready (the map may still be loading, or a theme switch
- * may be mid-flight), in which case the map's 'load' handler retries for every route at once.
+ * them for free.
+ * <p>
+ * Adding a source and layer needs the style JSON parsed, but not its tiles loaded, so this is
+ * safe to call from the map's 'load' and 'style.load' events even while the style's tile
+ * sources are still fetching. Both are listened to because the map-level 'load' is the one
+ * signal that reliably follows the first paint, while 'style.load' fires on every later style
+ * swap (a theme switch), when 'load' no longer does. If the style genuinely is not parsed yet
+ * - a route registered while the very first stylesheet fetch is in flight - addSource throws
+ * and we fall through, leaving the route tracked; the next 'load' or 'style.load' retries it.
  * @param {string} mapId
  * @param {string} routeId
  */
@@ -415,36 +418,39 @@ function ensureRouteLayer(mapId, routeId) {
     }
 
     const map = state.map;
-    if (!map.isStyleLoaded()) {
-        return;
-    }
 
     const layerId = `${routeId}-layer`;
     const sourceId = `${routeId}-source`;
     const data = routeData(route);
 
-    if (map.getSource(sourceId)) {
-        map.getSource(sourceId).setData(data);
-    } else {
-        map.addSource(sourceId, { type: 'geojson', data });
-        map.addLayer({
-            id: layerId,
-            type: 'line',
-            source: sourceId,
-            layout: { 'line-cap': 'round', 'line-join': 'round' },
-            paint: {
-                'line-color': route.color,
-                'line-width': route.width,
-                'line-opacity': route.opacity
-            }
-        });
-        return;
-    }
+    try {
+        if (map.getSource(sourceId)) {
+            map.getSource(sourceId).setData(data);
+        } else {
+            map.addSource(sourceId, { type: 'geojson', data });
+            map.addLayer({
+                id: layerId,
+                type: 'line',
+                source: sourceId,
+                layout: { 'line-cap': 'round', 'line-join': 'round' },
+                paint: {
+                    'line-color': route.color,
+                    'line-width': route.width,
+                    'line-opacity': route.opacity
+                }
+            });
+            return;
+        }
 
-    // Style-only changes still need the paint properties refreshed.
-    map.setPaintProperty(layerId, 'line-color', route.color);
-    map.setPaintProperty(layerId, 'line-width', route.width);
-    map.setPaintProperty(layerId, 'line-opacity', route.opacity);
+        // Style-only changes still need the paint properties refreshed.
+        map.setPaintProperty(layerId, 'line-color', route.color);
+        map.setPaintProperty(layerId, 'line-width', route.width);
+        map.setPaintProperty(layerId, 'line-opacity', route.opacity);
+    } catch (error) {
+        // The style is not parsed yet (initial stylesheet fetch in flight); the route stays
+        // tracked and the next 'load' or 'style.load' event retries it.
+        console.warn(`BbMapLibre: route ${routeId} deferred (${error})`);
+    }
 }
 
 /**
