@@ -168,12 +168,14 @@ export async function initializeMapLibre(mapId, dotNetRef, options = {}) {
     mapStates.set(mapId, { map, dotNetRef, stopWatchingTheme, lastStyle, markers: new Map(), popups: new Set(), routes: new Map() });
 
     map.on('moveend', () => notifyViewChanged(mapId));
-    // MapLibre fires the map-level 'load' exactly once, but setStyle() (a theme switch)
-    // signals completion as 'style.load' on each new style. Listen to both so routes are
-    // restored after the initial load and after every theme switch.
+    // The map-level 'load' is the one signal that reliably follows the first style being
+    // applied and painted. setStyle() (a theme switch) does not re-fire it, so routes and
+    // markers are also restored from 'style.load', which fires on every style swap. Listen
+    // to both: without the first, a fresh map would never draw its routes.
     map.on('load', () => {
         notifyViewChanged(mapId);
         updateMarkers(mapId);
+        redrawRoutes(mapId);
     });
     map.on('style.load', () => {
         updateMarkers(mapId);
