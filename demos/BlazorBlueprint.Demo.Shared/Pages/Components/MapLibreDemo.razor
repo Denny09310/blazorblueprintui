@@ -8,15 +8,13 @@
             <p class="text-xl text-muted-foreground">
                 Vector maps powered by MapLibre GL JS, hosted inside a Blazor container. The map
                 itself is drawn by the engine; everything on top of it &mdash; the
-                <strong>BbMapLibreMarker</strong> pins, their popups, tooltips, labels and dragging
-                &mdash; is Blazor.
+                <strong>BbMapLibreMarker</strong> pins and their popups &mdash; is Blazor.
             </p>
             <p class="text-muted-foreground">
                 Pins stay ordinary children of the map container, so Blazor keeps ownership of
                 their markup. The interop layer moves them around with CSS transforms as the camera
-                moves and hands drag events back to .NET through <code>OnMoved</code>. Routes, by
-                contrast, are drawn natively by the engine as line layers, so they pan, zoom and
-                clip with the map automatically.
+                moves. Routes, by contrast, are drawn natively by the engine as line layers, so
+                they pan, zoom and clip with the map automatically.
             </p>
         </div>
     </div>

@@ -342,20 +342,30 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
     [JSInvokable]
     public async Task OnMapViewChanged(double latitude, double longitude, double zoom, double bearing)
     {
+        // Keep the last-seen snapshots in step with what we report back to bindings. Without
+        // this, a user pan leaves the snapshots stale, so SyncViewAsync sees a difference it
+        // already reported and pushes the same camera back to the map on the next render.
         if (Center is { } center &&
             (Math.Abs(center.Latitude - latitude) > CoordinateTolerance ||
              Math.Abs(center.Longitude - longitude) > CoordinateTolerance))
         {
+            lastLatitude = latitude;
+            lastLongitude = longitude;
+
             await CenterChanged.InvokeAsync(new BbMapCoordinate(latitude, longitude));
         }
 
         if (Zoom is { } currentZoom && Math.Abs(currentZoom - zoom) > ZoomTolerance)
         {
+            lastZoom = zoom;
+
             await ZoomChanged.InvokeAsync(zoom);
         }
 
         if (Bearing is { } currentBearing && Math.Abs(currentBearing - bearing) > BearingTolerance)
         {
+            lastBearing = bearing;
+
             await BearingChanged.InvokeAsync(bearing);
         }
     }
@@ -387,13 +397,22 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
             {
                 // Expected during circuit disconnect in Blazor Server - safe to ignore
             }
-            catch (ObjectDisposedException)
-            {
-                // Module already disposed - safe to ignore
-            }
             catch (InvalidOperationException)
             {
                 // JS interop not available (prerendering) - safe to ignore
+            }
+        }
+
+        // Release the JS object reference returned by initializeMapLibre.
+        if (Map is not null)
+        {
+            try
+            {
+                await Map.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect in Blazor Server - safe to ignore
             }
         }
 

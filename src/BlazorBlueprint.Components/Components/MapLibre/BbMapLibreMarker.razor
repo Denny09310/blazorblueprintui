@@ -1,14 +1,24 @@
 @namespace BlazorBlueprint.Components
 
+@* The interop layer writes physical pixel transforms from map.project(), so the markers
+   anchor at physical left/top rather than logical start, keeping them correct in RTL.
+   Only markers with popup content are keyboard-focusable buttons. *@
 <div id="@markerId"
-     class="bb:absolute bb:top-0 bb:start-0 @zIndexClass"
+     class="bb:absolute bb:top-0 bb:left-0 @zIndexClass"
      style="@MarkerStyle"
+     tabindex="@(ChildContent is not null ? "0" : "-1")"
+     role="@(ChildContent is not null ? "button" : null)"
+     aria-expanded="@(ChildContent is not null ? (popupOpen ? "true" : "false") : null)"
+     aria-haspopup="@(ChildContent is not null ? "true" : null)"
      @onmouseenter="OpenPopup"
-     @onmouseleave="ClosePopup">
-    <div class="bb:pointer-events-none bb:absolute bb:start-0 bb:top-0 bb:rounded-full bb:animate-ping"
+     @onmouseleave="ClosePopup"
+     @onclick="OpenPopup"
+     @onkeydown="OnKeyDown"
+     @onkeydown:preventDefault="true">
+    <div class="bb:pointer-events-none bb:absolute bb:left-0 bb:top-0 bb:rounded-full bb:animate-ping"
          style="@DotStyle"></div>
 
-    <div class="bb:absolute bb:start-0 bb:top-0 bb:rounded-full bb:cursor-pointer"
+    <div class="bb:absolute bb:left-0 bb:top-0 bb:rounded-full bb:cursor-pointer"
          style="@DotStyle"></div>
 
     @if (popupOpen && ChildContent is not null)

@@ -54,6 +54,7 @@ public partial class LogicalPropertyTests
         ["BbScheduler.razor.cs"] = "lane widths are measured in pixels",
         ["BbDock.razor"] = "the corner grip matches a physical resize cursor",
         ["BbSelectionIndicator.razor"] = "the indicator is positioned by measurement",
+        ["BbMapLibreMarker.razor"] = "markers anchor where map.project() puts them, in physical pixels",
     };
 
     /// <summary>

@@ -18,6 +18,7 @@ const DOT_REACH = 6;
  * @property {Object} map - The MapLibre map instance
  * @property {any} dotNetRef - The .NET object reference to notify about view changes
  * @property {Function} stopWatchingTheme - Unsubscribes from theme changes
+ * @property {string} lastStyle - The style URL the map currently uses
  * @property {Map<string, MarkerState>} markers - Blazor-owned marker elements
  * @property {Set<string>} popups - Marker ids whose popup is currently open
  * @property {Map<string, RouteState>} routes - Lines drawn as native MapLibre style layers
@@ -98,8 +99,15 @@ function applyStyle(mapId) {
     if (!state) {
         return;
     }
+
     const isDark = document.documentElement.classList.contains('dark');
-    state.map.setStyle(isDark ? DARK_STYLE : LIGHT_STYLE);
+    const desired = isDark ? DARK_STYLE : LIGHT_STYLE;
+    if (state.lastStyle === desired) {
+        return;
+    }
+
+    state.lastStyle = desired;
+    state.map.setStyle(desired);
 }
 
 /**
@@ -145,23 +153,34 @@ export async function initializeMapLibre(mapId, dotNetRef, options = {}) {
         return null;
     }
 
+    // Build the map with the theme that is actually active, so dark-mode hosts do not
+    // flash a light map before the first setStyle round-trip lands.
+    const isDark = document.documentElement.classList.contains('dark');
+    const lastStyle = isDark ? DARK_STYLE : LIGHT_STYLE;
+
     const map = new mod.Map({
         container: element,
-        style: LIGHT_STYLE,
+        style: lastStyle,
         ...options
     });
 
     const stopWatchingTheme = watchThemeChanges(() => applyStyle(mapId));
-    mapStates.set(mapId, { map, dotNetRef, stopWatchingTheme, markers: new Map(), popups: new Set(), routes: new Map() });
+    mapStates.set(mapId, { map, dotNetRef, stopWatchingTheme, lastStyle, markers: new Map(), popups: new Set(), routes: new Map() });
 
     map.on('moveend', () => notifyViewChanged(mapId));
-    map.on('load', () => notifyViewChanged(mapId));
+    // MapLibre fires the map-level 'load' exactly once, but setStyle() (a theme switch)
+    // signals completion as 'style.load' on each new style. Listen to both so routes are
+    // restored after the initial load and after every theme switch.
+    map.on('load', () => {
+        notifyViewChanged(mapId);
+        updateMarkers(mapId);
+    });
+    map.on('style.load', () => {
+        updateMarkers(mapId);
+        redrawRoutes(mapId);
+    });
     map.on('move', () => updateMarkers(mapId));
-    map.on('load', () => updateMarkers(mapId));
-    map.on('load', () => redrawRoutes(mapId));
     element.addEventListener('fullscreenchange', () => handleFullscreenChange(mapId));
-
-    applyStyle(mapId);
 
     return map;
 }
@@ -437,7 +456,13 @@ function redrawRoutes(mapId) {
         return;
     }
 
-    state.routes.forEach((route, routeId) => ensureRouteLayer(mapId, routeId));
+    state.routes.forEach((route, routeId) => {
+        try {
+            ensureRouteLayer(mapId, routeId);
+        } catch (error) {
+            console.error(`BbMapLibre: failed to restore route ${routeId}:`, error);
+        }
+    });
 }
 
 /**
@@ -587,10 +612,20 @@ export function toggleFullscreen(mapId) {
 
     if (isFullscreen) {
         document.exitFullscreen();
-    } else {
-        container.requestFullscreen()
-            .catch(error => console.error('Fullscreen request failed:', error));
+        return;
     }
+
+    // requestFullscreen requires transient user activation. In Blazor Server the click is
+    // marshalled to .NET and back before this runs, which consumes the activation, so the
+    // call rejects with a "user gesture" error - surface a clear hint instead of a raw
+    // console.error.
+    container.requestFullscreen().catch(error => {
+        const isActivationError = error?.name === 'TypeError' &&
+            /user activation|user gesture|interactive/i.test(error?.message ?? '');
+        console.error(isActivationError
+            ? 'BbMapLibre: fullscreen requires a direct user gesture; use a button with a native onclick in Blazor Server.'
+            : `BbMapLibre: fullscreen request failed: ${error}`);
+    });
 }
 
 /**

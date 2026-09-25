@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 
 namespace BlazorBlueprint.Components;
@@ -55,7 +56,7 @@ public partial class BbMapLibreMarker : ComponentBase, IAsyncDisposable
 
     private string DotStyle =>
         $"background-color:{Color}; width:{Size}px; height:{Size}px;" +
-        $" margin-inline-start:{-Size / 2}px; margin-top:{-Size / 2}px;";
+        $" margin-left:{-Size / 2}px; margin-top:{-Size / 2}px;";
 
     // The wrapper stacks above the other markers while its popup is open so the
     // popup never renders underneath a neighbouring dot.
@@ -103,6 +104,45 @@ public partial class BbMapLibreMarker : ComponentBase, IAsyncDisposable
 
         popupOpen = false;
         StateHasChanged();
+    }
+
+    private void TogglePopup()
+    {
+        if (ChildContent is null)
+        {
+            return;
+        }
+
+        if (popupOpen)
+        {
+            closeDelayCts?.Cancel();
+            popupOpen = false;
+        }
+        else
+        {
+            OpenPopup();
+        }
+    }
+
+    private Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (ChildContent is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (e.Key is "Enter" or " " or "Spacebar")
+        {
+            TogglePopup();
+        }
+        else if (e.Key is "Escape")
+        {
+            closeDelayCts?.Cancel();
+            popupOpen = false;
+            StateHasChanged();
+        }
+
+        return Task.CompletedTask;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
