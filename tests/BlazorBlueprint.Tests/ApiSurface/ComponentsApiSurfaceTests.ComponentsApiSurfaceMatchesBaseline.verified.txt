@@ -3071,6 +3071,8 @@
 
 ### BbMapLibre (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - Bearing : Double?
+  - BearingChanged : EventCallback<Double>
   - Center : BbMapCoordinate?
   - CenterChanged : EventCallback<BbMapCoordinate>
   - ChildContent : RenderFragment

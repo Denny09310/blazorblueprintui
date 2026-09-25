@@ -105,7 +105,7 @@ function applyStyle(mapId) {
 /**
  * Handles a camera change (pan, zoom, rotate) coming from the map engine by
  * reporting the new position back to .NET, which surfaces it through the
- * @bind-Center and @bind-Zoom callbacks.
+ * @bind-Center, @bind-Zoom and @bind-Bearing callbacks.
  * @param {string} mapId
  */
 function notifyViewChanged(mapId) {
@@ -115,7 +115,7 @@ function notifyViewChanged(mapId) {
     }
 
     const center = state.map.getCenter();
-    state.dotNetRef.invokeMethodAsync('OnMapViewChanged', center.lat, center.lng, state.map.getZoom());
+    state.dotNetRef.invokeMethodAsync('OnMapViewChanged', center.lat, center.lng, state.map.getZoom(), state.map.getBearing());
 }
 
 /**
@@ -193,6 +193,20 @@ export function setZoom(mapId, zoom) {
     }
 
     state.map.setZoom(zoom);
+}
+
+/**
+ * Sets the map's bearing (rotation) in degrees, 0 being north.
+ * @param {string} mapId
+ * @param {number} bearing
+ */
+export function setBearing(mapId, bearing) {
+    const state = mapStates.get(mapId);
+    if (!state) {
+        return;
+    }
+
+    state.map.setBearing(bearing);
 }
 
 /**

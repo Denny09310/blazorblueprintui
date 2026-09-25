@@ -8,6 +8,7 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
 {
     private const double CoordinateTolerance = 0.0000001;
     private const double ZoomTolerance = 0.0001;
+    private const double BearingTolerance = 0.0001;
 
     private readonly string mapId = Guid.NewGuid().ToString("N");
 
@@ -17,6 +18,7 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
     private double? lastLatitude;
     private double? lastLongitude;
     private double? lastZoom;
+    private double? lastBearing;
 
     public IJSObjectReference? Map { get; private set; }
 
@@ -42,6 +44,16 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
 
     [Parameter]
     public EventCallback<double> ZoomChanged { get; set; }
+
+    /// <summary>
+    /// The map's bearing (rotation) in degrees, 0 being north. Two-way bindable with
+    /// <c>@bind-Bearing</c>.
+    /// </summary>
+    [Parameter]
+    public double? Bearing { get; set; }
+
+    [Parameter]
+    public EventCallback<double> BearingChanged { get; set; }
 
     [Parameter]
     public string? Style { get; set; }
@@ -90,11 +102,17 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
                 options["zoom"] = zoom;
             }
 
+            if (Bearing is { } bearing)
+            {
+                options["bearing"] = bearing;
+            }
+
             Map = await jsModule.InvokeAsync<IJSObjectReference>("initializeMapLibre", mapId, dotNetRef, options);
 
             lastLatitude = Center?.Latitude;
             lastLongitude = Center?.Longitude;
             lastZoom = Zoom;
+            lastBearing = Bearing;
 
             jsInitialized = true;
 
@@ -292,6 +310,13 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
 
             lastZoom = zoom;
         }
+
+        if (Bearing is { } bearing && (lastBearing is not { } previousBearing || Math.Abs(previousBearing - bearing) > BearingTolerance))
+        {
+            await jsModule.InvokeVoidAsync("setBearing", mapId, bearing);
+
+            lastBearing = bearing;
+        }
     }
 
     /// <summary>
@@ -315,7 +340,7 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
     /// Receives the camera position from the map after a user pan, zoom or rotation.
     /// </summary>
     [JSInvokable]
-    public async Task OnMapViewChanged(double latitude, double longitude, double zoom)
+    public async Task OnMapViewChanged(double latitude, double longitude, double zoom, double bearing)
     {
         if (Center is { } center &&
             (Math.Abs(center.Latitude - latitude) > CoordinateTolerance ||
@@ -327,6 +352,11 @@ public partial class BbMapLibre : ComponentBase, IAsyncDisposable
         if (Zoom is { } currentZoom && Math.Abs(currentZoom - zoom) > ZoomTolerance)
         {
             await ZoomChanged.InvokeAsync(zoom);
+        }
+
+        if (Bearing is { } currentBearing && Math.Abs(currentBearing - bearing) > BearingTolerance)
+        {
+            await BearingChanged.InvokeAsync(bearing);
         }
     }
 

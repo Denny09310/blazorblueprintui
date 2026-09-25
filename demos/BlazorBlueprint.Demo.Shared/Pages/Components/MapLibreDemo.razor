@@ -158,8 +158,10 @@
                 <h2 class="text-2xl font-semibold">Two-Way Binding</h2>
                 <p class="text-muted-foreground">
                     Bind <code class="text-xs bg-muted px-1 py-0.5 rounded">Center</code> (latitude,
-                    longitude) and <code class="text-xs bg-muted px-1 py-0.5 rounded">Zoom</code> to
-                    drive the camera from Blazor and stay in sync while the user pans and zooms.
+                    longitude), <code class="text-xs bg-muted px-1 py-0.5 rounded">Zoom</code> and
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Bearing</code> to drive the
+                    camera from Blazor and stay in sync while the user pans, zooms and rotates.
+                    Give the map a shake with the buttons below, then rotate it with a right drag.
                 </p>
             </div>
 
@@ -171,9 +173,24 @@
                     </span>
                     &middot; Zoom:
                     <span class="font-mono text-foreground">@zoom.ToString("F2")</span>
+                    &middot; Bearing:
+                    <span class="font-mono text-foreground">@bearing.ToString("F0")&deg;</span>
                 </p>
 
-                <BbMapLibre @bind-Center="center" @bind-Zoom="zoom" Style="height: 400px; width: 100%;" />
+                <div class="flex gap-2">
+                    <button type="button"
+                            class="rounded-md border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-accent"
+                            @onclick="() => bearing = (bearing + 45) % 360">
+                        Rotate +45&deg;
+                    </button>
+                    <button type="button"
+                            class="rounded-md border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-accent"
+                            @onclick="() => bearing = 0">
+                        Reset bearing
+                    </button>
+                </div>
+
+                <BbMapLibre @bind-Center="center" @bind-Zoom="zoom" @bind-Bearing="bearing" Style="height: 400px; width: 100%;" />
             </div>
 
             <CodeBlock Source="Components/MapLibre/controlled.txt" />
@@ -191,6 +208,10 @@
         <ApiParameter Name="Zoom" Type="double?">
             The map zoom level. Two-way bindable with <code
             class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Zoom</code>.
+        </ApiParameter>
+        <ApiParameter Name="Bearing" Type="double?">
+            The map's bearing (rotation) in degrees, 0 being north. Two-way bindable with <code
+            class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Bearing</code>.
         </ApiParameter>
         <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
             Additional HTML attributes applied to the map container, e.g. <code
@@ -265,4 +286,5 @@
 
     private BbMapCoordinate center = new(40.7128, -74.0060);
     private double zoom = 10;
+    private double bearing;
 }

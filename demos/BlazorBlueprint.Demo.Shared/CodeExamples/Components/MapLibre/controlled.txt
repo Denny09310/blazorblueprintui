@@ -1,6 +1,7 @@
-<BbMapLibre @bind-Center="center" @bind-Zoom="zoom" Style="height: 400px; width: 100%;" />
+<BbMapLibre @bind-Center="center" @bind-Zoom="zoom" @bind-Bearing="bearing" Style="height: 400px; width: 100%;" />
 
 @code {
     private BbMapCoordinate center = new(40.7128, -74.0060);
     private double zoom = 10;
+    private double bearing;
 }
