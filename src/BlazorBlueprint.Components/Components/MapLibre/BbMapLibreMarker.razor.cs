@@ -20,6 +20,7 @@ public partial class BbMapLibreMarker : ComponentBase, IAsyncDisposable
     private bool lastPopupOpen;
     private double? lastLatitude;
     private double? lastLongitude;
+    private CancellationTokenSource? closeDelayCts;
 
     [CascadingParameter]
     private BbMapLibre? Map { get; set; }
@@ -67,17 +68,41 @@ public partial class BbMapLibreMarker : ComponentBase, IAsyncDisposable
             return;
         }
 
+        closeDelayCts?.Cancel();
+        closeDelayCts = null;
+
         popupOpen = true;
     }
 
-    private void ClosePopup()
+    private async Task ClosePopup()
     {
         if (ChildContent is null)
         {
             return;
         }
 
+        // The popup floats a few pixels above the dot, so leaving the dot to move into the
+        // popup crosses a gap that fires mouseleave. Delay the close long enough to allow the
+        // popup's own mouseenter to cancel it, so the card stays open while hovered.
+        closeDelayCts?.Cancel();
+        var cts = closeDelayCts = new CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(200, cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        if (closeDelayCts != cts)
+        {
+            return;
+        }
+
         popupOpen = false;
+        StateHasChanged();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

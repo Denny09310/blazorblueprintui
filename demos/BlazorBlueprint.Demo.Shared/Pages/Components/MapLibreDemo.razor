@@ -133,13 +133,25 @@
                     device) and fullscreen controls. Anchor it to any corner with
                     <code class="text-xs bg-muted px-1 py-0.5 rounded">Position</code> and lay the
                     buttons out with <code class="text-xs bg-muted px-1 py-0.5 rounded">Orientation</code>.
-                    Like markers, the toolbar stays an ordinary child of the map container &mdash;
-                    the buttons drive the camera and the container's fullscreen through the interop
-                    layer.
+                    Zoom in and out are grouped together; the shadowed corner buttons and the
+                    copyright line share the corner without overlapping. Like markers, the toolbar
+                    stays an ordinary child of the map container &mdash; the buttons drive the
+                    camera and the container's fullscreen through the interop layer.
                 </p>
             </div>
 
-            <div class="rounded-lg border bg-card p-6 space-y-3">
+            <div class="grid gap-4 lg:grid-cols-2">
+                <BbMapLibre Center="new BbMapCoordinate(40.7128, -74.0060)" Zoom="11" Style="height: 400px; width: 100%;">
+                    <ChildContent>
+                        <BbMapLibreToolbar Position="BbMapLibreToolbarPosition.TopRight"
+                                           Orientation="BbMapLibreToolbarOrientation.Horizontal" />
+
+                        <BbMapLibreMarker Latitude="40.7128" Longitude="-74.0060">
+                            <div class="font-medium">New York City</div>
+                        </BbMapLibreMarker>
+                    </ChildContent>
+                </BbMapLibre>
+
                 <BbMapLibre Center="new BbMapCoordinate(40.7128, -74.0060)" Zoom="11" Style="height: 400px; width: 100%;">
                     <ChildContent>
                         <BbMapLibreToolbar Position="BbMapLibreToolbarPosition.BottomRight"
