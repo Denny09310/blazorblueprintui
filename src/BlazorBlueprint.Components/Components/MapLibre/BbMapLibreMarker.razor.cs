@@ -7,8 +7,8 @@ namespace BlazorBlueprint.Components;
 /// A colored dot pinned to a geographic position on top of a <see cref="BbMapLibre"/> map.
 /// The interop layer projects the coordinate to pixels and moves the element with CSS
 /// transforms as the camera moves, so Blazor keeps ownership of its markup.
-/// When <see cref="ChildContent"/> is provided, clicking the dot toggles a popup card
-/// anchored above the marker; the popup travels with the marker as the map moves.
+/// When <see cref="ChildContent"/> is provided, the dot pulses and hovering it shows a
+/// popup card anchored above the marker; the popup travels with the marker as the map moves.
 /// </summary>
 public partial class BbMapLibreMarker : ComponentBase, IAsyncDisposable
 {
@@ -34,7 +34,13 @@ public partial class BbMapLibreMarker : ComponentBase, IAsyncDisposable
     public string Color { get; set; } = "var(--color-primary)";
 
     /// <summary>
-    /// Popup content shown above the dot when it is clicked. When omitted the marker
+    /// Diameter of the dot in pixels, including the pulsing halo. Defaults to 12.
+    /// </summary>
+    [Parameter]
+    public double Size { get; set; } = 12;
+
+    /// <summary>
+    /// Popup content shown above the dot when it is hovered. When omitted the marker
     /// behaves as a plain dot with no popup interaction.
     /// </summary>
     [Parameter]
@@ -47,20 +53,31 @@ public partial class BbMapLibreMarker : ComponentBase, IAsyncDisposable
         "visibility:hidden;";
 
     private string DotStyle =>
-        $"background-color:{Color};";
+        $"background-color:{Color}; width:{Size}px; height:{Size}px;" +
+        $" margin-inline-start:{-Size / 2}px; margin-top:{-Size / 2}px;";
 
     // The wrapper stacks above the other markers while its popup is open so the
     // popup never renders underneath a neighbouring dot.
     private string zIndexClass => popupOpen && ChildContent is not null ? "bb:z-50" : "bb:z-[1]";
 
-    private void TogglePopup()
+    private void OpenPopup()
     {
         if (ChildContent is null)
         {
             return;
         }
 
-        popupOpen = !popupOpen;
+        popupOpen = true;
+    }
+
+    private void ClosePopup()
+    {
+        if (ChildContent is null)
+        {
+            return;
+        }
+
+        popupOpen = false;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

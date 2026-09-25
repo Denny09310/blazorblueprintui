@@ -47,10 +47,11 @@
                     Place a <code class="text-xs bg-muted px-1 py-0.5 rounded">BbMapLibreMarker</code>
                     inside the map with <code class="text-xs bg-muted px-1 py-0.5 rounded">Latitude</code>,
                     <code class="text-xs bg-muted px-1 py-0.5 rounded">Longitude</code> and an optional
-                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Color</code>. Markers stay ordinary
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Color</code> or
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Size</code>. Markers stay ordinary
                     children of the map container while the interop layer keeps them pinned to the
                     geography with CSS transforms. Add content to a marker to show a popup card when
-                    its dot is clicked. The card is kept inside the map viewport while the dot is on
+                    its dot is hovered. The card is kept inside the map viewport while the dot is on
                     screen &mdash; flipping to the other side of the marker near an edge &mdash; and
                     follows the dot if the marker is panned off the map. While the map loads, a
                     <code class="text-xs bg-muted px-1 py-0.5 rounded">LoadingContent</code> fragment
@@ -78,6 +79,7 @@
                         <BbMapLibreMarker Latitude="40.7580" Longitude="-73.9855" Color="var(--chart-2)">
                             <div class="font-medium">Times Square</div>
                         </BbMapLibreMarker>
+                        <BbMapLibreMarker Latitude="40.6892" Longitude="-74.0445" Color="var(--destructive)" Size="24" />
                     </ChildContent>
                 </BbMapLibre>
             </div>
@@ -236,8 +238,12 @@
             class="text-xs bg-muted px-1 py-0.5 rounded">var(--chart-2)</code>. Defaults to
             <code class="text-xs bg-muted px-1 py-0.5 rounded">var(--color-primary)</code>.
         </ApiParameter>
+        <ApiParameter Name="Size" Type="double" Default="12">
+            Diameter of the marker dot in pixels. The dot is centered on its geographic
+            coordinate and the pulsing halo scales with the dot.
+        </ApiParameter>
         <ApiParameter Name="ChildContent" Type="RenderFragment?">
-            Optional popup content shown in a card when the dot is clicked. The card is kept
+            Optional popup content shown in a card when the dot is hovered. The card is kept
             inside the map viewport while the dot is on screen, flipping to the other side of the
             marker near an edge, and follows the dot if the marker is panned off the map. When
             omitted, the marker is a plain dot with no popup interaction.

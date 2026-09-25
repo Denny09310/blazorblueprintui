@@ -2,18 +2,22 @@
 
 <div id="@markerId"
      class="bb:absolute bb:top-0 bb:start-0 @zIndexClass"
-     style="@MarkerStyle">
-    <div class="bb:absolute bb:start-0 bb:top-0 bb:-ms-1.5 bb:-mt-1.5 bb:size-3 bb:rounded-full bb:cursor-pointer"
-         style="@DotStyle"
-         role="button"
-         @onclick="TogglePopup"
-         @onclick:stopPropagation="true"></div>
+     style="@MarkerStyle"
+     @onmouseenter="OpenPopup"
+     @onmouseleave="ClosePopup">
+    <div class="bb:pointer-events-none bb:absolute bb:start-0 bb:top-0 bb:rounded-full bb:animate-ping"
+         style="@DotStyle"></div>
+
+    <div class="bb:absolute bb:start-0 bb:top-0 bb:rounded-full bb:cursor-pointer"
+         style="@DotStyle"></div>
 
     @if (popupOpen && ChildContent is not null)
     {
         <div id="@($"{markerId}-popup")"
              class="bb:absolute bb:min-w-40 bb:whitespace-nowrap bb:rounded-md bb:border bb:bg-popover bb:text-popover-foreground bb:px-3 bb:py-2 bb:text-sm bb:shadow-md"
              style="@PopupStyle"
+             @onmouseenter="OpenPopup"
+             @onmouseleave="ClosePopup"
              @onclick:stopPropagation="true">
             @ChildContent
         </div>

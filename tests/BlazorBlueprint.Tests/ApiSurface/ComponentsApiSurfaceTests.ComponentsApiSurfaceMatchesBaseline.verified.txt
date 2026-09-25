@@ -3086,6 +3086,7 @@
   - Color : String
   - Latitude : Double
   - Longitude : Double
+  - Size : Double
   - Map : BbMapLibre [CascadingParameter]
 
 ### BbMapLibreRoute (BlazorBlueprint.Components)

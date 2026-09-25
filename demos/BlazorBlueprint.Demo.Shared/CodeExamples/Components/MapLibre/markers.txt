@@ -16,5 +16,6 @@
         <BbMapLibreMarker Latitude="40.7580" Longitude="-73.9855" Color="var(--chart-2)">
             <div class="font-medium">Times Square</div>
         </BbMapLibreMarker>
+        <BbMapLibreMarker Latitude="40.6892" Longitude="-74.0445" Color="var(--destructive)" Size="24" />
     </ChildContent>
 </BbMapLibre>
