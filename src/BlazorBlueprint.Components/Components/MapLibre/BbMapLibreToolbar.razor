@@ -2,28 +2,52 @@
 @using BlazorBlueprint.Icons.Lucide.Components
 @implements IDisposable
 
-<div class="bb:pointer-events-none bb:absolute @PositionClass bb:z-20">
-    <div class="bb:pointer-events-auto bb:flex @OrientationClass bb:items-center bb:gap-1 bb:rounded-lg bb:border bb:bg-background/95 bb:p-1 bb:shadow-md bb:backdrop-blur">
-        @ToolbarButton("zoom-in", "Zoom in", OnZoomInAsync)
-        @ToolbarButton("zoom-out", "Zoom out", OnZoomOutAsync)
-        @ToolbarButton("compass", "Reset north", OnResetNorthAsync)
-        @ToolbarButton("locate-fixed", "Locate me", OnLocateUserAsync)
+<div class="bb:pointer-events-none bb:absolute @PositionClass bb:z-20" @onclick:stopPropagation="true">
+    <div class="bb:pointer-events-auto bb:flex @OrientationClass bb:items-center bb:gap-1">
+        <BbButtonGroup Orientation="@GroupOrientation" AriaLabel="Zoom controls">
+            <BbButton Variant="ButtonVariant.Outline"
+                      Size="ButtonSize.IconSmall"
+                      AriaLabel="Zoom in"
+                      AdditionalAttributes='Title("Zoom in")'
+                      OnClick="OnZoomInAsync">
+                <LucideIcon Name="zoom-in" Class="bb:h-4 bb:w-4" />
+            </BbButton>
+            <BbButton Variant="ButtonVariant.Outline"
+                      Size="ButtonSize.IconSmall"
+                      AriaLabel="Zoom out"
+                      AdditionalAttributes='Title("Zoom out")'
+                      OnClick="OnZoomOutAsync">
+                <LucideIcon Name="zoom-out" Class="bb:h-4 bb:w-4" />
+            </BbButton>
+        </BbButtonGroup>
 
-        <button type="button"
-                class="@ToolbarButtonClass"
-                title="@FullScreenLabel"
-                aria-label="@FullScreenLabel"
-                @onclick="OnToggleFullscreenAsync"
-                @onclick:stopPropagation="true">
+        <BbButton Variant="ButtonVariant.Outline"
+                  Size="ButtonSize.IconSmall"
+                  AriaLabel="Reset north"
+                  AdditionalAttributes='Title("Reset north")'
+                  OnClick="OnResetNorthAsync">
+            <LucideIcon Name="compass" Class="bb:h-4 bb:w-4" />
+        </BbButton>
+
+        <BbButton Variant="ButtonVariant.Outline"
+                  Size="ButtonSize.IconSmall"
+                  AriaLabel="Locate me"
+                  AdditionalAttributes='Title("Locate me")'
+                  OnClick="OnLocateUserAsync">
+            <LucideIcon Name="locate-fixed" Class="bb:h-4 bb:w-4" />
+        </BbButton>
+
+        <BbButton Variant="ButtonVariant.Outline"
+                  Size="ButtonSize.IconSmall"
+                  AriaLabel="@FullScreenLabel"
+                  AdditionalAttributes='Title(FullScreenLabel)'
+                  OnClick="OnToggleFullscreenAsync">
             <LucideIcon Name="@FullScreenIcon" Class="bb:h-4 bb:w-4" />
-        </button>
+        </BbButton>
     </div>
 </div>
 
 @code {
-    private const string ToolbarButtonClass =
-        "bb:inline-flex bb:size-7 bb:shrink-0 bb:items-center bb:justify-center bb:rounded-md bb:text-muted-foreground bb:transition-colors bb:hover:bg-accent bb:hover:text-accent-foreground bb:focus-visible:outline-none bb:focus-visible:ring-1 bb:focus-visible:ring-ring";
-
     private bool fullscreen;
 
     [CascadingParameter]
@@ -43,16 +67,26 @@
     [Parameter]
     public BbMapLibreToolbarOrientation Orientation { get; set; } = BbMapLibreToolbarOrientation.Horizontal;
 
+    private static Dictionary<string, object> Title(string label) =>
+        new() { ["title"] = label };
+
     private string PositionClass => Position switch
     {
         BbMapLibreToolbarPosition.TopLeft => "bb:top-2 bb:start-2",
         BbMapLibreToolbarPosition.TopRight => "bb:top-2 bb:end-2",
         BbMapLibreToolbarPosition.BottomLeft => "bb:bottom-2 bb:start-2",
-        _ => "bb:bottom-2 bb:end-2",
+        // Raised above MapLibre's attribution control. At this inset the toolbar would
+        // otherwise sit on top of the copyright line the attribution renders here.
+        _ => "bb:bottom-10 bb:end-2",
     };
 
     private string OrientationClass =>
         Orientation == BbMapLibreToolbarOrientation.Vertical ? "bb:flex-col" : "bb:flex-row";
+
+    private ButtonGroupOrientation GroupOrientation =>
+        Orientation == BbMapLibreToolbarOrientation.Vertical
+            ? ButtonGroupOrientation.Vertical
+            : ButtonGroupOrientation.Horizontal;
 
     private string FullScreenIcon => fullscreen ? "minimize" : "maximize";
 
@@ -65,18 +99,6 @@
             Map.FullscreenChanged += HandleFullscreenChanged;
         }
     }
-
-    private RenderFragment ToolbarButton(string icon, string label, Func<Task> onClick) => __builder =>
-    {
-        <button type="button"
-                class="@ToolbarButtonClass"
-                title="@label"
-                aria-label="@label"
-                @onclick="onClick"
-                @onclick:stopPropagation="true">
-            <LucideIcon Name="@icon" Class="bb:h-4 bb:w-4" />
-        </button>
-    };
 
     private Task OnZoomInAsync() => Map?.ZoomInAsync() ?? Task.CompletedTask;
 
