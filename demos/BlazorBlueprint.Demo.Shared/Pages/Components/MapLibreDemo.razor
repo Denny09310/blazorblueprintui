@@ -89,6 +89,67 @@
 
         <section class="space-y-4">
             <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Rich Popup</h2>
+                <p class="text-muted-foreground">
+                    The popup is plain Blazor markup, so it is not limited to a couple of lines
+                    of text. Compose a card from any components &mdash; a header image
+                    (<code class="text-xs bg-muted px-1 py-0.5 rounded">BbImage</code>), a title,
+                    a read-only <code class="text-xs bg-muted px-1 py-0.5 rounded">BbRating</code>,
+                    a <code class="text-xs bg-muted px-1 py-0.5 rounded">BbBadge</code> and small
+                    action buttons. Keep interactive elements light though: the popup opens on
+                    hover, and a 200ms close delay gives you time to reach the card before it
+                    dismisses.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-3">
+                <BbMapLibre Center="new BbMapCoordinate(40.6892, -74.0445)" Zoom="16" Style="height: 400px; width: 100%;">
+                    <ChildContent>
+                        <BbMapLibreToolbar Position="BbMapLibreToolbarPosition.TopRight"
+                                           Orientation="BbMapLibreToolbarOrientation.Horizontal" />
+
+                        <BbMapLibreMarker Latitude="40.6892" Longitude="-74.0445" Color="var(--destructive)" Size="24">
+                            <div class="w-72">
+                                <BbImage Src="@Photo" Alt="Statue of Liberty, Liberty Island" Fit="ImageFit.Cover"
+                                         Class="bb:h-24 bb:w-full bb:rounded-md" />
+
+                                <div class="mt-2 flex items-start justify-between gap-2">
+                                    <div>
+                                        <div class="font-medium">Statue of Liberty</div>
+                                        <div class="flex items-center gap-1">
+                                            <BbRating Value="4.8" ReadOnly="true" AllowHalf="true" Size="RatingSize.Small" />
+                                            <span class="text-xs text-muted-foreground">4.8</span>
+                                        </div>
+                                    </div>
+                                    <BbBadge Variant="BadgeVariant.Outline">Landmark</BbBadge>
+                                </div>
+
+                                <p class="mt-1 text-xs leading-relaxed text-muted-foreground">
+                                    A copper-clad colossus gifted by France in 1886, gazing out over
+                                    New York Harbor from Liberty Island since 1903.
+                                </p>
+
+                                <div class="mt-3 flex gap-2">
+                                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                                        <LucideIcon Name="navigation" Class="h-3.5 w-3.5" />
+                                        Directions
+                                    </BbButton>
+                                    <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small">
+                                        <LucideIcon Name="bookmark" Class="h-3.5 w-3.5" />
+                                        Save
+                                    </BbButton>
+                                </div>
+                            </div>
+                        </BbMapLibreMarker>
+                    </ChildContent>
+                </BbMapLibre>
+            </div>
+
+            <CodeBlock Source="Components/MapLibre/popup.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
                 <h2 class="text-2xl font-semibold">Routes</h2>
                 <p class="text-muted-foreground">
                     Add a <code class="text-xs bg-muted px-1 py-0.5 rounded">BbMapLibreRoute</code>
@@ -294,6 +355,8 @@
 </div>
 
 @code {
+    private const string Photo = "_content/BlazorBlueprint.Demo.Shared/images/placeholder-landscape.svg";
+
     private static readonly BbMapCoordinate[] routePoints =
     [
         new(40.7128, -74.0060),

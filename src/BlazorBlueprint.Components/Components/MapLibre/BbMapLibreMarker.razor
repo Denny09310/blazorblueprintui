@@ -14,7 +14,7 @@
     @if (popupOpen && ChildContent is not null)
     {
         <div id="@($"{markerId}-popup")"
-             class="bb:absolute bb:min-w-40 bb:whitespace-nowrap bb:rounded-md bb:border bb:bg-popover bb:text-popover-foreground bb:px-3 bb:py-2 bb:text-sm bb:shadow-md"
+             class="bb:absolute bb:min-w-40 bb:max-w-xs bb:rounded-md bb:border bb:bg-popover bb:text-popover-foreground bb:px-3 bb:py-2 bb:text-sm bb:shadow-md"
              style="@PopupStyle"
              @onmouseenter="OpenPopup"
              @onmouseleave="ClosePopup"
