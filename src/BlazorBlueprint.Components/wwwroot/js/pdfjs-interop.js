@@ -6,14 +6,20 @@
 // the visible state returns the same shape { ok, currentPage, pageCount, scale },
 // which .NET deserializes into PdfViewerState to keep its own fields in sync.
 
-import * as pdfjsLib from "../lib/pdfjs/pdf.mjs";
+// The legacy build: the modern one calls Map.prototype.getOrInsertComputed without a polyfill,
+// which only the newest browsers have.
+import * as pdfjsLib from "../lib/pdfjs/pdf.min.mjs";
 
 const workerUrl = new URL(
-    "../lib/pdfjs/pdf.worker.mjs",
+    "../lib/pdfjs/pdf.worker.min.mjs",
     import.meta.url
 );
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl.href;
+
+// PDF.js decodes JPEG 2000, JBIG2 and CCITT images, and applies ICC colour profiles, only through
+// these WebAssembly modules; without them scanned documents render blank or wrong.
+const wasmUrl = new URL("../lib/pdfjs/wasm/", import.meta.url).href;
 
 const SCALE_STEP = 0.25;
 const FIT_WIDTH_MARGIN = 32;
@@ -76,7 +82,7 @@ export async function load(canvas, url, options) {
     clearCanvas(canvas);
 
     try {
-        const pdf = await pdfjsLib.getDocument({ url }).promise;
+        const pdf = await pdfjsLib.getDocument({ url, wasmUrl }).promise;
 
         const viewer = {
             pdf,
@@ -131,7 +137,7 @@ export async function loadData(canvas, streamReference, options) {
 
     try {
         const data = await streamReference?.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data }).promise;
+        const pdf = await pdfjsLib.getDocument({ data, wasmUrl }).promise;
 
         const viewer = {
             pdf,
