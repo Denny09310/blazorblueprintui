@@ -1,4 +1,4 @@
-<InputFile OnChange="@HandleFileAsync" Accept=".pdf" />
+<InputFile OnChange="@HandleFileAsync" Accept=".pdf" aria-label="Choose a PDF file" />
 
 @* Load documents that exist only in the browser - the stream is streamed to
    the browser, so no URL or web request is involved. *@

@@ -57,7 +57,7 @@
 
         <div class="space-y-4">
             <div class="flex flex-wrap items-center gap-2">
-                <InputFile OnChange="@LoadLocalPdf" Accept=".pdf" />
+                <InputFile OnChange="@LoadLocalPdf" Accept=".pdf" aria-label="Choose a PDF file" />
                 <span class="text-sm text-muted-foreground">@localPdfStatus</span>
             </div>
             <BbPdfViewer @ref="localViewer" Height="440px" />
@@ -299,10 +299,17 @@
     {
         var file = e.File;
         localPdfStatus = "Loading " + file.Name + "…";
-        if (localViewer is not null)
+        if (localViewer is null)
         {
-            await localViewer.LoadDataAsync(file.OpenReadStream(maxAllowedSize: 25 * 1024 * 1024));
+            return;
         }
-        localPdfStatus = "Loaded " + file.Name;
+
+        await localViewer.LoadDataAsync(file.OpenReadStream(maxAllowedSize: 25 * 1024 * 1024));
+
+        // A file that isn't a PDF, or is over the size limit, loads nothing.
+        var pages = await localViewer.GetPageCountAsync();
+        localPdfStatus = pages > 0
+            ? "Loaded " + file.Name
+            : "Could not load " + file.Name;
     }
 }
