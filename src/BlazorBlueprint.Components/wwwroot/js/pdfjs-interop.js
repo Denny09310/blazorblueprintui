@@ -168,7 +168,6 @@ async function open(canvas, options, getSource) {
             loadingTask,
             pdf,
             url: source.url || null,
-            data: source.data || null,
             pageCount: pdf.numPages,
             currentPage: 1,
             scale: initialScale,
@@ -476,35 +475,25 @@ function defaultFileName(viewer) {
 }
 
 /**
- * Saves the open document as a PDF file. Documents loaded from bytes are down-
- * loaded straight from memory; URL-loaded documents are re-fetched and saved as
- * a blob, so a cross-origin page is downloaded instead of being navigated to.
- * If the source cannot be fetched (for example no CORS on the server), the URL
- * is opened in a new tab as a fallback.
+ * Saves the open document as a PDF file, from the bytes PDF.js already holds. That works the same
+ * for URL and byte-loaded documents: no second request, so nothing to fail on CORS or an expired
+ * signed URL, and nothing read from the ArrayBuffer given to getDocument, which PDF.js transfers
+ * to its worker and leaves empty.
  * @param {HTMLCanvasElement} canvas
  * @param {string|null} [fileName]
+ * @returns {Promise<string|null>} null when the file was saved, otherwise why it was not.
  */
 export async function download(canvas, fileName) {
     const viewer = currentViewer(canvas);
     if (!viewer) {
-        return;
+        return "No document is loaded.";
     }
 
-    let data = viewer.data;
-    if (!data) {
-        if (!viewer.url) {
-            return;
-        }
-        try {
-            const response = await fetch(viewer.url);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            data = new Uint8Array(await response.arrayBuffer());
-        } catch (err) {
-            window.open(viewer.url, "_blank");
-            return;
-        }
+    let data;
+    try {
+        data = await viewer.pdf.getData();
+    } catch (err) {
+        return messageOf(err);
     }
 
     const blob = new Blob([data], { type: "application/pdf" });
@@ -518,6 +507,8 @@ export async function download(canvas, fileName) {
     anchor.click();
     anchor.remove();
     setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+
+    return null;
 }
 
 /**

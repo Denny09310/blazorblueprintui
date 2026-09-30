@@ -477,10 +477,10 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
     }
 
     /// <summary>
-    /// Saves the open document as a PDF file. Byte-loaded documents are saved
-    /// straight from memory; URL-loaded documents are saved as a blob so a
-    /// cross-origin source is downloaded rather than navigated to. No-op before
-    /// a document is loaded.
+    /// Saves the open document as a PDF file, from the bytes the viewer already
+    /// holds, so a URL-loaded document is not requested again and a cross-origin
+    /// or expiring URL downloads the same as local bytes. No-op before a document
+    /// is loaded.
     /// </summary>
     /// <param name="fileName">
     /// The suggested file name. When null, it is derived from the source URL or
