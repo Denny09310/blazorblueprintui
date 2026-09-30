@@ -375,6 +375,86 @@ public class PdfViewerTests
             documentLoaded: _ => throw new InvalidOperationException("The consumer's handler failed."));
     }
 
+    [Fact]
+    public async Task LoadDataAsyncWaitsForTheModuleImportInsteadOfDoingNothing()
+    {
+        await RunAsync(
+            async (renderer, viewer, js) =>
+            {
+                // What a consumer's own OnAfterRenderAsync(firstRender) sees: the viewer has
+                // rendered, but its module import has not come back yet.
+                var load = viewer.LoadDataAsync(new byte[] { 0x25, 0x50, 0x44, 0x46 });
+                Assert.DoesNotContain(js.Calls, call => call.Identifier == "loadData");
+
+                js.ImportGate!.SetResult();
+                await load;
+
+                Assert.Single(js.Calls, call => call.Identifier == "loadData");
+                Assert.Equal(3, ComponentProbe.Field<int>(viewer, "pageCount"));
+            },
+            setupJs: js =>
+            {
+                js.ImportGate = new TaskCompletionSource();
+                js.Results["loadData"] = _ => State(ok: true, pageCount: 3, currentPage: 1, scale: 1.25);
+            });
+    }
+
+    [Fact]
+    public async Task AFailedLoadShowsTheLocalizedMessageNotWhatPdfJsSaid()
+    {
+        await RunAsync(
+            async (renderer, viewer, js) =>
+            {
+                var markup = renderer.Markup();
+                Assert.Contains("Unable to load the PDF document.", markup, StringComparison.Ordinal);
+                Assert.DoesNotContain("sig=secret", markup, StringComparison.Ordinal);
+            },
+            parameters => parameters[nameof(BbPdfViewer.Url)] = "a.pdf",
+            setupJs: js => js.Results["load"] = _ => State(
+                ok: false, pageCount: 0, currentPage: 0, scale: 1.25,
+                error: "Unexpected server response (404) while retrieving PDF \"https://files.example/a.pdf?sig=secret\"."));
+    }
+
+    [Fact]
+    public async Task AToolbarActionThatFailsInJavaScriptDoesNotThrow()
+    {
+        await RunAsync(
+            async (renderer, viewer, js) =>
+            {
+                // On Blazor Server an exception escaping a click handler ends the circuit.
+                await viewer.NextPageAsync();
+                await renderer.DispatchAsync("onclick", new MouseEventArgs(), occurrence: 1);
+
+                Assert.Equal(3, ComponentProbe.Field<int>(viewer, "currentPage"));
+                Assert.DoesNotContain("Unable to load the PDF document.", renderer.Markup(), StringComparison.Ordinal);
+            },
+            parameters => parameters[nameof(BbPdfViewer.Url)] = "a.pdf",
+            setupJs: js =>
+            {
+                js.Results["load"] = _ => State(ok: true, pageCount: 14, currentPage: 3, scale: 1.25);
+                js.Results["nextPage"] = _ => throw new JSException("Worker was destroyed");
+            });
+    }
+
+    [Fact]
+    public async Task AnActionAnsweredWithNoDocumentLeavesTheViewerAlone()
+    {
+        await RunAsync(
+            async (renderer, viewer, js) =>
+            {
+                await viewer.ZoomInAsync();
+
+                Assert.Equal(14, ComponentProbe.Field<int>(viewer, "pageCount"));
+                Assert.DoesNotContain("Unable to load the PDF document.", renderer.Markup(), StringComparison.Ordinal);
+            },
+            parameters => parameters[nameof(BbPdfViewer.Url)] = "a.pdf",
+            setupJs: js =>
+            {
+                js.Results["load"] = _ => State(ok: true, pageCount: 14, currentPage: 3, scale: 1.25);
+                js.Results["zoomIn"] = _ => State(ok: false, pageCount: 0, currentPage: 0, scale: 0);
+            });
+    }
+
     // ---------------------------------------------------------------------------------------
 
     private static async Task RunAsync(
@@ -435,7 +515,7 @@ public class PdfViewerTests
     /// Builds an instance of the viewer's private <c>PdfViewerState</c> DTO, which is what the
     /// real interop layer deserialises from the JSON object pdfjs-interop.js returns.
     /// </summary>
-    private static object State(bool ok, int pageCount, int currentPage, double scale)
+    private static object State(bool ok, int pageCount, int currentPage, double scale, string? error = null)
     {
         var stateType = typeof(BbPdfViewer).GetNestedType(
             "PdfViewerState", BindingFlags.NonPublic) ??
@@ -446,6 +526,7 @@ public class PdfViewerTests
         stateType.GetProperty("PageCount")!.SetValue(state, pageCount);
         stateType.GetProperty("CurrentPage")!.SetValue(state, currentPage);
         stateType.GetProperty("Scale")!.SetValue(state, scale);
+        stateType.GetProperty("Error")!.SetValue(state, error);
         return state;
     }
 
@@ -462,6 +543,9 @@ public class PdfViewerTests
         public List<(string Identifier, object?[]? Args, CancellationToken Token)> Calls { get; } = [];
         public Dictionary<string, Func<object?[]?, object?>> Results { get; } = new();
 
+        /// <summary>When set, the module import waits for it, like a slow circuit round trip.</summary>
+        public TaskCompletionSource? ImportGate { get; set; }
+
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
             InvokeAsync<TValue>(identifier, CancellationToken.None, args);
 
@@ -472,7 +556,9 @@ public class PdfViewerTests
 
             if (typeof(TValue) == typeof(IJSObjectReference))
             {
-                return ValueTask.FromResult((TValue)(object)this);
+                return ImportGate is { } gate
+                    ? new ValueTask<TValue>(ImportAsync<TValue>(gate.Task))
+                    : ValueTask.FromResult((TValue)(object)this);
             }
 
             if (Results.TryGetValue(identifier, out var factory) && factory(args) is { } result)
@@ -486,6 +572,12 @@ public class PdfViewerTests
         }
 
         private static async Task<TValue> AwaitAsync<TValue>(Task<object?> pending) => (TValue)(await pending)!;
+
+        private async Task<TValue> ImportAsync<TValue>(Task gate)
+        {
+            await gate;
+            return (TValue)(object)this;
+        }
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }

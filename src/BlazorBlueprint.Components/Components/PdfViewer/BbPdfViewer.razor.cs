@@ -2,6 +2,7 @@ using System.Globalization;
 using System.IO;
 using BlazorBlueprint.Primitives.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 
 namespace BlazorBlueprint.Components;
@@ -16,7 +17,7 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
     // === Private Fields ===
     private ElementReference canvas;
     private IJSObjectReference? jsModule;
-    private bool jsInitialized;
+    private Task? initTask;
     private string? lastKnownUrl;
 
     // Every load, from Url or LoadDataAsync, takes the next version and its own cancellation
@@ -49,6 +50,9 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
     private string? lastClass;
     private string? lastAriaLabel;
     private string? lastHeight;
+
+    [Inject]
+    private ILogger<BbPdfViewer> Logger { get; set; } = null!;
 
     // === Parameters - Source ===
 
@@ -141,37 +145,44 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
     {
         if (firstRender)
         {
-            await InitializeJsAsync();
+            await EnsureModuleAsync();
         }
 
         // Reload whenever the Url parameter has changed since the current document
         // was loaded. ShouldRender gates renders, so this only runs on real changes.
-        if (jsInitialized && jsModule is not null
-            && !string.Equals(Url, lastKnownUrl, StringComparison.Ordinal))
+        if (jsModule is not null && !string.Equals(Url, lastKnownUrl, StringComparison.Ordinal))
         {
             await LoadPdfAsync();
         }
     }
 
-    private async Task InitializeJsAsync()
+    /// <summary>
+    /// Imports the interop module on first use and waits for it. A public method called from the
+    /// consumer's own <c>OnAfterRenderAsync(firstRender)</c> can run before the viewer's import has
+    /// finished; it waits here instead of silently doing nothing. A failed import is tried again.
+    /// </summary>
+    private async Task<bool> EnsureModuleAsync()
     {
-        if (jsInitialized)
+        if (initTask is null || (initTask.IsCompleted && jsModule is null))
         {
-            return;
+            initTask = InitializeJsAsync();
         }
 
+        await initTask;
+        return jsModule is not null;
+    }
+
+    private async Task InitializeJsAsync()
+    {
         try
         {
             jsModule = await JsModules.GetAsync(
                 JS,
                 "./_content/BlazorBlueprint.Components/js/pdfjs-interop.js");
-
-            jsInitialized = true;
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine(
-                $"Failed to initialize PdfViewer JS: {ex.Message}");
+            PdfViewerLog.ModuleImportFailed(Logger, ex);
         }
     }
 
@@ -206,7 +217,7 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
         }
         catch (Exception ex) when (IsInteropFailure(ex))
         {
-            FailLoad(version);
+            FailLoad(version, ex.Message);
             return;
         }
 
@@ -233,13 +244,14 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
         return (++loadVersion, loadCts.Token);
     }
 
-    private void FailLoad(int version)
+    private void FailLoad(int version, string reason)
     {
         if (version != loadVersion)
         {
             return;
         }
 
+        PdfViewerLog.LoadFailed(Logger, reason);
         isLoading = false;
         loadError = Localizer["PdfViewer.LoadFailed"];
         StateHasChanged();
@@ -257,7 +269,7 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
             return;
         }
 
-        ApplyState(state);
+        ApplyLoadResult(state);
 
         if (state is { Ok: true })
         {
@@ -281,15 +293,20 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
 
     // === State Helpers ===
 
-    private void ApplyState(PdfViewerState? state)
+    private void ApplyLoadResult(PdfViewerState? state)
     {
         isLoading = false;
 
         if (state is null || !state.Ok)
         {
-            loadError = string.IsNullOrEmpty(state?.Error)
-                ? Localizer["PdfViewer.LoadFailed"]
-                : state!.Error;
+            // Users see the localized message. What PDF.js said can be raw English, and can carry
+            // the whole URL, signed query string included, so it goes to the log instead.
+            if (!string.IsNullOrEmpty(state?.Error))
+            {
+                PdfViewerLog.LoadFailed(Logger, state.Error);
+            }
+
+            loadError = Localizer["PdfViewer.LoadFailed"];
             pageCount = 0;
             currentPage = 0;
             StateHasChanged();
@@ -297,6 +314,11 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
         }
 
         loadError = null;
+        ApplyViewState(state);
+    }
+
+    private void ApplyViewState(PdfViewerState state)
+    {
         pageCount = state.PageCount;
         currentPage = state.CurrentPage;
         scale = state.Scale;
@@ -315,16 +337,51 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
 
     // === Toolbar Actions ===
 
-    private async Task NavigatePageAsync(string jsMethod)
+    /// <summary>
+    /// Runs a page, zoom or fit action in JavaScript. A failure is logged rather than thrown: these
+    /// run from toolbar clicks, and an exception escaping an event handler ends a Blazor Server
+    /// circuit. A result from before a newer load, or with no document open, is not applied.
+    /// </summary>
+    private async Task<PdfViewerState?> InvokeActionAsync(string jsMethod, params object?[] arguments)
     {
-        if (jsModule is null || !jsInitialized)
+        if (!await EnsureModuleAsync())
+        {
+            return null;
+        }
+
+        var version = loadVersion;
+        PdfViewerState? state;
+        try
+        {
+            state = await jsModule!.InvokeAsync<PdfViewerState>(jsMethod, [canvas, .. arguments]);
+        }
+        catch (Exception ex) when (IsInteropFailure(ex))
+        {
+            PdfViewerLog.ActionFailed(Logger, jsMethod, ex.Message);
+            return null;
+        }
+
+        if (!string.IsNullOrEmpty(state?.Error))
+        {
+            PdfViewerLog.ActionFailed(Logger, jsMethod, state.Error);
+        }
+
+        if (version != loadVersion || state is not { Ok: true })
+        {
+            return null;
+        }
+
+        ApplyViewState(state);
+        return state;
+    }
+
+    private async Task NavigatePageAsync(string jsMethod, params object?[] arguments)
+    {
+        var before = currentPage;
+        if (await InvokeActionAsync(jsMethod, arguments) is null)
         {
             return;
         }
-
-        var before = currentPage;
-        var state = await jsModule.InvokeAsync<PdfViewerState>(jsMethod, canvas);
-        ApplyState(state);
 
         if (currentPage > 0 && currentPage != before)
         {
@@ -334,19 +391,6 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
                 PageCount = pageCount
             });
         }
-    }
-
-    private async Task ZoomAsync(string jsMethod, object? argument = null)
-    {
-        if (jsModule is null || !jsInitialized)
-        {
-            return;
-        }
-
-        var state = argument is null
-            ? await jsModule.InvokeAsync<PdfViewerState>(jsMethod, canvas)
-            : await jsModule.InvokeAsync<PdfViewerState>(jsMethod, canvas, argument);
-        ApplyState(state);
     }
 
     private async Task GoToPageInputAsync()
@@ -385,40 +429,22 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
     /// Jumps to a specific page (1-based). Out-of-range values are clamped to the
     /// document's range. No-op when no document is loaded.
     /// </summary>
-    public async Task GoToPageAsync(int page)
-    {
-        if (jsModule is null || !jsInitialized || pageCount == 0)
-        {
-            return;
-        }
-
-        var before = currentPage;
-        var state = await jsModule.InvokeAsync<PdfViewerState>("gotoPage", canvas, page);
-        ApplyState(state);
-
-        if (currentPage > 0 && currentPage != before)
-        {
-            await OnPageChanged.InvokeAsync(new PdfViewerPageChangeEventArgs
-            {
-                Page = currentPage,
-                PageCount = pageCount
-            });
-        }
-    }
+    public Task GoToPageAsync(int page) =>
+        pageCount == 0 ? Task.CompletedTask : NavigatePageAsync("gotoPage", page);
 
     /// <summary>Zooms in by one step.</summary>
-    public Task ZoomInAsync() => ZoomAsync("zoomIn");
+    public Task ZoomInAsync() => InvokeActionAsync("zoomIn");
 
     /// <summary>Zooms out by one step.</summary>
-    public Task ZoomOutAsync() => ZoomAsync("zoomOut");
+    public Task ZoomOutAsync() => InvokeActionAsync("zoomOut");
 
     /// <summary>
     /// Sets the zoom scale, clamped to <see cref="MinScale"/> and <see cref="MaxScale"/>.
     /// </summary>
-    public Task SetScaleAsync(double scale) => ZoomAsync("setScale", scale);
+    public Task SetScaleAsync(double scale) => InvokeActionAsync("setScale", scale);
 
     /// <summary>Fits the current page to the width of its scroll area.</summary>
-    public Task FitToWidthAsync() => ZoomAsync("fitToWidth");
+    public Task FitToWidthAsync() => InvokeActionAsync("fitToWidth");
 
     /// <summary>
     /// Loads a PDF document from a byte array (for example bytes read from an
@@ -450,7 +476,7 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
     {
         ArgumentNullException.ThrowIfNull(data);
 
-        if (jsModule is null || !jsInitialized)
+        if (!await EnsureModuleAsync())
         {
             return;
         }
@@ -464,12 +490,12 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
         try
         {
             using var streamReference = new DotNetStreamReference(data);
-            state = await jsModule.InvokeAsync<PdfViewerState>(
+            state = await jsModule!.InvokeAsync<PdfViewerState>(
                 "loadData", cancellationToken, canvas, streamReference, BuildOptions());
         }
         catch (Exception ex) when (IsInteropFailure(ex))
         {
-            FailLoad(version);
+            FailLoad(version, ex.Message);
             return;
         }
 
@@ -488,42 +514,49 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
     /// </param>
     public async Task DownloadAsync(string? fileName = null)
     {
-        if (jsModule is null || !jsInitialized || pageCount == 0)
+        if (pageCount == 0 || !await EnsureModuleAsync())
         {
             return;
         }
 
-        await jsModule.InvokeVoidAsync("download", canvas, fileName);
+        try
+        {
+            var failure = await jsModule!.InvokeAsync<string?>("download", canvas, fileName);
+            if (failure is not null)
+            {
+                PdfViewerLog.ActionFailed(Logger, "download", failure);
+            }
+        }
+        catch (Exception ex) when (IsInteropFailure(ex))
+        {
+            PdfViewerLog.ActionFailed(Logger, "download", ex.Message);
+        }
     }
 
     /// <summary>Gets the currently visible page (1-based), or 0 before a document loads.</summary>
-    public async Task<int> GetCurrentPageAsync()
-    {
-        if (jsModule is not null && jsInitialized)
-        {
-            return await jsModule.InvokeAsync<int>("getCurrentPage", canvas);
-        }
-        return currentPage;
-    }
+    public Task<int> GetCurrentPageAsync() => QueryAsync("getCurrentPage", currentPage);
 
     /// <summary>Gets the number of pages in the loaded document, or 0 before it loads.</summary>
-    public async Task<int> GetPageCountAsync()
-    {
-        if (jsModule is not null && jsInitialized)
-        {
-            return await jsModule.InvokeAsync<int>("getPageCount", canvas);
-        }
-        return pageCount;
-    }
+    public Task<int> GetPageCountAsync() => QueryAsync("getPageCount", pageCount);
 
     /// <summary>Gets the current zoom scale.</summary>
-    public async Task<double> GetScaleAsync()
+    public Task<double> GetScaleAsync() => QueryAsync("getScale", scale);
+
+    private async Task<T> QueryAsync<T>(string jsMethod, T fallback)
     {
-        if (jsModule is not null && jsInitialized)
+        if (!await EnsureModuleAsync())
         {
-            return await jsModule.InvokeAsync<double>("getScale", canvas);
+            return fallback;
         }
-        return scale;
+
+        try
+        {
+            return await jsModule!.InvokeAsync<T>(jsMethod, canvas);
+        }
+        catch (Exception ex) when (IsInteropFailure(ex))
+        {
+            return fallback;
+        }
     }
 
     // === Render Helpers ===
@@ -631,7 +664,7 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
         loadCts?.Dispose();
         loadCts = null;
 
-        if (jsModule is null || !jsInitialized)
+        if (jsModule is null)
         {
             return;
         }

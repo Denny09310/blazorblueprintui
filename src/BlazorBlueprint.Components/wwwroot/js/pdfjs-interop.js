@@ -220,7 +220,17 @@ async function open(canvas, options, getSource) {
  * @returns {Promise<{ok: boolean, currentPage: number, pageCount: number, scale: number, error?: string, superseded?: boolean}>}
  */
 export function load(canvas, url, options) {
-    return open(canvas, options, async () => ({ url }));
+    return open(canvas, options, async () => ({ url: resolveUrl(url) }));
+}
+
+// PDF.js resolves a relative URL against the page's location rather than <base href>, so a
+// relative Url failed on every page below the app's root.
+function resolveUrl(url) {
+    try {
+        return new URL(url, document.baseURI).href;
+    } catch {
+        return url;
+    }
 }
 
 /**
