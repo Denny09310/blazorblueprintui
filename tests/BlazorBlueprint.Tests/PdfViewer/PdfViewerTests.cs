@@ -288,6 +288,93 @@ public class PdfViewerTests
             setupJs: js => js.Results["load"] = _ => State(ok: true, pageCount: 1, currentPage: 1, scale: 1.0));
     }
 
+    [Fact]
+    public async Task ALoadOvertakenByANewerUrlNeverReplacesIt()
+    {
+        var slow = new TaskCompletionSource<object?>();
+        var loaded = new List<int>();
+        await RunAsync(
+            async (renderer, viewer, js) =>
+            {
+                await SetUrlAsync(viewer, "slow.pdf");
+                await SetUrlAsync(viewer, "fast.pdf");
+                Assert.Equal([1], loaded);
+
+                // The slow document finishes after the fast one has been shown.
+                slow.SetResult(State(ok: true, pageCount: 14, currentPage: 1, scale: 1.25));
+                await Task.Delay(50);
+
+                Assert.Equal(1, ComponentProbe.Field<int>(viewer, "pageCount"));
+                Assert.Equal([1], loaded);
+                Assert.Contains(">1</span>", renderer.Markup(), StringComparison.Ordinal);
+
+                // The overtaken call was cancelled, so it no longer counts against the interop timeout.
+                Assert.True(js.Calls.First(call => call.Identifier == "load").Token.IsCancellationRequested);
+            },
+            setupJs: js => js.Results["load"] = args => (string?)args![1] == "slow.pdf"
+                ? slow.Task
+                : State(ok: true, pageCount: 1, currentPage: 1, scale: 1.25),
+            documentLoaded: loaded.Add);
+    }
+
+    [Fact]
+    public async Task LoadDataAsyncOvertakesAUrlLoadInFlight()
+    {
+        var slow = new TaskCompletionSource<object?>();
+        await RunAsync(
+            async (renderer, viewer, js) =>
+            {
+                await SetUrlAsync(viewer, "slow.pdf");
+                await viewer.LoadDataAsync(new byte[] { 0x25, 0x50, 0x44, 0x46 });
+
+                slow.SetResult(State(ok: true, pageCount: 14, currentPage: 1, scale: 1.25));
+                await Task.Delay(50);
+
+                Assert.Equal(2, ComponentProbe.Field<int>(viewer, "pageCount"));
+            },
+            setupJs: js =>
+            {
+                js.Results["load"] = _ => slow.Task;
+                js.Results["loadData"] = _ => State(ok: true, pageCount: 2, currentPage: 1, scale: 1.25);
+            });
+    }
+
+    [Fact]
+    public async Task DisposalStopsALoadInFlightFromReportingIn()
+    {
+        var slow = new TaskCompletionSource<object?>();
+        var loaded = new List<int>();
+        await RunAsync(
+            async (renderer, viewer, js) =>
+            {
+                await SetUrlAsync(viewer, "slow.pdf");
+                await ((IAsyncDisposable)viewer).DisposeAsync();
+
+                slow.SetResult(State(ok: true, pageCount: 14, currentPage: 1, scale: 1.25));
+                await Task.Delay(50);
+
+                Assert.Empty(loaded);
+                Assert.True(js.Calls.First(call => call.Identifier == "load").Token.IsCancellationRequested);
+            },
+            setupJs: js => js.Results["load"] = _ => slow.Task,
+            documentLoaded: loaded.Add);
+    }
+
+    [Fact]
+    public async Task AnExceptionFromTheConsumersLoadedHandlerIsNotReportedAsAFailedLoad()
+    {
+        await RunAsync(
+            async (renderer, viewer, js) =>
+            {
+                await Assert.ThrowsAsync<InvalidOperationException>(
+                    () => viewer.LoadDataAsync(new byte[] { 0x25, 0x50, 0x44, 0x46 }));
+
+                Assert.DoesNotContain("Unable to load the PDF document.", renderer.Markup(), StringComparison.Ordinal);
+            },
+            setupJs: js => js.Results["loadData"] = _ => State(ok: true, pageCount: 2, currentPage: 1, scale: 1.25),
+            documentLoaded: _ => throw new InvalidOperationException("The consumer's handler failed."));
+    }
+
     // ---------------------------------------------------------------------------------------
 
     private static async Task RunAsync(
@@ -366,11 +453,13 @@ public class PdfViewerTests
     /// A JavaScript runtime that records every call and answers each interop identifier with a
     /// configured result, so tests can both verify what the component asked for and feed it the
     /// state it would get back from pdfjs-interop.js. Like <see cref="NoopJavaScript"/>, it stands
-    /// in for the module reference itself when an import is requested.
+    /// in for the module reference itself when an import is requested. A result given as a
+    /// <see cref="Task{TResult}"/> of object completes when the test says so, and ignores the call's
+    /// cancellation token, the way a JavaScript promise already running finishes regardless.
     /// </summary>
     private sealed class RecordingJsRuntime : IJSRuntime, IJSObjectReference
     {
-        public List<(string Identifier, object?[]? Args)> Calls { get; } = [];
+        public List<(string Identifier, object?[]? Args, CancellationToken Token)> Calls { get; } = [];
         public Dictionary<string, Func<object?[]?, object?>> Results { get; } = new();
 
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
@@ -379,7 +468,7 @@ public class PdfViewerTests
         public ValueTask<TValue> InvokeAsync<TValue>(
             string identifier, CancellationToken cancellationToken, object?[]? args)
         {
-            Calls.Add((identifier, args));
+            Calls.Add((identifier, args, cancellationToken));
 
             if (typeof(TValue) == typeof(IJSObjectReference))
             {
@@ -388,11 +477,15 @@ public class PdfViewerTests
 
             if (Results.TryGetValue(identifier, out var factory) && factory(args) is { } result)
             {
-                return ValueTask.FromResult((TValue)result);
+                return result is Task<object?> pending
+                    ? new ValueTask<TValue>(AwaitAsync<TValue>(pending))
+                    : ValueTask.FromResult((TValue)result);
             }
 
             return ValueTask.FromResult<TValue>(default!);
         }
+
+        private static async Task<TValue> AwaitAsync<TValue>(Task<object?> pending) => (TValue)(await pending)!;
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }

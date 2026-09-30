@@ -1,10 +1,11 @@
 // Pdf.js interop for PdfViewer component
 // Handles loading, page navigation, zoom, fit-to-width and lifecycle.
 //
-// State is kept per canvas in a WeakMap, so each viewer owns its PDF document,
-// its page cache and the in-flight render task. Every function that can change
-// the visible state returns the same shape { ok, currentPage, pageCount, scale },
-// which .NET deserializes into PdfViewerState to keep its own fields in sync.
+// State is kept per canvas in a WeakMap: a slot holding the document the canvas shows and the load
+// in flight, if any. Every function that can change the visible state returns the same shape
+// { ok, currentPage, pageCount, scale }, which .NET deserializes into PdfViewerState to keep its
+// own fields in sync. None of them throws: a failure comes back in `error`, because an exception
+// escaping an interop call from an event handler ends a Blazor Server circuit.
 
 // The legacy build: the modern one calls Map.prototype.getOrInsertComputed without a polyfill,
 // which only the newest browsers have.
@@ -24,7 +25,23 @@ const wasmUrl = new URL("../lib/pdfjs/wasm/", import.meta.url).href;
 const SCALE_STEP = 0.25;
 const FIT_WIDTH_MARGIN = 32;
 
-const viewers = new WeakMap();
+// canvas -> { generation, loadingTask, viewer }. The generation increases every time the canvas is
+// given a new document or released, so a load that was overtaken can tell it is stale.
+const slots = new WeakMap();
+
+function slotFor(canvas) {
+    let slot = slots.get(canvas);
+    if (!slot) {
+        slot = { generation: 0, loadingTask: null, viewer: null };
+        slots.set(canvas, slot);
+    }
+    return slot;
+}
+
+function currentViewer(canvas) {
+    const slot = slots.get(canvas);
+    return slot ? slot.viewer : null;
+}
 
 function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
@@ -46,13 +63,17 @@ function normalizeOptions(options) {
 }
 
 function stateFor(canvas) {
-    const viewer = viewers.get(canvas);
+    const viewer = currentViewer(canvas);
     return {
         ok: !!viewer,
         currentPage: viewer ? viewer.currentPage : 0,
         pageCount: viewer ? viewer.pageCount : 0,
         scale: viewer ? viewer.scale : 0
     };
+}
+
+function messageOf(err) {
+    return err && err.message ? err.message : String(err);
 }
 
 function clearCanvas(canvas) {
@@ -66,28 +87,88 @@ function clearCanvas(canvas) {
     canvas.style.height = "";
 }
 
-/**
- * Loads a document into the canvas and renders its first page.
- * Replaces whatever the viewer was showing before (the previous PDF is destroyed).
- * @param {HTMLCanvasElement} canvas
- * @param {string} url
- * @param {{initialScale?: number, minScale?: number, maxScale?: number}} [options]
- * @returns {Promise<{ok: boolean, currentPage: number, pageCount: number, scale: number, error?: string}>}
- */
-export async function load(canvas, url, options) {
-    await dispose(canvas);
+async function destroyTask(loadingTask) {
+    try {
+        await loadingTask.destroy();
+    } catch {
+        // Already destroyed, or the load it belonged to failed.
+    }
+}
 
+/**
+ * Ends whatever the canvas is showing or loading. Bumping the generation makes any load still in
+ * flight stale, and destroying its loading task terminates the worker and the document inside it.
+ * PDFDocumentProxy has no destroy() in PDF.js 6: only the loading task frees them.
+ * @param {HTMLCanvasElement} canvas
+ * @returns {Promise<number>} The canvas's new generation.
+ */
+async function release(canvas) {
+    const slot = slotFor(canvas);
+    const generation = ++slot.generation;
+
+    const { viewer, loadingTask } = slot;
+    slot.viewer = null;
+    slot.loadingTask = null;
+
+    if (viewer) {
+        try {
+            viewer.renderTask && viewer.renderTask.cancel();
+        } catch {
+            // Ignore render cancellation errors.
+        }
+        viewer.renderTask = null;
+        viewer.pageCache.clear();
+        await destroyTask(viewer.loadingTask);
+    }
+
+    if (loadingTask) {
+        await destroyTask(loadingTask);
+    }
+
+    return generation;
+}
+
+/**
+ * Loads a document into the canvas and renders its first page, replacing whatever the canvas was
+ * showing or loading. A load overtaken by a newer one, or by dispose, destroys its own document and
+ * returns { superseded: true } instead of registering it.
+ * @param {HTMLCanvasElement} canvas
+ * @param {object} options
+ * @param {() => Promise<object>} getSource Resolves to the getDocument source ({ url } or { data }).
+ */
+async function open(canvas, options, getSource) {
+    const generation = await release(canvas);
+    const slot = slotFor(canvas);
     const { initialScale, minScale, maxScale } = normalizeOptions(options);
+    const superseded = { ok: false, superseded: true, currentPage: 0, pageCount: 0, scale: initialScale };
+
+    if (slot.generation !== generation) {
+        return superseded;
+    }
 
     clearCanvas(canvas);
 
+    let loadingTask = null;
     try {
-        const pdf = await pdfjsLib.getDocument({ url, wasmUrl }).promise;
+        const source = await getSource();
+        if (slot.generation !== generation) {
+            return superseded;
+        }
+
+        loadingTask = pdfjsLib.getDocument({ ...source, wasmUrl });
+        slot.loadingTask = loadingTask;
+
+        const pdf = await loadingTask.promise;
+        if (slot.generation !== generation) {
+            await destroyTask(loadingTask);
+            return superseded;
+        }
 
         const viewer = {
+            loadingTask,
             pdf,
-            url,
-            data: null,
+            url: source.url || null,
+            data: source.data || null,
             pageCount: pdf.numPages,
             currentPage: 1,
             scale: initialScale,
@@ -96,9 +177,13 @@ export async function load(canvas, url, options) {
             pageCache: new Map(),
             renderTask: null
         };
-        viewers.set(canvas, viewer);
+        slot.loadingTask = null;
+        slot.viewer = viewer;
 
-        await renderPage(canvas, 1);
+        await renderPage(canvas, viewer, 1);
+        if (slot.generation !== generation) {
+            return superseded;
+        }
 
         return {
             ok: true,
@@ -107,70 +192,57 @@ export async function load(canvas, url, options) {
             scale: viewer.scale
         };
     } catch (err) {
+        // A newer load or dispose destroying this one's task rejects here too; that is not an error.
+        if (slot.generation !== generation) {
+            return superseded;
+        }
+
+        slot.viewer = null;
+        slot.loadingTask = null;
+        if (loadingTask) {
+            await destroyTask(loadingTask);
+        }
         clearCanvas(canvas);
         return {
             ok: false,
             currentPage: 0,
             pageCount: 0,
             scale: initialScale,
-            error: err && err.message ? err.message : String(err)
+            error: messageOf(err)
         };
     }
 }
 
 /**
- * Loads a document from an in-memory byte stream. The .NET side sends a
- * DotNetStreamReference, whose `dotnetStream` property is a ReadableStream that
- * is consumed directly here, so PDF.js renders from the local bytes and there is
- * no second web request. Replaces whatever the viewer was showing before.
+ * Loads a document from a URL.
  * @param {HTMLCanvasElement} canvas
- * @param {{dotnetStream: ReadableStream}} streamReference
+ * @param {string} url
  * @param {{initialScale?: number, minScale?: number, maxScale?: number}} [options]
- * @returns {Promise<{ok: boolean, currentPage: number, pageCount: number, scale: number, error?: string}>}
+ * @returns {Promise<{ok: boolean, currentPage: number, pageCount: number, scale: number, error?: string, superseded?: boolean}>}
  */
-export async function loadData(canvas, streamReference, options) {
-    await dispose(canvas);
+export function load(canvas, url, options) {
+    return open(canvas, options, async () => ({ url }));
+}
 
-    const { initialScale, minScale, maxScale } = normalizeOptions(options);
+/**
+ * Loads a document from an in-memory byte stream. The .NET side sends a DotNetStreamReference,
+ * read here with arrayBuffer(), so PDF.js renders from the local bytes and there is no web request.
+ * @param {HTMLCanvasElement} canvas
+ * @param {{arrayBuffer: () => Promise<ArrayBuffer>}} streamReference
+ * @param {{initialScale?: number, minScale?: number, maxScale?: number}} [options]
+ * @returns {Promise<{ok: boolean, currentPage: number, pageCount: number, scale: number, error?: string, superseded?: boolean}>}
+ */
+export function loadData(canvas, streamReference, options) {
+    return open(canvas, options, async () => ({ data: await streamReference.arrayBuffer() }));
+}
 
-    clearCanvas(canvas);
-
-    try {
-        const data = await streamReference?.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data, wasmUrl }).promise;
-
-        const viewer = {
-            pdf,
-            url: null,
-            data,
-            pageCount: pdf.numPages,
-            currentPage: 1,
-            scale: initialScale,
-            minScale,
-            maxScale,
-            pageCache: new Map(),
-            renderTask: null
-        };
-        viewers.set(canvas, viewer);
-
-        await renderPage(canvas, 1);
-
-        return {
-            ok: true,
-            currentPage: viewer.currentPage,
-            pageCount: viewer.pageCount,
-            scale: viewer.scale
-        };
-    } catch (err) {
-        clearCanvas(canvas);
-        return {
-            ok: false,
-            currentPage: 0,
-            pageCount: 0,
-            scale: initialScale,
-            error: err && err.message ? err.message : String(err)
-        };
+async function getPage(viewer, pageNumber) {
+    let page = viewer.pageCache.get(pageNumber);
+    if (!page) {
+        page = await viewer.pdf.getPage(pageNumber);
+        viewer.pageCache.set(pageNumber, page);
     }
+    return page;
 }
 
 /**
@@ -179,18 +251,13 @@ export async function loadData(canvas, streamReference, options) {
  * a stale frame over the newest one, and resolved pages are cached so paging
  * back and forth does not re-fetch every time.
  * @param {HTMLCanvasElement} canvas
+ * @param {object} viewer
  * @param {number} pageNumber
  */
-async function renderPage(canvas, pageNumber) {
-    const viewer = viewers.get(canvas);
-    if (!viewer) {
+async function renderPage(canvas, viewer, pageNumber) {
+    const page = await getPage(viewer, pageNumber);
+    if (currentViewer(canvas) !== viewer) {
         return;
-    }
-
-    let page = viewer.pageCache.get(pageNumber);
-    if (!page) {
-        page = await viewer.pdf.getPage(pageNumber);
-        viewer.pageCache.set(pageNumber, page);
     }
 
     if (viewer.renderTask) {
@@ -240,8 +307,35 @@ async function renderPage(canvas, pageNumber) {
         }
         throw err;
     } finally {
-        viewer.renderTask = null;
+        // Only clear our own task: a newer render may already have replaced it.
+        if (viewer.renderTask === renderTask) {
+            viewer.renderTask = null;
+        }
     }
+}
+
+/**
+ * Runs an action against the document the canvas shows and returns the resulting state. A failure
+ * is returned in `error` rather than thrown. A document replaced or released mid-action rejects
+ * with "Worker was destroyed"; that is not a failure of the document now showing, so it is dropped.
+ * @param {HTMLCanvasElement} canvas
+ * @param {(viewer: object) => Promise<void>} action
+ */
+async function act(canvas, action) {
+    const viewer = currentViewer(canvas);
+    if (!viewer) {
+        return stateFor(canvas);
+    }
+
+    try {
+        await action(viewer);
+    } catch (err) {
+        if (currentViewer(canvas) === viewer) {
+            return { ...stateFor(canvas), error: messageOf(err) };
+        }
+    }
+
+    return stateFor(canvas);
 }
 
 /**
@@ -251,18 +345,12 @@ async function renderPage(canvas, pageNumber) {
  * @param {number} pageNumber
  */
 function goToPage(canvas, pageNumber) {
-    const viewer = viewers.get(canvas);
-    if (!viewer) {
-        return Promise.resolve(stateFor(canvas));
-    }
-
-    const view = stateFor(canvas);
-    const target = clamp(Math.floor(pageNumber), 1, view.pageCount);
-    if (target === viewer.currentPage) {
-        return Promise.resolve(view);
-    }
-
-    return renderPage(canvas, target).then(() => stateFor(canvas));
+    return act(canvas, async viewer => {
+        const target = clamp(Math.floor(pageNumber), 1, viewer.pageCount);
+        if (target !== viewer.currentPage) {
+            await renderPage(canvas, viewer, target);
+        }
+    });
 }
 
 /**
@@ -270,8 +358,8 @@ function goToPage(canvas, pageNumber) {
  * @param {HTMLCanvasElement} canvas
  */
 export function nextPage(canvas) {
-    const current = stateFor(canvas).currentPage;
-    return goToPage(canvas, current ? current + 1 : 0);
+    const viewer = currentViewer(canvas);
+    return goToPage(canvas, viewer ? viewer.currentPage + 1 : 1);
 }
 
 /**
@@ -279,8 +367,8 @@ export function nextPage(canvas) {
  * @param {HTMLCanvasElement} canvas
  */
 export function previousPage(canvas) {
-    const current = stateFor(canvas).currentPage;
-    return goToPage(canvas, current ? current - 1 : 0);
+    const viewer = currentViewer(canvas);
+    return goToPage(canvas, viewer ? viewer.currentPage - 1 : 1);
 }
 
 /**
@@ -296,47 +384,37 @@ export function gotoPage(canvas, page) {
  * Sets the zoom scale for the current page.
  * @param {HTMLCanvasElement} canvas
  * @param {number} scale
- * @returns {Promise<{currentPage: number, pageCount: number, scale: number}>}
  */
-export async function setScale(canvas, scale) {
-    const viewer = viewers.get(canvas);
-    if (!viewer) {
-        return stateFor(canvas);
-    }
-    const before = viewer.scale;
-    viewer.scale = clamp(scale, viewer.minScale, viewer.maxScale);
-    if (viewer.scale !== before) {
-        await renderPage(canvas, viewer.currentPage);
-    }
-    return stateFor(canvas);
+export function setScale(canvas, scale) {
+    return act(canvas, async viewer => {
+        const before = viewer.scale;
+        viewer.scale = clamp(scale, viewer.minScale, viewer.maxScale);
+        if (viewer.scale !== before) {
+            await renderPage(canvas, viewer, viewer.currentPage);
+        }
+    });
 }
 
 /**
  * Zooms in one step.
  * @param {HTMLCanvasElement} canvas
  */
-export async function zoomIn(canvas) {
-    const viewer = viewers.get(canvas);
-    if (!viewer) {
-        return stateFor(canvas);
-    }
-    viewer.scale = clamp(viewer.scale + SCALE_STEP, viewer.minScale, viewer.maxScale);
-    await renderPage(canvas, viewer.currentPage);
-    return stateFor(canvas);
+export function zoomIn(canvas) {
+    return act(canvas, async viewer => {
+        viewer.scale = clamp(viewer.scale + SCALE_STEP, viewer.minScale, viewer.maxScale);
+        await renderPage(canvas, viewer, viewer.currentPage);
+    });
 }
 
 /**
  * Zooms out one step.
  * @param {HTMLCanvasElement} canvas
  */
-export async function zoomOut(canvas) {
-    const viewer = viewers.get(canvas);
-    if (!viewer) {
-        return stateFor(canvas);
-    }
-    viewer.scale = clamp(viewer.scale - SCALE_STEP, viewer.minScale, viewer.maxScale);
-    await renderPage(canvas, viewer.currentPage);
-    return stateFor(canvas);
+export function zoomOut(canvas) {
+    return act(canvas, async viewer => {
+        viewer.scale = clamp(viewer.scale - SCALE_STEP, viewer.minScale, viewer.maxScale);
+        await renderPage(canvas, viewer, viewer.currentPage);
+    });
 }
 
 /**
@@ -344,28 +422,19 @@ export async function zoomOut(canvas) {
  * margin on each side. Returns the updated state.
  * @param {HTMLCanvasElement} canvas
  */
-export async function fitToWidth(canvas) {
-    const viewer = viewers.get(canvas);
-    if (!viewer) {
-        return stateFor(canvas);
-    }
+export function fitToWidth(canvas) {
+    return act(canvas, async viewer => {
+        const page = await getPage(viewer, viewer.currentPage);
+        const baseViewport = page.getViewport({ scale: 1 });
+        const container = canvas.parentElement;
+        const available = (container ? container.clientWidth : 0) - FIT_WIDTH_MARGIN;
+        if (available <= 0) {
+            return;
+        }
 
-    let page = viewer.pageCache.get(viewer.currentPage);
-    if (!page) {
-        page = await viewer.pdf.getPage(viewer.currentPage);
-        viewer.pageCache.set(viewer.currentPage, page);
-    }
-
-    const baseViewport = page.getViewport({ scale: 1 });
-    const container = canvas.parentElement;
-    const available = (container ? container.clientWidth : 0) - FIT_WIDTH_MARGIN;
-    if (available <= 0) {
-        return stateFor(canvas);
-    }
-
-    viewer.scale = clamp(available / baseViewport.width, viewer.minScale, viewer.maxScale);
-    await renderPage(canvas, viewer.currentPage);
-    return stateFor(canvas);
+        viewer.scale = clamp(available / baseViewport.width, viewer.minScale, viewer.maxScale);
+        await renderPage(canvas, viewer, viewer.currentPage);
+    });
 }
 
 /**
@@ -416,7 +485,7 @@ function defaultFileName(viewer) {
  * @param {string|null} [fileName]
  */
 export async function download(canvas, fileName) {
-    const viewer = viewers.get(canvas);
+    const viewer = currentViewer(canvas);
     if (!viewer) {
         return;
     }
@@ -456,42 +525,15 @@ export async function download(canvas, fileName) {
  * @param {HTMLCanvasElement} canvas
  */
 export async function clear(canvas) {
-    await dispose(canvas);
+    await release(canvas);
     clearCanvas(canvas);
 }
 
 /**
- * Destroys the loaded document and frees its resources. Safe to call when
+ * Destroys the loaded document, stops any load in flight and frees their workers. Safe to call when
  * nothing is loaded, and during circuit disposal.
  * @param {HTMLCanvasElement} canvas
  */
 export async function dispose(canvas) {
-    const viewer = viewers.get(canvas);
-    if (!viewer) {
-        return;
-    }
-
-    viewers.delete(canvas);
-
-    try {
-        viewer.renderTask && viewer.renderTask.cancel();
-    } catch {
-        // Ignore render cancellation errors.
-    }
-    viewer.renderTask = null;
-
-    for (const page of viewer.pageCache.values()) {
-        try {
-            page.cleanup();
-        } catch {
-            // Ignore page cleanup errors.
-        }
-    }
-    viewer.pageCache.clear();
-
-    try {
-        await viewer.pdf.destroy();
-    } catch {
-        // Ignore PDF.js cleanup errors.
-    }
+    await release(canvas);
 }

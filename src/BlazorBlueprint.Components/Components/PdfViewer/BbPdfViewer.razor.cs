@@ -19,6 +19,12 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
     private bool jsInitialized;
     private string? lastKnownUrl;
 
+    // Every load, from Url or LoadDataAsync, takes the next version and its own cancellation
+    // source. A newer load or disposal cancels the older call and bumps the version, so a result
+    // that still arrives late is recognised as stale and never replaces the newer document.
+    private int loadVersion;
+    private CancellationTokenSource? loadCts;
+
     private bool isLoading;
     private string? loadError;
     private int pageCount;
@@ -177,6 +183,45 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
         }
 
         lastKnownUrl = Url;
+        var (version, cancellationToken) = BeginLoad();
+
+        PdfViewerState? state;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(Url))
+            {
+                await jsModule.InvokeVoidAsync("clear", cancellationToken, canvas);
+                if (version == loadVersion)
+                {
+                    isLoading = false;
+                    StateHasChanged();
+                }
+                return;
+            }
+
+            // The explicit token also replaces Blazor Server's 60-second interop timeout: a large
+            // document on a slow link is still loading, not failed.
+            state = await jsModule.InvokeAsync<PdfViewerState>(
+                "load", cancellationToken, canvas, Url, BuildOptions());
+        }
+        catch (Exception ex) when (IsInteropFailure(ex))
+        {
+            FailLoad(version);
+            return;
+        }
+
+        await CompleteLoadAsync(version, state);
+    }
+
+    /// <summary>
+    /// Starts a load: supersedes the one in flight and resets the visible state.
+    /// </summary>
+    private (int Version, CancellationToken CancellationToken) BeginLoad()
+    {
+        loadCts?.Cancel();
+        loadCts?.Dispose();
+        loadCts = new CancellationTokenSource();
+
         isLoading = true;
         loadError = null;
         pageCount = 0;
@@ -185,38 +230,47 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
         pageInput = "1";
         StateHasChanged();
 
-        if (string.IsNullOrWhiteSpace(Url))
+        return (++loadVersion, loadCts.Token);
+    }
+
+    private void FailLoad(int version)
+    {
+        if (version != loadVersion)
         {
-            await jsModule.InvokeVoidAsync("clear", canvas);
-            isLoading = false;
-            StateHasChanged();
             return;
         }
 
-        try
+        isLoading = false;
+        loadError = Localizer["PdfViewer.LoadFailed"];
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Applies a load's result unless a newer load or disposal has overtaken it. Raising
+    /// <see cref="OnDocumentLoaded"/> happens outside the interop error handling, so an exception
+    /// from the consumer's own handler reaches them rather than showing as a failed load.
+    /// </summary>
+    private async Task CompleteLoadAsync(int version, PdfViewerState? state)
+    {
+        if (version != loadVersion || state is { Superseded: true })
         {
-            var state = await jsModule.InvokeAsync<PdfViewerState>(
-                "load", canvas, Url, BuildOptions());
-
-            ApplyState(state);
-
-            if (state is { Ok: true })
-            {
-                await OnDocumentLoaded.InvokeAsync(state.PageCount);
-            }
+            return;
         }
-        catch (Exception ex) when (
-            ex is JSDisconnectedException
-            or JSException
-            or TaskCanceledException
-            or ObjectDisposedException
-            or InvalidOperationException)
+
+        ApplyState(state);
+
+        if (state is { Ok: true })
         {
-            isLoading = false;
-            loadError = Localizer["PdfViewer.LoadFailed"];
-            StateHasChanged();
+            await OnDocumentLoaded.InvokeAsync(state.PageCount);
         }
     }
+
+    private static bool IsInteropFailure(Exception ex) =>
+        ex is JSDisconnectedException
+            or JSException
+            or OperationCanceledException
+            or ObjectDisposedException
+            or InvalidOperationException;
 
     private object BuildOptions() => new
     {
@@ -404,40 +458,22 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
         // A programmatic load replaces the current document; keep the Url marker
         // in sync so an unchanged Url parameter does not reload it afterwards.
         lastKnownUrl = Url;
-        isLoading = true;
-        loadError = null;
-        pageCount = 0;
-        currentPage = 0;
-        scale = ClampScale(DefaultScale);
-        pageInput = "1";
-        StateHasChanged();
+        var (version, cancellationToken) = BeginLoad();
 
+        PdfViewerState? state;
         try
         {
-            using (var streamReference = new DotNetStreamReference(data))
-            {
-                var state = await jsModule.InvokeAsync<PdfViewerState>(
-                    "loadData", canvas, streamReference, BuildOptions());
-
-                ApplyState(state);
-
-                if (state is { Ok: true })
-                {
-                    await OnDocumentLoaded.InvokeAsync(state.PageCount);
-                }
-            }
+            using var streamReference = new DotNetStreamReference(data);
+            state = await jsModule.InvokeAsync<PdfViewerState>(
+                "loadData", cancellationToken, canvas, streamReference, BuildOptions());
         }
-        catch (Exception ex) when (
-            ex is JSDisconnectedException
-            or JSException
-            or TaskCanceledException
-            or ObjectDisposedException
-            or InvalidOperationException)
+        catch (Exception ex) when (IsInteropFailure(ex))
         {
-            isLoading = false;
-            loadError = Localizer["PdfViewer.LoadFailed"];
-            StateHasChanged();
+            FailLoad(version);
+            return;
         }
+
+        await CompleteLoadAsync(version, state);
     }
 
     /// <summary>
@@ -578,6 +614,9 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
         public int CurrentPage { get; set; }
         public double Scale { get; set; }
         public string? Error { get; set; }
+
+        /// <summary>True when a newer load or disposal overtook this one in JavaScript.</summary>
+        public bool Superseded { get; set; }
     }
 
     // === Dispose ===
@@ -585,6 +624,12 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         GC.SuppressFinalize(this);
+
+        // A load still in flight must not apply its result to a disposed viewer.
+        loadVersion++;
+        loadCts?.Cancel();
+        loadCts?.Dispose();
+        loadCts = null;
 
         if (jsModule is null || !jsInitialized)
         {
