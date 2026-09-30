@@ -25,14 +25,14 @@ const wasmUrl = new URL("../lib/pdfjs/wasm/", import.meta.url).href;
 const SCALE_STEP = 0.25;
 const FIT_WIDTH_MARGIN = 32;
 
-// canvas -> { generation, loadingTask, viewer }. The generation increases every time the canvas is
-// given a new document or released, so a load that was overtaken can tell it is stale.
+// canvas -> { generation, loadingTask, viewer, overtaken }. The generation increases every time the
+// canvas is given a new document or released, so a load that was overtaken can tell it is stale.
 const slots = new WeakMap();
 
 function slotFor(canvas) {
     let slot = slots.get(canvas);
     if (!slot) {
-        slot = { generation: 0, loadingTask: null, viewer: null };
+        slot = { generation: 0, loadingTask: null, viewer: null, overtaken: null };
         slots.set(canvas, slot);
     }
     return slot;
@@ -106,6 +106,12 @@ async function release(canvas) {
     const slot = slotFor(canvas);
     const generation = ++slot.generation;
 
+    // Lets the load in flight return at once (see open).
+    if (slot.overtaken) {
+        slot.overtaken();
+        slot.overtaken = null;
+    }
+
     const { viewer, loadingTask } = slot;
     slot.viewer = null;
     slot.loadingTask = null;
@@ -148,67 +154,78 @@ async function open(canvas, options, getSource) {
 
     clearCanvas(canvas);
 
-    let loadingTask = null;
-    try {
-        const source = await getSource();
-        if (slot.generation !== generation) {
-            return superseded;
+    // A loading task destroyed before its worker has answered never settles its promise, so a load
+    // overtaken that early would wait forever, holding on to everything it references. The next
+    // release() resolves this and the load returns at once; what it was awaiting is then ignored.
+    const overtaken = new Promise(resolve => {
+        slot.overtaken = resolve;
+    }).then(() => superseded);
+
+    return Promise.race([fetchAndRender(), overtaken]);
+
+    async function fetchAndRender() {
+        let loadingTask = null;
+        try {
+            const source = await getSource();
+            if (slot.generation !== generation) {
+                return superseded;
+            }
+
+            loadingTask = pdfjsLib.getDocument({ ...source, wasmUrl });
+            slot.loadingTask = loadingTask;
+
+            const pdf = await loadingTask.promise;
+            if (slot.generation !== generation) {
+                await destroyTask(loadingTask);
+                return superseded;
+            }
+
+            const viewer = {
+                loadingTask,
+                pdf,
+                url: source.url || null,
+                pageCount: pdf.numPages,
+                currentPage: 1,
+                scale: initialScale,
+                minScale,
+                maxScale,
+                pageCache: new Map(),
+                renderTask: null
+            };
+            slot.loadingTask = null;
+            slot.viewer = viewer;
+
+            await renderPage(canvas, viewer, 1);
+            if (slot.generation !== generation) {
+                return superseded;
+            }
+
+            return {
+                ok: true,
+                currentPage: viewer.currentPage,
+                pageCount: viewer.pageCount,
+                scale: viewer.scale
+            };
+        } catch (err) {
+            // A newer load or dispose destroying this one's task rejects here too; that is not an error.
+            if (slot.generation !== generation) {
+                return superseded;
+            }
+
+            slot.viewer = null;
+            slot.loadingTask = null;
+            if (loadingTask) {
+                await destroyTask(loadingTask);
+            }
+            clearCanvas(canvas);
+            return {
+                ok: false,
+                currentPage: 0,
+                pageCount: 0,
+                scale: initialScale,
+                error: messageOf(err)
+            };
         }
-
-        loadingTask = pdfjsLib.getDocument({ ...source, wasmUrl });
-        slot.loadingTask = loadingTask;
-
-        const pdf = await loadingTask.promise;
-        if (slot.generation !== generation) {
-            await destroyTask(loadingTask);
-            return superseded;
-        }
-
-        const viewer = {
-            loadingTask,
-            pdf,
-            url: source.url || null,
-            pageCount: pdf.numPages,
-            currentPage: 1,
-            scale: initialScale,
-            minScale,
-            maxScale,
-            pageCache: new Map(),
-            renderTask: null
-        };
-        slot.loadingTask = null;
-        slot.viewer = viewer;
-
-        await renderPage(canvas, viewer, 1);
-        if (slot.generation !== generation) {
-            return superseded;
-        }
-
-        return {
-            ok: true,
-            currentPage: viewer.currentPage,
-            pageCount: viewer.pageCount,
-            scale: viewer.scale
-        };
-    } catch (err) {
-        // A newer load or dispose destroying this one's task rejects here too; that is not an error.
-        if (slot.generation !== generation) {
-            return superseded;
-        }
-
-        slot.viewer = null;
-        slot.loadingTask = null;
-        if (loadingTask) {
-            await destroyTask(loadingTask);
-        }
-        clearCanvas(canvas);
-        return {
-            ok: false,
-            currentPage: 0,
-            pageCount: 0,
-            scale: initialScale,
-            error: messageOf(err)
-        };
     }
 }
 
