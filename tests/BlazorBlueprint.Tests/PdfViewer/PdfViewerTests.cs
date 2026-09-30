@@ -455,6 +455,41 @@ public class PdfViewerTests
             });
     }
 
+    [Fact]
+    public async Task ChangingTheZoomBoundsRedrawsTheToolbar()
+    {
+        await RunAsync(
+            async (renderer, viewer, js) =>
+            {
+                Assert.Equal(0, CountOf(renderer.Markup(), "aria-disabled=\"true\""));
+
+                // Zoom is already at the new maximum, so zoom-in must now render disabled.
+                await viewer.SetParametersAsync(ParameterView.FromDictionary(
+                    new Dictionary<string, object?>
+                    {
+                        [nameof(BbPdfViewer.Url)] = "a.pdf",
+                        [nameof(BbPdfViewer.MaxScale)] = 1.25
+                    }));
+
+                Assert.Equal(1, CountOf(renderer.Markup(), "aria-disabled=\"true\""));
+            },
+            parameters => parameters[nameof(BbPdfViewer.Url)] = "a.pdf",
+            setupJs: js => js.Results["load"] = _ => State(ok: true, pageCount: 14, currentPage: 3, scale: 1.25));
+    }
+
+    [Fact]
+    public async Task WithNoHeightTheViewerFillsItsParent()
+    {
+        await RunAsync(
+            async (renderer, viewer, js) =>
+            {
+                var markup = renderer.Markup();
+                Assert.Contains("bb:h-full", markup, StringComparison.Ordinal);
+                Assert.DoesNotContain("height: ", markup, StringComparison.Ordinal);
+            },
+            parameters => parameters[nameof(BbPdfViewer.Height)] = null);
+    }
+
     // ---------------------------------------------------------------------------------------
 
     private static async Task RunAsync(

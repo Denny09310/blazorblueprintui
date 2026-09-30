@@ -29,7 +29,7 @@
                     <LucideIcon Name="chevron-right" Size="16" />
                 </BbButton>
 
-                <span class="bb:flex bb:items-center bb:gap-1 bb:px-1" aria-label="@Localizer["PdfViewer.CurrentPage"]">
+                <span class="bb:flex bb:items-center bb:gap-1 bb:px-1">
                     <BbInput @bind-Value="pageInput"
                              @bind-Value:after="GoToPageInputAsync"
                              Disabled="@(pageCount == 0)"

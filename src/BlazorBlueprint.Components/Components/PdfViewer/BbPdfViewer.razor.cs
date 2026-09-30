@@ -50,6 +50,10 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
     private string? lastClass;
     private string? lastAriaLabel;
     private string? lastHeight;
+    private double lastMinScale;
+    private double lastMaxScale;
+    private double lastDefaultScale;
+    private Dictionary<string, object>? lastAdditionalAttributes;
 
     [Inject]
     private ILogger<BbPdfViewer> Logger { get; set; } = null!;
@@ -592,7 +596,11 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
             || lastToolbar != Toolbar
             || lastClass != Class
             || lastAriaLabel != AriaLabel
-            || lastHeight != Height;
+            || lastHeight != Height
+            || !lastMinScale.Equals(MinScale)
+            || !lastMaxScale.Equals(MaxScale)
+            || !lastDefaultScale.Equals(DefaultScale)
+            || !SameAttributes(lastAdditionalAttributes, AdditionalAttributes);
 
         if (changed)
         {
@@ -608,9 +616,26 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
             lastClass = Class;
             lastAriaLabel = AriaLabel;
             lastHeight = Height;
+            lastMinScale = MinScale;
+            lastMaxScale = MaxScale;
+            lastDefaultScale = DefaultScale;
+            lastAdditionalAttributes = AdditionalAttributes is null ? null : new(AdditionalAttributes);
         }
 
         return changed;
+    }
+
+    // Compared by content, not reference: a parent re-render hands over a new dictionary every time,
+    // and that alone must not redraw the viewer.
+    private static bool SameAttributes(Dictionary<string, object>? before, Dictionary<string, object>? now)
+    {
+        if (before is null || now is null)
+        {
+            return before is null && now is null;
+        }
+
+        return before.Count == now.Count
+            && now.All(pair => before.TryGetValue(pair.Key, out var value) && Equals(value, pair.Value));
     }
 
     // === CSS Classes ===
@@ -618,6 +643,9 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
     private string ContainerCssClass => ClassNames.cn(
         "bb:flex bb:flex-col bb:rounded-md bb:border bb:border-input bb:bg-background",
         "bb:overflow-hidden",
+        // With no Height the viewer fills its parent, as documented; the viewport takes what the
+        // toolbar leaves.
+        string.IsNullOrEmpty(Height) ? "bb:h-full" : null,
         Class
     );
 
@@ -626,7 +654,7 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
     );
 
     private static string ViewportCssClass => ClassNames.cn(
-        "bb:relative bb:flex bb:flex-1 bb:items-start bb:justify-center bb:overflow-auto bb:bg-muted/30"
+        "bb:relative bb:flex bb:min-h-0 bb:flex-1 bb:items-start bb:justify-center bb:overflow-auto bb:bg-muted/30"
     );
 
     private static string CanvasCssClass => ClassNames.cn(

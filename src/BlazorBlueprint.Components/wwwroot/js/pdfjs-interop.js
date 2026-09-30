@@ -358,6 +358,11 @@ function goToPage(canvas, pageNumber) {
         const target = clamp(Math.floor(pageNumber), 1, viewer.pageCount);
         if (target !== viewer.currentPage) {
             await renderPage(canvas, viewer, target);
+
+            // A new page starts at its top, not wherever the last one was scrolled to.
+            if (canvas.parentElement) {
+                canvas.parentElement.scrollTop = 0;
+            }
         }
     });
 }
