@@ -234,7 +234,7 @@ else if (Context.IsPresent)
     /// </summary>
     private async Task ExitNativeDialogAsync()
     {
-        await WaitForExitAsync();
+        await OverlayExit.WaitAsync(JSRuntime, _contentRef, OverlayExit.SlideFallbackDelay);
 
         if (_disposed || Context.IsOpen)
         {
@@ -323,38 +323,9 @@ else if (Context.IsPresent)
         }
     }
 
-    /// <summary>
-    /// Longest a C# fallback may wait after JS interop fails for the CSS exit animation to play.
-    /// Covers the 200ms dialog duration and the 300ms sheet/drawer durations against the shared
-    /// module's own 1000ms backstop; the animation module resolves barely later than the CSS.
-    /// </summary>
-    private static readonly TimeSpan ExitFallbackDelay = TimeSpan.FromMilliseconds(300);
-
-    private async Task WaitForExitAsync()
-    {
-        try
-        {
-            var module = await PrimitiveModules.GetAsync(JSRuntime);
-            await module.InvokeVoidAsync("animation.waitForExit", _contentRef);
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
-        {
-            // Interop unavailable (prerendering, reconnect drop). Fall back to a fixed wait so the
-            // dialog still unmounts instead of hanging with its content mounted forever.
-            try
-            {
-                await Task.Delay(ExitFallbackDelay);
-            }
-            catch (ObjectDisposedException)
-            {
-                // Component disposed while waiting
-            }
-        }
-    }
-
     private async Task WaitForExitThenCompleteAsync()
     {
-        await WaitForExitAsync();
+        await OverlayExit.WaitAsync(JSRuntime, _contentRef, OverlayExit.SlideFallbackDelay);
 
         if (_disposed || Context.IsOpen)
         {

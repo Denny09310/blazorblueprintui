@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Primitives.Utilities
 
 @* Drawer - A mobile-friendly slide panel built on Sheet primitive *@
 <CascadingValue Value="this" IsFixed="false">
@@ -54,22 +55,17 @@
     /// <summary>Gets whether the drawer is playing its closed-state exit animation. While set, the
     /// overlay and content stay mounted with <c>data-state="closed"</c> so their animate-out classes
     /// get a window to run in, then <see cref="CompleteClose"/> clears it to unmount.</summary>
-    internal bool IsAnimatingOut { get; private set; }
+    internal bool IsAnimatingOut => exit.IsAnimatingOut;
 
     /// <summary>Gets whether the drawer should be present in the DOM: open, or playing its exit animation.</summary>
-    internal bool IsPresent => IsOpen || IsAnimatingOut;
+    internal bool IsPresent => exit.IsPresent(IsOpen);
 
     /// <summary>Ends the exit animation, allowing the overlay and content to unmount. No-op while
     /// the drawer is open, so a reopen that beats the animation to the punch stays mounted.</summary>
-    internal void CompleteClose()
-    {
-        if (IsOpen)
-        {
-            return;
-        }
+    internal void CompleteClose() =>
+        _ = exit.CompleteClose(IsOpen);
 
-        IsAnimatingOut = false;
-    }
+    private readonly ExitAnimationGate exit = new();
 
     private bool _lastOpen;
 
@@ -77,11 +73,11 @@
     {
         if (open)
         {
-            IsAnimatingOut = false;
+            exit.Cancel();
         }
-        else if (!IsAnimatingOut)
+        else
         {
-            IsAnimatingOut = true;
+            exit.Begin();
         }
     }
 

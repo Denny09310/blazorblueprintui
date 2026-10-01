@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Primitives.Services
 @using Microsoft.JSInterop
 @inject BlazorBlueprint.Primitives.Services.IFocusManager FocusManager
 @inject IJSRuntime JS
@@ -206,30 +207,9 @@
         await ConfigureSnapsAsync();
     }
 
-    /// <summary>Longest a C# fallback may wait after JS interop fails for the CSS exit animation
-    /// to play. Matches the 300ms closed-state duration the drawer animates with.</summary>
-    private static readonly TimeSpan ExitFallbackDelay = TimeSpan.FromMilliseconds(300);
-
     private async Task WaitForExitThenCompleteAsync()
     {
-        try
-        {
-            var module = await PrimitiveModules.GetAsync(JS);
-            await module.InvokeVoidAsync("animation.waitForExit", _contentRef);
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
-        {
-            // Interop unavailable (prerendering, reconnect drop). Fall back to a fixed wait so the
-            // drawer still unmounts instead of hanging with its content mounted forever.
-            try
-            {
-                await Task.Delay(ExitFallbackDelay);
-            }
-            catch (ObjectDisposedException)
-            {
-                // Component disposed while waiting
-            }
-        }
+        await OverlayExit.WaitAsync(JS, _contentRef, OverlayExit.SlideFallbackDelay);
 
         if (_disposed || Context?.IsOpen == true)
         {

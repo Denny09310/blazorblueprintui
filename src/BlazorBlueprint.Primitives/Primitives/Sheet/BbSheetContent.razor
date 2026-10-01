@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Primitives.Sheet
 @using System.ComponentModel
+@using BlazorBlueprint.Primitives.Services
 @inject IFocusManager FocusManager
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
@@ -189,32 +190,9 @@
         }
     }
 
-    /// <summary>
-    /// Longest a C# fallback may wait after JS interop fails for the CSS exit animation to play.
-    /// Matches the 150ms default of tw-animate; the animation module's own backstop is 1000ms.
-    /// </summary>
-    private static readonly TimeSpan ExitFallbackDelay = TimeSpan.FromMilliseconds(200);
-
-    private async Task WaitForExitThenCompleteAsync()
+private async Task WaitForExitThenCompleteAsync()
     {
-        try
-        {
-            var module = await PrimitiveModules.GetAsync(JSRuntime);
-            await module.InvokeVoidAsync("animation.waitForExit", _contentRef);
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
-        {
-            // Interop unavailable (prerendering, reconnect drop). Fall back to a fixed wait so the
-            // sheet still unmounts instead of hanging with its content mounted forever.
-            try
-            {
-                await Task.Delay(ExitFallbackDelay);
-            }
-            catch (ObjectDisposedException)
-            {
-                // Component disposed while waiting
-            }
-        }
+        await OverlayExit.WaitAsync(JSRuntime, _contentRef, OverlayExit.SlideFallbackDelay);
 
         if (_disposed || Context.IsOpen)
         {

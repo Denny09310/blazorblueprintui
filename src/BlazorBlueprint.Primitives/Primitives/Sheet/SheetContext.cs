@@ -1,4 +1,5 @@
 using BlazorBlueprint.Primitives.Contexts;
+using BlazorBlueprint.Primitives.Utilities;
 
 namespace BlazorBlueprint.Primitives.Sheet;
 
@@ -42,6 +43,8 @@ public class SheetContext : PrimitiveContextWithEvents<SheetState>
     {
     }
 
+    private readonly ExitAnimationGate exit = new();
+
     /// <summary>
     /// Gets the ID for the sheet trigger button.
     /// </summary>
@@ -77,12 +80,12 @@ public class SheetContext : PrimitiveContextWithEvents<SheetState>
     /// overlay and content stay mounted with <c>data-state="closed"</c> so their animate-out
     /// classes get a window to run in, then <see cref="CompleteClose"/> clears it to unmount.
     /// </summary>
-    internal bool IsAnimatingOut { get; private set; }
+    internal bool IsAnimatingOut => exit.IsAnimatingOut;
 
     /// <summary>
     /// Gets whether the sheet should be present in the DOM: open, or playing its exit animation.
     /// </summary>
-    internal bool IsPresent => State.IsOpen || IsAnimatingOut;
+    internal bool IsPresent => exit.IsPresent(State.IsOpen);
 
     /// <summary>
     /// Gets the side from which the sheet slides in.
@@ -100,7 +103,7 @@ public class SheetContext : PrimitiveContextWithEvents<SheetState>
     /// <param name="triggerElement">Optional element that triggered the sheet.</param>
     public void Open(object? triggerElement = null)
     {
-        IsAnimatingOut = false;
+        exit.Cancel();
         UpdateState(state =>
         {
             state.IsOpen = true;
@@ -118,7 +121,7 @@ public class SheetContext : PrimitiveContextWithEvents<SheetState>
             return;
         }
 
-        IsAnimatingOut = true;
+        exit.Begin();
         UpdateState(state => state.IsOpen = false);
     }
 
@@ -149,13 +152,10 @@ public class SheetContext : PrimitiveContextWithEvents<SheetState>
     /// </summary>
     internal void CompleteClose()
     {
-        if (!IsAnimatingOut || State.IsOpen)
+        if (exit.CompleteClose(State.IsOpen))
         {
-            return;
+            NotifyStateChanged();
         }
-
-        IsAnimatingOut = false;
-        NotifyStateChanged();
     }
 
     /// <summary>

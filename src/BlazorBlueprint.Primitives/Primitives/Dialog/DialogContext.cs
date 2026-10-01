@@ -1,4 +1,5 @@
 using BlazorBlueprint.Primitives.Contexts;
+using BlazorBlueprint.Primitives.Utilities;
 
 namespace BlazorBlueprint.Primitives.Dialog;
 
@@ -26,6 +27,8 @@ public class DialogState
 public class DialogContext : PrimitiveContextWithEvents<DialogState>
 {
     internal bool AllowDismiss { get; set; } = true;
+
+    private readonly ExitAnimationGate exit = new();
 
     /// <summary>
     /// Initializes a new instance of the DialogContext.
@@ -64,12 +67,12 @@ public class DialogContext : PrimitiveContextWithEvents<DialogState>
     /// overlay and content stay mounted with <c>data-state="closed"</c> so their animate-out
     /// classes get a window to run in, then <see cref="CompleteClose"/> clears it to unmount.
     /// </summary>
-    internal bool IsAnimatingOut { get; private set; }
+    internal bool IsAnimatingOut => exit.IsAnimatingOut;
 
     /// <summary>
     /// Gets whether the dialog should be present in the DOM: open, or playing its exit animation.
     /// </summary>
-    internal bool IsPresent => State.IsOpen || IsAnimatingOut;
+    internal bool IsPresent => exit.IsPresent(State.IsOpen);
 
     /// <summary>
     /// Opens the dialog.
@@ -77,7 +80,7 @@ public class DialogContext : PrimitiveContextWithEvents<DialogState>
     /// <param name="triggerElement">Optional element that triggered the dialog.</param>
     public void Open(object? triggerElement = null)
     {
-        IsAnimatingOut = false;
+        exit.Cancel();
         UpdateState(state =>
         {
             state.IsOpen = true;
@@ -95,7 +98,7 @@ public class DialogContext : PrimitiveContextWithEvents<DialogState>
             return;
         }
 
-        IsAnimatingOut = true;
+        exit.Begin();
         UpdateState(state => state.IsOpen = false);
     }
 
@@ -126,13 +129,10 @@ public class DialogContext : PrimitiveContextWithEvents<DialogState>
     /// </summary>
     internal void CompleteClose()
     {
-        if (!IsAnimatingOut || State.IsOpen)
+        if (exit.CompleteClose(State.IsOpen))
         {
-            return;
+            NotifyStateChanged();
         }
-
-        IsAnimatingOut = false;
-        NotifyStateChanged();
     }
 
     /// <summary>
